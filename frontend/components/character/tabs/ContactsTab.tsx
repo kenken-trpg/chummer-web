@@ -4,6 +4,7 @@ import { useState } from "react";
 import { CONTACT_ROLES } from "@/lib/character/constants";
 import { HelpTip } from "@/components/help/HelpTip";
 import { contactTerm } from "@/lib/ui-strings";
+import { editRow } from "@/lib/character/rows";
 
 export function ContactsTab({ character: ch, d, tr, ui, patch, setCharacter }: TabPanelProps) {
   const [contactName, setContactName] = useState("");
@@ -62,16 +63,12 @@ export function ContactsTab({ character: ch, d, tr, ui, patch, setCharacter }: T
                   onChange={(e) =>
                     setCharacter({
                       ...ch,
-                      contacts: (ch.contacts || []).map((row) =>
-                        row.id === item.id ? { ...row, name: e.target.value } : row,
-                      ),
+                      contacts: editRow(ch.contacts, item.id, { name: e.target.value }),
                     })
                   }
                   onBlur={(e) =>
                     patch({
-                      contacts: (ch.contacts || []).map((row) =>
-                        row.id === item.id ? { ...row, name: e.target.value } : row,
-                      ),
+                      contacts: editRow(ch.contacts, item.id, { name: e.target.value }),
                     })
                   }
                 />
@@ -87,16 +84,12 @@ export function ContactsTab({ character: ch, d, tr, ui, patch, setCharacter }: T
                   onChange={(e) =>
                     setCharacter({
                       ...ch,
-                      contacts: (ch.contacts || []).map((row) =>
-                        row.id === item.id ? { ...row, role: e.target.value } : row,
-                      ),
+                      contacts: editRow(ch.contacts, item.id, { role: e.target.value }),
                     })
                   }
                   onBlur={(e) =>
                     patch({
-                      contacts: (ch.contacts || []).map((row) =>
-                        row.id === item.id ? { ...row, role: e.target.value || null } : row,
-                      ),
+                      contacts: editRow(ch.contacts, item.id, { role: e.target.value || null }),
                     })
                   }
                 />
@@ -110,9 +103,9 @@ export function ContactsTab({ character: ch, d, tr, ui, patch, setCharacter }: T
                   value={item.connection}
                   onChange={(e) =>
                     patch({
-                      contacts: (ch.contacts || []).map((row) =>
-                        row.id === item.id ? { ...row, connection: Number(e.target.value) } : row,
-                      ),
+                      contacts: editRow(ch.contacts, item.id, {
+                        connection: Number(e.target.value),
+                      }),
                     })
                   }
                 />
@@ -126,9 +119,7 @@ export function ContactsTab({ character: ch, d, tr, ui, patch, setCharacter }: T
                   value={item.loyalty}
                   onChange={(e) =>
                     patch({
-                      contacts: (ch.contacts || []).map((row) =>
-                        row.id === item.id ? { ...row, loyalty: Number(e.target.value) } : row,
-                      ),
+                      contacts: editRow(ch.contacts, item.id, { loyalty: Number(e.target.value) }),
                     })
                   }
                 />

@@ -4,6 +4,7 @@ import { HelpTip } from "@/components/help/HelpTip";
 import type { VehicleRowProps } from "@/components/character/tabs/gear/vehicle/types";
 import { useBookFilter } from "@/lib/character/books";
 import { vehicleFits } from "@/lib/character/gear";
+import { editRow } from "@/lib/character/rows";
 
 /** The weapon mounts on one vehicle, what is mounted in each, and the picker
  *  that bolts on another mount of a given size. */
@@ -79,11 +80,9 @@ export function VehicleMountRows({
                 value={mount.weapon_install_id || ""}
                 onChange={(e) =>
                   patch({
-                    weapon_mounts: (ch.weapon_mounts || []).map((row) =>
-                      row.id === mount.id
-                        ? { ...row, weapon_install_id: e.target.value || null }
-                        : row,
-                    ),
+                    weapon_mounts: editRow(ch.weapon_mounts, mount.id, {
+                      weapon_install_id: e.target.value || null,
+                    }),
                   })
                 }
               >

@@ -15,6 +15,7 @@ import {
   sourceBit,
   specialArmorLine,
 } from "@/lib/character/format";
+import { editRow } from "@/lib/character/rows";
 
 /** The other pieces a Custom Fit (Stack) can be tailored to: whole armors
  * (not `+N` accessories), by catalog name, keeping the current pick even
@@ -99,9 +100,7 @@ export function ArmorGear({ catalog, character: ch, d, tr, ui, patch }: TabPanel
                     ui={ui}
                     onChange={(cost) =>
                       patch({
-                        armor: (ch.armor || []).map((row) =>
-                          row.id === item.id ? { ...row, cost } : row,
-                        ),
+                        armor: editRow(ch.armor, item.id, { cost }),
                       })
                     }
                   />
@@ -111,9 +110,7 @@ export function ArmorGear({ catalog, character: ch, d, tr, ui, patch }: TabPanel
                       checked={item.equipped}
                       onChange={(e) =>
                         patch({
-                          armor: (ch.armor || []).map((row) =>
-                            row.id === item.id ? { ...row, equipped: e.target.checked } : row,
-                          ),
+                          armor: editRow(ch.armor, item.id, { equipped: e.target.checked }),
                         })
                       }
                     />
@@ -129,9 +126,7 @@ export function ArmorGear({ catalog, character: ch, d, tr, ui, patch }: TabPanel
                         value={item.rating}
                         onChange={(e) =>
                           patch({
-                            armor: (ch.armor || []).map((row) =>
-                              row.id === item.id ? { ...row, rating: Number(e.target.value) } : row,
-                            ),
+                            armor: editRow(ch.armor, item.id, { rating: Number(e.target.value) }),
                           })
                         }
                       />
@@ -144,9 +139,7 @@ export function ArmorGear({ catalog, character: ch, d, tr, ui, patch }: TabPanel
                         checked={item.wireless ?? true}
                         onChange={(e) =>
                           patch({
-                            armor: (ch.armor || []).map((row) =>
-                              row.id === item.id ? { ...row, wireless: e.target.checked } : row,
-                            ),
+                            armor: editRow(ch.armor, item.id, { wireless: e.target.checked }),
                           })
                         }
                       />

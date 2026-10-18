@@ -5,6 +5,7 @@ import { useState } from "react";
 import { kindLabel, sourceBit } from "@/lib/character/format";
 import { spellDescriptors, spellDuration, spellRange } from "@/lib/spell-terms";
 import { HelpTip } from "@/components/help/HelpTip";
+import { editRow } from "@/lib/character/rows";
 
 export function SpellsTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   const [spellSearch, setSpellSearch] = useState("");
@@ -115,9 +116,7 @@ export function SpellsTab({ catalog, character: ch, d, tr, ui, patch }: TabPanel
                     value={item.spell.force}
                     onChange={(e) =>
                       patch({
-                        spells: (ch.spells || []).map((row) =>
-                          row.id === item.id ? { ...row, force: Number(e.target.value) } : row,
-                        ),
+                        spells: editRow(ch.spells, item.id, { force: Number(e.target.value) }),
                       })
                     }
                   />

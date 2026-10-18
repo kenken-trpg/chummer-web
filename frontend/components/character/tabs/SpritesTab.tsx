@@ -5,6 +5,7 @@ import { useState } from "react";
 import { optionalNumber, sourceBit, testLine } from "@/lib/character/format";
 import { CritterPowerRow } from "@/components/character/CritterPowerRow";
 import { HelpTip } from "@/components/help/HelpTip";
+import { editRow } from "@/lib/character/rows";
 
 export function SpritesTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   const [spriteSearch, setSpriteSearch] = useState("");
@@ -77,9 +78,7 @@ export function SpritesTab({ catalog, character: ch, d, tr, ui, patch }: TabPane
                   value={item.level}
                   onChange={(e) =>
                     patch({
-                      sprites: (ch.sprites || []).map((row) =>
-                        row.id === item.id ? { ...row, level: Number(e.target.value) } : row,
-                      ),
+                      sprites: editRow(ch.sprites, item.id, { level: Number(e.target.value) }),
                     })
                   }
                 />
@@ -93,16 +92,11 @@ export function SpritesTab({ catalog, character: ch, d, tr, ui, patch }: TabPane
                   value={item.services}
                   onChange={(e) =>
                     patch({
-                      sprites: (ch.sprites || []).map((row) =>
-                        row.id === item.id
-                          ? {
-                              ...row,
-                              services: Number(e.target.value),
-                              hits: null,
-                              opposed_hits: null,
-                            }
-                          : row,
-                      ),
+                      sprites: editRow(ch.sprites, item.id, {
+                        services: Number(e.target.value),
+                        hits: null,
+                        opposed_hits: null,
+                      }),
                     })
                   }
                 />
@@ -117,9 +111,9 @@ export function SpritesTab({ catalog, character: ch, d, tr, ui, patch }: TabPane
                   value={item.hits ?? ""}
                   onChange={(e) =>
                     patch({
-                      sprites: (ch.sprites || []).map((row) =>
-                        row.id === item.id ? { ...row, hits: optionalNumber(e.target.value) } : row,
-                      ),
+                      sprites: editRow(ch.sprites, item.id, {
+                        hits: optionalNumber(e.target.value),
+                      }),
                     })
                   }
                 />
@@ -132,11 +126,9 @@ export function SpritesTab({ catalog, character: ch, d, tr, ui, patch }: TabPane
                   value={item.opposed_hits ?? ""}
                   onChange={(e) =>
                     patch({
-                      sprites: (ch.sprites || []).map((row) =>
-                        row.id === item.id
-                          ? { ...row, opposed_hits: optionalNumber(e.target.value) }
-                          : row,
-                      ),
+                      sprites: editRow(ch.sprites, item.id, {
+                        opposed_hits: optionalNumber(e.target.value),
+                      }),
                     })
                   }
                 />
@@ -147,11 +139,9 @@ export function SpritesTab({ catalog, character: ch, d, tr, ui, patch }: TabPane
                   value={item.registered ? "registered" : "compiled"}
                   onChange={(e) =>
                     patch({
-                      sprites: (ch.sprites || []).map((row) =>
-                        row.id === item.id
-                          ? { ...row, registered: e.target.value === "registered" }
-                          : row,
-                      ),
+                      sprites: editRow(ch.sprites, item.id, {
+                        registered: e.target.value === "registered",
+                      }),
                     })
                   }
                 >

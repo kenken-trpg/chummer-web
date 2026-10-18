@@ -9,6 +9,7 @@ import { accessoryFits, ammoFits, dropTree, weaponLine } from "@/lib/character/g
 import { weaponHelpLines } from "@/lib/character/help-breakdown";
 import { availBit, formatAccessoryCost, formatAmmoCost, sourceBit } from "@/lib/character/format";
 import { removeWareTree } from "@/lib/character/ware";
+import { editRow } from "@/lib/character/rows";
 
 export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   const byBook = useBookFilter();
@@ -127,16 +128,12 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                           const qty = Number(e.target.value);
                           if (fromGear) {
                             patch({
-                              gear: (ch.gear || []).map((row) =>
-                                row.id === item.source_gear_id ? { ...row, qty } : row,
-                              ),
+                              gear: editRow(ch.gear, item.source_gear_id, { qty }),
                             });
                             return;
                           }
                           patch({
-                            weapons: (ch.weapons || []).map((row) =>
-                              row.id === item.id ? { ...row, qty } : row,
-                            ),
+                            weapons: editRow(ch.weapons, item.id, { qty }),
                           });
                         }}
                       />
@@ -257,9 +254,7 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                         value={ammo.qty}
                         onChange={(e) =>
                           patch({
-                            gear: (ch.gear || []).map((row) =>
-                              row.id === ammo.id ? { ...row, qty: Number(e.target.value) } : row,
-                            ),
+                            gear: editRow(ch.gear, ammo.id, { qty: Number(e.target.value) }),
                           })
                         }
                       />

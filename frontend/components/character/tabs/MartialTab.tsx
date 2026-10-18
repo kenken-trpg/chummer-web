@@ -4,6 +4,7 @@ import type { TabPanelProps } from "@/components/character/types";
 import { useState } from "react";
 import { HelpTip } from "@/components/help/HelpTip";
 import { sourceBit } from "@/lib/character/format";
+import { editRow } from "@/lib/character/rows";
 
 export function MartialTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   const [martialSearch, setMartialSearch] = useState("");
@@ -74,9 +75,7 @@ export function MartialTab({ catalog, character: ch, d, tr, ui, patch }: TabPane
                           }
                           const techniques = item.technique_options.filter((opt) => next.has(opt));
                           patch({
-                            martial_arts: (ch.martial_arts || []).map((row) =>
-                              row.id === item.id ? { ...row, techniques } : row,
-                            ),
+                            martial_arts: editRow(ch.martial_arts, item.id, { techniques }),
                           });
                         }}
                       />

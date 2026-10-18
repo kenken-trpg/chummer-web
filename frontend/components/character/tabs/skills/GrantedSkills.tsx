@@ -3,6 +3,7 @@ import { SkillPickSelects } from "@/components/character/SkillPickSelects";
 import { HelpTip } from "@/components/help/HelpTip";
 import type { TabPanelProps } from "@/components/character/types";
 import type { SkillPickSlot } from "@/lib/types";
+import { editRow } from "@/lib/character/rows";
 
 /** Every skill the character does not buy but has to *name*, gathered on the
  *  tab where a player goes looking for a skill.
@@ -75,9 +76,7 @@ export function GrantedSkills({ character: ch, d, tr, ui, patch }: TabPanelProps
           const powerId = key.startsWith("power:") ? key.slice("power:".length) : "";
           if (powerId) {
             patch({
-              adept_powers: (ch.adept_powers || []).map((row) =>
-                row.id === powerId ? { ...row, extra: skill } : row,
-              ),
+              adept_powers: editRow(ch.adept_powers, powerId, { extra: skill }),
             });
             return;
           }

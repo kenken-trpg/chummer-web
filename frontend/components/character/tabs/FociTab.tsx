@@ -4,6 +4,7 @@ import { HelpTip } from "@/components/help/HelpTip";
 import type { TabPanelProps } from "@/components/character/types";
 import { useState } from "react";
 import { optionalNumber, sourceBit, testLine } from "@/lib/character/format";
+import { editRow } from "@/lib/character/rows";
 
 export function FociTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   const [focusSearch, setFocusSearch] = useState("");
@@ -72,9 +73,7 @@ export function FociTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
                   value={item.force}
                   onChange={(e) =>
                     patch({
-                      foci: (ch.foci || []).map((row) =>
-                        row.id === item.id ? { ...row, force: Number(e.target.value) } : row,
-                      ),
+                      foci: editRow(ch.foci, item.id, { force: Number(e.target.value) }),
                     })
                   }
                 />
@@ -86,9 +85,7 @@ export function FociTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
                     value={item.weapon_id || ""}
                     onChange={(e) =>
                       patch({
-                        foci: (ch.foci || []).map((row) =>
-                          row.id === item.id ? { ...row, extra: e.target.value || null } : row,
-                        ),
+                        foci: editRow(ch.foci, item.id, { extra: e.target.value || null }),
                       })
                     }
                   >
@@ -113,11 +110,7 @@ export function FociTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
                       value={item.hits ?? ""}
                       onChange={(e) =>
                         patch({
-                          foci: (ch.foci || []).map((row) =>
-                            row.id === item.id
-                              ? { ...row, hits: optionalNumber(e.target.value) }
-                              : row,
-                          ),
+                          foci: editRow(ch.foci, item.id, { hits: optionalNumber(e.target.value) }),
                         })
                       }
                     />
@@ -130,11 +123,9 @@ export function FociTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
                       value={item.opposed_hits ?? ""}
                       onChange={(e) =>
                         patch({
-                          foci: (ch.foci || []).map((row) =>
-                            row.id === item.id
-                              ? { ...row, opposed_hits: optionalNumber(e.target.value) }
-                              : row,
-                          ),
+                          foci: editRow(ch.foci, item.id, {
+                            opposed_hits: optionalNumber(e.target.value),
+                          }),
                         })
                       }
                     />
@@ -145,11 +136,9 @@ export function FociTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
                       value={item.formula_bought ? "buy" : "design"}
                       onChange={(e) =>
                         patch({
-                          foci: (ch.foci || []).map((row) =>
-                            row.id === item.id
-                              ? { ...row, formula_bought: e.target.value === "buy" }
-                              : row,
-                          ),
+                          foci: editRow(ch.foci, item.id, {
+                            formula_bought: e.target.value === "buy",
+                          }),
                         })
                       }
                     >

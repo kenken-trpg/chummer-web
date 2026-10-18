@@ -8,6 +8,7 @@ import { useBookFilter } from "@/lib/character/books";
 import { SENSOR_DEVICE_CATS } from "@/lib/character/constants";
 import { dropTree } from "@/lib/character/gear";
 import { deviceRatingBit, sourceBit } from "@/lib/character/format";
+import { editRow } from "@/lib/character/rows";
 
 export function SensorGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   const byBook = useBookFilter();
@@ -72,9 +73,9 @@ export function SensorGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                         value={item.rating}
                         onChange={(e) =>
                           patch({
-                            sensors: (ch.sensors || []).map((row) =>
-                              row.id === item.id ? { ...row, rating: Number(e.target.value) } : row,
-                            ),
+                            sensors: editRow(ch.sensors, item.id, {
+                              rating: Number(e.target.value),
+                            }),
                           })
                         }
                       />
@@ -113,11 +114,9 @@ export function SensorGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                           value={child.rating}
                           onChange={(e) =>
                             patch({
-                              sensors: (ch.sensors || []).map((row) =>
-                                row.id === child.id
-                                  ? { ...row, rating: Number(e.target.value) }
-                                  : row,
-                              ),
+                              sensors: editRow(ch.sensors, child.id, {
+                                rating: Number(e.target.value),
+                              }),
                             })
                           }
                         />

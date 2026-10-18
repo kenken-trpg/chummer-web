@@ -4,6 +4,7 @@ import type { TabPanelProps } from "@/components/character/types";
 import { useState } from "react";
 import { cfDuration, cfTarget, sourceBit, testLine } from "@/lib/character/format";
 import { HelpTip } from "@/components/help/HelpTip";
+import { editRow } from "@/lib/character/rows";
 
 export function ComplexFormsTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   const [cfSearch, setCfSearch] = useState("");
@@ -61,9 +62,9 @@ export function ComplexFormsTab({ catalog, character: ch, d, tr, ui, patch }: Ta
                   value={item.level}
                   onChange={(e) =>
                     patch({
-                      complex_forms: (ch.complex_forms || []).map((row) =>
-                        row.id === item.id ? { ...row, level: Number(e.target.value) } : row,
-                      ),
+                      complex_forms: editRow(ch.complex_forms, item.id, {
+                        level: Number(e.target.value),
+                      }),
                     })
                   }
                 />
@@ -75,9 +76,9 @@ export function ComplexFormsTab({ catalog, character: ch, d, tr, ui, patch }: Ta
                     value={item.extra || ""}
                     onChange={(e) =>
                       patch({
-                        complex_forms: (ch.complex_forms || []).map((row) =>
-                          row.id === item.id ? { ...row, extra: e.target.value } : row,
-                        ),
+                        complex_forms: editRow(ch.complex_forms, item.id, {
+                          extra: e.target.value,
+                        }),
                       })
                     }
                   >

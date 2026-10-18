@@ -6,6 +6,7 @@ import { catalogExtraOptions } from "@/lib/character/gear";
 import type { TabPanelProps } from "@/components/character/types";
 import { trAs } from "@/lib/ui-strings";
 import { useBookFilter } from "@/lib/character/books";
+import { editRow } from "@/lib/character/rows";
 
 /**
  * The apps on one device and the select to add more. A commlink runs them,
@@ -64,7 +65,7 @@ export function AppRows({
               ui={ui}
               onChange={(cost) =>
                 patch({
-                  apps: (ch.apps || []).map((row) => (row.id === app.id ? { ...row, cost } : row)),
+                  apps: editRow(ch.apps, app.id, { cost }),
                 })
               }
             />
@@ -78,9 +79,7 @@ export function AppRows({
                   value={app.rating}
                   onChange={(e) =>
                     patch({
-                      apps: (ch.apps || []).map((row) =>
-                        row.id === app.id ? { ...row, rating: Number(e.target.value) } : row,
-                      ),
+                      apps: editRow(ch.apps, app.id, { rating: Number(e.target.value) }),
                     })
                   }
                 />
@@ -93,9 +92,7 @@ export function AppRows({
                   value={app.extra || ""}
                   onChange={(e) =>
                     patch({
-                      apps: (ch.apps || []).map((row) =>
-                        row.id === app.id ? { ...row, extra: e.target.value } : row,
-                      ),
+                      apps: editRow(ch.apps, app.id, { extra: e.target.value }),
                     })
                   }
                 >
@@ -115,9 +112,7 @@ export function AppRows({
                   value={app.extra || ""}
                   onChange={(e) =>
                     patch({
-                      apps: (ch.apps || []).map((row) =>
-                        row.id === app.id ? { ...row, extra: e.target.value } : row,
-                      ),
+                      apps: editRow(ch.apps, app.id, { extra: e.target.value }),
                     })
                   }
                 />

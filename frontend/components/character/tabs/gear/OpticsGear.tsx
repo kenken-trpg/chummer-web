@@ -7,6 +7,7 @@ import type { TabPanelProps } from "@/components/character/types";
 import { OPTICS_DEVICE_CATS } from "@/lib/character/constants";
 import { dropTree } from "@/lib/character/gear";
 import { sourceBit } from "@/lib/character/format";
+import { editRow } from "@/lib/character/rows";
 
 export function OpticsGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   return (
@@ -60,9 +61,7 @@ export function OpticsGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                         value={item.rating}
                         onChange={(e) =>
                           patch({
-                            optics: (ch.optics || []).map((row) =>
-                              row.id === item.id ? { ...row, rating: Number(e.target.value) } : row,
-                            ),
+                            optics: editRow(ch.optics, item.id, { rating: Number(e.target.value) }),
                           })
                         }
                       />
@@ -105,11 +104,9 @@ export function OpticsGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                           value={child.rating}
                           onChange={(e) =>
                             patch({
-                              optics: (ch.optics || []).map((row) =>
-                                row.id === child.id
-                                  ? { ...row, rating: Number(e.target.value) }
-                                  : row,
-                              ),
+                              optics: editRow(ch.optics, child.id, {
+                                rating: Number(e.target.value),
+                              }),
                             })
                           }
                         />

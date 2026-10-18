@@ -10,6 +10,7 @@ import type { TabPanelProps } from "@/components/character/types";
 import { dropTree } from "@/lib/character/gear";
 import { HelpTip } from "@/components/help/HelpTip";
 import { sourceBit } from "@/lib/character/format";
+import { editRow } from "@/lib/character/rows";
 
 export function RccGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   return (
@@ -54,9 +55,7 @@ export function RccGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
                       value={item.rating}
                       onChange={(e) =>
                         patch({
-                          rccs: (ch.rccs || []).map((row) =>
-                            row.id === item.id ? { ...row, rating: Number(e.target.value) } : row,
-                          ),
+                          rccs: editRow(ch.rccs, item.id, { rating: Number(e.target.value) }),
                         })
                       }
                     />
