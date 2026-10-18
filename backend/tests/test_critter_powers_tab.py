@@ -97,3 +97,18 @@ def test_bought_powers_survive_the_round_trip() -> None:
     back = CharacterState(**chum5_to_state(state_to_chum5(state))[0])
     assert [(p.power_id, p.rating) for p in back.critter_powers] == [(STOCK["Mystic Armor (Infected)"]["id"], 3)]
     assert compute(back).derived["karma"]["spent"] == compute(state).derived["karma"]["spent"]
+
+
+def test_a_career_purchase_costs_the_same_karma_as_in_creation() -> None:
+    """CharacterCareer's cmdAddCritterPower_Click charges `CritterPower.Karma`
+    — the same `<karma>` CharacterCreate sums — as one expense. Here a career
+    purchase is billed by the same sum, so the karma left drops by exactly it,
+    and the creation-only gates (requirements, category) stay quiet."""
+    from tests.engine_support import _into_career
+
+    state = _into_career("cp", [_quality_id("Infected: Bandersnatch")])
+    before = compute(state).derived["karma"]["remaining"]
+    bought = CharacterState(**{**state.model_dump(), "critter_powers": _bought("Evolved Reflexes", "Silence")})
+    out = compute(bought).derived
+    assert out["karma"]["remaining"] == before - 12 - 9
+    assert not [e for e in out["errors"] if e["key"].startswith("engine.critterPowers")]
