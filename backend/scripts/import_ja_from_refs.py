@@ -186,11 +186,16 @@ except ImportError:  # when run as `python backend/scripts/import_ja_from_refs.p
     from ja_books import BOOKS as _BOOKS  # type: ignore[no-redef]
     from ja_curated_entities import ENTITIES as _ENTITIES  # type: ignore[no-redef]
     from ja_curated_spells import SPELLS as _SPELLS  # type: ignore[no-redef]
+#: Which hand-kept table each CURATED entry came from, for the report. Kept in
+#: step with CURATED: the later table wins both the value and the origin.
+ORIGIN: dict[str, str] = dict.fromkeys(CURATED, "import_ja_from_refs.CURATED")
 CURATED.update(_SPELLS)
+ORIGIN.update(dict.fromkeys(_SPELLS, "ja_curated_spells.SPELLS"))
 CURATED.update(_ENTITIES)
+ORIGIN.update(dict.fromkeys(_ENTITIES, "ja_curated_entities.ENTITIES"))
 
 
-def _book_terms() -> dict[str, str]:
+def _book_terms() -> dict[str, tuple[str, str]]:
     """Every book pass's verified table, merged in registry order.
 
     Last, because these are the only entries somebody has read in print: they
@@ -199,19 +204,22 @@ def _book_terms() -> dict[str, str]:
     """
     import importlib
 
-    out: dict[str, str] = {}
+    out: dict[str, tuple[str, str]] = {}
     for book in _BOOKS.values():
         for candidate in (f"scripts.{book.module}", book.module):
             try:
                 module = importlib.import_module(candidate)
             except ImportError:
                 continue
-            out.update(getattr(module, book.table, {}))
+            origin = f"{book.module}.{book.table}"
+            out.update({k: (v, origin) for k, v in getattr(module, book.table, {}).items()})
             break
     return out
 
 
-CURATED.update(_book_terms())
+for _key, (_val, _origin) in _book_terms().items():
+    CURATED[_key] = _val
+    ORIGIN[_key] = _origin
 
 # chumJA category english -> skip when the SR4 term is stale / wrong for SR5.
 CATEGORY_SKIP = {
@@ -292,6 +300,101 @@ def is_japanese(existing: dict[str, str], vendored: dict[str, str], key: str) ->
     return False
 
 
+#: Report section order: the tables a human checked against print first.
+_SECTION_ORDER = ("ja_curated_", "import_ja_from_refs.", "chumJA")
+
+
+def _section_rank(src: str) -> tuple[int, str]:
+    if src.startswith("ja_curated_") and not src.startswith(("ja_curated_spells", "ja_curated_entities")):
+        return (0, src)  # a book pass
+    return (1 + next((i for i, p in enumerate(_SECTION_ORDER) if src.startswith(p)), len(_SECTION_ORDER)), src)
+
+
+def _report(ordered: dict[str, str], by_src: dict[str, list[tuple[str, str]]], vendored: dict[str, str]) -> str:
+    """docs/translation-import-report.md: every overlay entry by origin, with
+    the kinds and books its name lands on, then the per-book picture."""
+    from app.catalog_view import public_catalog
+    from app.data_loader import reset_catalog
+
+    try:
+        from scripts import ja_provenance as prov
+    except ImportError:  # run as `python backend/scripts/import_ja_from_refs.py`
+        import ja_provenance as prov  # type: ignore[no-redef]
+
+    # The catalog was loaded before data.json was written — under regen_ja.sh,
+    # from an emptied one — so read it again: the report describes the result.
+    # Book titles are translations too (Run and Gun's ラン＆ガン is an overlay
+    # entry), and the Japanese-edition test reads them.
+    reset_catalog()
+    public = public_catalog()
+    books = public.get("books") or []
+    printed = prov.ja_books(books)
+    found = prov.carriers(public, printed)
+    shown = public.get("translations") or {}
+    titles = {b["code"]: b["name"] for b in books}
+
+    def where(name: str) -> str:
+        c = found.get(name)
+        return c.render() if c else "—"
+
+    lines = [
+        "# 翻訳インポートレポート",
+        "",
+        "**自動生成** — `backend/scripts/regen_ja.sh` (= `import_ja_from_refs.py --write`)。",
+        "画面の日本語名は 3 つの層から来る。上流 Chummer の `ja-jp_data.xml`、その上に重ねる",
+        "`data.json`、最後にまだ英語の名前にだけ当てるシャドウラン・コデックスの名前",
+        "（`app/data_loader/codex.py`）。ここに載るのは `data.json` の全エントリで、出どころの表ごとに分けてある。",
+        "訳の表は英語名だけで引くので、「品目」の列には、その名前を持つ品目の種類と本をすべて並べる。",
+        "",
+        f"- オーバーレイ合計: **{len(ordered)} 件**",
+        f"- 日本語版のある本: {', '.join(sorted(printed))}（コデックスが再録した品目も日本語版ありと数える）",
+        "",
+    ]
+
+    orphans = sorted(
+        (k, v, src)
+        for src, rows in by_src.items()
+        if not src.startswith("chumJA")
+        for k, v in rows
+        if k in found and not found[k].printed_ja and found[k].books()
+    )
+    lines += [
+        f"## 日本語版の無い品目にだけ当たる自前の訳 ({len(orphans)})",
+        "",
+        "サプリの用語は英語のままにする方針（本に無い片仮名を作らない）と食い違う候補。",
+        "chumJA（SR4 の訳）は別に数える。",
+        "",
+        "| English | 日本語 | 出どころ | 品目 |",
+        "|---|---|---|---|",
+        *(f"| {k} | {v} | {src} | {where(k)} |" for k, v, src in orphans),
+        "",
+    ]
+
+    for src in sorted(by_src, key=_section_rank):
+        rows = by_src[src]
+        lines += [f"## {src} ({len(rows)})", "", "| English | 日本語 | 品目 |", "|---|---|---|"]
+        lines += [f"| {k} | {v} | {where(k)} |" for k, v in sorted(rows)]
+        lines.append("")
+
+    counts = prov.per_book(found, ordered, vendored, shown)
+    lines += [
+        "## 本ごとの訳の出どころ",
+        "",
+        "名前の数。1 つの名前が複数の本に載っていれば、それぞれの本で数える。",
+        "",
+        "| 本 | 書名 | 日本語版 | 上流 | data.json | コデックス | 英語のまま |",
+        "|---|---|---|---|---|---|---|",
+    ]
+    for code in sorted(counts, key=lambda c: (-sum(counts[c].values()), c)):
+        n = counts[code]
+        lines.append(
+            f"| {code} | {titles.get(code, '')} | {'あり' if code in printed else ''} "
+            f"| {n['upstream']} | {n['overlay']} | {n['codex']} | {n['english']} |"
+        )
+    lines.append("")
+    return "\n".join(lines) + "\n"
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--chumja", type=Path, default=DEFAULT_CHUMJA)
@@ -323,7 +426,7 @@ def main(argv: list[str] | None = None) -> int:
             if not is_japanese(existing, vendored, key) or existing.get(key) != val:
                 if existing.get(key) != val:
                     additions[key] = val
-                    prov[key] = "curated"
+                    prov[key] = ORIGIN[key]
 
     # 2) chumJA exact name matches, app-relevant, still untranslated
     for key, val in sorted(cj_names.items()):
@@ -353,7 +456,7 @@ def main(argv: list[str] | None = None) -> int:
         if key in prov:
             return prov[key]
         if key in CURATED:
-            return "curated"
+            return ORIGIN[key]
         if key in cj_names:
             return "chumJA(SR4) name"
         if key in cj_cats:
@@ -372,24 +475,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.write:
         OVERLAY.write_text(json.dumps(ordered, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        lines = [
-            "# 翻訳インポートレポート",
-            "",
-            "**自動生成** — `backend/scripts/regen_ja.sh` (= `import_ja_from_refs.py --write`)。",
-            "`data.json` の全エントリを出典別に一覧。curated (SR5・用語集照合済) と",
-            "chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カテゴリに限定。",
-            "",
-            f"- オーバーレイ合計: **{len(ordered)} 件**",
-            "",
-        ]
-        for src, rows in sorted(by_src.items()):
-            lines.append(f"## {src} ({len(rows)})")
-            lines.append("")
-            lines.append("| English | 日本語 |")
-            lines.append("|---|---|")
-            lines += [f"| {k} | {v} |" for k, v in sorted(rows)]
-            lines.append("")
-        args.report.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        args.report.write_text(_report(ordered, by_src, vendored), encoding="utf-8")
         print(f"wrote {OVERLAY.relative_to(ROOT.parent)}")
         print(f"wrote {args.report.relative_to(ROOT.parent)}")
     else:
