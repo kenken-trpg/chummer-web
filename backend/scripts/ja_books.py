@@ -1,7 +1,8 @@
 """The books a Japanese verification pass can run over — see docs/plans/translation-plan.md.
 
 Phase 5 started as one pass over Run & Gun with the Japanese edition on the
-desk. Three more books are reachable, but not the same way: RF, SG and DT have
+desk; the core rulebook joined it for the names still left in English. Three
+more books are reachable, but not the same way: RF, SG and DT have
 no Japanese edition at all. What exists is the *Shadowrun Codex*, a Japanese
 compendium that reprints a large part of their content, so it is a translation
 source rather than a translation of any one book.
@@ -67,6 +68,31 @@ class Book:
 
 
 BOOKS: dict[str, Book] = {
+    # The core rulebook. Almost all of it reads right already — upstream's
+    # translation and the glossary cover it — so its pass is the remainder:
+    # `make_ja_worksheet.py --book SR5 --untranslated-only` lists the names
+    # still shown in English, with the page to open.
+    "SR5": Book(
+        code="SR5",
+        title="Shadowrun, Fifth Edition",
+        ja_source="シャドウラン 5th Edition (Japanese core rulebook)",
+        slug="sr5",
+        table="SR5",
+        # Chummer's page is the English book's, and the Japanese edition is
+        # laid out differently: Power Point is p.326 in English, p.332 in
+        # Japanese (checked against the book, 2026-10-17).
+        page_is_ja=False,
+        buckets=(
+            "qualities",
+            "spirits",
+            "streams",
+            "commlinks",
+            "weapons",
+            "weapon_mounts",
+            "gear",
+            "category",
+        ),
+    ),
     "RG": Book(
         code="RG",
         title="Run & Gun",
