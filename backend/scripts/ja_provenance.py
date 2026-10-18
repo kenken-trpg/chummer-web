@@ -56,17 +56,20 @@ def ja_books(books: Iterable[Mapping[str, str]]) -> frozenset[str]:
 def carriers(public: Mapping[str, object], printed: frozenset[str]) -> dict[str, Carriers]:
     """English name -> the rows of the public catalog that carry it.
 
-    A row's `source` is inherited by what it nests, as the worksheet walk does,
-    and a row the Codex reprints (`also_in`) counts as printed in Japanese.
-    Categories are names too: they are listed under the kind ``category``.
+    A row is a dict with its own `source`. A name nested under one without a
+    source of its own is a reference, not an item — a life module's granted
+    skill, a quality's prerequisite tree, a metatype's built-in powers — and
+    the book it would inherit is the referrer's, not its own: inheriting it
+    put the RF lifestyle option Grid Subscription under SR5. A row the Codex
+    reprints (`also_in`) counts as printed in Japanese. Categories are names
+    too: they are listed under the kind ``category``.
     """
     out: dict[str, Carriers] = {}
 
-    def walk(kind: str, obj: object, source: str | None) -> None:
+    def walk(kind: str, obj: object) -> None:
         if isinstance(obj, dict):
-            here = obj.get("source")
-            source = here if isinstance(here, str) and here else source
-            if source:
+            source = obj.get("source")
+            if isinstance(source, str) and source:
                 also = {str(a.get("source")) for a in obj.get("also_in") or [] if isinstance(a, dict)}
                 in_ja = source in printed or bool(also & printed)
                 name = obj.get("name")
@@ -77,14 +80,14 @@ def carriers(public: Mapping[str, object], printed: frozenset[str]) -> dict[str,
                     out.setdefault(category.strip(), Carriers()).add("category", source, in_ja)
             for key, value in obj.items():
                 if key not in ("name", "source", "category", "also_in"):
-                    walk(kind, value, source)
+                    walk(kind, value)
         elif isinstance(obj, list):
             for value in obj:
-                walk(kind, value, source)
+                walk(kind, value)
 
     for key, value in public.items():
         if key not in _NOT_ROWS:
-            walk(key, value, None)
+            walk(key, value)
     return out
 
 

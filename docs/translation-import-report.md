@@ -9,7 +9,7 @@
 - オーバーレイ合計: **552 件**
 - 日本語版のある本: RG, SR5, SRCX（コデックスが再録した品目も日本語版ありと数える）
 
-## 日本語版の無い品目にだけ当たる自前の訳 (255)
+## 日本語版の無い品目にだけ当たる自前の訳 (246)
 
 サプリの用語は英語のままにする方針（本に無い片仮名を作らない）と食い違う候補。
 chumJA（SR4 の訳）は別に数える。
@@ -17,9 +17,11 @@ chumJA（SR4 の訳）は別に数える。
 | English | 日本語 | 出どころ | 品目 |
 |---|---|---|---|
 | Acceleration | 加速値 | import_ja_from_refs.CURATED | category: R5 |
-| Acting | 演技 | import_ja_from_refs.CURATED | life_modules: CA, RF, SL |
 | Adept Accident | アデプト・アクシデント | ja_curated_entities.ENTITIES | powers: HT |
-| Advanced Ritual Casting | 上級儀式行使 | import_ja_from_refs.CURATED | magic_arts: SG / metamagics: SG |
+| Adept Spell | アデプト呪文 | ja_curated_entities.ENTITIES | powers: HT |
+| Advanced Alchemy | 上級錬金術 | import_ja_from_refs.CURATED | magic_arts: SG / metamagics: SG |
+| Advanced Ritual Casting | 上級儀式行使 | import_ja_from_refs.CURATED | magic_arts: SG |
+| Advanced Spellcasting | 上級呪文行使 | import_ja_from_refs.CURATED | magic_arts: SG |
 | Aegis | イージス | ja_curated_entities.ENTITIES | echoes: KC |
 | Air Elemental | 大気のエレメンタル | import_ja_from_refs.CURATED | spirits: FA |
 | Air Filter | 空気清浄/エア・フィルター | ja_curated_spells.SPELLS | spells: SSP |
@@ -36,14 +38,13 @@ chumJA（SR4 の訳）は別に数える。
 | Asthenologica | アステノロジカ | ja_curated_entities.ENTITIES | martial_arts: SOTG |
 | Astral Doppelganger | アストラル・ドッペルゲンガー | ja_curated_spells.SPELLS | spells: SG |
 | Astral Message | アストラル伝言/アストラル・メッセージ | ja_curated_spells.SPELLS | spells: SG |
-| Athletics | 運動 | import_ja_from_refs.CURATED | life_modules: CF, HT, KC, NF, RF, SAG, SL |
-| Attune Animal | 動物同調 | ja_curated_spells.SPELLS | metamagics: SG / spells: SG |
+| Attune Animal | 動物同調 | ja_curated_spells.SPELLS | spells: SG |
 | Attune Item | 物品同調 | ja_curated_spells.SPELLS | spells: SG |
 | Badger | アナグマ | import_ja_from_refs.CURATED | mentors: SOTG |
 | Barrage | 弾幕/バラージュ | ja_curated_spells.SPELLS | enhancements: SG / spells: FA |
 | Berserker | バーサーカー | import_ja_from_refs.CURATED | mentors: SG / qualities: RF |
 | Berserker's Rage | 狂戦士の怒り | ja_curated_entities.ENTITIES | powers: SG |
-| Blood Magic | 血の魔術 | import_ja_from_refs.CURATED | magic_arts: SG / metamagics: DTR, FA, SG / qualities: FA |
+| Blood Magic | 血の魔術 | import_ja_from_refs.CURATED | magic_arts: SG |
 | Body | 強靱力 | import_ja_from_refs.CURATED | category: R5 |
 | Body Sculpt | 肉体成形 | ja_curated_entities.ENTITIES | powers: BLB |
 | Bolt Hole | 隠れ家 | ja_curated_entities.ENTITIES | lifestyles: RF |
@@ -51,7 +52,7 @@ chumJA（SR4 の訳）は別に数える。
 | Branch | 枝/ブランチ | ja_curated_spells.SPELLS | spells: FA |
 | Broadcast | 放送/ブロードキャスト | ja_curated_spells.SPELLS | spells: SSP |
 | Brother in Arms | 戦友 | import_ja_from_refs.CURATED | mentors: SOTG |
-| Buddhism | 仏教 | import_ja_from_refs.CURATED | qualities: FA / traditions: SG |
+| Buddhism | 仏教 | import_ja_from_refs.CURATED | traditions: SG |
 | Bug Zapper | 殺虫器/バグ・ザッパー | ja_curated_spells.SPELLS | spells: SG |
 | Calling [Spirit Type] | [精霊タイプ] 呼び出し | ja_curated_spells.SPELLS | spells: SG |
 | Capricorn | カプリコーン | ja_curated_entities.ENTITIES | mentors: SAG |
@@ -62,18 +63,15 @@ chumJA（SR4 の訳）は別に数える。
 | Circle Fencing | サークル・フェンシング | ja_curated_entities.ENTITIES | martial_arts: SOTG |
 | Circle of Cleansing | 浄化円 | ja_curated_spells.SPELLS | spells: SG |
 | Claw | 爪撃/クロウ | ja_curated_spells.SPELLS | spells: FA |
-| Close Combat | 近接戦闘 | import_ja_from_refs.CURATED | life_modules: CF, HT, RF, SAG, SL, TCG |
 | Comet | 彗星/コメット | ja_curated_spells.SPELLS | spells: FA |
 | Commercial | 商業施設 | ja_curated_entities.ENTITIES | lifestyles: RF |
 | Companion Sprite | コンパニオン・スプライト | import_ja_from_refs.CURATED | sprites: KC |
 | Conceal Scent | 匂い隠し/コンシール・セント | ja_curated_spells.SPELLS | spells: HT |
-| Conjuring | 召喚 | import_ja_from_refs.CURATED | life_modules: RF |
 | Consistency | 一貫性/コンシステンシー | ja_curated_spells.SPELLS | spells: CA |
 | Contaminate | コンタミネート | ja_curated_entities.ENTITIES | echoes: DTD |
 | Convince | 説得/コンヴィンス | ja_curated_spells.SPELLS | spells: SS |
 | Coriolis | コリオリ | ja_curated_entities.ENTITIES | complex_forms: CF |
-| Cracking | クラッキング | import_ja_from_refs.CURATED | life_modules: CA, RF |
-| Create Ally Spirit | 同盟精霊創造 | ja_curated_spells.SPELLS | qualities: FA / spells: SG |
+| Create Ally Spirit | 同盟精霊創造 | ja_curated_spells.SPELLS | spells: SG |
 | Death | 死 | import_ja_from_refs.CURATED | mentors: FA |
 | Decontamination | 除染/デコンタミネーション | ja_curated_spells.SPELLS | spells: SSP |
 | Decoy | 囮/デコイ | ja_curated_spells.SPELLS | spells: SG |
@@ -89,17 +87,15 @@ chumJA（SR4 の訳）は別に数える。
 | Dispersion Circle | 拡散円 | ja_curated_spells.SPELLS | spells: SG |
 | Disrupt [Focus] | [収束具] 破壊/ディスラプト [収束具] | ja_curated_spells.SPELLS | spells: SG |
 | Dissonance Spike | ディソナンス・スパイク | ja_curated_entities.ENTITIES | complex_forms: KC |
-| Divination | 占術 | import_ja_from_refs.CURATED | magic_arts: SG / metamagics: SG |
+| Divination | 占術 | import_ja_from_refs.CURATED | magic_arts: SG |
 | Doberman | ドーベルマン | import_ja_from_refs.CURATED | mentors: SOTG |
 | Door Wards | 扉の結界 | ja_curated_spells.SPELLS | spells: SG |
 | Dove | 鳩 | import_ja_from_refs.CURATED | mentors: FA |
 | Draining Spike | ドレイン・スパイク | ja_curated_entities.ENTITIES | echoes: KC |
 | Druid | ドルイド | import_ja_from_refs.CURATED | traditions: SG |
 | Earth Elemental | 大地のエレメンタル | import_ja_from_refs.CURATED | spirits: FA |
-| Electronics | エレクトロニクス | import_ja_from_refs.CURATED | life_modules: DT, RF, TCG |
-| Elemental Body | 元素の身体 | ja_curated_entities.ENTITIES | powers: SG / qualities: BTB |
+| Elemental Body | 元素の身体 | ja_curated_entities.ENTITIES | powers: SG |
 | Elemental Weapon | 元素の武器 | ja_curated_entities.ENTITIES | powers: SG |
-| Enchanting | 付術 | import_ja_from_refs.CURATED | life_modules: RF |
 | Esdo | エスド | ja_curated_entities.ENTITIES | martial_arts: SAG |
 | Euphoria | 多幸感/ユーフォリア | ja_curated_spells.SPELLS | spells: SG |
 | Eurasian Jay | カケス | import_ja_from_refs.CURATED | mentors: SAG |
@@ -147,13 +143,11 @@ chumJA（SR4 の訳）は別に数える。
 | Inflict Disease | 発病/インフリクト・ディジーズ | ja_curated_spells.SPELLS | spells: SSP |
 | Insecticide [Insect Spirit] | [昆虫精霊] 殺虫/インセクティサイド [インセクトスピリット] | ja_curated_spells.SPELLS | spells: SG |
 | Insulate | 断熱/インシュレイト | ja_curated_spells.SPELLS | spells: SSP |
-| Interest | 趣味 | import_ja_from_refs.CURATED | category: CA, CF, DT, KC, NF, RF, SFCR, SFME / life_modules: SAG |
-| Islam | イスラム教 | import_ja_from_refs.CURATED | qualities: FA / traditions: SG |
+| Islam | イスラム教 | import_ja_from_refs.CURATED | traditions: SG |
 | Keratin Control | ケラチン制御 | ja_curated_entities.ENTITIES | powers: SGE, SSP |
 | Kiai | 気合 | ja_curated_entities.ENTITIES | powers: HT |
 | Kinesics Mastery | キネシクス習熟 | ja_curated_entities.ENTITIES | powers: SG |
 | Kreussler Fencing | クロイスラー・フェンシング | ja_curated_entities.ENTITIES | martial_arts: SOTG |
-| Language | 言語 | import_ja_from_refs.CURATED | category: BTB, CA, HT, NF, RF, SAG, SFCR, SFME, SL |
 | Lash | 鞭打ち/ラッシュ | ja_curated_spells.SPELLS | spells: FA |
 | Lie Detector | 嘘発見 | ja_curated_entities.ENTITIES | powers: CA |
 | Light Touch | 軽い手 | ja_curated_entities.ENTITIES | powers: SS |
@@ -177,14 +171,13 @@ chumJA（SR4 の訳）は別に数える。
 | Mystic Guardian | 神秘の守護者 | ja_curated_entities.ENTITIES | mentors: SOTG |
 | Napalm Wall | ナパームの壁/ナパーム・ウォール | ja_curated_spells.SPELLS | spells: SSP |
 | Nauseate | 吐き気/ノージエイト | ja_curated_spells.SPELLS | spells: SSP |
-| Necromancy | 死霊術 | import_ja_from_refs.CURATED | magic_arts: SG / metamagics: DTR |
+| Necromancy | 死霊術 | import_ja_from_refs.CURATED | magic_arts: SG |
 | Net Bind | 網の拘束/ネット・バインド | ja_curated_spells.SPELLS | spells: SG |
 | Neural Synergy | ニューラル・シナジー | ja_curated_entities.ENTITIES | echoes: KC |
 | Obfuscating Ward | 隠蔽結界 | ja_curated_spells.SPELLS | spells: SG |
 | Opium Den | 阿片窟/オピウム・デン | ja_curated_spells.SPELLS | spells: SG |
 | Oracle | オラクル | import_ja_from_refs.CURATED | mentors: SG |
 | Osmosis | 浸透 | ja_curated_entities.ENTITIES | powers: CA |
-| Outdoors | 野外 | import_ja_from_refs.CURATED | life_modules: BTB, HT, RF, SAG, SFCR, SL |
 | Overdrive | オーバードライブ | ja_curated_entities.ENTITIES | complex_forms: KC / drugs: CF / gear: CF |
 | Passenger | 同乗/パッセンジャー | ja_curated_spells.SPELLS | spells: SSP |
 | Peacemaker | ピースメーカー | import_ja_from_refs.CURATED | mentors: SG |
@@ -226,7 +219,6 @@ chumJA（SR4 の訳）は別に数える。
 | Slash | 斬撃/スラッシュ | ja_curated_spells.SPELLS | spells: FA |
 | Slow Vehicle | ヴィークル減速/スロー・ヴィークル | ja_curated_spells.SPELLS | spells: SG |
 | Smith | 鍛冶師 | import_ja_from_refs.CURATED | mentors: SHB2 |
-| Sorcery | 魔術 | import_ja_from_refs.CURATED | life_modules: NF, RF |
 | Sourcerer Daemon | ソーサラー・デーモン | ja_curated_entities.ENTITIES | echoes: KC |
 | Spirit Claw | 精霊の爪 | ja_curated_entities.ENTITIES | powers: SG |
 | Spirit Ram | 精霊の衝角 | ja_curated_entities.ENTITIES | powers: SG |
@@ -240,7 +232,6 @@ chumJA（SR4 の訳）は別に数える。
 | Supernatural Toughness | 超常の頑健さ | ja_curated_entities.ENTITIES | powers: SSP |
 | Switch Vehicle Signature | ヴィークル・シグネチャー切替/スイッチ・ヴィークル・シグネチャー | ja_curated_spells.SPELLS | spells: SG |
 | Symbolic Link | 象徴リンク/シンボリック・リンク | ja_curated_spells.SPELLS | spells: SG |
-| Tasking | タスキング | import_ja_from_refs.CURATED | life_modules: DT |
 | The Adversary | 敵対者 | ja_curated_entities.ENTITIES | mentors: HT |
 | The Van der Waals Effect | ファンデルワールス効果 | ja_curated_entities.ENTITIES | echoes: KC |
 | Thorn | 棘/ソーン | ja_curated_spells.SPELLS | spells: FA |
@@ -258,7 +249,7 @@ chumJA（SR4 の訳）は別に数える。
 | Vodou | ヴォドゥン | import_ja_from_refs.CURATED | traditions: SG |
 | War | 戦争 | import_ja_from_refs.CURATED | mentors: FA |
 | Water Elemental | 水のエレメンタル | import_ja_from_refs.CURATED | spirits: FA |
-| Way of Unified Mana (Hapsum-Do) | 統一マナの道（ハプスムドー） | ja_curated_entities.ENTITIES | martial_arts: FA / metamagics: FA |
+| Way of Unified Mana (Hapsum-Do) | 統一マナの道（ハプスムドー） | ja_curated_entities.ENTITIES | martial_arts: FA |
 | Weaken Data Bomb | データボム弱体化 | ja_curated_entities.ENTITIES | complex_forms: KC |
 | Weaken Encryption | 暗号化弱体化 | ja_curated_entities.ENTITIES | complex_forms: KC |
 | Weimaraner | ワイマラナー | import_ja_from_refs.CURATED | mentors: SOTG |
@@ -267,7 +258,7 @@ chumJA（SR4 の訳）は別に数える。
 | Will of the Resonance | 共振の意志 | ja_curated_entities.ENTITIES | echoes: KC |
 | Zombie | ゾンビ | ja_curated_spells.SPELLS | spells: HT |
 | Zoroastrianism | ゾロアスター教 | import_ja_from_refs.CURATED | traditions: SG |
-| [Critter] Form | [クリッター] 化/[クリッター] フォーム | ja_curated_spells.SPELLS | qualities: FA / spells: SG |
+| [Critter] Form | [クリッター] 化/[クリッター] フォーム | ja_curated_spells.SPELLS | spells: SG |
 | [Element] Aura | [元素] のオーラ/[エレメント] オーラ | ja_curated_spells.SPELLS | spells: SG |
 | [Element] Grenade | [元素] 手榴弾/[エレメント] グレネード | ja_curated_spells.SPELLS | spells: SSP |
 | [Element] Wall | [元素] の壁/[エレメント] ウォール | ja_curated_spells.SPELLS | spells: SG |
@@ -332,7 +323,7 @@ chumJA（SR4 の訳）は別に数える。
 |---|---|---|
 | (Synth)Leather | （合成）レザー | armor_mods: SR5 |
 | Adept Accident | アデプト・アクシデント | powers: HT |
-| Adept Spell | アデプト呪文 | powers: HT / qualities: SR5 |
+| Adept Spell | アデプト呪文 | powers: HT |
 | Aegis | イージス | echoes: KC |
 | Alpine Wrestling | アルパイン・レスリング | martial_arts: SAG |
 | Arbeitskreis INI | アルバイツクライスINI | martial_arts: SOTG |
@@ -360,7 +351,7 @@ chumJA（SR4 の訳）は別に数える。
 | Drum Magazine, 24-round | ドラムマガジン, 24発 | weapon_accessories: SR5 |
 | Drum Magazine, 32-round | ドラムマガジン, 32発 | weapon_accessories: SR5 |
 | Electrochromic Clothing | エレクトロクロミック・クロージング | armor_mods: SR5 |
-| Elemental Body | 元素の身体 | powers: SG / qualities: BTB |
+| Elemental Body | 元素の身体 | powers: SG |
 | Elemental Weapon | 元素の武器 | powers: SG |
 | Esdo | エスド | martial_arts: SAG |
 | Essence Antihole | エッセンス・アンチホール | cyberware: SR5 |
@@ -460,7 +451,7 @@ chumJA（SR4 の訳）は別に数える。
 | Urban Brawl Parkour | アーバンブロウル・パルクール | martial_arts: SAG |
 | Urban Explorer Jumpsuit: Helmet | アーバンエクスプローラー・ジャンプスーツ：ヘルメット | armor_mods: SR5 |
 | Ventriloquism | 腹話術 | powers: CA |
-| Way of Unified Mana (Hapsum-Do) | 統一マナの道（ハプスムドー） | martial_arts: FA / metamagics: FA |
+| Way of Unified Mana (Hapsum-Do) | 統一マナの道（ハプスムドー） | martial_arts: FA |
 | Weaken Data Bomb | データボム弱体化 | complex_forms: KC |
 | Weaken Encryption | 暗号化弱体化 | complex_forms: KC |
 | Will of the Resonance | 共振の意志 | echoes: KC |
@@ -477,7 +468,7 @@ chumJA（SR4 の訳）は別に数える。
 | Ambidexterity | 両利き/アンビデクステリティ | spells: SG |
 | Astral Doppelganger | アストラル・ドッペルゲンガー | spells: SG |
 | Astral Message | アストラル伝言/アストラル・メッセージ | spells: SG |
-| Attune Animal | 動物同調 | metamagics: SG / spells: SG |
+| Attune Animal | 動物同調 | spells: SG |
 | Attune Item | 物品同調 | spells: SG |
 | Barrage | 弾幕/バラージュ | enhancements: SG / spells: FA |
 | Branch | 枝/ブランチ | spells: FA |
@@ -493,7 +484,7 @@ chumJA（SR4 の訳）は別に数える。
 | Conceal Scent | 匂い隠し/コンシール・セント | spells: HT |
 | Consistency | 一貫性/コンシステンシー | spells: CA |
 | Convince | 説得/コンヴィンス | spells: SS |
-| Create Ally Spirit | 同盟精霊創造 | qualities: FA / spells: SG |
+| Create Ally Spirit | 同盟精霊創造 | spells: SG |
 | Decontamination | 除染/デコンタミネーション | spells: SSP |
 | Decoy | 囮/デコイ | spells: SG |
 | Decrease Gear Limits | 装備リミット減退/ディクリース・ギア・リミット | spells: SG |
@@ -565,7 +556,7 @@ chumJA（SR4 の訳）は別に数える。
 | Turn To Goo | 粘液化/ターン・トゥ・グー | spells: SG |
 | Vines | 蔦/ヴァインズ | spells: FA |
 | Zombie | ゾンビ | spells: HT |
-| [Critter] Form | [クリッター] 化/[クリッター] フォーム | qualities: FA / spells: SG |
+| [Critter] Form | [クリッター] 化/[クリッター] フォーム | spells: SG |
 | [Element] Aura | [元素] のオーラ/[エレメント] オーラ | spells: SG |
 | [Element] Grenade | [元素] 手榴弾/[エレメント] グレネード | spells: SSP |
 | [Element] Wall | [元素] の壁/[エレメント] ウォール | spells: SG |
@@ -574,41 +565,41 @@ chumJA（SR4 の訳）は別に数える。
 
 | English | 日本語 | 品目 |
 |---|---|---|
-| Academic | 学術 | category: BTB, CA, CF, HT, KC, RF, SAG, SFCR, SFME, SL, TCG / metatypes: SR5 |
+| Academic | 学術 | — |
 | Acceleration | 加速値 | category: R5 |
-| Acting | 演技 | life_modules: CA, RF, SL |
-| Advanced Alchemy | 上級錬金術 | magic_arts: SG / metamagics: SG, SR5 / qualities: FA |
-| Advanced Ritual Casting | 上級儀式行使 | magic_arts: SG / metamagics: SG |
-| Advanced Spellcasting | 上級呪文行使 | magic_arts: SG / metamagics: SG, SR5 |
+| Acting | 演技 | — |
+| Advanced Alchemy | 上級錬金術 | magic_arts: SG / metamagics: SG |
+| Advanced Ritual Casting | 上級儀式行使 | magic_arts: SG |
+| Advanced Spellcasting | 上級呪文行使 | magic_arts: SG |
 | Air Elemental | 大気のエレメンタル | spirits: FA |
 | Architect | 建築家 | life_modules: RF / mentors: SOTG / paragons: KC |
 | Artist | 芸術家 | mentors: SHB2 |
-| Athletics | 運動 | life_modules: CF, HT, KC, NF, RF, SAG, SL |
+| Athletics | 運動 | — |
 | Attributes | 能力値 | — |
 | BTLs | BTLチップ | category: CF, SR5 |
 | Badger | アナグマ | mentors: SOTG |
 | Berserker | バーサーカー | mentors: SG / qualities: RF |
-| Biotech | 医療 | category: 2050, BB, CF, NF, SR5 / life_modules: CF, RF |
-| Blood Magic | 血の魔術 | magic_arts: SG / metamagics: DTR, FA, SG / qualities: FA |
+| Biotech | 医療 | category: 2050, BB, CF, NF, SR5 |
+| Blood Magic | 血の魔術 | magic_arts: SG |
 | Body | 強靱力 | category: R5 |
 | Brother in Arms | 戦友 | mentors: SOTG |
-| Buddhism | 仏教 | qualities: FA / traditions: SG |
-| Close Combat | 近接戦闘 | life_modules: CF, HT, RF, SAG, SL, TCG |
+| Buddhism | 仏教 | traditions: SG |
+| Close Combat | 近接戦闘 | — |
 | Combat | 戦闘 | category: FA, HT, SG, SR5, SSP |
 | Companion Sprite | コンパニオン・スプライト | sprites: KC |
-| Conjuring | 召喚 | life_modules: RF |
-| Cracking | クラッキング | life_modules: CA, RF |
+| Conjuring | 召喚 | — |
+| Cracking | クラッキング | — |
 | Death | 死 | mentors: FA |
 | Detection | 探知 | category: BB, CA, SG, SR5, SSP |
-| Divination | 占術 | magic_arts: SG / metamagics: SG |
+| Divination | 占術 | magic_arts: SG |
 | Doberman | ドーベルマン | mentors: SOTG |
 | Dove | 鳩 | mentors: FA |
 | Druid | ドルイド | traditions: SG |
-| Dwarf | ドワーフ | life_modules: RF / metatypes: SR5 / qualities: RF, SR5 |
+| Dwarf | ドワーフ | metatypes: SR5 |
 | Earth Elemental | 大地のエレメンタル | spirits: FA |
-| Electronics | エレクトロニクス | life_modules: DT, RF, TCG |
-| Elf | エルフ | life_modules: RF / metatypes: SR5 / qualities: RF, SR5 |
-| Enchanting | 付術 | life_modules: RF |
+| Electronics | エレクトロニクス | — |
+| Elf | エルフ | metatypes: SR5 |
+| Enchanting | 付術 | — |
 | Eurasian Jay | カケス | mentors: SAG |
 | Exorcism | 祓魔術 | magic_arts: SG / metamagics: SG |
 | Fire Elemental | 火のエレメンタル | spirits: FA |
@@ -622,11 +613,11 @@ chumJA（SR4 の訳）は別に数える。
 | Guanyin | 観音 | mentors: BTB |
 | Health | 身体 | category: FA, SG, SR5, SSP |
 | Hinduism | ヒンドゥー教 | traditions: SG |
-| Human | ヒューマン | life_modules: RF / metatypes: SR5 / qualities: HT, RF, SR5 |
+| Human | ヒューマン | metatypes: SR5 |
 | Illusion | 幻影 | category: CA, SG, SR5, SS, SSP |
-| Interest | 趣味 | category: CA, CF, DT, KC, NF, RF, SFCR, SFME / life_modules: SAG |
-| Islam | イスラム教 | qualities: FA / traditions: SG |
-| Language | 言語 | category: BTB, CA, HT, NF, RF, SAG, SFCR, SFME, SL |
+| Interest | 趣味 | — |
+| Islam | イスラム教 | traditions: SG |
+| Language | 言語 | — |
 | Little Red Riding Hood | 赤ずきん | mentors: SOTG |
 | Living Focus | 生体収束具 | powers: SGE, SSP |
 | Manipulation | 操作 | category: BB, BTB, CA, FA, HT, SG, SR5, SS, SSP |
@@ -635,25 +626,25 @@ chumJA（SR4 の訳）は別に数える。
 | Monkey | 猿 | mentors: HT |
 | Moon | 月 | mentors: FA |
 | Mundane | マンディン | category: SR5 |
-| Necromancy | 死霊術 | magic_arts: SG / metamagics: DTR |
+| Necromancy | 死霊術 | magic_arts: SG |
 | Oracle | オラクル | mentors: SG |
-| Ork | オーク | life_modules: RF, TCG / metatypes: SR5 / qualities: RF, SR5, TCT |
-| Outdoors | 野外 | life_modules: BTB, HT, RF, SAG, SFCR, SL |
+| Ork | オーク | metatypes: SR5 |
+| Outdoors | 野外 | — |
 | Peacemaker | ピースメーカー | mentors: SG |
 | Power Point | パワー・ポイント | metamagics: SR5 |
-| Professional | 職業 | category: BTB, CA, CF, DT, HT, KC, NF, R5, RF, SAG, SFCR, SFME, SFMO, SL, TCG / metatypes: SR5 |
+| Professional | 職業 | — |
 | Run and Gun | ラン＆ガン | — |
 | Services | 助力 | category: RF |
 | Shadowrun 5th Edition | シャドウラン 第5版 | — |
 | Smith | 鍛冶師 | mentors: SHB2 |
-| Sorcery | 魔術 | life_modules: NF, RF |
+| Sorcery | 魔術 | — |
 | Squirrel | リス | mentors: SAG |
 | Stag | 牡鹿 | mentors: FA |
-| Street | 街 | category: BTB, CA, CF, DT, HT, KC, NF, R5, RF, SAG, SFCR, SFME, SL, TCG / lifestyles: SR5 |
-| Tasking | タスキング | life_modules: DT |
+| Street | 街 | lifestyles: SR5 |
+| Tasking | タスキング | — |
 | Tide | 潮 | mentors: SAG |
 | Treasure Hunter | トレジャーハンター | mentors: SOTG |
-| Troll | トロール | life_modules: RF, TCG / metatypes: SR5 / qualities: RF, TCT |
+| Troll | トロール | metatypes: SR5 |
 | Vodou | ヴォドゥン | traditions: SG |
 | War | 戦争 | mentors: FA |
 | Water Elemental | 水のエレメンタル | spirits: FA |
@@ -675,7 +666,7 @@ chumJA（SR4 の訳）は別に数える。
 | Bodyware | ボディウェア | category: 2050, CF, HT, SR5, TCT |
 | Cars | 自動車 | category: 2050, KK, R5, SAG, SHB, SHB3, SOTG, SR5, SS, TCT |
 | Chemicals | 化学薬品 | category: 2050, CA, HT, SR5 |
-| Combat Active | 戦闘能動 | category: SR5 / metatypes: RF |
+| Combat Active | 戦闘能動 | category: SR5 |
 | Commlink Accessories | コムリンク・アクセサリ | category: DT, KC, SR5 |
 | Cosmetic | 美容整形 | category: 2050, HT, R5, SR5, TCT |
 | Crossbows | クロスボウ | category: RG, SL, SR5 |
@@ -686,7 +677,7 @@ chumJA（SR4 の訳）は別に数える。
 | Cyberlimb Enhancement | サイバーリム強化 | category: CF, HT, R5, SR5 |
 | Cyberterminals | サイバーターミナル | category: HKS |
 | Cyberweapon | サイバー武器 | — |
-| Drugs | ドラッグ | category: 2050, BB, CF, DTR, LCD, SAG, SR5, SS, TVG / life_modules: CF |
+| Drugs | ドラッグ | category: 2050, BB, CF, DTR, LCD, SAG, SR5, SS, TVG |
 | Earware | イアウェア | category: 2050, CF, SR5 |
 | Exotic Melee Weapons | 特殊近接武器 | category: CA, HAMG, NF, RG, SL, SR5 |
 | Exotic Ranged Weapons | 特殊射撃武器 | category: CA, HT, LCD, RG, SL, SLG2, SOTG, SR5 |
@@ -712,10 +703,10 @@ chumJA（SR4 の訳）は別に数える。
 | Rotorcraft | 回転翼機 | category: 2050, NF, R5, SAG, SFME, SHB3, SR5 |
 | Security Devices | セキュリティ機器 | category: 2050, SR5 |
 | Sensors | センサー | category: CA, NF, SR5 |
-| Shapeshifter | シェイプシフター | category: RF, SAG / metatypes: RF / qualities: HT, RF, SR5 |
+| Shapeshifter | シェイプシフター | category: RF, SAG |
 | Skillsofts | スキルソフト | category: SR5 |
-| Social Active | 社交能動 | category: SR5 / metatypes: RF, SR5 |
-| Technical Active | 技術能動 | category: SR5 / metatypes: SR5 |
+| Social Active | 社交能動 | category: SR5 |
+| Technical Active | 技術能動 | category: SR5 |
 | Tools | 工具 | category: 2050, NF, RF, SR5 |
 | Toxins | 毒物 | category: 2050, BB, BTB, HT, PZG, SR5, SRM0803, SRM0804, SS |
 | Trucks | トラック | category: 2050, KK, NF, R5, SAG, SHB, SHB3, SLG7, SOTG, SR5, SS |
@@ -742,7 +733,7 @@ chumJA（SR4 の訳）は別に数える。
 | Banishing Resistance | 放逐抵抗 | — |
 | Bat | コウモリ | mentors: HT |
 | Boar | イノシシ | mentors: HS |
-| Cannibalize | 貪肉術 | metamagics: FA, SG |
+| Cannibalize | 貪肉術 | metamagics: SG |
 | Caretaker Spirit | 昆虫精霊(世話役) | spirits: SG |
 | Chameleon Skin | カメレオン・スキン | bioware: CF |
 | Chemical Seal | 化学遮断 | armor_mods: SR5 |
@@ -774,7 +765,7 @@ chumJA（SR4 の訳）は別に数える。
 | Feedback Clothing | フィードバック・クロージング | armor_mods: SR5 |
 | Foot Anchor | 脚底アンカー | cyberware: CF |
 | Fox | キツネ | mentors: SAG |
-| Geomancy | 地霊術 | magic_arts: SG / metamagics: PGG |
+| Geomancy | 地霊術 | magic_arts: SG |
 | Gills | 鰓 | bioware: CF |
 | Giraffe | キリン | mentors: HS |
 | Gliding | 滑走 | — |
@@ -797,18 +788,18 @@ chumJA（SR4 の訳）は別に数える。
 | Lion | ライオン | mentors: BOTL |
 | Magemask | メイジマスク | gear: SG |
 | Magic Sense | 魔力感知 | metatypes: RF / powers: SG / qualities: RF |
-| Magical Guard | 魔法の守護 | qualities: RF |
-| Magical Theory | 魔法理論 | life_modules: NF, RF / qualities: FA |
+| Magical Guard | 魔法の守護 | — |
+| Magical Theory | 魔法理論 | — |
 | Master Shedim | マスター・シェディム | spirits: SG |
 | Math SPU | 算術SPU | cyberware: CF |
 | Metahuman Form | 人間形態 | — |
 | Micro Flare Launcher | 照明弾ピストル | gear: SR5 |
 | Mind Link | 精神連結 | — |
 | Mob Mood | 集団感情制御 | spells: SSP |
-| Music | 音楽 | life_modules: NF, SFCR |
+| Music | 音楽 | — |
 | Mutable Form | きまぐれな姿 | — |
 | Mutagen | 変異原 | — |
-| Naga | ナーガ | qualities: RF, SR5 |
+| Naga | ナーガ | — |
 | Nodachi | ノダチ | weapons: SL |
 | Norse | 北欧 | traditions: SSP |
 | Nunchaku | ヌンチャク | weapons: SL |
@@ -819,9 +810,9 @@ chumJA（SR4 の訳）は別に数える。
 | Pestilence | 疫病 | — |
 | Piercing Senses | 透徹感覚 | powers: SSP |
 | Pig | ブタ | mentors: SAG |
-| Pixie | ピクシー | qualities: SR5 |
+| Pixie | ピクシー | — |
 | Poisoner | 汚染者 | qualities: HT |
-| Possession | 憑依 | metamagics: HT |
+| Possession | 憑依 | — |
 | Power Bleed | パワー奪取 | metamagics: SG |
 | Psionic | サイオニック | traditions: SSP |
 | Quake | 地震 | — |
@@ -830,8 +821,8 @@ chumJA（SR4 の訳）は別に数える。
 | Rappelling Gloves | ラペリング・グローブ | gear: SR5 |
 | Realistic Form | リアルな外見 | — |
 | Reinforcement | 強化 | — |
-| Sacrifice | 供犠 | metamagics: DTR, FA, SG |
-| Sasquatch | サスカッチ | qualities: RF, SR5 |
+| Sacrifice | 供犠 | metamagics: SG |
+| Sasquatch | サスカッチ | — |
 | Satellite Link | 衛星リンク | gear: SR5 / vehicle_mods: R5 |
 | Scout Spirit | 昆虫精霊(斥候役) | spirits: SG |
 | Seal | アザラシ | mentors: SAG |
@@ -865,39 +856,35 @@ chumJA（SR4 の訳）は別に数える。
 
 | 本 | 書名 | 日本語版 | 上流 | data.json | コデックス | 英語のまま |
 |---|---|---|---|---|---|---|
-| SR5 | Shadowrun 5th Edition | あり | 969 | 102 | 0 | 98 |
-| RF | Run Faster |  | 138 | 44 | 6 | 775 |
-| CF | Chrome Flesh |  | 26 | 35 | 15 | 514 |
+| SR5 | Shadowrun 5th Edition | あり | 930 | 93 | 0 | 64 |
+| RF | Run Faster |  | 17 | 18 | 6 | 720 |
+| CF | Chrome Flesh |  | 5 | 29 | 15 | 495 |
 | RG | Run and Gun | あり | 427 | 34 | 0 | 14 |
-| R5 | Rigger 5.0 |  | 22 | 19 | 0 | 369 |
-| SG | Street Grimoire |  | 161 | 112 | 0 | 108 |
+| R5 | Rigger 5.0 |  | 7 | 17 | 0 | 362 |
 | 2050 | Shadowrun 2050 (German-Only) |  | 14 | 23 | 0 | 341 |
-| FA | Forbidden Arcana |  | 61 | 47 | 0 | 245 |
-| HT | Hard Targets |  | 51 | 44 | 11 | 170 |
-| KC | Kill Code |  | 32 | 41 | 3 | 185 |
-| DT | Data Trails |  | 24 | 26 | 2 | 187 |
-| SL | Street Lethal |  | 51 | 20 | 1 | 163 |
-| SAG | State of the Art ADL (German-Only) |  | 37 | 34 | 0 | 145 |
-| CA | Cutting Aces |  | 30 | 24 | 1 | 112 |
-| NF | No Future |  | 24 | 19 | 0 | 69 |
-| BTB | Better Than Bad |  | 22 | 13 | 2 | 48 |
+| SG | Street Grimoire |  | 136 | 112 | 0 | 102 |
+| FA | Forbidden Arcana |  | 4 | 38 | 0 | 233 |
+| KC | Kill Code |  | 1 | 36 | 3 | 171 |
+| HT | Hard Targets |  | 10 | 34 | 11 | 147 |
+| DT | Data Trails |  | 2 | 21 | 2 | 175 |
+| SL | Street Lethal |  | 16 | 12 | 0 | 137 |
+| SAG | State of the Art ADL (German-Only) |  | 8 | 26 | 0 | 130 |
+| CA | Cutting Aces |  | 7 | 17 | 0 | 106 |
 | SS | Stolen Souls |  | 13 | 12 | 0 | 57 |
 | SSP | Shadow Spells |  | 1 | 62 | 0 | 11 |
 | KK | Krime Katalog |  | 10 | 4 | 0 | 57 |
 | SOTG | Datapuls SOTA 2080 (German-Only) |  | 6 | 19 | 0 | 46 |
-| DTR | Dark Terrors |  | 4 | 7 | 0 | 59 |
-| HS | Howling Shadows |  | 2 | 9 | 0 | 47 |
-| TCG |  |  | 32 | 7 | 0 | 19 |
+| NF | No Future |  | 2 | 11 | 0 | 53 |
 | PBG | Parabotany (German-Only) |  | 1 | 1 | 0 | 45 |
-| SFCR | Shadows In Focus: Casablanca-Rabat |  | 16 | 8 | 0 | 23 |
+| BTB | Better Than Bad |  | 0 | 7 | 2 | 37 |
 | GH3 | Gun Heaven 3 |  | 11 | 0 | 0 | 34 |
 | BB | Bullets & Bandages |  | 0 | 13 | 0 | 31 |
-| TCT | The Complete Trog |  | 3 | 8 | 0 | 30 |
+| DTR | Dark Terrors |  | 0 | 4 | 0 | 36 |
+| TCT | The Complete Trog |  | 3 | 6 | 0 | 30 |
+| HS | Howling Shadows |  | 0 | 9 | 0 | 22 |
 | LCD | Lockdown |  | 0 | 4 | 0 | 27 |
-| SFME | Shadows In Focus: Metropole |  | 7 | 6 | 0 | 18 |
-| SFMO | Shadows In Focus: Morocco |  | 18 | 1 | 0 | 11 |
 | SHB | Schattenhandbuch (German-Only) |  | 3 | 2 | 0 | 23 |
-| PGG | Parageology (German-Only) |  | 0 | 2 | 0 | 23 |
+| PGG | Parageology (German-Only) |  | 0 | 1 | 0 | 23 |
 | HAMG | Datapuls Hamburg (German-Only) |  | 2 | 3 | 0 | 18 |
 | HKS | Hong Kong Sourcebook |  | 0 | 2 | 0 | 17 |
 | QSR | Shadowrun Quick-Start Rules |  | 0 | 0 | 0 | 17 |
@@ -905,10 +892,14 @@ chumJA（SR4 の訳）は別に数える。
 | TSG | The Seattle Gambit |  | 1 | 2 | 0 | 9 |
 | SHB2 | Schattenhandbuch 2 (German-Only) |  | 3 | 3 | 0 | 5 |
 | SHB3 | Schattenhandbuch 3 (German-Only) |  | 0 | 3 | 0 | 8 |
+| SFCR | Shadows In Focus: Casablanca-Rabat |  | 0 | 1 | 0 | 9 |
 | AP | Assassin's Primer |  | 1 | 2 | 0 | 6 |
 | PZG | Parazoology (German-Only) |  | 0 | 2 | 0 | 7 |
 | SASS | Sail Away, Sweet Sister |  | 4 | 2 | 0 | 3 |
+| SFME | Shadows In Focus: Metropole |  | 0 | 1 | 0 | 7 |
+| TCG |  |  | 0 | 0 | 0 | 7 |
 | BOTL | Book of the Lost |  | 0 | 2 | 0 | 3 |
+| SFMO | Shadows In Focus: Morocco |  | 0 | 0 | 0 | 5 |
 | SLG3 | Schattenload 3 (German-Only) |  | 0 | 0 | 0 | 5 |
 | SOXG | Datapuls SOX 2080 (German-Only) |  | 0 | 0 | 0 | 4 |
 | TVG | The Vladivostok Gauntlet |  | 0 | 1 | 0 | 3 |

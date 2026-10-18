@@ -36,8 +36,9 @@ def test_every_kind_and_book_carrying_a_name_is_listed() -> None:
     assert "Data Trails" not in found  # book titles are not rows
 
 
-def test_a_nested_row_inherits_its_parents_book() -> None:
-    assert carriers(PUBLIC, PRINTED)["Nested Part"].books() == {"KC"}
+def test_a_nested_reference_is_not_an_item_of_its_referrers_book() -> None:
+    # a prerequisite or a granted skill names another item; it is not one of KC's
+    assert "Nested Part" not in carriers(PUBLIC, PRINTED)
 
 
 def test_printed_in_japanese_by_its_own_book_or_a_codex_reprint() -> None:
@@ -61,4 +62,4 @@ def test_per_book_counts_a_name_once_in_each_of_its_books() -> None:
     found = carriers(PUBLIC, PRINTED)
     counts = per_book(found, {"Redundancy": "冗長化"}, {}, {"Data Anomaly": "特異なデータ"})
     assert counts["DT"] == {"upstream": 0, "overlay": 1, "codex": 1, "english": 1}  # + Positive
-    assert counts["KC"]["english"] == 2
+    assert counts["KC"]["english"] == 1
