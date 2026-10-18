@@ -52,7 +52,7 @@ export const JA_SIDEBAR = {
   "side.def.physicalIllusion": "物理幻影",
   "side.memory": "記憶",
   "side.composure": "冷静",
-  "side.judge": "意図看破",
+  "side.judge": "意図を測る",
   "side.dodge": "回避",
   "side.surprise": "奇襲",
   "side.essenceOther": "その他",
