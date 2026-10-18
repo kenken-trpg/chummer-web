@@ -1,1 +1,0 @@
-- **英語表示のヘルプで、ダメージトラックの呼び方を Chummer にそろえました。** 「Physical monitor」「Stun monitor」「Core monitor」を、用語集の英語どおり「Physical track」「Stun track」「Core damage track」にしました。Home Node の「Matrix monitor」は「Matrix condition monitor」です。

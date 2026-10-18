@@ -1,5 +1,0 @@
-- **A.I.（Data Trails）の作成時の計算に対応しました。** Chummer で作った A.I.（E-Ghost・Xenosapient・Protosapient を含む）の `.chum5` を読み込むと、Chummer と同じ値になります。
-  - 深度（DEP）を特殊能力値として扱います。開始値は Talent の深度（Karma 方式では 1）で、特殊能力値点とカルマで上げられます。
-  - Priority・Sum to Ten では、能力値点が優先度の値の半分（切り捨て）になります。
-  - EDG の上限は DEP になります（Lucky などの上限ボーナスはその上に乗ります）。
-  - A.I. は A.I. の Talent しか取れず、資質は種族の一覧にあるものだけ取れます。
