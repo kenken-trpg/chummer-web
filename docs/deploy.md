@@ -353,10 +353,11 @@ impossible. `--min-instances 1` is the version with a guarantee and a bill.
 
 **HSTS.** The Worker adds `Strict-Transport-Security` to every HTTPS answer
 (`HSTS` in `src/index.ts`). It is the only sender: the image also serves
-self-hosted copies over plain HTTP, which the header must not follow. It ships
-at `max-age=300`, because a browser holds the rule for that long whatever the
-site says afterwards. Once `curl -sI https://<host>/` shows it and the site
-still loads, raise it to `max-age=31536000` and `npx wrangler deploy` again.
+self-hosted copies over plain HTTP, which the header must not follow. It is
+`max-age=31536000` (a year). A browser holds the rule for that long whatever
+the site says afterwards, so on a new hostname start at `max-age=300`, check
+that `curl -sI https://<host>/` shows it and the site still loads, and only
+then raise it and `npx wrangler deploy` again.
 Add `includeSubDomains` or `preload` only if every name under the hostname is
 HTTPS-only for good.
 

@@ -38,12 +38,12 @@ const EARLY_S = 300;
  * Caddy and Next sit behind it and also serve self-hosted copies on
  * `http://localhost:8080` or a home domain, which this must not reach.
  *
- * Short on purpose to begin with. A browser keeps the rule for `max-age`
- * seconds and nothing the site says can cut that short, so it starts at five
- * minutes and goes up once the live site is seen to be fine with it. No
- * `includeSubDomains` and no `preload`: the rule is for this hostname alone.
+ * A year. A browser keeps the rule for `max-age` seconds and nothing the site
+ * says can cut that short, so it shipped at five minutes first and was raised
+ * once the live site was seen to be fine with it. No `includeSubDomains` and
+ * no `preload`: the rule is for this hostname alone.
  */
-const HSTS = "max-age=300";
+const HSTS = "max-age=31536000";
 
 let cached: { token: string; expires: number } | null = null;
 let key: CryptoKey | null = null;

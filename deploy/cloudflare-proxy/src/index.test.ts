@@ -307,7 +307,7 @@ describe("Strict-Transport-Security", () => {
       new Request("https://chummer-web.millionskenken.org/"),
       env,
     );
-    expect(res.headers.get("strict-transport-security")).toBe("max-age=300");
+    expect(res.headers.get("strict-transport-security")).toBe("max-age=31536000");
     // the rest of the answer is untouched
     expect(res.status).toBe(200);
     expect(await res.text()).toBe("upstream");
@@ -335,7 +335,7 @@ describe("Strict-Transport-Security", () => {
     );
     expect(res.status).toBe(302);
     expect(res.headers.get("location")).toBe("/manual/index.html");
-    expect(res.headers.get("strict-transport-security")).toBe("max-age=300");
+    expect(res.headers.get("strict-transport-security")).toBe("max-age=31536000");
   });
 
   it("is not stated over plain HTTP", async () => {
