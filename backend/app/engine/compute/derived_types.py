@@ -409,6 +409,11 @@ class DerivedDict(TypedDict):
     martial_arts: list[Row]
     #: An A.I.'s programs (`engine/ai_programs.py`).
     ai_programs: list[Row]
+    #: Powers bought on the Critter Powers tab (`engine/critter_powers.py`),
+    #: the ids it offers now, and the categories it sells from.
+    critter_powers: list[Row]
+    critter_power_offer: list[str]
+    critter_power_categories: list[str]
     martial_art_points: _MartialArtPoints
     #: Extra specializations a skill may be bought at, from a martial art
     #: style (SR5 p.140) or a quality that widens the list (RF p.114).

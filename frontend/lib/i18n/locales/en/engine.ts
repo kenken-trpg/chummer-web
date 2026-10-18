@@ -185,6 +185,7 @@ export const EN_ENGINE = {
   "engine.spend.lifestyles": "Lifestyles",
   "engine.spend.martialArts": "Martial arts",
   "engine.spend.aiPrograms": "A.I. programs",
+  "engine.spend.critterPowers": "Critter powers",
   "engine.spend.metatype": "Metatype",
   "engine.spend.mysticPP": "Mystic adept power points",
   "engine.spend.nuyenExchange": "Nuyen exchange",
@@ -333,6 +334,12 @@ export const EN_ENGINE = {
   "engine.complexforms.requires": "{name} requires {needed}",
   "engine.aiPrograms.prereq": "{name} requires one of {needed}",
   "engine.aiPrograms.pickExtra": "Enter what {name} is for",
+  "engine.critterPowers.pickExtra": "Enter what {name} is for",
+  "engine.critterPowers.pickRating": "Choose a rating for {name}",
+  "engine.critterPowers.category":
+    "{name} is a {category} critter power, which your qualities do not let you buy",
+  "engine.critterPowers.prereq": "{name}'s requirements are not met",
+  "engine.critterPowers.forbidden": "{name} cannot be taken with your current qualities or powers",
   "engine.homeNode.personaFirmware":
     "Chummer asks {name} to carry Persona Firmware (DT p.66) to be a home node; this app cannot fit it to a vehicle, so it is not checked",
   "engine.homeNode.programLimit":
@@ -488,6 +495,7 @@ export const EN_ENGINE = {
   "engine.kind.bioware": "bioware",
   "engine.kind.complexForm": "complex form",
   "engine.kind.aiProgram": "A.I. program",
+  "engine.kind.critterPower": "Critter power",
   "engine.kind.cyberware": "cyberware",
   "engine.kind.drone": "drone",
   "engine.kind.drugComponent": "drug component",

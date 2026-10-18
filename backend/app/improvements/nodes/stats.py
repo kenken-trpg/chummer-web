@@ -139,7 +139,10 @@ def _initiative(tag: str, node: dict[str, Any], fields: dict[str, Any], effects:
         effects["initiative"] += value
 
 
-@handles("initiativepass")
+# Chummer's `initiativepass` is `initiativedice` by another name
+# (AddImprovementCollection.initiativepass calls initiativedice); Evolved
+# Reflexes, an Infected's power (DTR), spells it the second way.
+@handles("initiativepass", "initiativedice")
 def _initiativepass(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: EffectsDict, source: str) -> None:
     value = _bonus_int(node, fields)
     if not _by_precedence(effects, node, "initiative_dice", value):
@@ -155,6 +158,17 @@ def _enabletab(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: 
         name = text.upper() if text.upper() in {"MAG", "RES"} else text.lower()
         if name:
             effects["enabled_tabs"].add(name)
+
+
+@handles("limitcritterpowercategory")
+def _limitcritterpowercategory(
+    tag: str, node: dict[str, Any], fields: dict[str, Any], effects: EffectsDict, source: str
+) -> None:
+    """The category an Infected's or a drake's Critter Powers tab buys from
+    (`Infected`, `Drake`); Chummer's SelectCritterPower lists only those."""
+    category = str(node.get("value") or "").strip()
+    if category:
+        effects["critter_power_categories"].add(category)
 
 
 @handles("enableattribute")

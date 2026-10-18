@@ -125,6 +125,11 @@ export const JA_HELP = {
   "help.bio.spent": "消費¥はこのタブ分ではなく、装備や資質も含めた支出の合計",
   "help.cf.statsLabel": "複合体の値",
   "help.cf.fv": "フェイディング：L は唱えるときに選ぶレベルで、L−1 ならレベル −1（最低 2）",
+  "help.cpower.what":
+    "Infected の資質・Dracoform の資質が開くタブ。資質が決めた分類（Infected・Drake）のパワーを、それぞれのカルマで買う",
+  "help.cpower.offer":
+    "一覧に出るのは、前提条件（Infected の種類やほかのパワー）を満たしたものだけ",
+  "help.cpower.granted": "資質が最初から持たせるパワーはここに出ない。資質タブの資質の欄に並ぶ",
   "help.aiprog.price":
     "1 つにつき 5 カルマ、Advanced Programs は 8 カルマ（DT）。作成後に足しても同じ価格",
   "help.aiprog.inherent": "資質 Inherent Program で選んだ 1 つは無料で、資質を外すと消える",

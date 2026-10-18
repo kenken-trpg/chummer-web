@@ -124,6 +124,15 @@ export interface AIProgramInstall {
   extra?: string | null;
 }
 
+export interface CritterPowerInstall {
+  id?: string;
+  power_id: string;
+  /** for a power bought at a rating (Mystic Armor (Infected)) */
+  rating?: number | null;
+  /** the pick a `<selecttext>` power asks for (Animal Control's animal) */
+  extra?: string | null;
+}
+
 export interface ComplexFormInstall {
   id?: string;
   form_id: string;
@@ -673,6 +682,7 @@ export interface Character {
   spirits?: SpiritInstall[];
   complex_forms?: ComplexFormInstall[];
   ai_programs?: AIProgramInstall[];
+  critter_powers?: CritterPowerInstall[];
   /** an A.I.'s home node (Chummer `HomeNode`): a commlink, deck, RCC, vehicle or drone id */
   home_node?: string;
   sprites?: SpriteInstall[];

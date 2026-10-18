@@ -99,6 +99,15 @@ export const EN_MAGIC = {
 
   "sprite.search": "Search sprites",
   "cf.free": "Free from priority {used}/{free}",
+  "cpower.title": "Critter powers",
+  "cpower.summary": "{count} / {karma} karma",
+  "cpower.categories": "Sold here: {list}",
+  "cpower.rating": "Rating",
+  "cpower.extra": "For",
+  "cpower.search": "Search powers",
+  "cpower.none": "Your qualities offer no critter power to buy",
+  "cpower.stats": "{type} / {action} / {range} / {duration}",
+
   "aiprog.title": "A.I. programs",
   "aiprog.summary": "{count} programs / {karma} karma",
   "aiprog.grantedBy": " / free from {name}",

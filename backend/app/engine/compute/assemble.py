@@ -145,6 +145,7 @@ def assemble(ctx: Ctx) -> None:
             + int(ctx.contacts.get("karma") or 0)
             + int(ctx.martial.get("karma") or 0)
             + ctx.ai_programs["karma"]
+            + ctx.critter_powers["karma"]
             + int(ctx.initiation.get("karma") or 0)
             + int(ctx.submersion.get("karma") or 0),
         },
@@ -352,6 +353,9 @@ def assemble(ctx: Ctx) -> None:
         },
         "martial_arts": ctx.martial.get("public") or [],
         "ai_programs": ctx.ai_programs["public"],
+        "critter_powers": ctx.critter_powers["public"],
+        "critter_power_offer": ctx.critter_powers["offer"],
+        "critter_power_categories": ctx.critter_powers["categories"],
         "martial_art_points": {
             "styles": ctx.martial.get("style_count") or 0,
             "style_max": ctx.martial.get("style_max") or MARTIAL_ART_CHARGEN_STYLE_MAX,

@@ -33,7 +33,7 @@ from ..magic import (
     resolve_submersion,
     spell_cast_info,
 )
-from ..qualities import critter_power_sources, free_powers_from_grants
+from ..qualities import bought_critter_powers, critter_power_sources, free_powers_from_grants
 from ..resonance import apply_granted_echoes, resolve_complex_forms, resolve_sprites
 from .context import Ctx
 
@@ -50,7 +50,9 @@ def awakened(ctx: Ctx) -> None:
         ctx.quality_names,
         ctx.errors,
         metamagic_limits=list(ctx.effects.get("metamagic_limits") or []),
-        critter_powers=set(critter_power_sources(ctx.meta, ctx.qualities, ctx.state.quality_extras)),
+        critter_powers=set(
+            critter_power_sources(ctx.meta, ctx.qualities, ctx.state.quality_extras, bought_critter_powers(ctx.state))
+        ),
     )
     apply_free_metamagics(ctx.effects, ctx.initiation, ctx.talent["name"], ctx.warnings)
     ctx.warnings.extend(ctx.initiation["warnings"])

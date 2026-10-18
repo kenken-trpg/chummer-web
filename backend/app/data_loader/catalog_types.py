@@ -75,6 +75,9 @@ class CatalogDict(TypedDict):
     books: list[Row]
     #: settings.xml — Chummer's shipped rulesets, see loaders/books.py
     settings_presets: list[Row]
+    #: the Critter Powers tab's stock — critter_powers.xml rows with their
+    #: rules (`bonus`, trees, `karma`), in the categories a quality limits it to
+    buyable_critter_powers: list[Row]
     translations: dict[str, str]
     #: {kind: {english: japanese}} — exceptions to `translations`, see loaders/translations.py
     translations_by_kind: dict[str, dict[str, str]]

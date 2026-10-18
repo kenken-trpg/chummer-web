@@ -37,6 +37,7 @@ export const JA_APP = {
   "tab.foci": "収束具",
   "tab.complexforms": "複合体",
   "tab.aiprograms": "プログラム",
+  "tab.critterpowers": "クリッター・パワー",
   "tab.sprites": "スプライト",
   "tab.check": "チェック",
 
@@ -60,6 +61,8 @@ export const JA_APP = {
   "tab.foci.hint": "収束具。カルマで〈固着〉させて使います",
   "tab.complexforms.hint": "複合体。テクノマンサーのみ",
   "tab.aiprograms.hint": "A.I. のプログラム。A.I. のみ",
+  "tab.critterpowers.hint":
+    "Infected・ドレイクがカルマで買うクリッター・パワー。その資質を持つキャラクターのみ",
   "tab.sprites.hint": "登録したスプライト。テクノマンサーのみ",
   "tab.check.hint": "作成ルールに違反していないかの一覧。エラーがあると完成できません",
 

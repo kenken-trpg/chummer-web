@@ -609,6 +609,10 @@ export interface Catalog {
     source: string;
     page: string;
   }[];
+  /** The Critter Powers tab's stock: the powers in the categories a quality
+   *  opens it to (Infected, Drake). Which of them it offers now is the
+   *  engine's `critter_power_offer`. */
+  buyable_critter_powers?: BuyableCritterPower[];
   /** An A.I.'s programs (`programs.xml`), not the gear of the same names. */
   ai_programs?: {
     id: string;
@@ -772,4 +776,22 @@ export interface DrugComponentGradeCatalogItem {
   cost_multiplier: number;
   addiction_threshold: number;
   source?: string;
+}
+
+/** One power the Critter Powers tab sells (`critterpowers.xml`). */
+export interface BuyableCritterPower {
+  id: string;
+  name: string;
+  category: string;
+  type: string;
+  action: string;
+  range: string;
+  duration: string;
+  karma: number;
+  /** bought at a rating (Mystic Armor (Infected)) */
+  has_rating: boolean;
+  /** asks for a pick (`<selecttext>`: Animal Control's animal) */
+  needs_extra: boolean;
+  source?: string;
+  page?: string;
 }

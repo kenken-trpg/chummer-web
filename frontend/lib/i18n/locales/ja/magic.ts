@@ -100,6 +100,15 @@ export const JA_MAGIC = {
 
   "sprite.search": "スプライトを検索",
   "cf.free": "優先度の無料枠 {used}/{free}",
+  "cpower.title": "クリッター・パワー",
+  "cpower.summary": "{count} 個 / {karma} カルマ",
+  "cpower.categories": "買える分類：{list}",
+  "cpower.rating": "レーティング",
+  "cpower.extra": "対象",
+  "cpower.search": "パワーを検索",
+  "cpower.none": "今の資質で買えるクリッター・パワーはありません",
+  "cpower.stats": "{type} / {action} / {range} / {duration}",
+
   "aiprog.title": "A.I. のプログラム",
   "aiprog.summary": "{count} 個 / {karma} カルマ",
   "aiprog.grantedBy": " / {name} で無料",

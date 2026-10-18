@@ -37,6 +37,7 @@ EXPECTED_KEYS = {
     "spirits",
     "complex_forms",
     "ai_programs",
+    "buyable_critter_powers",
     "streams",
     "sprites",
     "paragons",
