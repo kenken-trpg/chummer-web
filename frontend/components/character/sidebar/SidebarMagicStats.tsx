@@ -17,21 +17,53 @@ const SPELL_DEFENCE: [
   ["side.def.physicalIllusion", "physical_illusion", "help.def.physicalIllusion"],
 ];
 
-/** Test modifiers, shown only when non-zero. */
-const TEST_MODS: [MsgKey, keyof NonNullable<SidebarBlockProps["d"]["test_mods"]>][] = [
-  ["side.memory", "memory"],
-  ["side.composure", "composure"],
-  ["side.judge", "judge_intentions"],
-  ["side.dodge", "dodge"],
-  ["side.surprise", "surprise"],
+/** Test modifiers, shown only when non-zero, with the attributes each test
+ *  rolls (Chummer's `Memory`, `Composure`, `Surprise`). No total for the two
+ *  whose pool takes more than this one modifier: Judge Intentions also adds
+ *  `judgeintentionsoffense`, Dodge the armor's dodge rating. */
+const TEST_MODS: [
+  MsgKey,
+  keyof NonNullable<SidebarBlockProps["d"]["test_mods"]>,
+  MsgKey,
+  [string, string] | null,
+][] = [
+  ["side.memory", "memory", "help.test.memory", ["LOG", "WIL"]],
+  ["side.composure", "composure", "help.test.composure", ["CHA", "WIL"]],
+  ["side.judge", "judge_intentions", "help.test.judge", null],
+  ["side.dodge", "dodge", "help.test.dodge", null],
+  ["side.surprise", "surprise", "help.test.surprise", ["REA", "INT"]],
 ];
 
-export function SidebarMagicStats({ d, ui }: SidebarBlockProps) {
+const signed = (n: number) => `${n > 0 ? "+" : ""}${n}`;
+
+export function SidebarMagicStats({ d, tr, ui }: SidebarBlockProps) {
+  /** The lines of a "+N" row's tip: what the test rolls, this modifier, and
+   *  the dice in all when the attributes alone make up the rest. */
+  const modLines = (help: MsgKey, value: number, attrs: [string, string] | null) => [
+    { label: ui(help) },
+    { label: ui("help.bonus"), value: signed(value) },
+    ...(attrs
+      ? [
+          {
+            label: ui("help.total"),
+            value: attrs.reduce((sum, a) => sum + (d.totals?.[a] || 0), value),
+            strong: true,
+          },
+        ]
+      : []),
+  ];
   return (
     <>
       {(d.fatigue_resist || 0) !== 0 ? (
         <div className="stat">
-          <span>{ui("side.fatigueResist")}</span>
+          <span>
+            <HelpTip
+              label={ui("help.open", { label: ui("side.fatigueResist") })}
+              lines={modLines("help.test.fatigue", d.fatigue_resist || 0, ["BOD", "WIL"])}
+            >
+              {ui("side.fatigueResist")}
+            </HelpTip>
+          </span>
           <b>+{d.fatigue_resist}</b>
         </div>
       ) : null}
@@ -85,19 +117,40 @@ export function SidebarMagicStats({ d, ui }: SidebarBlockProps) {
         : null}
       {(d.action_dice_pools || []).map((row, idx) => (
         <div className="stat" key={`adp-${row.name}-${idx}`}>
-          <span>{row.category ? `${row.category}: ${row.name}` : row.name}</span>
+          <span>
+            <HelpTip
+              label={ui("help.open", {
+                label: row.category ? `${row.category}: ${row.name}` : row.name,
+              })}
+              lines={[
+                { label: ui("help.actionPool.what") },
+                ...(row.source
+                  ? [{ label: ui("help.actionPool.source"), value: tr(row.source) }]
+                  : []),
+              ]}
+            >
+              {row.category ? `${row.category}: ${row.name}` : row.name}
+            </HelpTip>
+          </span>
           <b>
             {row.bonus > 0 ? "+" : ""}
             {row.bonus}
           </b>
         </div>
       ))}
-      {TEST_MODS.map(([key, field]) => {
+      {TEST_MODS.map(([key, field, help, attrs]) => {
         const value = d.test_mods?.[field] || 0;
         if (value === 0) return null;
         return (
           <div className="stat" key={key}>
-            <span>{ui(key)}</span>
+            <span>
+              <HelpTip
+                label={ui("help.open", { label: ui(key) })}
+                lines={modLines(help, value, attrs)}
+              >
+                {ui(key)}
+              </HelpTip>
+            </span>
             <b>
               {value > 0 ? "+" : ""}
               {value}

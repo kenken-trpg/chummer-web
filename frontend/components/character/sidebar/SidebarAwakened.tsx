@@ -186,7 +186,14 @@ export function SidebarAwakened({ d, tr, ui }: SidebarBlockProps) {
       ) : null}
       {(d.unarmed_dv || 0) > 0 ? (
         <div className="stat">
-          <span>{ui("side.unarmedDv")}</span>
+          <span>
+            <HelpTip
+              label={ui("help.open", { label: ui("side.unarmedDv") })}
+              lines={[{ label: ui("help.unarmedDv.what") }]}
+            >
+              {ui("side.unarmedDv")}
+            </HelpTip>
+          </span>
           <b>+{d.unarmed_dv}</b>
         </div>
       ) : null}
