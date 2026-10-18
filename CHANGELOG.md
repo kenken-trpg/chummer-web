@@ -3,6 +3,36 @@
 Notable changes. Format follows [Keep a Changelog](https://keepachangelog.com/);
 self-hosters can pin to a tag instead of tracking `main`.
 
+## [0.5.7] — 2026-10-18
+
+### Added
+
+- **The sidebar's other "+N" rows explain themselves too.** Fatigue resistance,
+  memory, composure, judge intentions, dodge, surprise, unarmed DV and each
+  action dice pool now have a "?" with the test's formula and the modifier,
+  and the total dice where the attributes make up the rest of the pool.
+
+- **The sidebar explains its spell resistance and damage resistance rows.** The
+  "?" on each spell defence line gives that kind's formula, its modifier and
+  the total dice. The one on damage resistance breaks the pool into BOD (an
+  A.I.'s vehicle Body), armor and the modifier.
+
+### Fixed
+
+- **Judge Intentions reads 意図を測る and Composure 冷静, as the glossary has
+  them.** The sidebar, the print sheet and the Cocofolia palette said 意図看破,
+  and the print sheet alone said 沈着. Both are now banned terms.
+
+### Security
+
+- **HSTS now lasts a year.** The five-minute `max-age` the Worker started with
+  becomes `max-age=31536000`, once the live site had been seen to work with it.
+
+- **The public site asks browsers to come back over HTTPS only.** The
+  Cloudflare Worker in front of Cloud Run adds `Strict-Transport-Security`,
+  starting at five minutes so a mistake cannot stick. Self-hosted copies are
+  unaffected: the header is set at the production edge alone.
+
 ## [0.5.6] — 2026-10-18
 
 ### Added
