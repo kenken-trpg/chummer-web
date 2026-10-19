@@ -81,7 +81,7 @@ export const JA_CHARGEN = {
   "life.kind.qualities": "資質",
 
   "life.experimental":
-    "Experimental support. Modules with unsupported mechanics are unavailable. Chummer resaves import as career snapshots because their module choices are not retained.",
+    "Experimental support. A module is unavailable only if it uses mechanics this app does not support yet. Characters saved in Chummer import as career snapshots, because Chummer does not keep the module choices.",
   "engine.life.chum5StateInvalid":
     "この .chum5 のライフモジュール情報と技能値が一致しないか、保存形式に対応していません。JSON バックアップから復元してください。",
   "engine.life.chum5Unsupported":
