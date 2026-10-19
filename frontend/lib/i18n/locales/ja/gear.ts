@@ -102,7 +102,7 @@ export const JA_GEAR = {
   "gear.inUse": "使用中",
   "gear.drugToggleHint": "能力値・イニシアティブ・技能に反映",
   "customDrug.addComponent": "コンポーネントを足す",
-  "customDrug.addiction": "依存症 R{rating}/閾値{threshold}",
+  "customDrug.addiction": "依存症 R{rating}/目標値{threshold}",
   "customDrug.avail": "入手値 {avail}",
   "customDrug.crash": "クラッシュ {damage}S",
   "customDrug.duration": "持続 {seconds} 秒",

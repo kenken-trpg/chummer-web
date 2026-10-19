@@ -141,3 +141,23 @@ def test_overlay_data_matches_glossary_terms() -> None:
         if want and value != want and GLOSSARY_EXCEPTIONS.get(key) != value:
             mismatches.append(f"{key!r}: overlay {value!r} vs glossary {want!r}")
     assert not mismatches, "\n  " + "\n  ".join(mismatches)
+
+
+def test_contextual_ui_labels_match_glossary_terms() -> None:
+    """Health is 身体 for a spirit role, but 健康 is valid in other names.
+
+    Compare known semantic keys with the canon rather than banning an ordinary
+    Japanese word everywhere (for example the spell Healthy Glow / 健康美).
+    """
+    glossary = _load_glossary()
+    labels = [
+        ("rules.ts", "sr.spirit.health", "Health", ""),
+        ("engine.ts", "engine.spiritRole.health", "Health", ""),
+        ("rules.ts", "sr.skillcat.resonance", "Resonance", "技能"),
+        ("sheet.ts", "sheet.resonance", "Resonance", ""),
+    ]
+    for filename, key, term, suffix in labels:
+        text = (FRONTEND / "lib/i18n/locales/ja" / filename).read_text(encoding="utf-8")
+        match = re.search(rf'^\s*"{re.escape(key)}": "([^"]+)"', text, re.M)
+        assert match is not None, f"{filename}: missing {key}"
+        assert match[1] == glossary[term.lower()] + suffix, f"{filename}: {key} contradicts {term}"
