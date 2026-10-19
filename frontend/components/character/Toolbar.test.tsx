@@ -35,10 +35,10 @@ function makeEd(over: Partial<CharacterEditor> = {}): CharacterEditor {
 }
 
 /**
- * The conversions sit behind 他の形式 — the toolbar only shows the handful of
+ * The conversions sit behind 書き出し — the toolbar only shows the handful of
  * actions used every session. Open it before reaching for one.
  */
-function openFormats(root: { getByRole: typeof screen.getByRole } = screen, name = "他の形式 ▾") {
+function openFormats(root: { getByRole: typeof screen.getByRole } = screen, name = "書き出し ▾") {
   fireEvent.click(root.getByRole("button", { name }));
 }
 
@@ -68,12 +68,12 @@ describe("<Toolbar>", () => {
 
   // The point of the menu: the toolbar itself carries only what gets used
   // every session. A conversion creeping back out into the row fails here.
-  it("keeps the conversions behind 他の形式, and closes it again", () => {
+  it("keeps the conversions behind 書き出し, and closes it again", () => {
     render(<Toolbar ed={makeEd()} {...base} tab={"priority"} sheetLayout={"standard"} />);
     for (const name of [".chum5書出", ".xlsx書出", "FVTT書出", "ココフォリア", "ユドナリウム"]) {
       expect(screen.queryByRole("button", { name })).toBeNull();
     }
-    const toggle = screen.getByRole("button", { name: "他の形式 ▾" });
+    const toggle = screen.getByRole("button", { name: "書き出し ▾" });
     expect(toggle.getAttribute("aria-expanded")).toBe("false");
 
     openFormats();
@@ -136,7 +136,7 @@ describe("<Toolbar>", () => {
       expect(screen.getByRole("button", { name: "Save JSON" })).toBeDefined();
       expect(screen.getByRole("combobox", { name: "Saved characters" })).toBeDefined();
       expect(screen.getByRole("textbox", { name: "Character name" })).toBeDefined();
-      expect(screen.getByRole("button", { name: "Other formats ▾" })).toBeDefined();
+      expect(screen.getByRole("button", { name: "Export ▾" })).toBeDefined();
       expect(screen.queryByText("複製")).toBeNull();
     } finally {
       window.localStorage.removeItem(LOCALE_STORAGE_KEY);

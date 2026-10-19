@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { openOtherFormats, waitForEditor } from "./helpers";
+import { openExportMenu, waitForEditor } from "./helpers";
 
 /**
  * The three things this app hands over by copying rather than by downloading:
@@ -36,7 +36,7 @@ test("the share link, the Cocofolia piece and the palette reach the clipboard", 
   expect(link.split("#c=")[1].length).toBeGreaterThan(20);
 
   // 2. the Cocofolia piece: pasted into Cocofolia as JSON, so it has to parse
-  await openOtherFormats(page);
+  await openExportMenu(page);
   await page.getByRole("button", { name: "ココフォリア" }).click();
   const piece = JSON.parse(await read()) as {
     kind: string;
@@ -48,7 +48,7 @@ test("the share link, the Cocofolia piece and the palette reach the clipboard", 
   expect(piece.data.commands).toContain("B6");
 
   // 3. the palette on its own: BCDice ShadowRun5 commands, one per line
-  await openOtherFormats(page);
+  await openExportMenu(page);
   await page.getByRole("button", { name: "チャットパレット" }).click();
   const palette = await read();
   expect(palette.split("\n").length).toBeGreaterThan(3);

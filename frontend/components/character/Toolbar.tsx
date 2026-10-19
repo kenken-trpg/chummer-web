@@ -132,7 +132,7 @@ export function Toolbar({
           share, print. The conversions below are a handful of buttons each
           used once in a while, and as a flat row they were most of the
           toolbar — so they live one click away instead. */}
-      <Menu label={ui("toolbar.otherFormats")} title={ui("toolbar.otherFormatsHint")}>
+      <Menu label={ui("toolbar.exportMenu")} title={ui("toolbar.exportMenuHint")}>
         <button className="btn" onClick={downloadChum5} title={ui("toolbar.exportChum5Hint")}>
           {ui("toolbar.exportChum5")}
         </button>

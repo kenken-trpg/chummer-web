@@ -11,11 +11,11 @@ export async function waitForEditor(page: Page) {
 
 /**
  * The conversions (.chum5, .xlsx, FVTT, Cocofolia, Udonarium) live behind the
- * toolbar's 他の形式 menu; only the per-session actions are buttons in the row.
+ * toolbar's 書き出し menu; only the per-session actions are buttons in the row.
  * The menu closes as soon as an item is picked, so one call per item.
  */
-export async function openOtherFormats(page: Page) {
-  await page.getByRole("button", { name: "他の形式 ▾" }).click();
+export async function openExportMenu(page: Page) {
+  await page.getByRole("button", { name: "書き出し ▾" }).click();
 }
 
 /**
