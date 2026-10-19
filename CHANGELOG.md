@@ -3,6 +3,26 @@
 Notable changes. Format follows [Keep a Changelog](https://keepachangelog.com/);
 self-hosters can pin to a tag instead of tracking `main`.
 
+## [0.5.8] — 2026-10-19
+
+### Changed
+
+- **The toolbar's "Other formats" menu is now "Export" (書き出し).** Everything
+  behind it exports a file or copies to the clipboard, so the label says what
+  pressing it does. The manual's text and screenshots follow.
+
+### Fixed
+
+- **Threshold, Resonance and Health read as the glossary has them.** A drug's
+  addiction threshold says 目標値, the skill category and the sheet say 共振力,
+  and the spirit role says 身体. Banned-term checks and a context-aware
+  glossary check keep them from drifting back.
+
+- **The life-module notice says what actually happens.** A module is
+  unavailable only when it uses unsupported mechanics, and every
+  life-module character saved in Chummer, not only a resave of an export,
+  imports as a career snapshot.
+
 ## [0.5.7] — 2026-10-18
 
 ### Added
