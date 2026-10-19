@@ -169,7 +169,7 @@ try {
   await page.evaluate(() => window.scrollBy(0, 850));
   await shot("tab-sheet-body2");
   await page.evaluate(() => window.scrollTo(0, 0));
-  await page.getByRole("button", { name: "他の形式 ▾" }).click();
+  await page.getByRole("button", { name: "書き出し ▾" }).click();
   await shot("ui-export-menu");
 } finally {
   await browser.close();

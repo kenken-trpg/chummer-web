@@ -179,8 +179,8 @@ export const JA_APP = {
   "toolbar.redoHint": "やり直し (Ctrl/⌘+Shift+Z)",
   "toolbar.name": "キャラクター名",
   "toolbar.saveJson": "JSON保存",
-  "toolbar.otherFormats": "他の形式",
-  "toolbar.otherFormatsHint":
+  "toolbar.exportMenu": "書き出し",
+  "toolbar.exportMenuHint":
     "Chummer5a・スプレッドシート・Foundry VTT・ココフォリア・ユドナリウム向けの書き出しとコピー",
   "toolbar.exportChum5": ".chum5書出",
   "toolbar.exportChum5Hint": "Chummer5a で開ける .chum5（XML）で書き出す",
