@@ -11,7 +11,7 @@
 - 採用順: `ADOPTED_OVERRIDES` (手動確定) > 2021 版 > sr5eja。
 - 2 資料が食い違う語は **採用=2021版** のまま `差異` を立てる (下表の備考)。人が判断する。
 
-- 統合語数: **573** / うち sr5eja だけにある新規: **359** / 2 資料で表記が割れる語: **18**。
+- 統合語数: **578** / うち sr5eja だけにある新規: **359** / 2 資料で表記が割れる語: **18**。
 
 ## 表1: 統合用語
 
@@ -25,7 +25,8 @@ sr5eja 列: `＝` = 採用と一致 / `≠` = 採用と相違。sr5eja の訳語
 | Accuracy | 精度 | 精度 | ＝ |  |
 | Acid | 強酸 | 強酸 |  |  |
 | Action | アクション |  | ＝ |  |
-| Action Type | タイプ |  | ＝ |  |
+| Action Type | 動作 |  | ≠ | 手動確定 |
+| Action Type Auto | 自動 |  |  | 手動確定 |
 | Action Type Complex | 複雑 |  | ＝ |  |
 | Action Type Free | 簡易 |  | ＝ |  |
 | Action Type None | なし |  | ＝ |  |
@@ -199,8 +200,10 @@ sr5eja 列: `＝` = 採用と一致 / `≠` = 採用と相違。sr5eja の訳語
 | Dropoff | 外す |  | ＝ |  |
 | Duck Or Cover | 伏せもしくは遮蔽を取る |  | ＝ |  |
 | Duration | 効果時間 | 効果時間 | ＝ |  |
-| Duration Instant | インスタント |  | ＝ |  |
+| Duration Always | 常時 |  |  | 手動確定 |
+| Duration Instant | 即時 |  | ≠ | 手動確定 |
 | Duration Permanent | 永続 |  | ＝ |  |
+| Duration Special | 特殊 |  |  | 手動確定 |
 | Duration Sustained | 維持 |  | ＝ |  |
 | E | 超遠距離-6 | 超遠距離-6 |  |  |
 | Echo | エコー |  | ＝ |  |
@@ -340,6 +343,8 @@ sr5eja 列: `＝` = 採用と一致 / `≠` = 採用と相違。sr5eja の訳語
 | Location | 所在地 | 所在地 |  |  |
 | LOG | 論理 | 論理 |  |  |
 | Logic | 論理力 | 論理力 |  |  |
+| LOS | 視界内 |  |  | 手動確定 |
+| LOS (A) | 視界内（範囲） |  |  | 手動確定 |
 | Loyalty | 忠実値 | 忠実値 | ≠ | 手動確定 / 差異 |
 | M | 中距離-1 | 中距離-1 |  |  |
 | MAG | 魔力 | 魔力 |  |  |

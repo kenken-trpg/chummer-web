@@ -133,6 +133,12 @@ ADOPTED_OVERRIDES = {
     "cost": "価格",  # the book's gear tables, not just vehicles
     "hot sim": "ホット・シム",  # 中黒, as the core rulebook prints it (p.231)
     "astral initiative": "アストラル・イニシアティブ",  # 中黒, core rulebook p.320
+    # A spell's Instant duration; sr5eja's インスタント is not the book's word.
+    # Checked by the user (2026-10-20). Complex forms' 瞬間 is a separate row.
+    "duration instant": "即時",
+    # The book heads a power's action 動作; its タイプ is the マナ/物理 field.
+    # Checked by the user (2026-10-20).
+    "action type": "動作",
 }
 
 # Rulebook terms neither reference translates, so they have no row to override.
@@ -152,6 +158,14 @@ RULEBOOK_ONLY = {
     "Spell Defense": "呪文防御",
     "Cold Sim": "コールド・シム",  # core rulebook p.231, beside ホット・シム
     "Matrix Condition Monitor": "マトリックス・コンディション・モニター",  # core rulebook p.229
+    # a spell's range, checked by the user (2026-10-20)
+    "LOS": "視界内",
+    "LOS (A)": "視界内（範囲）",
+    # a critter power's duration, beside 維持 and 永続 (core rulebook p.401)
+    "Duration Always": "常時",
+    "Duration Special": "特殊",
+    # a critter power's action (動作), beside 複雑 and 単純; checked by the user
+    "Action Type Auto": "自動",
     # Data Trails has no Japanese edition and its Codex pass has not reached
     # the A.I.: a supplement's coinage stays English (docs/data-pipeline.md)
     "Home Node": "Home Node",

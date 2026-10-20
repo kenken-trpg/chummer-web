@@ -81,7 +81,7 @@ export function testLine(
 export function cfDuration(value: string | undefined, ui: UiFn) {
   if (value === "P" || value === "E") return ui("sr.dur.permanent");
   if (value === "S") return ui("sr.dur.sustained");
-  if (value === "I") return ui("sr.dur.instantCf");
+  if (value === "I") return ui("sr.dur.instant");
   return value || "";
 }
 

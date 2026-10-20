@@ -13,23 +13,19 @@ export const JA_RULES = {
 
   "sr.type.physical": "物理",
   "sr.range.touch": "接触",
-  "sr.range.touchArea": "接触(範囲)",
-  "sr.range.los": "視認",
-  "sr.range.losArea": "視認(範囲)",
+  "sr.range.touchArea": "接触（範囲）",
+  "sr.range.los": "視界内",
+  "sr.range.losArea": "視界内（範囲）",
   "sr.range.self": "自身",
-  "sr.range.selfArea": "自身(範囲)",
+  "sr.range.selfArea": "自身（範囲）",
 
   "sr.range.special": "特殊",
   "sr.dur.instant": "即時",
   "sr.dur.permanent": "永続",
   "sr.dur.sustained": "維持",
   "sr.dur.special": "特殊",
-  /** Complex forms say 瞬間 where spells say 即時 for the same "Instant"
-   *  duration. Kept apart rather than unified under cover of a translation
-   *  pass — collapsing them changes what the sheet reads. */
-  "sr.dur.instantCf": "瞬間",
   /** Critter powers add a duration spells have no use for: the power is
-   *  simply always on (SR5 p.394). */
+   *  simply always on (SR5 p.401: 常時・維持・永続・特殊). */
   "sr.dur.always": "常時",
 
   /** The action a power takes, in the glossary's words (`Action Type …`):
