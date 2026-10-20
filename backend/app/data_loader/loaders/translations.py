@@ -207,8 +207,9 @@ def load_text_translations() -> dict[str, str]:
     The upstream lang file has its own `<altadvantage>`/`<altdisadvantage>`
     for 90 mentors, and they are deliberately not read: they translate the
     Fourth Edition rules (Dog: +2 for detection spells and spirits of man,
-    where Fifth gives +2 for Tracking). Entries here come from the Japanese
-    core rulebook; a disadvantage is a summary of it, not the printed text.
+    where Fifth gives +2 for Tracking). Entries here are our own summaries of
+    the Japanese core rulebook, advantage and disadvantage alike — never its
+    printed text, which NOTICE.txt promises not to reproduce.
     """
     result: dict[str, str] = {}
     for key, value in _load_ja_overrides("texts.json").items():
