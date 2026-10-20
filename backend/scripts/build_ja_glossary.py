@@ -161,6 +161,8 @@ RULEBOOK_ONLY = {
     # a critter power's duration, beside 維持 and 永続 (core rulebook p.401)
     "Duration Always": "常時",
     "Duration Special": "特殊",
+    # a critter power's action (動作), beside 複雑 and 単純; checked by the user
+    "Action Type Auto": "自動",
     # Data Trails has no Japanese edition and its Codex pass has not reached
     # the A.I.: a supplement's coinage stays English (docs/data-pipeline.md)
     "Home Node": "Home Node",
