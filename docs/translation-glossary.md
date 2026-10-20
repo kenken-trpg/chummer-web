@@ -199,7 +199,7 @@ sr5eja 列: `＝` = 採用と一致 / `≠` = 採用と相違。sr5eja の訳語
 | Dropoff | 外す |  | ＝ |  |
 | Duck Or Cover | 伏せもしくは遮蔽を取る |  | ＝ |  |
 | Duration | 効果時間 | 効果時間 | ＝ |  |
-| Duration Instant | インスタント |  | ＝ |  |
+| Duration Instant | 即時 |  | ≠ | 手動確定 |
 | Duration Permanent | 永続 |  | ＝ |  |
 | Duration Sustained | 維持 |  | ＝ |  |
 | E | 超遠距離-6 | 超遠距離-6 |  |  |
