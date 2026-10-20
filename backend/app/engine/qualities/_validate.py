@@ -81,49 +81,8 @@ def apply_quality_rules(
             negative_gain += -int(spec["karma"])
         if counted and spec["karma"] > 0:
             positive_spend += int(spec["karma"])
-        if str(spec.get("extra_kind") or "") == "add_spirit":
-            count = max(1, int(spec.get("add_spirit_count") or 1))
-            if any(quality_addspirit_extra_key(spec["id"], idx) not in extras for idx in range(count)):
-                errors.append(notice("engine.qualities.pickAddSpirit", name=term(str(spec["name"]))))
-        elif quality_needs_extra(spec) and spec["id"] not in extras:
-            if _quality_has_selectside(spec):
-                errors.append(notice("engine.qualities.pickSide", name=term(str(spec["name"]))))
-            elif _quality_has_actiondicepool(spec):
-                errors.append(notice("engine.qualities.pickMatrixAction", name=term(str(spec["name"]))))
-            elif _quality_needs_spell_category(spec):
-                errors.append(notice("engine.qualities.pickSpellCategory", name=term(str(spec["name"]))))
-            elif _quality_needs_spirit_category(spec):
-                errors.append(notice("engine.qualities.pickSpirit", name=term(str(spec["name"]))))
-            elif str(spec.get("extra_kind") or "") == "weapon_skill":
-                errors.append(notice("engine.qualities.pickWeaponSkill", name=term(str(spec["name"]))))
-            elif _is_flavour_text_only(spec):
-                if warnings is not None:
-                    warnings.append(notice("engine.qualities.pickText", name=term(str(spec["name"]))))
-            else:
-                errors.append(notice("engine.qualities.pickExtra", name=term(str(spec["name"]))))
-        optional = [critter_power_label(row) for row in spec.get("optional_powers") or []]
-        if optional:
-            picked = extras.get(quality_optional_power_extra_key(spec["id"]))
-            if not picked:
-                errors.append(notice("engine.qualities.pickOptionalPower", name=term(str(spec["name"]))))
-            elif picked not in optional:
-                errors.append(notice("engine.qualities.extraInvalid", name=term(str(spec["name"]))))
-        if _quality_needs_spirit_category(spec) and _quality_needs_spell_category(spec):
-            spirit_key = quality_spirit_category_extra_key(spec["id"])
-            if spirit_key not in extras:
-                errors.append(notice("engine.qualities.pickSpirit", name=term(str(spec["name"]))))
-        elif _quality_has_selectside(spec) and spec["id"] in extras and not _normalize_side(extras[spec["id"]]):
-            errors.append(notice("engine.qualities.sideInvalid", name=term(str(spec["name"]))))
-        options = list(spec.get("select_options") or [])
-        if not options:
-            for node in spec.get("bonus") or []:
-                if node.get("tag") != "selectquality":
-                    continue
-                raw = (node.get("fields") or {}).get("quality") or node.get("value") or []
-                options = [str(item).strip() for item in (raw if isinstance(raw, list) else [raw]) if str(item).strip()]
-        if options and spec["id"] in extras and extras[spec["id"]] not in options:
-            if not _quality_has_actiondicepool(spec):
-                errors.append(notice("engine.qualities.extraInvalid", name=term(str(spec["name"]))))
+        _check_missing_pick(spec, extras, errors, warnings)
+        _check_pick_values(spec, extras, errors)
         if is_free or career:
             # `<required>` / `<forbidden>` are a purchase-time gate, not a
             # standing invariant: Chummer evaluates `RequirementsMetAsync` when
@@ -133,33 +92,114 @@ def apply_quality_rules(
             # of Chummer's own career saves illegal. In creation the engine is
             # the only gate there is, so the check stays.
             continue
-        own_ctx = as_before_taking(ctx, spec)
-        if spec.get("required_tree") and not requirement_tree_met(spec.get("required_tree"), own_ctx):
-            errors.append(notice("engine.qualities.prereq", name=term(str(spec["name"]))))
-        forbidden = spec.get("forbidden_tree") or []
-        if forbidden and requirement_tree_met(forbidden, own_ctx):
-            errors.append(notice("engine.qualities.forbidden", name=term(str(spec["name"]))))
-        elif restriction is not None and spec["name"] not in restriction.get(str(spec.get("category")), []):
-            # The metatype's `<qualityrestriction>` (an A.I.'s): the qualities
-            # it lists are the only ones Chummer's SelectQuality offers.
-            errors.append(notice("engine.qualities.forbidden", name=term(str(spec["name"]))))
-    rules = current_rules()
+        _check_purchase_gate(spec, ctx, errors, restriction)
     positive_spend = max(0, positive_spend - max(0, int(free_positive_karma)))
     negative_gain = max(0, negative_gain - max(0, int(free_negative_karma)))
-    if negative_gain > rules.quality_karma_cap_negative and not career and not rules.quality_exceed_negative:
+    if not career:
+        _check_karma_caps(positive_spend, negative_gain, errors)
+    _check_metagenic(qualities, errors, warnings, career=career, report=report)
+    return negative_gain
+
+
+def _check_missing_pick(
+    spec: dict[str, Any], extras: dict[str, str], errors: list[Notice], warnings: list[Notice] | None
+) -> None:
+    """A pick the quality needs and the character has not made yet."""
+    if str(spec.get("extra_kind") or "") == "add_spirit":
+        count = max(1, int(spec.get("add_spirit_count") or 1))
+        if any(quality_addspirit_extra_key(spec["id"], idx) not in extras for idx in range(count)):
+            errors.append(notice("engine.qualities.pickAddSpirit", name=term(str(spec["name"]))))
+    elif quality_needs_extra(spec) and spec["id"] not in extras:
+        if _quality_has_selectside(spec):
+            errors.append(notice("engine.qualities.pickSide", name=term(str(spec["name"]))))
+        elif _quality_has_actiondicepool(spec):
+            errors.append(notice("engine.qualities.pickMatrixAction", name=term(str(spec["name"]))))
+        elif _quality_needs_spell_category(spec):
+            errors.append(notice("engine.qualities.pickSpellCategory", name=term(str(spec["name"]))))
+        elif _quality_needs_spirit_category(spec):
+            errors.append(notice("engine.qualities.pickSpirit", name=term(str(spec["name"]))))
+        elif str(spec.get("extra_kind") or "") == "weapon_skill":
+            errors.append(notice("engine.qualities.pickWeaponSkill", name=term(str(spec["name"]))))
+        elif _is_flavour_text_only(spec):
+            if warnings is not None:
+                warnings.append(notice("engine.qualities.pickText", name=term(str(spec["name"]))))
+        else:
+            errors.append(notice("engine.qualities.pickExtra", name=term(str(spec["name"]))))
+
+
+def _check_pick_values(spec: dict[str, Any], extras: dict[str, str], errors: list[Notice]) -> None:
+    """A pick that was made, but is not one the quality offers."""
+    optional = [critter_power_label(row) for row in spec.get("optional_powers") or []]
+    if optional:
+        picked = extras.get(quality_optional_power_extra_key(spec["id"]))
+        if not picked:
+            errors.append(notice("engine.qualities.pickOptionalPower", name=term(str(spec["name"]))))
+        elif picked not in optional:
+            errors.append(notice("engine.qualities.extraInvalid", name=term(str(spec["name"]))))
+    if _quality_needs_spirit_category(spec) and _quality_needs_spell_category(spec):
+        spirit_key = quality_spirit_category_extra_key(spec["id"])
+        if spirit_key not in extras:
+            errors.append(notice("engine.qualities.pickSpirit", name=term(str(spec["name"]))))
+    elif _quality_has_selectside(spec) and spec["id"] in extras and not _normalize_side(extras[spec["id"]]):
+        errors.append(notice("engine.qualities.sideInvalid", name=term(str(spec["name"]))))
+    options = list(spec.get("select_options") or [])
+    if not options:
+        for node in spec.get("bonus") or []:
+            if node.get("tag") != "selectquality":
+                continue
+            raw = (node.get("fields") or {}).get("quality") or node.get("value") or []
+            options = [str(item).strip() for item in (raw if isinstance(raw, list) else [raw]) if str(item).strip()]
+    if options and spec["id"] in extras and extras[spec["id"]] not in options:
+        if not _quality_has_actiondicepool(spec):
+            errors.append(notice("engine.qualities.extraInvalid", name=term(str(spec["name"]))))
+
+
+def _check_purchase_gate(
+    spec: dict[str, Any],
+    ctx: dict[str, Any],
+    errors: list[Notice],
+    restriction: dict[str, list[str]] | None,
+) -> None:
+    """`<required>` / `<forbidden>` and the metatype's quality restriction,
+    judged as the character stood before taking the quality."""
+    own_ctx = as_before_taking(ctx, spec)
+    if spec.get("required_tree") and not requirement_tree_met(spec.get("required_tree"), own_ctx):
+        errors.append(notice("engine.qualities.prereq", name=term(str(spec["name"]))))
+    forbidden = spec.get("forbidden_tree") or []
+    if forbidden and requirement_tree_met(forbidden, own_ctx):
+        errors.append(notice("engine.qualities.forbidden", name=term(str(spec["name"]))))
+    elif restriction is not None and spec["name"] not in restriction.get(str(spec.get("category")), []):
+        # The metatype's `<qualityrestriction>` (an A.I.'s): the qualities
+        # it lists are the only ones Chummer's SelectQuality offers.
+        errors.append(notice("engine.qualities.forbidden", name=term(str(spec["name"]))))
+
+
+def _check_karma_caps(positive_spend: int, negative_gain: int, errors: list[Notice]) -> None:
+    """Creation only: the two quality karma caps (25 each by default)."""
+    rules = current_rules()
+    if negative_gain > rules.quality_karma_cap_negative and not rules.quality_exceed_negative:
         errors.append(
             notice(
                 "engine.qualities.negativeCap", karma=negative_gain, limit=current_rules().quality_karma_cap_negative
             )
         )
-    if positive_spend > rules.quality_karma_cap_positive and not career and not rules.quality_exceed_positive:
+    if positive_spend > rules.quality_karma_cap_positive and not rules.quality_exceed_positive:
         errors.append(
             notice(
                 "engine.qualities.positiveCap", karma=positive_spend, limit=current_rules().quality_karma_cap_positive
             )
         )
 
-    # --- Metagenic / SURGE (Run Faster p.106) ------------------------------
+
+def _check_metagenic(
+    qualities: list[dict[str, Any]],
+    errors: list[Notice],
+    warnings: list[Notice] | None,
+    *,
+    career: bool,
+    report: dict[str, Any] | None,
+) -> None:
+    """Metagenic qualities under SURGE (Run Faster p.106)."""
     metagenic_limit = surge_metagenic_limit(qualities)
     mg_specs = [spec for spec in qualities if spec.get("metagenic") and spec.get("contributes_to_limit")]
     mg_pos = sum(int(spec["karma"]) for spec in mg_specs if int(spec["karma"]) > 0)
@@ -198,4 +238,3 @@ def apply_quality_rules(
             "balanced": bool(mg_balanced),
             "count": len(mg_specs),
         }
-    return negative_gain
