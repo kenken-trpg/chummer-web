@@ -95,7 +95,7 @@ def _import_settings(root: ET.Element, cat: CatalogDict) -> dict[str, Any]:
         try:
             extra["chargen_avail_max"] = int(max_avail)
         except ValueError:
-            pass
+            pass  # not a number: the settings' own limit stands
     if sources:
         extra["books"] = sources
     if not name:
