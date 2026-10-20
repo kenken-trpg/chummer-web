@@ -17,8 +17,9 @@ original book; `scripts/rr_resolve.py` lists the candidates and fills in the
 Chummer id. A row without an id is work in progress and changes nothing.
 See docs/role-and-roll.md.
 
-Not wired into `public_catalog` yet: the issues show up in the book list only
-once the UI can fold them away.
+`public_catalog` carries the stamps and `book_translations`, but not the
+issues themselves in `books`: they show up in the book list only once the UI
+can fold them away.
 """
 
 from __future__ import annotations
@@ -256,3 +257,17 @@ def stamp(catalog: dict[str, Any], entries: Iterable[Entry]) -> dict[str, dict[s
                 also_in.append({"source": e.book, "page": e.page})
             names.setdefault(e.book, {})[str(row.get("name") or "")] = e.ja
     return names
+
+
+def book_translations(catalog: dict[str, Any], codex_names: dict[str, str]) -> dict[str, dict[str, str]]:
+    """`stamp` with the shipped entries, minus the names the Codex prints.
+
+    The Codex is in the 日本語環境 every Japanese table starts from, so its
+    name is the one players know; an issue only names what it alone prints.
+    Over everything else — the community translations from upstream, this
+    app's own — the ticked issue wins: it is the licensed Japanese."""
+    names = stamp(catalog, load())
+    for table in names.values():
+        for english in codex_names:
+            table.pop(english, None)
+    return {book: table for book, table in names.items() if table}

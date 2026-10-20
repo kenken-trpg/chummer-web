@@ -40,20 +40,40 @@ export type TrFn = ((name: string) => string) & {
  * Catalog name -> display name. The Chummer data files are English, so the
  * translation table maps English -> Japanese and `en` is the identity: there is
  * no en-us_data.xml upstream because there is nothing to translate.
+ *
+ * `books` is the character's ticked books (empty or absent: all of them). A
+ * ticked Role&Roll issue's names win over the flat table, the newest issue
+ * first; an unticked one's are not used at all.
  */
 export function makeTr(
   catalog?:
-    | (Pick<Catalog, "translations" | "translations_by_kind"> & {
+    | (Pick<Catalog, "translations" | "translations_by_kind" | "book_translations"> & {
         skills?: Pick<Catalog["skills"], "spec_names">;
       })
     | null,
   locale: Locale = "ja",
+  books?: readonly string[],
 ): TrFn {
   if (locale === "en") return (name) => name;
-  const tr: TrFn = (name) => catalog?.translations?.[name] || name;
+  const issues = bookNames(catalog?.book_translations, books);
+  const tr: TrFn = (name) => issues[name] || catalog?.translations?.[name] || name;
   tr.byKind = catalog?.translations_by_kind;
   tr.specs = catalog?.skills?.spec_names;
   return tr;
+}
+
+/** The ticked books' names in one table. Book codes sort by issue (RR213 <
+ *  RR241), so a later issue overwrites an earlier one's name. */
+function bookNames(
+  byBook: Record<string, Record<string, string>> | undefined,
+  books: readonly string[] | undefined,
+): Record<string, string> {
+  const ticked = books && books.length > 0 ? new Set(books) : null;
+  const out: Record<string, string> = {};
+  for (const book of Object.keys(byBook || {}).sort()) {
+    if (!ticked || ticked.has(book)) Object.assign(out, byBook?.[book]);
+  }
+  return out;
 }
 
 /**

@@ -135,3 +135,16 @@ def test_resolve_fills_ids_from_the_english_name(tmp_path: Path, capsys):
     assert first.ids == (SPEED_DEMON,) and second.ids == ()
     out = capsys.readouterr().out
     assert "no English name" in out and "1 row(s) with ids, 1 without" in out
+
+
+def test_the_catalog_carries_names_per_issue_but_not_the_codex_ones(monkeypatch):
+    rows = [
+        _entry(),
+        _entry(line=3, source="RF", ja="お尋ね者", ids=(WANTED,)),
+    ]
+    monkeypatch.setattr(rr, "load", lambda path=rr.DATA: rows)
+    catalog = public_catalog()
+    # Wanted keeps the Codex's 賞金首 everywhere; the issue still lists the page
+    assert catalog["book_translations"] == {"RR215": {"Speed Demon": "スピードデーモン"}}
+    assert {"source": "RR215", "page": "88"} in _find(catalog, WANTED)[0]["also_in"]
+    assert "RR215" not in {book["code"] for book in catalog["books"]}
