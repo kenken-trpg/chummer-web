@@ -153,7 +153,7 @@ def test_contextual_ui_labels_match_glossary_terms() -> None:
     labels = [
         ("rules.ts", "sr.spirit.health", "Health", ""),
         ("engine.ts", "engine.spiritRole.health", "Health", ""),
-        ("rules.ts", "sr.skillcat.resonance", "Resonance", "技能"),
+        ("rules.ts", "sr.skillcat.resonance", "Resonance", "系能動技能"),
         ("sheet.ts", "sheet.resonance", "Resonance", ""),
     ]
     for filename, key, term, suffix in labels:

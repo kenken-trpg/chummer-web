@@ -50,7 +50,7 @@ describe("<SkillsTab>", () => {
     // the formula; see `bindRuns` in HelpTip
     expect(tip?.textContent).toContain("テストのダイス = 技能レーティング\u00a0+\u00a0関連能力値");
     expect(tip?.textContent).toContain("+2 ダイス");
-    expect(tip?.textContent).toContain("戦闘技能／関連能力値 AGI／作成上限 6");
+    expect(tip?.textContent).toContain("戦闘系能動技能／関連能力値 AGI／作成上限 6");
   });
 
   it("drops the −1 on a skill the Reflex Recorder covers, and says when defaulting is out", () => {
@@ -340,7 +340,7 @@ describe("active skill ordering", () => {
 
     expect(namesInOrder(container)).toEqual(["Blades", "Pistols", "Con", "Computer"]);
     const headings = [...container.querySelectorAll(".skill-cat")].map((el) => el.textContent);
-    expect(headings).toEqual(["戦闘技能", "対人技能", "技術技能"]);
+    expect(headings).toEqual(["戦闘系能動技能", "社交系能動技能", "技術系能動技能"]);
   });
 
   it("falls back to the rulebook order when the catalog predates active_categories", () => {

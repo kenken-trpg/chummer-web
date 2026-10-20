@@ -59,6 +59,15 @@ CURATED: dict[str, str] = {
     # vehicle modification, core rulebook p.467 (Japanese edition; Chummer's
     # p.461 is the English one); upstream has リガーインターフェイス
     "Rigger Interface": "リガー・コマンド・インターフェース",
+    # active-skill categories, as the core rulebook heads them (chumJA has
+    # 戦闘能動 and the like); the sheet's headings say the same
+    "Combat Active": "戦闘系能動技能",
+    "Physical Active": "身体系能動技能",
+    "Social Active": "社交系能動技能",
+    "Magical Active": "魔法系能動技能",
+    "Resonance Active": "共振力系能動技能",
+    "Technical Active": "技術系能動技能",
+    "Vehicle Active": "ヴィークル系能動技能",
     # spell categories (glossary lang.*Spells minus the 呪文 suffix used elsewhere)
     "Combat": "戦闘",
     "Detection": "探知",
