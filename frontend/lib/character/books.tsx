@@ -90,9 +90,14 @@ export function isBookEnabled(
   );
 }
 
-/** `source`, plus where else the item is printed: "CF / SRCX p.198". */
+/** `source`, plus where else the item is printed: "CF / SRCX p.198". A
+ *  reprint whose page is not known (a Role&Roll row typed in without one) is
+ *  just its book: "RF / RR229". */
 export function sourceText(item: Sourced): string {
-  return [item.source || "", ...(item.also_in || []).map((b) => `${b.source} p.${b.page || ""}`)]
+  return [
+    item.source || "",
+    ...(item.also_in || []).map((b) => (b.page ? `${b.source} p.${b.page}` : b.source)),
+  ]
     .filter(Boolean)
     .join(" / ");
 }
