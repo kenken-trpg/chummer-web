@@ -3,6 +3,52 @@
 Notable changes. Format follows [Keep a Changelog](https://keepachangelog.com/);
 self-hosters can pin to a tag instead of tracking `main`.
 
+## [0.5.11] — 2026-10-21
+
+### Changed
+
+- **複合体の効果時間 Instant を、呪文と同じ「即時」と表示するようにしました。**
+  これまでは「瞬間」でした。コアルールブックの効果時間は即時・維持・永続の 3 つで、
+  呪文と複合体で同じ語を使います。呪文のヘルプの「持続（瞬間／維持／永続）」も
+  「即時」に直しました。
+
+- **技能タブの見出しを、コアルールブックどおり「戦闘系能動技能」「身体系能動技能」などにしました。**
+  これまでは「肉体技能」「対人技能」「操縦技能」など、本と違う語が混じっていました。
+  社交・技術・魔法・共振力・ヴィークルも「〜系能動技能」です。購入一覧などに出る技能の分類名
+  （「戦闘能動」など）も同じ語にそろえました。
+
+- **ヴィークルの武器マウントとリガー・コマンド・インターフェースを、コアルールブック（p.467）の名前で表示するようにしました。**
+  武器マウントの大きさ Standard と Heavy は「武器マウント」「大型武器マウント」、改造の Rigger
+  Interface は「リガー・コマンド・インターフェース」（これまでは「リガーインターフェイス」）です。
+  HK 227・AK-97・FN HAR・RPK HMG は、本と同じく英字の名前のままです。
+
+- **The translation glossary lists a critter power's durations.** 常時 and
+  特殊 join 維持 and 永続, as the core rulebook gives them (p.401); the sheet
+  already showed these words.
+- **The translation glossary gives a critter power's Auto action as 自動,**
+  beside 複雑 and 単純, as the core rulebook prints it; the sheet already
+  showed 自動.
+- **The translation glossary heads a power's action 動作, not タイプ.** In the
+  core rulebook タイプ is the マナ／物理 field.
+
+- **The translation glossary gives a spell's Instant duration as 即時.** It
+  said インスタント, from the Foundry VTT translation; the core rulebook says
+  即時, which the sheet already showed.
+
+- **導師精霊の「長所」「短所」を、コアルールブックの見出しどおり「利点」「欠点」にしました。**
+  あわせて、利点の日本語を本の文にするという方針をやめ、利点・欠点とも自前の要約にしました。
+  本文を再録しないという NOTICE の約束に合わせるためです。本の文はまだ 1 件も入っていません。
+
+- **呪文の射程 LOS を、コアルールブックどおり「視界内」と表示するようにしました。**
+  これまでは「視認」（ヘルプでは「視線」）でした。範囲つきは「視界内（範囲）」です。
+  あわせて「接触（範囲）」「自身（範囲）」の括弧も全角にそろえました。
+
+### Fixed
+
+- **Commlink dongles cite Shadowrun Codex p.202, not p.200.** The attack,
+  stealth and stun dongles, the cable tap and the receiver are printed on
+  p.202, after the weapon modifications on p.201.
+
 ## [0.5.10] — 2026-10-20
 
 ### Fixed
