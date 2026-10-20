@@ -40,3 +40,11 @@ def test_codex_names_fill_only_missing_translations():
     assert tr["Bulk Modification (Full Arm/Full Leg)"] == "大容量化改造（腕/脚）"
     # an existing translation is kept
     assert codex.fill_translations({"Quiet": "静寂"}, {"Quiet": "クワイエット"}) == {"Quiet": "静寂"}
+
+
+def test_dongles_cite_page_202():
+    # the dongles follow the weapon mods (p.201) and share p.202 with the
+    # partial cyberskull; they were once stamped p.200
+    found = _stamped(public_catalog(), {})
+    dongle = found["d66c8cfa-2d00-4f5f-ac7a-eed5f5f7dde7"]
+    assert dongle["also_in"][0] == {"source": codex.CODE, "page": "202"}
