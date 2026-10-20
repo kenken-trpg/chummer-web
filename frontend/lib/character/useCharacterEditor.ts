@@ -301,7 +301,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     }
   }
 
-  const tr = makeTr(catalog, locale);
+  const tr = makeTr(catalog, locale, ch?.settings?.books);
   const trGroup = makeTrSkillGroup(catalog, locale);
   const t: TFn = makeT(catalog, locale);
 

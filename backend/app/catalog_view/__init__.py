@@ -19,7 +19,7 @@ Nothing here decides *what* the sections contain — they are pure functions of
 from __future__ import annotations
 
 from .. import ja_default
-from ..data_loader import catalog, codex
+from ..data_loader import catalog, codex, role_and_roll
 from . import chargen, gear, magic, matrix, vehicles, ware
 from .chargen import CORE_METATYPES
 
@@ -48,7 +48,11 @@ def public_catalog() -> dict:
     out["settings_presets"] = [ja_default.PRESET, *(raw.get("settings_presets") or [])]
     # Items the Shadowrun Codex reprints carry it as a second source; see
     # data_loader/codex.py.
-    out["translations"] = codex.fill_translations(raw["translations"], codex.stamp(out))
+    codex_names = codex.stamp(out)
+    out["translations"] = codex.fill_translations(raw["translations"], codex_names)
+    # Role&Roll issues reprint some too, but their names apply only while the
+    # issue is ticked, so they ride per book; see data_loader/role_and_roll.py.
+    out["book_translations"] = role_and_roll.book_translations(out, codex_names)
     out["translations_by_kind"] = raw.get("translations_by_kind") or {}
     out["text_translations"] = raw.get("text_translations") or {}
     out["ui_strings"] = raw["ui_strings"]

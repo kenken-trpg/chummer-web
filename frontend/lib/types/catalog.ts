@@ -564,6 +564,10 @@ export interface Catalog {
    *  their English (a mentor's advantage). Read through `makeTextTr`; see
    *  backend/data/ja_overrides/texts.json. */
   text_translations?: Record<string, string>;
+  /** `{book: {english: japanese}}` — the names a Role&Roll issue prints,
+   *  applied only while that issue is ticked. Read through `makeTr`; see
+   *  backend/app/data_loader/role_and_roll.py. */
+  book_translations?: Record<string, Record<string, string>>;
   /** `{locale: {key: text}}` — narrowed by the backend to what the app reads. */
   ui_strings: Record<string, Record<string, string>>;
   cyberware: WareCatalog;

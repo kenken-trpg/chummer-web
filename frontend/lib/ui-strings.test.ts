@@ -174,3 +174,36 @@ describe("makeTextTr", () => {
     expect(makeTextTr(texts, "en")("mentor", "ab-12", "advantage", "All: +2")).toBe("All: +2");
   });
 });
+
+describe("makeTr with Role&Roll issues", () => {
+  const withIssues = {
+    translations: { "Speed Demon": "スピード・デーモン", Chaser: "チェイサー" },
+    book_translations: {
+      RR215: { "Speed Demon": "スピードデーモン", "Grease Monkey": "機械いじり" },
+      RR220: { "Speed Demon": "速度狂" },
+    },
+  };
+
+  it("uses a ticked issue's names over the flat table", () => {
+    const tr = makeTr(withIssues, "ja", ["SR5", "RR215"]);
+    expect(tr("Speed Demon")).toBe("スピードデーモン");
+    expect(tr("Grease Monkey")).toBe("機械いじり");
+    expect(tr("Chaser")).toBe("チェイサー");
+  });
+
+  it("leaves an unticked issue's names out", () => {
+    const tr = makeTr(withIssues, "ja", ["SR5"]);
+    expect(tr("Speed Demon")).toBe("スピード・デーモン");
+    expect(tr("Grease Monkey")).toBe("Grease Monkey");
+  });
+
+  it("lets the newer issue win, and every issue count when no book is ticked", () => {
+    expect(makeTr(withIssues, "ja", ["RR220", "RR215"])("Speed Demon")).toBe("速度狂");
+    expect(makeTr(withIssues, "ja", [])("Grease Monkey")).toBe("機械いじり");
+    expect(makeTr(withIssues, "ja")("Speed Demon")).toBe("速度狂");
+  });
+
+  it("is still the identity in English", () => {
+    expect(makeTr(withIssues, "en", ["RR215"])("Speed Demon")).toBe("Speed Demon");
+  });
+});

@@ -91,7 +91,7 @@ export default function SharePage() {
   }
   if (!state) return <div className="main">{ui("share.loading")}</div>;
 
-  const tr = makeTr(state.catalog, locale);
+  const tr = makeTr(state.catalog, locale, state.character.settings?.books);
 
   return (
     <div className="app sheet-mode">
