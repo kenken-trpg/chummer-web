@@ -5,6 +5,7 @@ import { LifeModuleSkillOverflow } from "./LifeModuleSkillOverflow";
 import type { MsgKey } from "@/lib/i18n";
 import type { TabPanelProps } from "@/components/character/types";
 import { sourceBit } from "@/lib/character/format";
+import { HelpTip } from "@/components/help/HelpTip";
 import {
   lifeModuleAlreadyTaken,
   lifeModuleOrderPatch,
@@ -89,10 +90,18 @@ export function LifeModulesPanel({
       <p className="muted">{ui("life.note")}</p>
       {skillResult && (
         <p className="muted">
-          {ui("life.transfer.caps", {
-            active: skillResult.policy.active_cap,
-            knowledge: skillResult.policy.knowledge_cap,
-          })}
+          <HelpTip
+            label={ui("help.open", { label: ui("life.transfer.capsLabel") })}
+            lines={[
+              { label: ui("help.lifeModule.caps") },
+              { label: ui("help.lifeModule.overflow") },
+            ]}
+          >
+            {ui("life.transfer.caps", {
+              active: skillResult.policy.active_cap,
+              knowledge: skillResult.policy.knowledge_cap,
+            })}
+          </HelpTip>
         </p>
       )}
       {(ch.life_module_transfers || [])
@@ -123,12 +132,22 @@ export function LifeModulesPanel({
         ))}
       <div className="life-summary">
         <p>
-          {ui("life.total", {
-            karma: selected.reduce(
-              (sum, id) => sum + (rows.find((row) => row.id === id)?.karma || 0),
-              0,
-            ),
-          })}
+          <HelpTip
+            label={ui("help.open", { label: ui("life.totalLabel") })}
+            lines={[
+              { label: ui("help.lifeModule.karma") },
+              ...(freePositive || freeNegative
+                ? [{ label: ui("help.lifeModule.freeQuality") }]
+                : []),
+            ]}
+          >
+            {ui("life.total", {
+              karma: selected.reduce(
+                (sum, id) => sum + (rows.find((row) => row.id === id)?.karma || 0),
+                0,
+              ),
+            })}
+          </HelpTip>
         </p>
         <p>
           {ui("life.nuyen", {

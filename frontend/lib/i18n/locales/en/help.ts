@@ -138,6 +138,15 @@ export const EN_HELP = {
     "Loyalty is how much they care: what they will risk, and how hard they are to turn",
   "help.contact.cost":
     "At creation a contact costs Connection + Loyalty out of your contact points",
+  // Life Module panel (#565)
+  "help.lifeModule.karma":
+    "Module karma is what the modules cost together. It comes out of the same creation karma as everything else: 750 unless the settings give another pool",
+  "help.lifeModule.freeQuality":
+    "Free quality points: positive qualities cost no karma up to the Positive figure, and negative qualities give none back up to the Negative one",
+  "help.lifeModule.caps":
+    "Skill levels from modules count only up to these ratings. Your own purchases are priced from the rating the grants leave",
+  "help.lifeModule.overflow":
+    "What a module grants an individual skill past the cap is overflow. Move it to another skill linked to the same attribute; levels with no room anywhere are lost",
   "help.spell.statsLabel": "Spell",
   "help.spell.drain":
     "Drain is what the caster takes; F is the Force chosen when casting, so F\u22123 is Force \u2212 3 (minimum 2)",

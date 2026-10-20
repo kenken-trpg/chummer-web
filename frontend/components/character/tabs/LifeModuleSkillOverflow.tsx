@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { TabPanelProps } from "@/components/character/types";
+import { HelpTip } from "@/components/help/HelpTip";
 import type { LifeModuleTransfer } from "@/lib/types";
 import type { LifeModuleSkillPool } from "@/lib/types/life-modules";
 
@@ -51,7 +52,16 @@ export function LifeModuleSkillOverflow({ character: ch, ui, patch, pool, tr = (
 
   return (
     <fieldset disabled={ch.career || busy} className="life-overflow">
-      <legend>{ui("life.transfer.title", { name: tr(pool.source_name) })}</legend>
+      <legend>
+        <HelpTip
+          label={ui("help.open", {
+            label: ui("life.transfer.title", { name: tr(pool.source_name) }),
+          })}
+          lines={[{ label: ui("help.lifeModule.overflow") }]}
+        >
+          {ui("life.transfer.title", { name: tr(pool.source_name) })}
+        </HelpTip>
+      </legend>
       <p>
         {ui("life.transfer.source", {
           before: pool.before,
