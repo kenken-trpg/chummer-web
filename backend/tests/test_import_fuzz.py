@@ -171,7 +171,7 @@ def _read_or_refuse(raw: bytes) -> None:
         state.pop("_warnings", None)
         import_character(state)
     except NoticeError:
-        pass
+        pass  # refused with a reason: as good an outcome as reading it
 
 
 @_FUZZ
@@ -222,7 +222,7 @@ def test_a_damaged_json_character_is_accepted_or_fails_validation(payload: dict[
     try:
         import_character(payload)
     except (ValidationError, NoticeError):
-        pass
+        pass  # refused with a reason: as good an outcome as reading it
 
 
 # --- Foundry VTT actors -------------------------------------------------------
@@ -272,7 +272,7 @@ def test_a_damaged_fvtt_actor_is_read_or_refused_with_a_reason(actor: Any) -> No
         state, _warnings = fvtt_to_state(actor)
         import_character(state)
     except NoticeError:
-        pass
+        pass  # refused with a reason: as good an outcome as reading it
 
 
 _SETTINGS_SEED = (
@@ -307,7 +307,7 @@ def test_a_damaged_settings_file_is_read_or_refused(raw: bytes) -> None:
     try:
         parse_settings_upload(raw)
     except ValueError:
-        pass
+        pass  # refused with a reason: as good an outcome as reading it
 
 
 @pytest.mark.parametrize(
@@ -320,8 +320,10 @@ def test_a_damaged_settings_file_is_read_or_refused(raw: bytes) -> None:
         b"<?xml version='1.0' encoding='latin-1'?><character><name>\xe9</name></character>",
         b"<character>" + b"<qualities>" * 2000 + b"</qualities>" * 2000 + b"</character>",
         # found by the properties above: int(float("1e309")) is an OverflowError
-        b"<character><metatype>Human</metatype><attributes><attribute><name>BOD</name>"
-        b"<metatypemin>1e309</metatypemin><base>NaN</base></attribute></attributes></character>",
+        (
+            b"<character><metatype>Human</metatype><attributes><attribute><name>BOD</name>"
+            b"<metatypemin>1e309</metatypemin><base>NaN</base></attribute></attributes></character>"
+        ),
         # and an unknown metatype was a KeyError from deep inside the engine
         b"<character><metatype>Dracoform</metatype></character>",
     ],

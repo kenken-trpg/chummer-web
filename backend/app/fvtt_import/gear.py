@@ -40,7 +40,7 @@ def _import_gear(items: list[dict[str, Any]], st: dict[str, Any], warn: list[Not
                 if packs % max(1, _num(spec.get("costfor"))):
                     row["purchased_parts_units"] = round(packs * 4)
             except (ValueError, TypeError):
-                pass
+                pass  # an unreadable quantity reads as whole packs, the default
         if bucket == "programs":
             row["running"] = _tech(i).get("equipped", True) is not False
         elif spec.get("category") == "Cyberdeck Modules":

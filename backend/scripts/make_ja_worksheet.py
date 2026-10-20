@@ -122,7 +122,7 @@ def book_entries(bk: Book) -> dict[str, Entry]:
         try:
             entry.pages.add(int(str(page)))
         except (TypeError, ValueError):
-            pass
+            pass  # no page, or not a number: the entry is listed without one
 
     def walk(top: str, obj: object, inherited: str | None = None) -> None:
         if isinstance(obj, dict):
