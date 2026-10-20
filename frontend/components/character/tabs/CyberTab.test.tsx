@@ -510,3 +510,27 @@ it("excludes grades banned by the character's settings from the add picker", () 
   expect(screen.queryByRole("option", { name: /Alphaware/ })).toBeNull();
   expect(screen.getByRole("option", { name: /Standard/ })).toBeDefined();
 });
+
+it("explains the summary line, the limb average and what the Redliner boxes count", () => {
+  renderTab({
+    character: {
+      derived: {
+        essence: 4.5,
+        essence_lost_cyber: 1.5,
+        limb_replace: { count: 1, parts: 6, str: 4, agi: 4, meat_str: 3, meat_agi: 3 },
+      },
+    } as never,
+  });
+
+  expect(screen.getByRole("button", { name: "このタブの合計 の説明" })).toBeDefined();
+  expect(screen.getByText(/括弧内はサイバーウェアで減った分/)).toBeDefined();
+  expect(screen.getByRole("button", { name: "手足の平均 の説明" })).toBeDefined();
+  expect(screen.getByText(/6 か所を平均した値（切り上げ）/)).toBeDefined();
+  expect(screen.getByRole("button", { name: "Redliner に含める の説明" })).toBeDefined();
+  expect(screen.getByText(/既定の設定で数えるのは腕と脚だけ/)).toBeDefined();
+});
+
+it("has no limb-average tip while no cyberlimb is fitted", () => {
+  renderTab();
+  expect(screen.queryByRole("button", { name: "手足の平均 の説明" })).toBeNull();
+});
