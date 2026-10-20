@@ -158,6 +158,9 @@ RULEBOOK_ONLY = {
     # a spell's range, checked by the user (2026-10-20)
     "LOS": "視界内",
     "LOS (A)": "視界内（範囲）",
+    # a critter power's duration, beside 維持 and 永続 (core rulebook p.401)
+    "Duration Always": "常時",
+    "Duration Special": "特殊",
     # Data Trails has no Japanese edition and its Codex pass has not reached
     # the A.I.: a supplement's coinage stays English (docs/data-pipeline.md)
     "Home Node": "Home Node",

@@ -25,7 +25,7 @@ export const JA_RULES = {
   "sr.dur.sustained": "維持",
   "sr.dur.special": "特殊",
   /** Critter powers add a duration spells have no use for: the power is
-   *  simply always on (SR5 p.394). */
+   *  simply always on (SR5 p.401: 常時・維持・永続・特殊). */
   "sr.dur.always": "常時",
 
   /** The action a power takes, in the glossary's words (`Action Type …`):
