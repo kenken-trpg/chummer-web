@@ -567,7 +567,7 @@ chumJA（SR4 の訳）は別に数える。
 | [Element] Grenade | [元素] 手榴弾/[エレメント] グレネード | spells: SSP |
 | [Element] Wall | [元素] の壁/[エレメント] ウォール | spells: SG |
 
-## import_ja_from_refs.CURATED (89)
+## import_ja_from_refs.CURATED (96)
 
 | English | 日本語 | 品目 |
 |---|---|---|
@@ -592,6 +592,7 @@ chumJA（SR4 の訳）は別に数える。
 | Buddhism | 仏教 | traditions: SG |
 | Close Combat | 近接戦闘 | — |
 | Combat | 戦闘 | category: FA, HT, SG, SR5, SSP |
+| Combat Active | 戦闘系能動技能 | category: SR5 |
 | Companion Sprite | コンパニオン・スプライト | sprites: KC |
 | Conjuring | 召喚 | — |
 | Cracking | クラッキング | — |
@@ -626,6 +627,7 @@ chumJA（SR4 の訳）は別に数える。
 | Language | 言語 | — |
 | Little Red Riding Hood | 赤ずきん | mentors: SOTG |
 | Living Focus | 生体収束具 | powers: SGE, SSP |
+| Magical Active | 魔法系能動技能 | category: SR5 |
 | Manipulation | 操作 | category: BB, BTB, CA, FA, HT, SG, SR5, SS, SSP |
 | Metahuman | メタヒューマン | category: RF, SR5 |
 | Metavariant | メタバリアント | category: DT, RF |
@@ -637,22 +639,27 @@ chumJA（SR4 の訳）は別に数える。
 | Ork | オーク | metatypes: SR5 |
 | Outdoors | 野外 | — |
 | Peacemaker | ピースメーカー | mentors: SG |
+| Physical Active | 身体系能動技能 | category: SR5 |
 | Power Point | パワー・ポイント | metamagics: SR5 |
 | Professional | 職業 | — |
+| Resonance Active | 共振力系能動技能 | category: SR5 |
 | Rigger Interface | リガー・コマンド・インターフェース | vehicle_mods: SR5 |
 | Run and Gun | ラン＆ガン | — |
 | Services | 助力 | category: RF |
 | Shadowrun 5th Edition | シャドウラン 第5版 | — |
 | Smith | 鍛冶師 | mentors: SHB2 |
 | Social | 社交 | — |
+| Social Active | 社交系能動技能 | category: SR5 |
 | Sorcery | 魔術 | — |
 | Squirrel | リス | mentors: SAG |
 | Stag | 牡鹿 | mentors: FA |
 | Street | 街 | lifestyles: SR5 |
 | Tasking | タスキング | — |
+| Technical Active | 技術系能動技能 | category: SR5 |
 | Tide | 潮 | mentors: SAG |
 | Treasure Hunter | トレジャーハンター | mentors: SOTG |
 | Troll | トロール | metatypes: SR5 |
+| Vehicle Active | ヴィークル系能動技能 | category: SR5 |
 | Vodou | ヴォドゥン | traditions: SG |
 | War | 戦争 | mentors: FA |
 | Water Elemental | 水のエレメンタル | spirits: FA |
@@ -661,7 +668,7 @@ chumJA（SR4 の訳）は別に数える。
 | Wild Hunt | ワイルドハント | mentors: SAG |
 | Zoroastrianism | ゾロアスター教 | traditions: SG |
 
-## chumJA(SR4) category (56)
+## chumJA(SR4) category (49)
 
 | English | 日本語 | 品目 |
 |---|---|---|
@@ -674,7 +681,6 @@ chumJA（SR4 の訳）は別に数える。
 | Bodyware | ボディウェア | category: 2050, CF, HT, SR5, TCT |
 | Cars | 自動車 | category: 2050, KK, R5, SAG, SHB, SHB3, SOTG, SR5, SS, TCT |
 | Chemicals | 化学薬品 | category: 2050, CA, HT, SR5 |
-| Combat Active | 戦闘能動 | category: SR5 |
 | Commlink Accessories | コムリンク・アクセサリ | category: DT, KC, SR5 |
 | Cosmetic | 美容整形 | category: 2050, HT, R5, SR5, TCT |
 | Crossbows | クロスボウ | category: RG, SL, SR5 |
@@ -697,29 +703,23 @@ chumJA（SR4 の訳）は別に数える。
 | Hovercraft | ホバークラフト | category: SAG |
 | ID/Credsticks | ID/クレッドスティック | category: 2050, SR5 |
 | Laser Weapons | レーザー武器 | category: HT, LCD, RG |
-| Magical Active | 魔法能動 | category: SR5 |
 | Magical Compounds | 魔法化合物 | category: FA, PBG, SG |
 | Magical Supplies | 魔法用品 | category: 2050, CA, FA, HT, PGG, SG, SR5, SSP |
 | Medium Machine Guns | ミディアムマシンガン | category: RG, SR5 |
 | Nanocybernetics | ナノサイバーウェア | category: CF |
 | Negative | 不利 | category: AP, BB, BTB, CA, CF, DT, HT, KC, NF, R5, RF, RG, SAG, SFB, SFCR, SG, SL, SR5, TCT, TSG |
 | Paranormal | 超常生物 | category: SR5 |
-| Physical Active | 身体能動 | category: SR5 |
 | Positive | 有利 | category: AP, BB, BTB, CA, CF, DT, DTR, FA, HS, HT, KC, NF, R5, RF, RG, SASS, SFB, SG, SL, SR5, TCT |
 | RFID Tags | RFIDタグ | category: SR5 |
-| Resonance Active | 共振能動 | category: SR5 |
 | Rotorcraft | 回転翼機 | category: 2050, NF, R5, SAG, SFME, SHB3, SR5 |
 | Security Devices | セキュリティ機器 | category: 2050, SR5 |
 | Sensors | センサー | category: CA, NF, SR5 |
 | Shapeshifter | シェイプシフター | category: RF, SAG |
 | Skillsofts | スキルソフト | category: SR5 |
-| Social Active | 社交能動 | category: SR5 |
-| Technical Active | 技術能動 | category: SR5 |
 | Tools | 工具 | category: 2050, NF, RF, SR5 |
 | Toxins | 毒物 | category: 2050, BB, BTB, HT, PZG, SR5, SRM0803, SRM0804, SS |
 | Trucks | トラック | category: 2050, KK, NF, R5, SAG, SHB, SHB3, SLG7, SOTG, SR5, SS |
 | Unarmed | 素手 | category: HT, SL, SR5 |
-| Vehicle Active | ヴィークル能動 | category: SR5 |
 | Weakness | 弱点 | — |
 
 ## chumJA(SR4) name (131)

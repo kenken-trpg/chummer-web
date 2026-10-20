@@ -91,15 +91,15 @@ export const JA_RULES = {
 
   // Active-skill category headings, in the rulebook's chapter order.
   "sr.know.street": "街",
-  "sr.skillcat.combat": "戦闘技能",
-  "sr.skillcat.physical": "肉体技能",
-  "sr.skillcat.social": "対人技能",
-  "sr.skillcat.magical": "魔法技能",
+  "sr.skillcat.combat": "戦闘系能動技能",
+  "sr.skillcat.physical": "身体系能動技能",
+  "sr.skillcat.social": "社交系能動技能",
+  "sr.skillcat.magical": "魔法系能動技能",
   "sr.skillcat.pseudomagical": "準魔法技能",
-  "sr.skillcat.resonance": "共振力技能",
-  "sr.skillcat.technical": "技術技能",
+  "sr.skillcat.resonance": "共振力系能動技能",
+  "sr.skillcat.technical": "技術系能動技能",
 
-  "sr.skillcat.vehicle": "操縦技能",
+  "sr.skillcat.vehicle": "ヴィークル系能動技能",
   "sr.spirit.combat": "戦闘",
   "sr.spirit.detection": "探知",
   "sr.spirit.health": "身体",
