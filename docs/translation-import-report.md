@@ -6,7 +6,7 @@
 （`app/data_loader/codex.py`）。ここに載るのは `data.json` の全エントリで、出どころの表ごとに分けてある。
 訳の表は英語名だけで引くので、「品目」の列には、その名前を持つ品目の種類と本をすべて並べる。
 
-- オーバーレイ合計: **552 件**
+- オーバーレイ合計: **555 件**
 - 日本語版のある本: RG, SR5, SRCX（コデックスが再録した品目も日本語版ありと数える）
 
 ## 日本語版の無い品目にだけ当たる自前の訳 (246)
@@ -316,6 +316,13 @@ chumJA（SR4 の訳）は別に数える。
 | Vindicator 200-Round Belt | ヴィンディケーター 200(ベルト) | weapon_accessories: RG |
 | YNT Softweave Armor | YNT ソフトウィーブ・アーマー | armor_mods: RG |
 
+## ja_curated_sr5.SR5 (2)
+
+| English | 日本語 | 品目 |
+|---|---|---|
+| Heavy [SR5] | 大型武器マウント | weapon_mounts: SR5 |
+| Standard [SR5] | 武器マウント | weapon_mounts: SR5 |
+
 ## ja_curated_entities.ENTITIES (134)
 
 | English | 日本語 | 品目 |
@@ -560,7 +567,7 @@ chumJA（SR4 の訳）は別に数える。
 | [Element] Grenade | [元素] 手榴弾/[エレメント] グレネード | spells: SSP |
 | [Element] Wall | [元素] の壁/[エレメント] ウォール | spells: SG |
 
-## import_ja_from_refs.CURATED (88)
+## import_ja_from_refs.CURATED (89)
 
 | English | 日本語 | 品目 |
 |---|---|---|
@@ -632,6 +639,7 @@ chumJA（SR4 の訳）は別に数える。
 | Peacemaker | ピースメーカー | mentors: SG |
 | Power Point | パワー・ポイント | metamagics: SR5 |
 | Professional | 職業 | — |
+| Rigger Interface | リガー・コマンド・インターフェース | vehicle_mods: SR5 |
 | Run and Gun | ラン＆ガン | — |
 | Services | 助力 | category: RF |
 | Shadowrun 5th Edition | シャドウラン 第5版 | — |
@@ -829,7 +837,7 @@ chumJA（SR4 の訳）は別に数える。
 | Sense Link | 感覚連結 | — |
 | Shadow Cloak | 影の衣 | — |
 | Shedim | シェディム | spirits: SG |
-| Silence | 静寂 | spells: SR5 |
+| Silence | 静寂 | buyable_critter_powers: SG / spells: SR5 |
 | Siren | サイレン | vehicle_mods: SS |
 | Skill Enhancement | 技能強化 | — |
 | Smuggling Compartment | 密輸用容器 | cyberware: SR5 / vehicle_mods: R5 |
@@ -856,13 +864,13 @@ chumJA（SR4 の訳）は別に数える。
 
 | 本 | 書名 | 日本語版 | 上流 | data.json | コデックス | 英語のまま |
 |---|---|---|---|---|---|---|
-| SR5 | Shadowrun 5th Edition | あり | 930 | 93 | 0 | 64 |
+| SR5 | Shadowrun 5th Edition | あり | 931 | 96 | 0 | 62 |
 | RF | Run Faster |  | 17 | 18 | 6 | 720 |
 | CF | Chrome Flesh |  | 5 | 29 | 15 | 495 |
 | RG | Run and Gun | あり | 427 | 34 | 0 | 14 |
 | R5 | Rigger 5.0 |  | 7 | 17 | 0 | 362 |
 | 2050 | Shadowrun 2050 (German-Only) |  | 14 | 23 | 0 | 341 |
-| SG | Street Grimoire |  | 136 | 112 | 0 | 102 |
+| SG | Street Grimoire |  | 137 | 113 | 0 | 102 |
 | FA | Forbidden Arcana |  | 4 | 38 | 0 | 233 |
 | KC | Kill Code |  | 1 | 36 | 3 | 171 |
 | HT | Hard Targets |  | 10 | 34 | 11 | 147 |
@@ -874,14 +882,14 @@ chumJA（SR4 の訳）は別に数える。
 | SSP | Shadow Spells |  | 1 | 62 | 0 | 11 |
 | KK | Krime Katalog |  | 10 | 4 | 0 | 57 |
 | SOTG | Datapuls SOTA 2080 (German-Only) |  | 6 | 19 | 0 | 46 |
+| DTR | Dark Terrors |  | 2 | 4 | 0 | 62 |
 | NF | No Future |  | 2 | 11 | 0 | 53 |
+| HS | Howling Shadows |  | 12 | 9 | 0 | 41 |
 | PBG | Parabotany (German-Only) |  | 1 | 1 | 0 | 45 |
 | BTB | Better Than Bad |  | 0 | 7 | 2 | 37 |
 | GH3 | Gun Heaven 3 |  | 11 | 0 | 0 | 34 |
 | BB | Bullets & Bandages |  | 0 | 13 | 0 | 31 |
-| DTR | Dark Terrors |  | 0 | 4 | 0 | 36 |
 | TCT | The Complete Trog |  | 3 | 6 | 0 | 30 |
-| HS | Howling Shadows |  | 0 | 9 | 0 | 22 |
 | LCD | Lockdown |  | 0 | 4 | 0 | 27 |
 | SHB | Schattenhandbuch (German-Only) |  | 3 | 2 | 0 | 23 |
 | PGG | Parageology (German-Only) |  | 0 | 1 | 0 | 23 |
