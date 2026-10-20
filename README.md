@@ -266,7 +266,7 @@ make check       # CI と同じ: ruff / pytest / mypy / tsc / eslint / prettier 
 
 ```
 backend/    FastAPI + ルールエンジン（app/engine/compute の compute() が中心）。ステートレス
-frontend/   Next.js 15 App Router + React 19。キャラは IndexedDB
+frontend/   Next.js 16 App Router + React 19。キャラは IndexedDB
 deploy/     Caddyfile + supervisord.conf（コンテナ内のプロセス構成）
 docs/       作成手順の案内・アーキテクチャ・データパイプライン・デプロイ・ルール追加手順
 ```
@@ -277,6 +277,18 @@ docs/       作成手順の案内・アーキテクチャ・データパイプ�
 - [利用マニュアル](https://kenken-trpg.github.io/chummer-web/) — 実画面のスクリーンショット付きの使い方。
   アプリからはフッターの「使い方」。実体は [`frontend/public/manual/`](frontend/public/manual/) で、`/manual/` として配信されます
 - [`docs/life-modules.md`](docs/life-modules.md) — ライフモジュール方式の操作・試験対応の範囲
+- 作成方式・種族ごとの対応状況（Chummer との照合結果と残る項目）:
+  [`docs/ai-chargen.md`](docs/ai-chargen.md)（A.I.）・
+  [`docs/shapeshifter-chargen.md`](docs/shapeshifter-chargen.md)（シェイプシフター）・
+  [`docs/centaur-chargen.md`](docs/centaur-chargen.md)（ケンタウロス）
+- [`docs/role-and-roll.md`](docs/role-and-roll.md) — Role&Roll の各号を 1 冊の本として選ぶ仕組みと訳語の優先順位
+- [`docs/cyberdeck-construction.md`](docs/cyberdeck-construction.md) — デッキのプログラム・モジュール・電子改造
+- [`docs/quality-levels.md`](docs/quality-levels.md) — Lv 付き資質の扱いと Chummer5a での確認結果
+- [`docs/translation-glossary.md`](docs/translation-glossary.md) — 日本語訳の用語集（自動生成）。
+  関連する報告は [`docs/translation-banned-terms.md`](docs/translation-banned-terms.md)・
+  [`docs/translation-glossary-mismatches.md`](docs/translation-glossary-mismatches.md)・
+  [`docs/translation-import-report.md`](docs/translation-import-report.md)
+- [`docs/TODO.md`](docs/TODO.md) — 開発候補と保留中の項目
 - [`docs/architecture.md`](docs/architecture.md) — データフロー、`<bonus>` ノードと `effects`、API 一覧
 - [`docs/deploy.md`](docs/deploy.md) — Docker、Cloud Run / Fly / Cloudflare Containers / 自宅 + Cloudflare Tunnel
 - [`docs/adding-rules.md`](docs/adding-rules.md) — 新しい modifier / アイテム項目 / タブ / 検証の追加レシピ
