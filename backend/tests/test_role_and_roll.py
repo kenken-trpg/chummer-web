@@ -42,7 +42,9 @@ def test_one_book_per_issue_none_of_them_chummers():
     codes = [book["code"] for book in rr.books()]
     assert codes[0] == "RR213" and codes[-1] == "RR241" and len(codes) == 29
     assert all(book["group"] == "RR" for book in rr.books())
-    assert not set(codes) & {book["code"] for book in public_catalog()["books"]}
+    chummers = {book["code"] for book in public_catalog()["books"] if not book.get("group")}
+    assert not set(codes) & chummers
+    assert public_catalog()["books"][-29:] == rr.books()
 
 
 def test_the_shipped_entries_have_no_problems():
@@ -147,4 +149,3 @@ def test_the_catalog_carries_names_per_issue_but_not_the_codex_ones(monkeypatch)
     # Wanted keeps the Codex's 賞金首 everywhere; the issue still lists the page
     assert catalog["book_translations"] == {"RR215": {"Speed Demon": "スピードデーモン"}}
     assert {"source": "RR215", "page": "88"} in _find(catalog, WANTED)[0]["also_in"]
-    assert "RR215" not in {book["code"] for book in catalog["books"]}

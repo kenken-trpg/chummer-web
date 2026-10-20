@@ -42,8 +42,9 @@ def public_catalog() -> dict:
     out["weapon_ranges"] = raw.get("weapon_ranges") or {}
     # The settings pulldown: which rulebooks exist, and Chummer's own presets
     # over them. Not a domain section — nothing here filters by book; the
-    # client narrows its pick lists against `Character.settings.books`.
-    out["books"] = [*(raw.get("books") or []), codex.BOOK]
+    # client narrows its pick lists against `Character.settings.books`. The
+    # Role&Roll issues come last, as one folded group.
+    out["books"] = [*(raw.get("books") or []), codex.BOOK, *role_and_roll.books()]
     # This app's own 日本語環境 first — it is what a new character starts under.
     out["settings_presets"] = [ja_default.PRESET, *(raw.get("settings_presets") or [])]
     # Items the Shadowrun Codex reprints carry it as a second source; see
