@@ -3,6 +3,28 @@
 Notable changes. Format follows [Keep a Changelog](https://keepachangelog.com/);
 self-hosters can pin to a tag instead of tracking `main`.
 
+## [0.5.9] — 2026-10-20
+
+### Added
+
+- **Role&Roll issues as rulebooks.** Some issues of the Japanese magazine
+  Role&Roll translate, under licence, parts of SR5 supplements that have no
+  Japanese edition. Vol.213–241 now sit at the end of the settings' book list,
+  folded under "Role&Roll" with how many are ticked. A ticked issue makes the
+  items it reprints buyable even with their own supplement off, and shows
+  their Japanese names — only while it is ticked, newest issue first; an item
+  the Shadowrun Codex also prints keeps the Codex's name. A reprint whose page
+  is not known shows its book alone ("RF / RR229").
+
+- **Role&Roll vol.229: Oni and Koborokuru.** The first data: with the issue
+  ticked, the two Run Faster metavariants read オニ and コロボックル.
+
+- **Typing in an issue.** Rows go into
+  `backend/data/role_and_roll/entries.tsv` as read off the magazine; the
+  English name and the original book may be left empty, and
+  `scripts/rr_resolve.py` finds the Chummer entry, or lists candidates. See
+  `docs/role-and-roll.md`.
+
 ## [0.5.8] — 2026-10-19
 
 ### Changed
