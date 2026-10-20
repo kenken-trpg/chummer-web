@@ -3,6 +3,16 @@
 Notable changes. Format follows [Keep a Changelog](https://keepachangelog.com/);
 self-hosters can pin to a tag instead of tracking `main`.
 
+## [0.5.10] — 2026-10-20
+
+### Fixed
+
+- **The "?" on the skills tab opens again.** Its box was cut off by the
+  cell that shortens long skill names, so hovering showed nothing; it also
+  wraps on a phone instead of running off the edge. The attribute rows get
+  their one-line layout back (name, slider and total side by side), lost in
+  the content-visibility change.
+
 ## [0.5.9] — 2026-10-20
 
 ### Added
