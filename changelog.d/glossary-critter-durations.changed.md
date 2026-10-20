@@ -4,3 +4,5 @@
 - **The translation glossary gives a critter power's Auto action as 自動,**
   beside 複雑 and 単純, as the core rulebook prints it; the sheet already
   showed 自動.
+- **The translation glossary heads a power's action 動作, not タイプ.** In the
+  core rulebook タイプ is the マナ／物理 field.

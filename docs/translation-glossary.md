@@ -25,7 +25,7 @@ sr5eja 列: `＝` = 採用と一致 / `≠` = 採用と相違。sr5eja の訳語
 | Accuracy | 精度 | 精度 | ＝ |  |
 | Acid | 強酸 | 強酸 |  |  |
 | Action | アクション |  | ＝ |  |
-| Action Type | タイプ |  | ＝ |  |
+| Action Type | 動作 |  | ≠ | 手動確定 |
 | Action Type Auto | 自動 |  |  | 手動確定 |
 | Action Type Complex | 複雑 |  | ＝ |  |
 | Action Type Free | 簡易 |  | ＝ |  |

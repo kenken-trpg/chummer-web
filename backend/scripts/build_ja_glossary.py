@@ -136,6 +136,9 @@ ADOPTED_OVERRIDES = {
     # A spell's Instant duration; sr5eja's インスタント is not the book's word.
     # Checked by the user (2026-10-20). Complex forms' 瞬間 is a separate row.
     "duration instant": "即時",
+    # The book heads a power's action 動作; its タイプ is the マナ/物理 field.
+    # Checked by the user (2026-10-20).
+    "action type": "動作",
 }
 
 # Rulebook terms neither reference translates, so they have no row to override.
