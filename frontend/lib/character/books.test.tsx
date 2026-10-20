@@ -70,6 +70,10 @@ describe("also_in (the Shadowrun Codex reprints)", () => {
 
   it("names the reprint's page beside the original book", () => {
     expect(sourceText(reprinted[0])).toBe("CF / SRCX p.198");
+    // a page not known yet is left out rather than shown as a bare "p."
+    expect(sourceText({ source: "RF", also_in: [{ source: "RR229", page: "" }] })).toBe(
+      "RF / RR229",
+    );
     expect(sourceText({ source: "SR5" })).toBe("SR5");
   });
 });

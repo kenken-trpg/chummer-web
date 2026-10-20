@@ -12,7 +12,8 @@ def _stamped(node, found):
         for child in node:
             _stamped(child, found)
     elif isinstance(node, dict):
-        if node.get("also_in"):
+        # the Codex's stamps only: a Role&Roll issue reprints some rows too
+        if any(a.get("source") == codex.CODE for a in node.get("also_in") or []):
             found[node.get("id")] = node
         for child in node.values():
             _stamped(child, found)
@@ -29,6 +30,7 @@ def test_every_listed_item_is_found_in_the_catalog():
     found = _stamped(public_catalog(), {})
     assert set(codex.ITEMS) <= set(found)
     assert {row["name"] for row in found.values()} >= set(codex.NAMED)
+    # the Codex is stamped first, so it leads any Role&Roll issue
     assert all(row["also_in"][0]["source"] == codex.CODE for row in found.values())
 
 
