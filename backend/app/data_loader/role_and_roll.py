@@ -13,8 +13,9 @@ folding them into the global `translations`.
 The data is typed in by hand from the magazine, into one TSV
 (`backend/data/role_and_roll/entries.tsv`, columns `COLUMNS`). The English
 name is often not printed, so a row may start with only its Japanese name and
-original book; `scripts/rr_resolve.py` lists the candidates and fills in the
-Chummer id. A row without an id is work in progress and changes nothing.
+original book, or with neither; `scripts/rr_resolve.py` lists the candidates
+and fills in the Chummer id (and the 出典原書, when the English name finds
+it). A row without an id is work in progress and changes nothing.
 See docs/role-and-roll.md.
 
 `public_catalog` lists the issues in `books`, with `group` set so the book
@@ -183,20 +184,29 @@ def sections(category: str, catalog: dict[str, Any]) -> tuple[str, ...]:
     return CATEGORIES.get(category.strip()) or tuple(k for k in catalog if k not in _SKIP)
 
 
+def _shapeshifter_form(row: dict[str, Any]) -> bool:
+    """A shapeshifter's human form: Chummer lists one per metavariant under
+    each shapeshifter, named after it (11 called Oni). A magazine prints the
+    metavariant, never these."""
+    return str(row.get("parent") or "").startswith("Shapeshifter")
+
+
 def candidates(entry: Entry, catalog: dict[str, Any]) -> list[tuple[str, dict[str, Any]]]:
     """(section, row) for every catalog row this entry could be: its 出典原書's
-    rows in its 分類's sections, by English name too when it has one. The
-    same row can sit in several places (a quality also listed under a
-    metatype), so each id appears once."""
-    book = source_code(entry.source, catalog)
+    rows (any book's, when 出典原書 is empty) in its 分類's sections, by
+    English name too when it has one. The same row can sit in several places
+    (a quality also listed under a metatype), so each id appears once."""
+    book = source_code(entry.source, catalog) if entry.source else None
     english = entry.english.casefold()
     seen: set[str] = set()
     out = []
     for section in sections(entry.category, catalog):
         for row in _rows(catalog.get(section)):
-            if row.get("source") != book or str(row["id"]) in seen:
+            if (entry.source and row.get("source") != book) or str(row["id"]) in seen:
                 continue
             if english and str(row.get("name") or "").casefold() != english:
+                continue
+            if _shapeshifter_form(row):
                 continue
             seen.add(str(row["id"]))
             out.append((section, row))
@@ -221,8 +231,9 @@ def problems(entries: Iterable[Entry], catalog: dict[str, Any]) -> list[str]:
             out.append(f"{where}: vol.{e.vol} has another URL on an earlier line")
         if not e.ja:
             out.append(f"{where}: 和訳名 is empty")
-        book = source_code(e.source, catalog)
-        if book is None:
+        # empty is allowed: the magazine often does not say
+        book = source_code(e.source, catalog) if e.source else None
+        if e.source and book is None:
             out.append(f"{where}: unknown 出典原書 {e.source!r}")
         for id_ in e.ids:
             row = by_id.get(id_)

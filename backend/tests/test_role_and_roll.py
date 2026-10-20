@@ -149,3 +149,43 @@ def test_the_catalog_carries_names_per_issue_but_not_the_codex_ones(monkeypatch)
     # Wanted keeps the Codex's 賞金首 everywhere; the issue still lists the page
     assert catalog["book_translations"] == {"RR215": {"Speed Demon": "スピードデーモン"}}
     assert {"source": "RR215", "page": "88"} in _find(catalog, WANTED)[0]["also_in"]
+
+
+ONI = "0950b72c-f8b7-4a7d-9680-b1eab3f714e5"  # RF, the ork metavariant
+
+
+def test_an_empty_source_is_not_a_problem():
+    assert rr.problems([_entry(source="")], public_catalog()) == []
+
+
+def test_a_metavariant_without_its_shapeshifter_forms():
+    # Chummer also has an "Oni" under each of 11 shapeshifters
+    oni = _entry(source="RF", category="メタタイプ", english="Oni", ids=())
+    assert [row["id"] for _, row in rr.candidates(oni, public_catalog())] == [ONI]
+
+
+def test_resolve_finds_the_source_when_it_is_empty(tmp_path: Path, capsys):
+    path = tmp_path / "entries.tsv"
+    rows = [
+        _entry(source="", category="メタタイプ", ja="オニ", english="Oni", ids=()),
+        _entry(line=3, source="", ja="なにか", ids=()),
+    ]
+    rr.save(rows, path)
+    assert rr_resolve.main(["--file", str(path), "--write"]) == 0
+    oni, other = rr.load(path)
+    assert (oni.source, oni.ids) == ("RF", (ONI,))
+    assert (other.source, other.ids) == ("", ())
+    assert "no English name and no 出典原書" in capsys.readouterr().out
+
+
+def test_resolve_asks_for_the_source_when_the_name_is_in_two_books(tmp_path: Path, capsys):
+    catalog = public_catalog()
+    by_name: dict[str, set[str]] = {}
+    for row in rr._rows(catalog["gear"]):
+        by_name.setdefault(row["name"], set()).add(row["source"])
+    name = next(n for n, books in sorted(by_name.items()) if len(books) > 1)
+    path = tmp_path / "entries.tsv"
+    rr.save([_entry(source="", category="装備", english=name, ids=())], path)
+    assert rr_resolve.main(["--file", str(path), "--write"]) == 0
+    assert rr.load(path)[0].ids == ()
+    assert "fill in 出典原書" in capsys.readouterr().out
