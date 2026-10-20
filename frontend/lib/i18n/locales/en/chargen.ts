@@ -43,6 +43,7 @@ export const EN_CHARGEN = {
   "life.transfer.add": "Add transfer",
   "life.transfer.failed": "Could not save. Check the input and retry.",
   "life.transfer.caps": "Module caps: active skills {active}; knowledge skills {knowledge}.",
+  "life.transfer.capsLabel": "Module caps",
   "life.transfer.orphan": "A transfer of {ranks} levels has no matching acquisition or overflow.",
   "life.transfer.loss": "{count} levels of {name} are not granted because of the cap.",
   "life.moveEarlier": "Earlier in this stage",
@@ -97,6 +98,7 @@ export const EN_CHARGEN = {
   "life.note":
     "Choose a history for each stage. Further education and real life can repeat. Attribute and skill inputs are purchased ratings; module grants are added to the computed results.",
   "life.total": "Module karma: {karma}",
+  "life.totalLabel": "Module karma",
   "life.nuyen": "Module bonus funds: ¥{amount}",
   "life.freeQuality": "Free quality points: Positive {positive} / Negative {negative}",
   "life.pick": "Choose a module",

@@ -43,6 +43,7 @@ export const JA_CHARGEN = {
   "life.transfer.add": "この配分を追加",
   "life.transfer.failed": "保存できませんでした。入力を確認して再試行してください。",
   "life.transfer.caps": "経歴付与の上限: 能動技能 {active}／知識技能 {knowledge}。",
+  "life.transfer.capsLabel": "経歴付与の上限",
   "life.transfer.orphan": "対応する経歴または超過分がない配分（{ranks}レベル）があります。",
   "life.transfer.loss": "「{name}」は上限により{count}レベルが付与されません。",
   "life.moveEarlier": "この段階で1つ前へ",
@@ -97,6 +98,7 @@ export const JA_CHARGEN = {
   "life.note":
     "Choose a history for each stage. Further education and real life can repeat. Attribute and skill inputs are purchased ratings; module grants are added to the computed results.",
   "life.total": "Module karma: {karma}",
+  "life.totalLabel": "Module karma",
   "life.nuyen": "Module bonus funds: ¥{amount}",
   "life.freeQuality": "Free quality points: Positive {positive} / Negative {negative}",
   "life.pick": "Choose a module",

@@ -128,6 +128,17 @@ export const JA_HELP = {
     "コネ値：相手の人脈と力。高いほど良い品・良い情報に手が届く（SR5 p.388）",
   "help.contact.loyalty": "忠実値：相手がどれだけ親身か。高いほど無理を聞き、裏切りにくい",
   "help.contact.cost": "作成時のカルマはコネ値＋忠実値で、コンタクト値から払う",
+  // The module totals stay English, as the panel around them is (#565); the
+  // caps and the overflow follow the life.transfer.* lines they sit beside,
+  // which are Japanese
+  "help.lifeModule.karma":
+    "Module karma is what the modules cost together. It comes out of the same creation karma as everything else: 750 unless the settings give another pool",
+  "help.lifeModule.freeQuality":
+    "Free quality points: positive qualities cost no karma up to the Positive figure, and negative qualities give none back up to the Negative one",
+  "help.lifeModule.caps":
+    "経歴が付与する技能のレベルは、この値までしか数えない。手動の購入は、付与後の値から価格を計算する",
+  "help.lifeModule.overflow":
+    "経歴が個別の技能に付与したうち、上限を超えた分が超過分。同じ関連能力値の別の技能へ移せる。移せる技能に空きが無ければ、残りは失われる",
   "help.spell.statsLabel": "呪文データ",
   "help.spell.drain":
     "ドレイン：術者が受ける反動。F は唱えるときに選ぶフォースで、F−3 ならフォース −3（最低 2）",

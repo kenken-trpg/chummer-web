@@ -137,3 +137,12 @@ it("keeps invalid rows repairable and career history read-only", () => {
   expect(remove.closest("fieldset")?.disabled).toBe(true);
   expect(screen.queryByRole("combobox")).toBeNull();
 });
+
+it("says what an overflow is, and keeps that open to a career character", () => {
+  setup({}, true);
+  const tip = screen.getByRole("button", { name: /の超過分 の説明$/ }) as HTMLButtonElement;
+  // the legend's contents are not disabled with its fieldset
+  expect(tip.disabled).toBe(false);
+  expect(tip.matches(":disabled")).toBe(false);
+  expect(screen.getByText(/上限を超えた分が超過分/)).toBeDefined();
+});

@@ -115,11 +115,18 @@ it("prevents changing history in career mode", () => {
   for (const control of [
     ...screen.getAllByRole("combobox"),
     ...screen.getAllByRole("radio"),
-    ...screen.getAllByRole("button"),
+    // a "?" only reads, so it stays open to a career character
+    ...screen
+      .getAllByRole("button")
+      .filter((b) => !b.getAttribute("aria-label")?.endsWith("の説明")),
   ])
     expect((control as HTMLInputElement).disabled || control.closest("fieldset")?.disabled).toBe(
       true,
     );
+  expect(screen.getByRole("button", { name: "Module karma の説明" })).toHaveProperty(
+    "disabled",
+    false,
+  );
 });
 it("shows English requirements while inspecting a candidate whose metatype does not match", () => {
   const patch = setup({ metatype: "Human" });
@@ -470,4 +477,31 @@ it("prevents a second Corporate version but allows a different career", () => {
   fireEvent.click(screen.getByRole("radio", { name: /Bounty Hunter/ }));
   fireEvent.click(screen.getByRole("button", { name: "Add this module" }));
   expect(patch).toHaveBeenCalledWith({ life_modules: ["hacker", "hunter"] });
+});
+
+it("explains the module karma, and the free quality points only when a module gives some", () => {
+  setup();
+  fireEvent.click(screen.getByRole("button", { name: "Module karma の説明" }));
+  expect(screen.getByText(/same creation karma as everything else/)).toBeDefined();
+  expect(screen.queryByText(/Free quality points: positive qualities cost no karma/)).toBeNull();
+});
+
+it("explains the skill caps beside the line that names them", () => {
+  setup({
+    derived: {
+      life_module_skills: {
+        version: 2,
+        policy: { version: "2", active_cap: 7, knowledge_cap: 9 },
+        free_active: {},
+        free_knowledge: {},
+        native_languages: [],
+        groups: [],
+        pools: [],
+        losses: [],
+      },
+    } as never,
+  });
+  expect(screen.getByRole("button", { name: "経歴付与の上限 の説明" })).toBeDefined();
+  expect(screen.getByText(/この値までしか数えない/)).toBeDefined();
+  expect(screen.getByText(/同じ関連能力値の別の技能へ移せる/)).toBeDefined();
 });
