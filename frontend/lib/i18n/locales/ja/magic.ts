@@ -164,6 +164,6 @@ export const JA_MAGIC = {
   "mentor.label": "導師精霊",
 
   "mentor.chooseTarget": "対象を選択",
-  "mentor.advantage": "長所：{text}",
-  "mentor.disadvantage": "短所：{text}",
+  "mentor.advantage": "利点：{text}",
+  "mentor.disadvantage": "欠点：{text}",
 } as const;

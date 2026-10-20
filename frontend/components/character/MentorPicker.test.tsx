@@ -108,9 +108,9 @@ describe("MentorPicker", () => {
         onPatch={vi.fn()}
       />,
     );
-    expect(screen.getByText("長所：全員：追跡テストにダイス+2")).toBeTruthy();
+    expect(screen.getByText("利点：全員：追跡テストにダイス+2")).toBeTruthy();
     // no summary written yet: Chummer's English, under the Japanese label
-    expect(screen.getByText("短所：Dogs are loyal to a fault.")).toBeTruthy();
+    expect(screen.getByText("欠点：Dogs are loyal to a fault.")).toBeTruthy();
   });
 
   it("names a choice through the translation table", () => {
