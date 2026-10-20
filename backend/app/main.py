@@ -54,7 +54,7 @@ app = FastAPI(
     lifespan=_lifespan,
     title="Chummer Web",
     description="Unofficial Shadowrun 5e character creator. Not affiliated with Catalyst Game Labs.",
-    version="0.5.9",
+    version="0.5.10",
 )
 
 app.state.limiter = limiter
