@@ -6,7 +6,9 @@ docs/role-and-roll.md. For each row with no id yet:
 
 - 英語（わかれば） filled in: the 出典原書's entries of that name (in the
   分類's sections) are its ids. Several are all taken — one name can be
-  several Chummer entries, one per size or grade. `--write` saves them.
+  several Chummer entries, one per size or grade. With 出典原書 empty every
+  book is searched, and the one the entries come from is filled in too.
+  `--write` saves them.
 - 英語 empty: the candidates are listed, the entries whose current
   translation is the 和訳名 first. Copy the right one's English name into the
   row and run again.
@@ -51,17 +53,24 @@ def resolve(entries: list[rr.Entry], catalog: dict[str, Any], limit: int) -> lis
             out.append(e)
             continue
         found = rr.candidates(e, catalog)
-        head = f"line {e.line}: vol.{e.vol} p.{e.page} {e.ja} ({e.source} / {e.category or '分類なし'})"
+        head = f"line {e.line}: vol.{e.vol} p.{e.page} {e.ja} ({e.source or '出典不明'} / {e.category or '分類なし'})"
         if e.english:
-            if found:
+            books = sorted({str(row.get("source")) for _, row in found})
+            if len(books) > 1:
+                print(f"{head}: {e.english!r} is in {', '.join(books)}; fill in 出典原書")
+                out.append(e)
+            elif found:
                 ids = tuple(str(row["id"]) for _, row in found)
-                print(f"{head} -> {e.english}: {len(ids)} id(s)")
-                out.append(replace(e, ids=ids))
+                print(f"{head} -> {e.english} ({books[0]}): {len(ids)} id(s)")
+                out.append(replace(e, ids=ids, source=e.source or books[0]))
             else:
                 print(f"{head}: no {e.source} entry is named {e.english!r}")
                 out.append(e)
             continue
         out.append(e)
+        if not e.source:
+            print(f"{head}: no English name and no 出典原書; fill in either")
+            continue
         if rr.source_code(e.source, catalog) is None:
             print(f"{head}: unknown 出典原書")
             continue
