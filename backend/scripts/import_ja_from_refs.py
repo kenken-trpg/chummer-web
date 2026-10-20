@@ -56,6 +56,9 @@ CURATED: dict[str, str] = {
     "Foci": "収束具",
     "Living Focus": "生体収束具",  # chumJA gives 生体集束具
     "Power Point": "パワー・ポイント",  # the metamagic, core rulebook p.332; upstream has パワーポイント
+    # vehicle modification, core rulebook p.467 (Japanese edition; Chummer's
+    # p.461 is the English one); upstream has リガーインターフェイス
+    "Rigger Interface": "リガー・コマンド・インターフェース",
     # spell categories (glossary lang.*Spells minus the 呪文 suffix used elsewhere)
     "Combat": "戦闘",
     "Detection": "探知",
