@@ -17,9 +17,9 @@ original book; `scripts/rr_resolve.py` lists the candidates and fills in the
 Chummer id. A row without an id is work in progress and changes nothing.
 See docs/role-and-roll.md.
 
-`public_catalog` carries the stamps and `book_translations`, but not the
-issues themselves in `books`: they show up in the book list only once the UI
-can fold them away.
+`public_catalog` lists the issues in `books`, with `group` set so the book
+list folds them under one title, and carries their names as
+`book_translations`.
 """
 
 from __future__ import annotations

@@ -890,6 +890,16 @@ input[type="search"] {
   max-height: 40vh;
   overflow-y: auto;
 }
+.settings-picker .book-group {
+  margin-top: 8px;
+}
+.settings-picker .book-group > summary {
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+.settings-picker .book-group .book-grid {
+  margin-top: 4px;
+}
 .settings-picker .book-check {
   display: flex;
   gap: 6px;

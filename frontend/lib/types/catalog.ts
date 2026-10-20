@@ -401,6 +401,9 @@ export interface BookInfo {
    *  `translations`, where "Lockdown" is also a program. English when the
    *  book has no Japanese edition. Absent from an older catalog. */
   name_ja?: string;
+  /** Set on the books the list folds under one title: the issues of the
+   *  Role&Roll magazine are `"RR"`. */
+  group?: string;
 }
 
 /** A ruleset the user can pick from the settings pulldown. */
