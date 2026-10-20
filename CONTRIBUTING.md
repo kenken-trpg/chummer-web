@@ -49,7 +49,7 @@ backend/                FastAPI + the rules engine (Python 3.11+)
   scripts/fetch_chummer_data.py   downloads Chummer/data + lang files
   tests/                          pytest
   data/ja_overrides/              git-tracked JP translation overlay
-frontend/               Next.js 15 (App Router) + React 19 + TypeScript
+frontend/               Next.js 16 (App Router) + React 19 + TypeScript
   app/page.tsx          top-level editor shell + state/patch plumbing
   app/share/            read-only share view (state rides in the URL fragment)
   components/character/  sidebar, shared pickers, tabs/ (one file per tab)

@@ -245,7 +245,7 @@ make check       # the same as CI: ruff / pytest / mypy / tsc / eslint / prettie
 
 ```
 backend/    FastAPI + the rules engine (compute() in app/engine/compute is the core). Stateless
-frontend/   Next.js 15 App Router + React 19. Characters live in IndexedDB
+frontend/   Next.js 16 App Router + React 19. Characters live in IndexedDB
 deploy/     Caddyfile + supervisord.conf (the in-container process layout)
 docs/       Character creation walkthrough, architecture, data pipeline, deployment, how to add a rule
 ```
@@ -259,10 +259,23 @@ docs/       Character creation walkthrough, architecture, data pipeline, deploym
 - [`docs/data-pipeline.md`](docs/data-pipeline.md) — fetch → vendor → translation overlay
 - [`docs/i18n.md`](docs/i18n.md) — the two UI-string layers and how to add a locale (written in Japanese)
 - [`docs/share-link.md`](docs/share-link.md) — the read-only share link (`/share#c=…`): format and validation
+- [`docs/exports.md`](docs/exports.md) — the export guide: what each format carries, how to import it, known limits
+- [`docs/life-modules.md`](docs/life-modules.md) — the life-module method: how it works and how much of it is covered
+- Where each creation path stands (checked against Chummer, and what is left):
+  [`docs/ai-chargen.md`](docs/ai-chargen.md) (A.I.),
+  [`docs/shapeshifter-chargen.md`](docs/shapeshifter-chargen.md) (shapeshifters),
+  [`docs/centaur-chargen.md`](docs/centaur-chargen.md) (centaurs)
+- [`docs/role-and-roll.md`](docs/role-and-roll.md) — Role&Roll issues as books you tick, and whose translation wins
+- [`docs/cyberdeck-construction.md`](docs/cyberdeck-construction.md) — deck programs, modules and electronic modifications
+- [`docs/quality-levels.md`](docs/quality-levels.md) — rated qualities, and what Chummer5a does with them
+- [`docs/translation-glossary.md`](docs/translation-glossary.md) — the Japanese glossary (generated), with the
+  [`banned-terms`](docs/translation-banned-terms.md), [`mismatches`](docs/translation-glossary-mismatches.md)
+  and [`import`](docs/translation-import-report.md) reports
+- [`docs/TODO.md`](docs/TODO.md) — development candidates and what is on hold
 - [`docs/plans/`](docs/plans/) — working notes from refactors that have already landed (history, not current state)
 
-Most of `docs/` is written in English; `docs/chargen.md`, `docs/i18n.md`,
-`docs/share-link.md` and the `docs/translation-*` reports are in Japanese. Code, comments and commit messages are
+Most of `docs/` is written in Japanese; `docs/architecture.md`, `docs/deploy.md`,
+`docs/adding-rules.md` and `docs/data-pipeline.md` are in English. Code, comments and commit messages are
 in English.
 
 Contributions are welcome. For a rules change, cite the SR5 page number (or the supplement), and where the book is ambiguous, match Chummer5a's behaviour.
