@@ -98,6 +98,11 @@ export const JA_HELP = {
   "help.quality.positive": "有利な資質はカルマで買う。作成時の上限は 25 カルマ分（設定で変わる）",
   "help.quality.negative": "不利な資質はカルマが戻るが、戻せるのも 25 カルマ分まで",
   "help.quality.career": "キャリア中の買い足し・買い取りはカルマ 2 倍が標準（SR5 p.72）",
+  "help.qualityRow.of": "{name}のカルマ",
+  "help.qualityRow.karma": "有利な資質はこのカルマを払い、不利な資質はこのカルマが戻る",
+  "help.qualityRow.base":
+    "表の値と違うのは、データにある条件（種族や他の資質など）を満たして価格が変わったため",
+  "help.qualityRow.free": "付帯：種族や他の品に付いてくるので、カルマはかからず、ここでは外せない",
   "help.vehicle.statsLabel": "ステータス",
   "help.vehicle.stats":
     "HND 操縦値／SPD 最高速度／ACC 加速値／BOD 強靱力／ARM 装甲値／PLT パイロット／SNR センサー",

@@ -4,6 +4,13 @@ import { QualitiesTab } from "@/components/character/tabs/QualitiesTab";
 import { BooksProvider } from "@/lib/character/books";
 import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 
+/** A row's text as it reads on screen: the "?" and its closed tooltip left out. */
+function shownText(el: Element): string {
+  const copy = el.cloneNode(true) as Element;
+  copy.querySelectorAll(".help-tip-button, [role=tooltip]").forEach((n) => n.remove());
+  return copy.textContent ?? "";
+}
+
 const pickerCatalog = makeCatalog({
   qualities: [
     { id: "amb", name: "Ambidextrous", karma: 4, category: "Positive", source: "SR5" },
@@ -325,7 +332,31 @@ describe("<QualitiesTab> a cost moved by a condition", () => {
     const owned = [...document.querySelectorAll(".quality-item")].find((el) =>
       el.textContent?.includes("Blind"),
     )!;
-    expect(owned.textContent).toContain("カルマ -5（条件で変動・表では -15）");
+    expect(shownText(owned)).toContain("カルマ -5（条件で変動・表では -15）");
+  });
+
+  it("says in the karma's tip which way it goes and why the price moved", () => {
+    renderTab({
+      character: {
+        quality_ids: ["blind"],
+        derived: {
+          qualities: [
+            {
+              id: "blind",
+              name: "Blind",
+              karma: -5,
+              karma_base: -15,
+              category: "Negative",
+              source: "RF",
+            },
+          ] as never,
+        },
+      },
+    });
+    expect(screen.getByRole("button", { name: "Blindのカルマ の説明" })).toBeDefined();
+    expect(screen.getByText(/不利な資質はこのカルマが戻る/)).toBeDefined();
+    expect(screen.getByText(/データにある条件/)).toBeDefined();
+    expect(screen.queryByText(/付帯：種族や他の品に付いてくる/)).toBeNull();
   });
 });
 
@@ -586,7 +617,7 @@ describe("<QualitiesTab> leveled qualities", () => {
       target: { value: "3" },
     });
     const row = document.querySelector(".quality-list .quality-item")!;
-    expect(row.textContent).toContain("カルマ 18");
+    expect(shownText(row)).toContain("カルマ 18");
     fireEvent.click(row.querySelector("button")!);
     expect(patch).toHaveBeenCalledWith(
       expect.objectContaining({ quality_ids: ["magic", "magic", "magic"] }),
@@ -613,12 +644,12 @@ describe("<QualitiesTab> leveled qualities", () => {
     });
     expect(screen.getByText("Magic Resistance Lv3")).toBeDefined();
     const row = document.querySelector(".card > .quality-item")!;
-    expect(row.textContent).toContain("カルマ 18");
+    expect(shownText(row)).toContain("カルマ 18");
     fireEvent.change(screen.getByRole("combobox", { name: "Magic Resistanceの所持Lv" }), {
       target: { value: "2" },
     });
     expect(patch).toHaveBeenCalledWith({ quality_ids: ["magic", "magic", "other"] });
-    fireEvent.click(row.querySelector("button")!);
+    fireEvent.click(within(row as HTMLElement).getByRole("button", { name: "削除" }));
     expect(patch).toHaveBeenCalledWith({
       quality_ids: ["other"],
       quality_extras: { other: "keep" },

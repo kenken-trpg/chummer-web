@@ -104,6 +104,12 @@ export const EN_HELP = {
   "help.quality.negative": "Negative qualities give karma back, also capped at 25 karma worth",
   "help.quality.career":
     "In career play, buying or buying off a quality costs double karma (SR5 p.72)",
+  "help.qualityRow.of": "{name}'s karma",
+  "help.qualityRow.karma": "A positive quality costs this karma; a negative one gives it back",
+  "help.qualityRow.base":
+    "It differs from the table because a condition in the data (metatype, another quality…) moves the price",
+  "help.qualityRow.free":
+    "Attached: it comes with the metatype or another item, costs no karma and cannot be removed here",
   "help.vehicle.statsLabel": "Stats",
   "help.vehicle.stats":
     "HND handling / SPD speed / ACC acceleration / BOD body / ARM armor / PLT pilot / SNR sensor",
