@@ -390,7 +390,6 @@ td.rowhead {
   box-shadow: inset 0 0 0 1px var(--accent);
 }
 
-.attr-row,
 /* A category of active skills is ~10 rows the size of this box. Off screen,
    the browser skips laying it out and painting it until it is scrolled to —
    the tab is ~5,000 nodes and most of them start below the fold. */
@@ -398,6 +397,16 @@ td.rowhead {
   content-visibility: auto;
   contain-intrinsic-size: auto 480px;
 }
+/* `content-visibility: auto` also clips painting to the block, which cut off
+   the HelpTip of a category's last rows. A block with an open tip is on
+   screen anyway, so it gives up nothing by being drawn in full. */
+.skill-cat-block:has(.help-tip:hover, .help-tip:focus-within, .help-tip[data-open]) {
+  content-visibility: visible;
+}
+/* #364 slipped the content-visibility block in between `.attr-row,` and this
+   rule, which left the attribute rows without a grid: name, slider and karma
+   box stacked one under another. */
+.attr-row,
 .skill-row {
   display: grid;
   grid-template-columns: 80px 1fr 88px;
@@ -410,11 +419,30 @@ td.rowhead {
    each row is its own grid, so a content-sized column would start every
    slider at a different x, while a range shrinks by the same amount in every
    row and keeps them aligned. A name that still outgrows the track is
-   truncated rather than wrapped — they all carry a title. */
+   truncated rather than wrapped — they all carry a title.
+   The truncation sits on the name itself, not on this cell: an `overflow:
+   hidden` cell also clipped the HelpTip box hanging below it, so every "?"
+   in the list opened onto nothing. Whatever follows the name (a note, a
+   button) drops to the next line instead of being cut off with it. */
 .skill-row > span:first-child {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
   white-space: nowrap;
+}
+.skill-row > span:first-child > .help-tip {
+  min-width: 0;
+  max-width: 100%;
+}
+.skill-row .help-tip-label {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.skill-row .help-tip-button {
+  flex: none;
 }
 .skill-row {
   grid-template-columns: minmax(120px, 168px) 1fr 88px;
@@ -1929,6 +1957,9 @@ input[type="search"] {
   color: var(--text);
   font-size: 0.8rem;
   font-weight: normal;
+  /* a label that must stay on one line (a skill name) sets `nowrap`, and the
+     box inherited it: its lines ran out past the edge of a phone */
+  white-space: normal;
   box-shadow: 0 4px 12px rgb(0 0 0 / 40%);
 }
 .help-tip:hover .help-tip-body,
