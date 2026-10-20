@@ -103,7 +103,8 @@ def stamp(node: Any, names: dict[str, str] | None = None) -> dict[str, str]:
         if "source" in node and "id" in node:
             hit = _entry(node)
             if hit:
-                node["also_in"] = [{"source": CODE, "page": hit[0]}]
+                # Appended, not assigned: a Role&Roll issue can reprint it too.
+                node.setdefault("also_in", []).append({"source": CODE, "page": hit[0]})
                 names[str(node.get("name") or "")] = hit[1]
         for key, child in node.items():
             if key not in ("translations", "translations_by_kind", "ui_strings"):
