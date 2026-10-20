@@ -24,10 +24,6 @@ export const JA_RULES = {
   "sr.dur.permanent": "永続",
   "sr.dur.sustained": "維持",
   "sr.dur.special": "特殊",
-  /** Complex forms say 瞬間 where spells say 即時 for the same "Instant"
-   *  duration. Kept apart rather than unified under cover of a translation
-   *  pass — collapsing them changes what the sheet reads. */
-  "sr.dur.instantCf": "瞬間",
   /** Critter powers add a duration spells have no use for: the power is
    *  simply always on (SR5 p.394). */
   "sr.dur.always": "常時",

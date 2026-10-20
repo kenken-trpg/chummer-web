@@ -24,7 +24,6 @@ export const EN_RULES = {
   "sr.dur.permanent": "Permanent",
   "sr.dur.sustained": "Sustained",
   "sr.dur.special": "Special",
-  "sr.dur.instantCf": "Instant",
 
   "sr.dur.always": "Always",
   "sr.action.auto": "Auto",
