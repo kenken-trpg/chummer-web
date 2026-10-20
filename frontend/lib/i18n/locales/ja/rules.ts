@@ -13,11 +13,11 @@ export const JA_RULES = {
 
   "sr.type.physical": "物理",
   "sr.range.touch": "接触",
-  "sr.range.touchArea": "接触(範囲)",
-  "sr.range.los": "視認",
-  "sr.range.losArea": "視認(範囲)",
+  "sr.range.touchArea": "接触（範囲）",
+  "sr.range.los": "視界内",
+  "sr.range.losArea": "視界内（範囲）",
   "sr.range.self": "自身",
-  "sr.range.selfArea": "自身(範囲)",
+  "sr.range.selfArea": "自身（範囲）",
 
   "sr.range.special": "特殊",
   "sr.dur.instant": "即時",

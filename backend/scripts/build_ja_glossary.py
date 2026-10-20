@@ -152,6 +152,9 @@ RULEBOOK_ONLY = {
     "Spell Defense": "呪文防御",
     "Cold Sim": "コールド・シム",  # core rulebook p.231, beside ホット・シム
     "Matrix Condition Monitor": "マトリックス・コンディション・モニター",  # core rulebook p.229
+    # a spell's range, checked by the user (2026-10-20)
+    "LOS": "視界内",
+    "LOS (A)": "視界内（範囲）",
     # Data Trails has no Japanese edition and its Codex pass has not reached
     # the A.I.: a supplement's coinage stays English (docs/data-pipeline.md)
     "Home Node": "Home Node",
