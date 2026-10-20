@@ -150,6 +150,19 @@ export const EN_HELP = {
   "help.ware.essence": "ESS \u2212n is the essence this piece costs, after its grade multiplier",
   "help.ware.capacity":
     "Capacity is how much this piece can hold, shown as used / maximum \u2014 cyberlimbs and housings have it",
+  "help.cyber.statsLabel": "This tab's totals",
+  "help.cyber.essence":
+    "Essence is what is left in all, and the figure in brackets is the cyberware part of it",
+  "help.cyber.spent":
+    "The spent ¥ is every purchase, gear and qualities included, not this tab alone",
+  "help.cyber.limbLabel": "Limb average",
+  "help.cyber.limb":
+    "With cyberlimbs fitted, the body's STR / AGI is the average over six locations — both arms, both legs, torso and skull — rounded up. A location without a cyberlimb counts at the meat value",
+  "help.cyber.limbCount":
+    "Limb average is cyber locations / locations averaged; meat is the body's own STR / AGI",
+  "help.cyber.redliner":
+    "What Redliner (CF p.55) and Cyberseeker do depends on how many cyberlimbs are counted. By default only arms and legs count",
+  "help.cyber.redlinerParts": "Tick these to count a cyber torso or skull as well",
   "help.bio.statsLabel": "This tab's totals",
   "help.bio.what":
     "Bioware: cultured tissue grown and implanted; it spends essence just as cyberware does (SR5 p.459)",

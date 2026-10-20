@@ -138,6 +138,16 @@ export const JA_HELP = {
   "help.ware.essence": "ESS −n はこの品が食うエッセンス。等級の倍率がかかった後の値",
   "help.ware.capacity":
     "キャパシティ：この品の中に入れられる量（使用／上限）。サイバー手足や筐体が持つ",
+  "help.cyber.statsLabel": "このタブの合計",
+  "help.cyber.essence": "Essence は残っている合計で、括弧内はサイバーウェアで減った分だけ",
+  "help.cyber.spent": "消費¥はこのタブ分ではなく、装備や資質も含めた支出の合計",
+  "help.cyber.limbLabel": "手足の平均",
+  "help.cyber.limb":
+    "サイバー手足を付けると、体全体の STR／AGI は両腕・両脚・胴・頭蓋の 6 か所を平均した値（切り上げ）になる。サイバーでない部位は肉体の値で数える",
+  "help.cyber.limbCount": "リム平均はサイバーの部位数／平均する部位数、肉は肉体の STR／AGI",
+  "help.cyber.redliner":
+    "資質 Redliner（CF p.55）と Cyberseeker の効果は、数えたサイバー手足の本数で決まる。既定の設定で数えるのは腕と脚だけ",
+  "help.cyber.redlinerParts": "胴・頭蓋のサイバーも数えるなら、ここにチェックを入れる",
   "help.bio.statsLabel": "このタブの合計",
   "help.bio.what":
     "バイオウェア：培養した生体組織を体に植える。サイバーウェアと同じようにエッセンスを消費する（SR5 p.459）",

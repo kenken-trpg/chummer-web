@@ -7,6 +7,7 @@ import { WareRow } from "@/components/character/WareRow";
 import { modularVehicleHosts } from "@/lib/character/ware";
 import { ModularMountSelect } from "@/components/character/ModularMountSelect";
 import { WareHeldGear } from "@/components/character/WareHeldGear";
+import { HelpTip } from "@/components/help/HelpTip";
 import { useWareCompact } from "@/lib/character/useWareCompact";
 import { limbQualityLine } from "@/lib/character/format";
 import { dropRemovedWarePicks } from "@/lib/character/quality";
@@ -84,6 +85,12 @@ export function CyberTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelP
   return (
     <div className="card">
       <p className="muted">
+        <HelpTip
+          label={ui("help.open", { label: ui("help.cyber.statsLabel") })}
+          lines={[{ label: ui("help.cyber.essence") }, { label: ui("help.cyber.spent") }]}
+        >
+          {ui("help.cyber.statsLabel")}
+        </HelpTip>{" "}
         {ui("cyber.summary", {
           count: d.cyberware?.length || 0,
           essence: d.essence,
@@ -98,6 +105,12 @@ export function CyberTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelP
       ) : null}
       {d.limb_replace ? (
         <p className="muted">
+          <HelpTip
+            label={ui("help.open", { label: ui("help.cyber.limbLabel") })}
+            lines={[{ label: ui("help.cyber.limb") }, { label: ui("help.cyber.limbCount") }]}
+          >
+            {ui("help.cyber.limbLabel")}
+          </HelpTip>{" "}
           {ui("cyber.limbReplace", {
             str: d.limb_replace.str,
             agi: d.limb_replace.agi,
@@ -110,7 +123,12 @@ export function CyberTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelP
       ) : null}
       {d.limb_quality ? <p className="muted">{limbQualityLine(d.limb_quality, ui)}</p> : null}
       <div className="option-row">
-        <span>{ui("cyber.redliner")}</span>
+        <HelpTip
+          label={ui("help.open", { label: ui("cyber.redliner") })}
+          lines={[{ label: ui("help.cyber.redliner") }, { label: ui("help.cyber.redlinerParts") }]}
+        >
+          {ui("cyber.redliner")}
+        </HelpTip>
         <label>
           <input
             type="checkbox"
