@@ -41,6 +41,54 @@ test.describe("help tips", () => {
     await expect(button).toHaveAttribute("aria-expanded", "false");
   });
 
+  // The skills list truncates long names, and the cell that did it clipped
+  // the box too: every "?" there opened onto nothing. A category is also a
+  // `content-visibility` block, which clips its last rows' boxes the same way.
+  // Visibility alone does not catch either — the clipped box is "visible" —
+  // so ask what is actually drawn at its corners.
+  test("are drawn, not clipped, on the skills tab", async ({ page }) => {
+    await page.goto("/");
+    await waitForEditor(page);
+    await page.getByRole("button", { name: "技能", exact: true }).click();
+    const row = page.locator(".skill-cat-block .skill-row");
+    for (const target of [row.first(), row.last()]) {
+      const button = target.locator(".help-tip-button").first();
+      // Focus, not hover: the categories above settle from their estimated
+      // height as they render, which shifts the page under a parked mouse.
+      // A focused tip stays open while the box itself is scrolled into view
+      // — `elementFromPoint` sees nothing past the viewport.
+      await button.focus();
+      const tip = page.locator(`[id="${await button.getAttribute("aria-describedby")}"]`);
+      await expect(tip).toBeVisible();
+      await tip.evaluate((el) => el.scrollIntoView({ block: "center" }));
+      const drawn = await tip.evaluate((el) => {
+        const r = el.getBoundingClientRect();
+        return [
+          [r.left + 4, r.top + 4],
+          [r.right - 4, r.bottom - 4],
+        ].every(([x, y]) => el.contains(document.elementFromPoint(x, y)));
+      });
+      expect(drawn).toBe(true);
+    }
+  });
+
+  test("a skill's box wraps inside a phone-width screen", async ({ page }) => {
+    // the name cell is `nowrap`, and the box used to inherit it
+    await page.setViewportSize({ width: 390, height: 780 });
+    await page.goto("/");
+    await waitForEditor(page);
+    await page.getByRole("button", { name: "技能", exact: true }).click();
+    const button = page.locator(".skill-cat-block .skill-row .help-tip-button").first();
+    await button.scrollIntoViewIfNeeded();
+    await button.click();
+    const tip = page.locator(`[id="${await button.getAttribute("aria-describedby")}"]`);
+    await expect(tip).toBeVisible();
+    const overflow = await tip.evaluate((el) => el.scrollWidth - el.clientWidth);
+    expect(overflow).toBeLessThanOrEqual(0);
+    const box = (await tip.boundingBox())!;
+    expect(box.x + box.width).toBeLessThanOrEqual(390);
+  });
+
   test("stay inside a phone-width screen and print nothing", async ({ page }) => {
     for (const width of [390, 320]) {
       await page.setViewportSize({ width, height: 780 });
