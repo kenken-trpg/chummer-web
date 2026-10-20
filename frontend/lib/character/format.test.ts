@@ -78,7 +78,7 @@ describe("cfDuration / cfTarget", () => {
   it("maps complex-form duration codes", () => {
     expect(cfDuration("P", testUi)).toBe("永続");
     expect(cfDuration("S", testUi)).toBe("維持");
-    expect(cfDuration("I", testUi)).toBe("瞬間");
+    expect(cfDuration("I", testUi)).toBe("即時");
     expect(cfDuration("weird", testUi)).toBe("weird");
   });
   it("maps known targets, passes unknown through", () => {
