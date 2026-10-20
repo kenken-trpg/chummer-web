@@ -133,6 +133,9 @@ ADOPTED_OVERRIDES = {
     "cost": "価格",  # the book's gear tables, not just vehicles
     "hot sim": "ホット・シム",  # 中黒, as the core rulebook prints it (p.231)
     "astral initiative": "アストラル・イニシアティブ",  # 中黒, core rulebook p.320
+    # A spell's Instant duration; sr5eja's インスタント is not the book's word.
+    # Checked by the user (2026-10-20). Complex forms' 瞬間 is a separate row.
+    "duration instant": "即時",
 }
 
 # Rulebook terms neither reference translates, so they have no row to override.
