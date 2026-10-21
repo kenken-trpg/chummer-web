@@ -7,6 +7,7 @@ so removing a module and recomputing cannot leave or duplicate its benefits.
 from __future__ import annotations
 
 from copy import deepcopy
+from dataclasses import dataclass, field
 from typing import Any
 from uuid import NAMESPACE_URL, uuid5
 
@@ -37,6 +38,40 @@ def prepare(ctx: Ctx) -> None:
     if ctx.state.build_method != "LifeModule":
         return
     ctx.life["original"] = {key: deepcopy(getattr(ctx.state, key)) for key in FIELDS}
+    chosen = _chosen_modules(ctx)
+    taken = {row["stage"] for row in chosen}
+    for stage in STAGES:
+        if stage not in taken and not ctx.career:
+            ctx.err("engine.life.missingStage", stage=stage)
+    _resolve_quality_levels(ctx, chosen)
+    grants = _Grants()
+    for row in chosen:
+        _apply_module(ctx, row, grants)
+    _spread_group_bonuses(ctx, grants.bonuses)
+    _raise_ratings(ctx, grants.bonuses)
+    ctx.life.update(
+        bonuses=grants.bonuses,
+        rows=chosen,
+        qualities=_merge_rated_qualities(ctx, grants.qualities),
+        karma=sum(row["karma"] for row in chosen),
+        nuyen=sum(int(row.get("nuyen") or 0) for row in chosen),
+        free_positive_qualities=sum(int(row.get("free_positive_qualities") or 0) for row in chosen),
+        free_negative_qualities=sum(int(row.get("free_negative_qualities") or 0) for row in chosen),
+        free_specializations=grants.specializations,
+    )
+
+
+@dataclass
+class _Grants:
+    """What the chosen modules hand out, gathered before ratings are raised."""
+
+    bonuses: dict[str, dict[str, int]] = field(default_factory=lambda: {key: {} for key in FIELDS[:4]})
+    qualities: list[dict[str, Any]] = field(default_factory=list)
+    specializations: set[tuple[str, str]] = field(default_factory=set)
+
+
+def _chosen_modules(ctx: Ctx) -> list[dict[str, Any]]:
+    """The picked modules that count, each tagged with its position in the pick list."""
     by_id = {row["id"]: row for row in ctx.data.get("life_modules") or []}
     chosen: list[dict[str, Any]] = []
     seen: set[str] = set()
@@ -64,167 +99,215 @@ def prepare(ctx: Ctx) -> None:
         families.add(family)
         seen.add(stage)
         chosen.append({**row, "occurrence": occurrence})
-    for stage in STAGES:
-        if stage not in seen and not ctx.career:
-            ctx.err("engine.life.missingStage", stage=stage)
+    return chosen
+
+
+def _resolve_quality_levels(ctx: Ctx, chosen: list[dict[str, Any]]) -> None:
+    """Keep only the highest level of each quality-level group the modules grant."""
     levels_by_group: dict[str, int] = {}
     for row in chosen:
         for grant in row.get("quality_levels", []):
             group = str(grant["group"])
             levels_by_group[group] = max(levels_by_group.get(group, 0), int(grant["level"]))
-    if levels_by_group:
-        groups = ctx.data.get("quality_levels") or {}
-        quality_by_name = {str(q["name"]): q for q in ctx.data["qualities"]}
-        names_by_group = {
-            group: {name: level for level, name in groups.get(group, {}).items()} for group in levels_by_group
-        }
-        # Existing picks in a quality-level group participate in the same
-        # highest-level resolution as Life Module grants.
-        for quality_id in list(ctx.state.quality_ids or []):
-            quality = next((q for q in ctx.data["qualities"] if q["id"] == quality_id), None)
-            if not quality:
-                continue
-            for group, names in names_by_group.items():
-                level = names.get(quality["name"])
-                if level:
-                    levels_by_group[group] = max(levels_by_group[group], int(level))
-        grouped_names = {name for names in names_by_group.values() for name in names}
-        ctx.state.quality_ids = [
-            quality_id
-            for quality_id in (ctx.state.quality_ids or [])
-            if not any(q["id"] == quality_id and q["name"] in grouped_names for q in ctx.data["qualities"])
-        ]
-        for group, level in levels_by_group.items():
-            quality_name = groups[group].get(level)
-            quality = quality_by_name.get(str(quality_name or ""))
-            if not quality:
-                ctx.err("engine.life.qualityLevelUnknown", name=term(str(quality_name or group)))
-                continue
-            ctx.state.quality_ids.append(str(quality["id"]))
-    bonuses: dict[str, dict[str, int]] = {key: {} for key in FIELDS[:4]}
-    quality_grants: list[dict[str, Any]] = []
-    specialization_grants: set[tuple[str, str]] = set()
-    for row in chosen:
-        index = row["occurrence"]
-        # Choice keys retain the original positions, including rejected entries.
-        for grant in row["grants"]:
-            if ctx.state.life_module_rules_version == 2 and grant["kind"] in {
-                "skills",
-                "skill_groups",
-                "knowledge_skills",
-            }:
-                continue
-            name = grant["name"]
-            if not name:
-                key = f"{index}:{grant['choice']}"
-                name = ctx.state.life_module_choices.get(key, "")
-                choice = next(c for c in row["choices"] if c["key"] == grant["choice"])
-                options = choice["options"]
-                if (
-                    (options and name not in options and not choice.get("allow_custom"))
-                    or not name.strip()
-                    or (choice.get("allow_custom") and "[" in name)
-                ):
-                    ctx.err("engine.life.choice", name=term(row["name"]), slot=key)
-                    continue
-            name = name.strip()
-            kind = grant["kind"]
-            category = grant["category"]
-            if grant.get("category_choice"):
-                key = f"{index}:{grant['category_choice']}"
-                category = ctx.state.life_module_choices.get(key, "")
-                options = next(c["options"] for c in row["choices"] if c["key"] == grant["category_choice"])
-                if category not in options:
-                    ctx.err("engine.life.choice", name=term(row["name"]), slot=key)
-                    continue
-            if kind == "qualities":
-                quality = next((q for q in ctx.data["qualities"] if q["name"] == name), None)
-                if quality is None:
-                    ctx.err("engine.life.qualityUnknown", name=term(name))
-                    continue
-                if grant.get("extra_choice"):
-                    # The level was picked above; its own free text is a second
-                    # slot, so a placeholder never passes for an answer.
-                    key = f"{index}:{grant['extra_choice']}"
-                    extra = ctx.state.life_module_choices.get(key, "").strip()
-                    if not extra or "[" in extra:
-                        ctx.err("engine.life.choice", name=term(row["name"]), slot=key)
-                        continue
-                    taken = (ctx.state.quality_extras.get(quality["id"]) or "").strip()
-                    if taken and taken != extra:
-                        ctx.err("engine.life.qualityChoiceConflict", name=term(quality["name"]))
-                        continue
-                    ctx.state.quality_extras[quality["id"]] = extra
-                quality_grants.append(quality)
-                continue
-            if kind == "knowledge_skills" and category == "Language" and grant["value"] == 0:
-                if name not in ctx.state.native_languages:
-                    ctx.state.native_languages.append(name)
-                continue
-            bonuses[kind][name] = bonuses[kind].get(name, 0) + grant["value"]
-            if kind == "knowledge_skills":
-                ctx.state.knowledge_categories[name] = category
-        quality_grants.extend(row["quality_grants"])
-        for grant in row.get("quality_choice_grants", []):
-            key = f"{index}:{grant['choice']}"
-            picked = (grant["value"] or ctx.state.life_module_choices.get(key, "")).strip()
-            quality = next((q for q in ctx.data["qualities"] if q["id"] == grant["quality_id"]), None)
-            if quality is None:
-                ctx.err("engine.life.qualityUnknown", name=grant["quality_id"])
-                continue
-            options = (
-                ctx.data["skills"]["groups"]
-                if quality.get("extra_kind") == "skillgroup"
-                else quality.get("select_options") or []
-            )
-            if not picked or (options and picked not in options):
-                ctx.err("engine.life.choice", name=term(row["name"]), slot=key)
-                continue
-            existing = (ctx.state.quality_extras.get(quality["id"]) or "").strip()
-            if existing and existing != picked:
-                ctx.err("engine.life.qualityChoiceConflict", name=term(quality["name"]))
-                continue
-            ctx.state.quality_extras[quality["id"]] = picked
-            quality_grants.append(quality)
-        for grant in row.get("specialization_grants", []):
-            skill, spec = grant["skill"], grant["spec"]
-            if grant.get("choice"):
-                key = f"{index}:{grant['choice']}"
-                spec = ctx.state.life_module_choices.get(key, "").strip()
-                if not spec:
-                    ctx.err("engine.life.choice", name=term(row["name"]), slot=key)
-                    continue
-            existing_spec = ctx.state.skill_specializations.get(skill)
-            if existing_spec and existing_spec != spec:
-                ctx.err("engine.life.specializationConflict", name=term(skill))
-                continue
-            ctx.state.skill_specializations[skill] = spec
-            specialization_grants.add((skill, spec))
-        for contact_index, grant in enumerate(row.get("contact_grants", [])):
-            connection = max(1, min(12, int(grant["connection"])))
-            loyalty = max(1, min(12, int(grant["loyalty"])))
-            ctx.state.contacts.append(
-                ContactInstall(
-                    id=str(
-                        uuid5(
-                            NAMESPACE_URL,
-                            f"chummer-web:{ctx.state.id}:life-contact:{row['id']}:{index}:{contact_index}",
-                        )
-                    ),
-                    name=row["name"],
-                    connection=connection,
-                    loyalty=loyalty,
-                    free=bool(grant["free"]),
-                    free_connection=connection if grant["free"] else 0,
-                    free_loyalty=loyalty if grant["free"] else 0,
-                )
-            )
-    # Each module's group levels also add to members' individual free levels.
+    if not levels_by_group:
+        return
+    groups = ctx.data.get("quality_levels") or {}
+    quality_by_name = {str(q["name"]): q for q in ctx.data["qualities"]}
+    names_by_group = {
+        group: {name: level for level, name in groups.get(group, {}).items()} for group in levels_by_group
+    }
+    # Existing picks in a quality-level group participate in the same
+    # highest-level resolution as Life Module grants.
+    for quality_id in list(ctx.state.quality_ids or []):
+        quality = next((q for q in ctx.data["qualities"] if q["id"] == quality_id), None)
+        if not quality:
+            continue
+        for group, names in names_by_group.items():
+            level = names.get(quality["name"])
+            if level:
+                levels_by_group[group] = max(levels_by_group[group], int(level))
+    grouped_names = {name for names in names_by_group.values() for name in names}
+    ctx.state.quality_ids = [
+        quality_id
+        for quality_id in (ctx.state.quality_ids or [])
+        if not any(q["id"] == quality_id and q["name"] in grouped_names for q in ctx.data["qualities"])
+    ]
+    for group, level in levels_by_group.items():
+        quality_name = groups[group].get(level)
+        quality = quality_by_name.get(str(quality_name or ""))
+        if not quality:
+            ctx.err("engine.life.qualityLevelUnknown", name=term(str(quality_name or group)))
+            continue
+        ctx.state.quality_ids.append(str(quality["id"]))
+
+
+def _apply_module(ctx: Ctx, row: dict[str, Any], grants: _Grants) -> None:
+    for grant in row["grants"]:
+        if ctx.state.life_module_rules_version == 2 and grant["kind"] in {
+            "skills",
+            "skill_groups",
+            "knowledge_skills",
+        }:
+            continue
+        _apply_grant(ctx, row, grant, grants)
+    grants.qualities.extend(row["quality_grants"])
+    for grant in row.get("quality_choice_grants", []):
+        _apply_quality_choice(ctx, row, grant, grants)
+    for grant in row.get("specialization_grants", []):
+        _apply_specialization(ctx, row, grant, grants)
+    for contact_index, grant in enumerate(row.get("contact_grants", [])):
+        _add_contact(ctx, row, contact_index, grant)
+
+
+def _choice(ctx: Ctx, row: dict[str, Any], slot: str) -> tuple[str, str]:
+    """The slot's key and the player's answer for it.
+
+    Choice keys retain the module's original position, including rejected entries.
+    """
+    key = f"{row['occurrence']}:{slot}"
+    return key, ctx.state.life_module_choices.get(key, "")
+
+
+def _grant_name(ctx: Ctx, row: dict[str, Any], grant: dict[str, Any]) -> str | None:
+    fixed: str = grant["name"]
+    if fixed:
+        return fixed.strip()
+    key, name = _choice(ctx, row, grant["choice"])
+    choice = next(c for c in row["choices"] if c["key"] == grant["choice"])
+    options = choice["options"]
+    if (
+        (options and name not in options and not choice.get("allow_custom"))
+        or not name.strip()
+        or (choice.get("allow_custom") and "[" in name)
+    ):
+        ctx.err("engine.life.choice", name=term(row["name"]), slot=key)
+        return None
+    return name.strip()
+
+
+def _grant_category(ctx: Ctx, row: dict[str, Any], grant: dict[str, Any]) -> str | None:
+    if not grant.get("category_choice"):
+        fixed: str = grant["category"]
+        return fixed
+    key, category = _choice(ctx, row, grant["category_choice"])
+    options = next(c["options"] for c in row["choices"] if c["key"] == grant["category_choice"])
+    if category not in options:
+        ctx.err("engine.life.choice", name=term(row["name"]), slot=key)
+        return None
+    return category
+
+
+def _apply_grant(ctx: Ctx, row: dict[str, Any], grant: dict[str, Any], grants: _Grants) -> None:
+    name = _grant_name(ctx, row, grant)
+    if name is None:
+        return
+    category = _grant_category(ctx, row, grant)
+    if category is None:
+        return
+    kind = grant["kind"]
+    if kind == "qualities":
+        _grant_quality(ctx, row, grant, name, grants)
+        return
+    if kind == "knowledge_skills" and category == "Language" and grant["value"] == 0:
+        if name not in ctx.state.native_languages:
+            ctx.state.native_languages.append(name)
+        return
+    grants.bonuses[kind][name] = grants.bonuses[kind].get(name, 0) + grant["value"]
+    if kind == "knowledge_skills":
+        ctx.state.knowledge_categories[name] = category
+
+
+def _grant_quality(ctx: Ctx, row: dict[str, Any], grant: dict[str, Any], name: str, grants: _Grants) -> None:
+    quality = next((q for q in ctx.data["qualities"] if q["name"] == name), None)
+    if quality is None:
+        ctx.err("engine.life.qualityUnknown", name=term(name))
+        return
+    if grant.get("extra_choice"):
+        # The level was picked above; its own free text is a second
+        # slot, so a placeholder never passes for an answer.
+        key, extra = _choice(ctx, row, grant["extra_choice"])
+        extra = extra.strip()
+        if not extra or "[" in extra:
+            ctx.err("engine.life.choice", name=term(row["name"]), slot=key)
+            return
+        if not _set_quality_extra(ctx, quality, extra):
+            return
+    grants.qualities.append(quality)
+
+
+def _set_quality_extra(ctx: Ctx, quality: dict[str, Any], extra: str) -> bool:
+    """Record the quality's answer unless the player already gave it a different one."""
+    taken = (ctx.state.quality_extras.get(quality["id"]) or "").strip()
+    if taken and taken != extra:
+        ctx.err("engine.life.qualityChoiceConflict", name=term(quality["name"]))
+        return False
+    ctx.state.quality_extras[quality["id"]] = extra
+    return True
+
+
+def _apply_quality_choice(ctx: Ctx, row: dict[str, Any], grant: dict[str, Any], grants: _Grants) -> None:
+    key, answer = _choice(ctx, row, grant["choice"])
+    picked = (grant["value"] or answer).strip()
+    quality = next((q for q in ctx.data["qualities"] if q["id"] == grant["quality_id"]), None)
+    if quality is None:
+        ctx.err("engine.life.qualityUnknown", name=grant["quality_id"])
+        return
+    options = (
+        ctx.data["skills"]["groups"]
+        if quality.get("extra_kind") == "skillgroup"
+        else quality.get("select_options") or []
+    )
+    if not picked or (options and picked not in options):
+        ctx.err("engine.life.choice", name=term(row["name"]), slot=key)
+        return
+    if _set_quality_extra(ctx, quality, picked):
+        grants.qualities.append(quality)
+
+
+def _apply_specialization(ctx: Ctx, row: dict[str, Any], grant: dict[str, Any], grants: _Grants) -> None:
+    skill, spec = grant["skill"], grant["spec"]
+    if grant.get("choice"):
+        key, spec = _choice(ctx, row, grant["choice"])
+        spec = spec.strip()
+        if not spec:
+            ctx.err("engine.life.choice", name=term(row["name"]), slot=key)
+            return
+    existing = ctx.state.skill_specializations.get(skill)
+    if existing and existing != spec:
+        ctx.err("engine.life.specializationConflict", name=term(skill))
+        return
+    ctx.state.skill_specializations[skill] = spec
+    grants.specializations.add((skill, spec))
+
+
+def _add_contact(ctx: Ctx, row: dict[str, Any], contact_index: int, grant: dict[str, Any]) -> None:
+    connection = max(1, min(12, int(grant["connection"])))
+    loyalty = max(1, min(12, int(grant["loyalty"])))
+    seed = f"chummer-web:{ctx.state.id}:life-contact:{row['id']}:{row['occurrence']}:{contact_index}"
+    ctx.state.contacts.append(
+        ContactInstall(
+            id=str(uuid5(NAMESPACE_URL, seed)),
+            name=row["name"],
+            connection=connection,
+            loyalty=loyalty,
+            free=bool(grant["free"]),
+            free_connection=connection if grant["free"] else 0,
+            free_loyalty=loyalty if grant["free"] else 0,
+        )
+    )
+
+
+def _spread_group_bonuses(ctx: Ctx, bonuses: dict[str, dict[str, int]]) -> None:
+    """Each module's group levels also add to members' individual free levels."""
     for skill in ctx.data["skills"]["skills"]:
         group_bonus = bonuses["skill_groups"].get(skill.get("skillgroup"), 0)
         if group_bonus and not skill.get("exotic"):
             name = skill["name"]
             bonuses["skills"][name] = bonuses["skills"].get(name, 0) + group_bonus
+
+
+def _raise_ratings(ctx: Ctx, bonuses: dict[str, dict[str, int]]) -> None:
+    """Stack the free levels on top of what the player bought, in the working copy."""
     for kind, values in bonuses.items():
         target = getattr(ctx.state, kind)
         for name, amount in values.items():
@@ -236,14 +319,19 @@ def prepare(ctx: Ctx) -> None:
                 )
                 bought = max(bought, ctx.life["original"]["skill_groups"].get(paid_group_name, 0))
             target[name] = max(minimum, bought) + amount
-    rated_grants: dict[str, dict[str, Any]] = {}
-    for quality in quality_grants:
+
+
+def _merge_rated_qualities(ctx: Ctx, granted: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Add up rated qualities granted by several modules, refusing those the player
+    already bought or that go over the quality's cap."""
+    rated: dict[str, dict[str, Any]] = {}
+    for quality in granted:
         if "life_rating" in quality:
             qid = quality["id"]
-            previous = rated_grants.get(qid, {}).get("life_rating", 0)
-            rated_grants[qid] = {**quality, "life_rating": previous + quality["life_rating"]}
-    quality_grants = [q for q in quality_grants if q["id"] not in rated_grants]
-    for qid, quality in rated_grants.items():
+            previous = rated.get(qid, {}).get("life_rating", 0)
+            rated[qid] = {**quality, "life_rating": previous + quality["life_rating"]}
+    merged = [q for q in granted if q["id"] not in rated]
+    for qid, quality in rated.items():
         if qid in ctx.life["original"]["quality_ids"]:
             ctx.err("engine.life.ratedQualityConflict", name=term(quality["name"]))
         elif quality["life_rating"] > quality["max_takes"]:
@@ -254,17 +342,8 @@ def prepare(ctx: Ctx) -> None:
                 cap=quality["max_takes"],
             )
         else:
-            quality_grants.append(quality)
-    ctx.life.update(
-        bonuses=bonuses,
-        rows=chosen,
-        qualities=quality_grants,
-        karma=sum(row["karma"] for row in chosen),
-        nuyen=sum(int(row.get("nuyen") or 0) for row in chosen),
-        free_positive_qualities=sum(int(row.get("free_positive_qualities") or 0) for row in chosen),
-        free_negative_qualities=sum(int(row.get("free_negative_qualities") or 0) for row in chosen),
-        free_specializations=specialization_grants,
-    )
+            merged.append(quality)
+    return merged
 
 
 def price(ctx: Ctx) -> None:
