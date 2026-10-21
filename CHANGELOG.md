@@ -3,6 +3,61 @@
 Notable changes. Format follows [Keep a Changelog](https://keepachangelog.com/);
 self-hosters can pin to a tag instead of tracking `main`.
 
+## [0.5.12] — 2026-10-21
+
+### Added
+
+- **The Cyberware tab explains its own lines.** The summary says which
+  figures are the cyberware's and which are totals, the limb-average line
+  says how the body's STR / AGI is averaged over six locations, and the
+  Redliner boxes say what they add to the limb count.
+
+- **The contact, spell and complex form point lines explain themselves.** The
+  "?" says where the free points or slots come from (Charisma × the settings
+  multiplier, the talent picked in the priority table, what qualities add) and
+  that anything past them is bought with karma.
+
+- **The Life Module panel explains its karma, caps and overflow.** The module
+  karma line says the cost comes out of the creation karma and what the free
+  quality points do; the skill-cap line and each overflow say how far module
+  grants count and where the excess can go. A "?" stays usable on a career
+  character, whose history is read-only.
+
+- **An owned quality's karma explains itself.** The "?" says that a
+  positive quality costs the karma and a negative one gives it back, and,
+  where they apply, why the price differs from the table, that an attached
+  quality is free and cannot be removed here, and what career play charges.
+
+### Fixed
+
+- **Ticking two rulebooks in quick succession keeps both.** The second tick
+  was built from a list the first had not reached yet, and saving it unticked
+  the first book again. Each tick is now applied to the list as saved.
+
+- **A complex form past the free ones shows the karma the settings file
+  charges.** The Complex Forms tab said "× 4 karma" whatever
+  `karmanewcomplexform` was set to, while the karma actually spent followed
+  the setting.
+
+- **A quality's bonus to a spell no longer reads as a book.** A character
+  with Quick Healer was warned that Heal came from a book called "Quick
+  Healer", because the dice-pool row it adds names the quality as its
+  `source`. The out-of-book check now counts only book codes, and keeps every
+  source a name has rather than the last one it walked past.
+
+- **Two quick adds to the same list no longer undo each other.** An edit made
+  while the previous one was still being saved could be taken for "the same
+  control, one step on" when both added a different item to a list, and
+  saving it removed the first item. Such an edit is now dropped instead, as
+  any other edit that would undo the one in front of it.
+
+### Security
+
+- **API answers keep their `Referrer-Policy: no-referrer` behind the bundled
+  Caddy, and pages no longer say `X-Powered-By: Next.js`.** Caddy set the page
+  referrer policy on every response, overwriting the API's stricter one; it is
+  now only a fallback. Next's `X-Powered-By` header is switched off.
+
 ## [0.5.11] — 2026-10-21
 
 ### Changed
