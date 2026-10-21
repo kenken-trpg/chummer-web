@@ -173,11 +173,54 @@ def totals(ctx: Ctx) -> None:
 
 def finalize(ctx: Ctx) -> None:
     resolve_precedence(ctx.effects)
-    bod = ctx.total["BOD"]
-    rea = ctx.total["REA"]
-    wil = ctx.total["WIL"]
-    intuition = ctx.total["INT"]
+    _limits(ctx)
+    _condition_monitors(ctx)
+    _initiative(ctx)
+    _attach_tests(ctx)
+    _movement(ctx)
+    ctx.quality_report = {}
+    ctx.negative_quality_karma = apply_quality_rules(
+        ctx.state,
+        ctx.qualities,
+        ctx.free_quality_ids,
+        quality_req_ctx(ctx),
+        ctx.errors,
+        career=ctx.career,
+        report=ctx.quality_report,
+        warnings=ctx.warnings,
+        free_positive_karma=int(ctx.life.get("free_positive_qualities") or 0),
+        free_negative_karma=int(ctx.life.get("free_negative_qualities") or 0),
+        restriction=ctx.meta.get("quality_restriction"),
+    )
 
+    if not ctx.career:
+        _check_chargen_points(ctx)
+    if ctx.karma_left < 0:
+        ctx.err("engine.karma.negative", karma=ctx.karma_left)
+    if ctx.nuyen < 0:
+        ctx.err("engine.nuyen.negative", nuyen=ctx.nuyen)
+    if not ctx.career:
+        _carryover_notices(ctx)
+    # House rules from the settings file that this app has no implementation
+    # for. Said out loud once per build: a GM who set `<mysaddppcareer>` and
+    # got a sheet that quietly ignored it is worse off than one who was told.
+    unsupported = list(ctx.state.settings.unsupported)
+    if unsupported:
+        ctx.warn("engine.settings.unsupported", count=len(unsupported), tags=", ".join(unsupported))
+    if ctx.ess <= 0:
+        ctx.err("engine.attrs.essenceDepleted")
+    _check_capacity(ctx)
+    if not ctx.is_karma:
+        allowed = {e["name"] for e in heritage_options(ctx.state.priorities.Heritage)}
+        if allowed and ctx.state.metatype not in allowed:
+            ctx.err("engine.meta.notInPriority", name=term(ctx.state.metatype))
+    if not ctx.career:
+        _check_gear_limits(ctx)
+
+
+def _limits(ctx: Ctx) -> None:
+    """The three limits, the A.I.'s home node they may come from, and the
+    weapon values that read the physical one."""
     physical_base, mental_base, social_base = _inherent_limits(ctx.total, ctx.ess)
     ctx.is_ai = is_ai(ctx.attrs_spec, ctx.special_floors)
     ctx.home_node, node_warnings = resolve_home_node(
@@ -201,6 +244,9 @@ def finalize(ctx: Ctx) -> None:
     ctx.social_limit = social_base + int(ctx.effects.get("limit_social") or 0)
     resolve_attr_formulas(ctx.gear.get("weapons"), ctx.total, int(ctx.effects.get("throw_str") or 0))
     resolve_limit_accuracy(ctx.gear.get("weapons"), ctx.physical_limit)
+
+
+def _condition_monitors(ctx: Ctx) -> None:
     if ctx.is_ai:
         # Chummer `PhysicalCM`: an A.I.'s is its Core monitor, 8 + DEP / 2;
         # `StunCM` is its home node's Matrix monitor, or nothing at all.
@@ -211,9 +257,12 @@ def finalize(ctx: Ctx) -> None:
             ctx.cm_phys = 8 + _ceil_div(int(ctx.total.get("DEP") or 0) / 2) + ctx.effects["cm_physical"]
         ctx.cm_stun = ctx.home_node["matrix_cm"] if ctx.home_node else 0
     else:
-        ctx.cm_phys = 8 + _ceil_div(bod / 2) + ctx.effects["cm_physical"]
-        ctx.cm_stun = 8 + _ceil_div(wil / 2) + ctx.effects["cm_stun"]
-    ctx.initiative = rea + intuition + ctx.effects["initiative"]
+        ctx.cm_phys = 8 + _ceil_div(ctx.total["BOD"] / 2) + ctx.effects["cm_physical"]
+        ctx.cm_stun = 8 + _ceil_div(ctx.total["WIL"] / 2) + ctx.effects["cm_stun"]
+
+
+def _initiative(ctx: Ctx) -> None:
+    ctx.initiative = ctx.total["REA"] + ctx.total["INT"] + ctx.effects["initiative"]
     # Chummer `InitiativeDice`: the settings' minimum plus what augmentations
     # add, never past the maximum — Wired Reflexes 3 on top of Synaptic
     # Booster 3 is still five dice.
@@ -221,6 +270,10 @@ def finalize(ctx: Ctx) -> None:
         current_rules().min_initiative_dice + int(ctx.effects.get("initiative_dice") or 0),
         current_rules().max_initiative_dice,
     )
+
+
+def _attach_tests(ctx: Ctx) -> None:
+    """The dice pools of what the character summons, binds and threads."""
     ctx.warnings.extend(
         attach_spirit_tests(
             list(ctx.spirits.get("public") or []),
@@ -263,6 +316,8 @@ def finalize(ctx: Ctx) -> None:
         )
     )
 
+
+def _movement(ctx: Ctx) -> None:
     # meat AGI: `ctx.total` already carries the cyberlimb replacement
     move_agi = ctx.ratings["AGI"] + ctx.attr_bonus("AGI")
     leg_agi = None
@@ -277,83 +332,65 @@ def finalize(ctx: Ctx) -> None:
         ground_agi=leg_agi,
     )
 
-    ctx.quality_report = {}
-    ctx.negative_quality_karma = apply_quality_rules(
-        ctx.state,
-        ctx.qualities,
-        ctx.free_quality_ids,
-        quality_req_ctx(ctx),
-        ctx.errors,
-        career=ctx.career,
-        report=ctx.quality_report,
-        warnings=ctx.warnings,
-        free_positive_karma=int(ctx.life.get("free_positive_qualities") or 0),
-        free_negative_karma=int(ctx.life.get("free_negative_qualities") or 0),
-        restriction=ctx.meta.get("quality_restriction"),
-    )
 
-    if not ctx.career:
-        # No count of skills at rating 6 here: "one at 6 or two at 5" is the
-        # SR4 creation rule. SR5 caps a skill at 6 (7 with Aptitude) and no
-        # more — the cap is `skill_rating_cap` — and Chummer checks the same.
-        # SR5 p.65: no more than one attribute at its natural maximum at
-        # character creation. Chummer counts its `AttributeList` — BOD to WIL
-        # — and not the special attributes: an Adept with MAG 6 may still
-        # take AGI to 6. Applies to every build method, not just Karma.
-        at_natural_max = []
-        for key in PHYSICAL_ATTRS:
-            spec = ctx.attrs_spec.get(key)
-            if spec is None or key not in ctx.ratings:
-                continue
-            racial_max = int(spec.get("max") or 0) + int(ctx.attr_max_bonus.get(key) or 0)
-            if racial_max > 0 and int(ctx.ratings.get(key) or 0) >= racial_max:
-                at_natural_max.append(key)
-        limit = current_rules().chargen_attributes_at_max
-        if len(at_natural_max) > limit:
-            ctx.err("engine.attrs.oneAtNaturalMax", count=len(at_natural_max), limit=limit)
-        if not ctx.is_karma:
-            if ctx.spent_physical > ctx.attr_points:
-                ctx.err("engine.attrs.pointsOver", used=ctx.spent_physical, max=ctx.attr_points)
-            if ctx.spent_special > ctx.special_from_meta:
-                ctx.err("engine.attrs.specialPointsOver", used=ctx.spent_special, max=ctx.special_from_meta)
-            if ctx.skill_spent > ctx.skill_points:
-                ctx.err("engine.skills.pointsOver", used=ctx.skill_spent, max=ctx.skill_points)
-            if ctx.group_spent > ctx.group_points:
-                ctx.err("engine.skills.groupPointsOver", used=ctx.group_spent, max=ctx.group_points)
-            if ctx.know_spent > ctx.know_max:
-                ctx.err("engine.skills.knowledgePointsOver", used=ctx.know_spent, max=ctx.know_max)
-    if ctx.karma_left < 0:
-        ctx.err("engine.karma.negative", karma=ctx.karma_left)
-    if ctx.nuyen < 0:
-        ctx.err("engine.nuyen.negative", nuyen=ctx.nuyen)
+def _check_chargen_points(ctx: Ctx) -> None:
+    """Creation only: attributes at their natural maximum, and every point
+    pool a priority build can overspend."""
+    # No count of skills at rating 6 here: "one at 6 or two at 5" is the
+    # SR4 creation rule. SR5 caps a skill at 6 (7 with Aptitude) and no
+    # more — the cap is `skill_rating_cap` — and Chummer checks the same.
+    # SR5 p.65: no more than one attribute at its natural maximum at
+    # character creation. Chummer counts its `AttributeList` — BOD to WIL
+    # — and not the special attributes: an Adept with MAG 6 may still
+    # take AGI to 6. Applies to every build method, not just Karma.
+    at_natural_max = []
+    for key in PHYSICAL_ATTRS:
+        spec = ctx.attrs_spec.get(key)
+        if spec is None or key not in ctx.ratings:
+            continue
+        racial_max = int(spec.get("max") or 0) + int(ctx.attr_max_bonus.get(key) or 0)
+        if racial_max > 0 and int(ctx.ratings.get(key) or 0) >= racial_max:
+            at_natural_max.append(key)
+    limit = current_rules().chargen_attributes_at_max
+    if len(at_natural_max) > limit:
+        ctx.err("engine.attrs.oneAtNaturalMax", count=len(at_natural_max), limit=limit)
+    if not ctx.is_karma:
+        if ctx.spent_physical > ctx.attr_points:
+            ctx.err("engine.attrs.pointsOver", used=ctx.spent_physical, max=ctx.attr_points)
+        if ctx.spent_special > ctx.special_from_meta:
+            ctx.err("engine.attrs.specialPointsOver", used=ctx.spent_special, max=ctx.special_from_meta)
+        if ctx.skill_spent > ctx.skill_points:
+            ctx.err("engine.skills.pointsOver", used=ctx.skill_spent, max=ctx.skill_points)
+        if ctx.group_spent > ctx.group_points:
+            ctx.err("engine.skills.groupPointsOver", used=ctx.group_spent, max=ctx.group_points)
+        if ctx.know_spent > ctx.know_max:
+            ctx.err("engine.skills.knowledgePointsOver", used=ctx.know_spent, max=ctx.know_max)
+
+
+def _carryover_notices(ctx: Ctx) -> None:
+    """Creation only: what of the unspent nuyen and karma does not survive
+    into play."""
     # SR5 p.98: at Standard power level only 5,000¥ of unspent resources
     # carry over into play (Street 200¥ / Prime 20,000¥). Surface it as a
     # chargen notice rather than silently deleting nuyen, matching Chummer.
-    if not ctx.career:
-        chargen_leftover = ctx.nuyen - int(ctx.state.nuyen_earned or 0)
-        if chargen_leftover > current_rules().nuyen_chargen_keep_max:
-            lost = chargen_leftover - current_rules().nuyen_chargen_keep_max
-            ctx.warn(
-                "engine.nuyen.chargenCarryOver",
-                left=f"{chargen_leftover:,}",
-                keep=f"{current_rules().nuyen_chargen_keep_max:,}",
-                lost=f"{lost:,}",
-            )
+    chargen_leftover = ctx.nuyen - int(ctx.state.nuyen_earned or 0)
+    if chargen_leftover > current_rules().nuyen_chargen_keep_max:
+        lost = chargen_leftover - current_rules().nuyen_chargen_keep_max
+        ctx.warn(
+            "engine.nuyen.chargenCarryOver",
+            left=f"{chargen_leftover:,}",
+            keep=f"{current_rules().nuyen_chargen_keep_max:,}",
+            lost=f"{lost:,}",
+        )
     # `<karmacarryover>` (SR5 p.107: 7): unspent chargen karma past it is
     # lost when play starts. Chummer asks before finishing; a notice here.
-    if not ctx.career:
-        karma_leftover = ctx.karma_left - int(ctx.state.karma_earned or 0)
-        keep = current_rules().karma_carryover
-        if karma_leftover > keep:
-            ctx.warn("engine.karma.chargenCarryOver", left=karma_leftover, keep=keep, lost=karma_leftover - keep)
-    # House rules from the settings file that this app has no implementation
-    # for. Said out loud once per build: a GM who set `<mysaddppcareer>` and
-    # got a sheet that quietly ignored it is worse off than one who was told.
-    unsupported = list(ctx.state.settings.unsupported)
-    if unsupported:
-        ctx.warn("engine.settings.unsupported", count=len(unsupported), tags=", ".join(unsupported))
-    if ctx.ess <= 0:
-        ctx.err("engine.attrs.essenceDepleted")
+    karma_leftover = ctx.karma_left - int(ctx.state.karma_earned or 0)
+    keep = current_rules().karma_carryover
+    if karma_leftover > keep:
+        ctx.warn("engine.karma.chargenCarryOver", left=karma_leftover, keep=keep, lost=karma_leftover - keep)
+
+
+def _check_capacity(ctx: Ctx) -> None:
     # `<enforcecapacity>` off: a ware may hold more than its capacity
     for item in ctx.installed if current_rules().enforce_capacity else []:
         cap_max = float(item.get("capacity_max") or 0)
@@ -363,48 +400,46 @@ def finalize(ctx: Ctx) -> None:
         if used > cap_max + 1e-9:
             ctx.err("engine.ware.capacityOver", name=term(str(item["name"])), used=f"{used:g}", max=f"{cap_max:g}")
 
-    if not ctx.is_karma:
-        allowed = {e["name"] for e in heritage_options(ctx.state.priorities.Heritage)}
-        if allowed and ctx.state.metatype not in allowed:
-            ctx.err("engine.meta.notInPriority", name=term(ctx.state.metatype))
-    if not ctx.career:
-        _check_avail_limit(
-            _avail_entries(
-                ctx.cyber_installed,
-                ctx.bio_installed,
-                ctx.gear.get("armor_items"),
-                ctx.gear.get("armor_mods"),
-                ctx.gear.get("weapons"),
-                ctx.gear.get("weapon_accessories"),
-                ctx.gear.get("commlinks"),
-                ctx.gear.get("cyberdecks"),
-                ctx.gear.get("rccs"),
-                ctx.gear.get("optics"),
-                ctx.gear.get("programs"),
-                ctx.gear.get("apps"),
-                ctx.gear.get("sensors"),
-                ctx.gear.get("drones"),
-                ctx.gear.get("vehicles"),
-                ctx.gear.get("vehicle_mods"),
-                ctx.gear.get("weapon_mounts"),
-                ctx.gear.get("gear"),
-                ctx.gear.get("custom_drugs"),
-                ctx.gear.get("lifestyles"),
-                ctx.foci.get("public"),
-            ),
-            ctx.effects,
-            ctx.errors,
-        )
-        _check_device_rating_limit(
-            _device_rating_entries(
-                ctx.cyber_installed,
-                ctx.bio_installed,
-                ctx.gear.get("commlinks"),
-                ctx.gear.get("cyberdecks"),
-                ctx.gear.get("rccs"),
-                ctx.gear.get("optics"),
-                ctx.gear.get("sensors"),
-                ctx.gear.get("gear"),
-            ),
-            ctx.errors,
-        )
+
+def _check_gear_limits(ctx: Ctx) -> None:
+    """Creation only: the availability and device-rating caps."""
+    _check_avail_limit(
+        _avail_entries(
+            ctx.cyber_installed,
+            ctx.bio_installed,
+            ctx.gear.get("armor_items"),
+            ctx.gear.get("armor_mods"),
+            ctx.gear.get("weapons"),
+            ctx.gear.get("weapon_accessories"),
+            ctx.gear.get("commlinks"),
+            ctx.gear.get("cyberdecks"),
+            ctx.gear.get("rccs"),
+            ctx.gear.get("optics"),
+            ctx.gear.get("programs"),
+            ctx.gear.get("apps"),
+            ctx.gear.get("sensors"),
+            ctx.gear.get("drones"),
+            ctx.gear.get("vehicles"),
+            ctx.gear.get("vehicle_mods"),
+            ctx.gear.get("weapon_mounts"),
+            ctx.gear.get("gear"),
+            ctx.gear.get("custom_drugs"),
+            ctx.gear.get("lifestyles"),
+            ctx.foci.get("public"),
+        ),
+        ctx.effects,
+        ctx.errors,
+    )
+    _check_device_rating_limit(
+        _device_rating_entries(
+            ctx.cyber_installed,
+            ctx.bio_installed,
+            ctx.gear.get("commlinks"),
+            ctx.gear.get("cyberdecks"),
+            ctx.gear.get("rccs"),
+            ctx.gear.get("optics"),
+            ctx.gear.get("sensors"),
+            ctx.gear.get("gear"),
+        ),
+        ctx.errors,
+    )
