@@ -39,7 +39,25 @@
  *
  * Anything else — the same field composed twice against different characters,
  * a row added or removed — is still dropped.
+ *
+ * A control that cannot afford either outcome sends an `Updater` instead: a
+ * function the editor calls with the character as last saved, just before it
+ * sends the body. Nothing in that body is stale, so it always waits its turn.
+ * Ticking two rulebooks in a row is the case that needs it — the second tick,
+ * built from the list the first had not reached yet, differs from the first
+ * in one element, passes for "one step on", and used to untick the first.
  */
+
+import type { Character } from "@/lib/types";
+
+/** What `api.patch` sends: the top-level fields it replaces. */
+export type PatchBody = Record<string, unknown>;
+
+/** A body composed from the character as saved at the moment it is sent. */
+export type Updater = (saved: Character) => PatchBody;
+
+/** What the editor's `patch` takes. */
+export type PatchInput = PatchBody | Updater;
 
 /** A plain `{}` object, as opposed to an array or a primitive. */
 function isRecord(v: unknown): v is Record<string, unknown> {

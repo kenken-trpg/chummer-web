@@ -1,5 +1,6 @@
 import type { Catalog, Character } from "@/lib/types";
 import type { UiFn } from "@/lib/i18n";
+import type { PatchInput } from "@/lib/character/patch-queue";
 
 export type TabPanelProps = {
   catalog: Catalog;
@@ -15,6 +16,9 @@ export type TabPanelProps = {
    *  is the app's own wording, which lives in `lib/i18n` (docs/i18n.md).
    *  Passed down rather than hooked per tab, like `tr`. */
   ui: UiFn;
-  patch: (body: Record<string, unknown>) => void | Promise<void>;
+  /** The editor's `patch`, which also takes an updater (`patch-queue`). A
+   *  method, not a property, so a tab's test can hand in a double that only
+   *  takes bodies: only the rulebook checklist sends an updater. */
+  patch(body: PatchInput): void | Promise<void>;
   setCharacter: (next: Character) => void;
 };

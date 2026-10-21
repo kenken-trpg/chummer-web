@@ -244,6 +244,50 @@ describe("useCharacterEditor", () => {
     expect(api.patch).toHaveBeenLastCalledWith("c1", { career: true, notes: "見習い" });
   });
 
+  it("sends updaters that arrive mid-flight against the character each one before left", async () => {
+    // Ticking two rulebooks quickly: as bodies, the second differed from the
+    // first in one element, was held as "one step on", and unticked the first.
+    const saved = (books: string[]) => makeCharacter({ id: "c1", settings: { name: "", books } });
+    api.create.mockResolvedValue(saved(["SR5"]));
+    let finish: (c: Character) => void = () => {};
+    api.patch.mockReturnValueOnce(new Promise<Character>((resolve) => (finish = resolve)));
+    const tick = (code: string) => (c: Character) => ({
+      settings: { ...c.settings, books: [...(c.settings?.books || []), code] },
+    });
+
+    const { result } = renderHook(() => useCharacterEditor());
+    await waitFor(() => expect(result.current.ch?.id).toBe("c1"));
+
+    let first: Promise<void> = Promise.resolve();
+    act(() => {
+      first = result.current.patch(tick("RF"));
+    });
+    act(() => {
+      void result.current.patch(tick("DTR"));
+      void result.current.patch(tick("HT"));
+    });
+    expect(api.patch).toHaveBeenCalledTimes(1);
+    expect(api.patch).toHaveBeenLastCalledWith("c1", {
+      settings: { name: "", books: ["SR5", "RF"] },
+    });
+
+    api.patch
+      .mockResolvedValueOnce(saved(["SR5", "RF", "DTR"]))
+      .mockResolvedValueOnce(saved(["SR5", "RF", "DTR", "HT"]));
+    await act(async () => {
+      finish(saved(["SR5", "RF"]));
+      await first;
+    });
+
+    expect(api.patch).toHaveBeenCalledTimes(3);
+    expect(api.patch).toHaveBeenNthCalledWith(2, "c1", {
+      settings: { name: "", books: ["SR5", "RF", "DTR"] },
+    });
+    expect(api.patch).toHaveBeenNthCalledWith(3, "c1", {
+      settings: { name: "", books: ["SR5", "RF", "DTR", "HT"] },
+    });
+  });
+
   it("drops what was waiting when the edit in front of it fails", async () => {
     api.create.mockResolvedValue(makeCharacter({ id: "c1" }));
     let fail: (e: Error) => void = () => {};

@@ -6,6 +6,7 @@ import { BookChecklist } from "@/components/character/ruleset/BookChecklist";
 import { MergeSummary } from "@/components/character/ruleset/MergeSummary";
 import { UnsupportedKnobs } from "@/components/character/ruleset/UnsupportedKnobs";
 import { useRulesetLoader } from "@/lib/character/useRulesetLoader";
+import type { PatchInput } from "@/lib/character/patch-queue";
 import type { UiFn } from "@/lib/i18n";
 
 /**
@@ -38,7 +39,7 @@ export function SettingsPicker({
   character: Character;
   ui: UiFn;
   tr: (name: string) => string;
-  patch: (body: Record<string, unknown>) => void | Promise<void>;
+  patch: (body: PatchInput) => void | Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
   const folderRef = useRef<HTMLInputElement>(null);
@@ -60,10 +61,18 @@ export function SettingsPicker({
   // folder is here.
   const needsCustomData = (ch.settings?.customdata || []).length > 0;
 
-  function setBooks(next: string[]) {
+  function setBooks(next: (books: string[]) => string[]) {
     // Deviating from a ruleset makes it the character's own. The numeric knobs
-    // are kept — only the books and the name are the user's edit here.
-    void patch({ settings: { ...(ch.settings || { books: [] }), name: "", books: next } });
+    // are kept — only the books and the name are the user's edit here. Built
+    // from the character as saved, not as shown: a second tick lands while
+    // the first is still being saved.
+    void patch((saved) => ({
+      settings: {
+        ...(saved.settings || { books: [] }),
+        name: "",
+        books: next(saved.settings?.books || []),
+      },
+    }));
   }
 
   return (

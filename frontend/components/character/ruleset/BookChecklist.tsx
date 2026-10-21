@@ -27,7 +27,9 @@ export function BookChecklist({
   /** The codes currently ticked. Empty means unrestricted. */
   books: string[];
   allBooks: BookInfo[];
-  onSet: (next: string[]) => void;
+  /** Called with how to get the new list from the saved one, not with the new
+   *  list: ticks that land while another is being saved stack up. */
+  onSet: (next: (books: string[]) => string[]) => void;
   tr: (name: string) => string;
   ui: UiFn;
 }) {
@@ -41,13 +43,14 @@ export function BookChecklist({
       <input
         type="checkbox"
         checked={books.includes(book.code)}
-        onChange={() =>
-          onSet(
-            books.includes(book.code)
-              ? books.filter((c) => c !== book.code)
-              : [...books, book.code],
-          )
-        }
+        onChange={(e) => {
+          const on = e.target.checked;
+          onSet((saved) =>
+            on
+              ? [...saved.filter((c) => c !== book.code), book.code]
+              : saved.filter((c) => c !== book.code),
+          );
+        }}
       />
       <span>
         {bookTitle(book)} <span className="muted">({book.code})</span>
@@ -64,14 +67,14 @@ export function BookChecklist({
       <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
         <button
           className="btn"
-          onClick={() => onSet(allBooks.map((book) => book.code))}
+          onClick={() => onSet(() => allBooks.map((book) => book.code))}
           title={ui("settings.booksAllOnHint")}
         >
           {ui("settings.booksAllOn")}
         </button>
         <button
           className="btn"
-          onClick={() => onSet([CORE_BOOK])}
+          onClick={() => onSet(() => [CORE_BOOK])}
           title={ui("settings.booksAllOffHint")}
         >
           {ui("settings.booksAllOff")}
