@@ -12,6 +12,7 @@ Imports only ``catalog`` / ``eval_formula`` / already-extracted engine modules
 from __future__ import annotations
 
 import math
+from dataclasses import dataclass, field
 from typing import Any
 
 from ...improvements import EffectsDict
@@ -130,27 +131,88 @@ def resolve_initiation(
     metamagic_limits: list[MetamagicLimitRow] | None = None,
     critter_powers: set[str] | None = None,
 ) -> InitiationBundle:
-    warnings: list[Notice] = []
-    empty: InitiationBundle = {
-        "warnings": warnings,
-        "grade": 0,
-        "karma": 0,
-        "choices": [],
-        "metamagics": [],
-        "arts": [],
-        "art_names": set(),
-        "metamagic_names": set(),
-        "bonus_sources": [],
-        "mag_max_bonus": 0,
-    }
     if talent_name not in MAG_TALENTS:
         state.initiate_grade = 0
         state.initiations = []
-        return empty
+        return {
+            "warnings": [],
+            "grade": 0,
+            "karma": 0,
+            "choices": [],
+            "metamagics": [],
+            "arts": [],
+            "art_names": set(),
+            "metamagic_names": set(),
+            "bonus_sources": [],
+            "mag_max_bonus": 0,
+        }
 
-    can_adept = talent_name in {"Adept", "Mystic Adept"}
-    can_magician = talent_name in MAG_TALENTS and talent_name != "Adept"
     grade = max(0, int(state.initiate_grade or 0))
+    kept_choices = _kept_choices(state, grade)
+    tally = _Tally(
+        state=state,
+        talent_name=talent_name,
+        quality_names=quality_names,
+        critter_powers=critter_powers,
+        limits=_metamagic_limits_by_grade(metamagic_limits),
+    )
+    for choice in kept_choices:
+        _keep_extra_arts(choice, tally)
+        row = _choice_row(choice, tally.limits)
+        _take_option(choice, row, tally)
+        tally.choices.append(row)
+
+    if grade > 0 and mag <= 0:
+        errors.append(notice("engine.initiation.needsMagic"))
+    elif grade > mag:
+        errors.append(notice("engine.initiation.gradeOverMagic", grade=grade, magic=mag))
+
+    return {
+        "warnings": tally.warnings,
+        "grade": grade,
+        "karma": initiation_karma_total(grade, kept_choices),
+        "choices": tally.choices,
+        "metamagics": tally.metamagics,
+        "arts": tally.arts,
+        "art_names": tally.art_names,
+        "metamagic_names": tally.metamagic_names,
+        "bonus_sources": tally.bonus_sources,
+        "mag_max_bonus": grade,
+    }
+
+
+@dataclass
+class _Tally:
+    """What the grades have taken so far, as they are read in order, and what
+    a later grade is checked against."""
+
+    state: CharacterState
+    talent_name: str
+    quality_names: set[str]
+    critter_powers: set[str] | None
+    limits: dict[int, list[str]]
+    warnings: list[Notice] = field(default_factory=list)
+    art_names: set[str] = field(default_factory=set)
+    metamagic_names: set[str] = field(default_factory=set)
+    choices: list[dict[str, Any]] = field(default_factory=list)
+    metamagics: list[dict[str, Any]] = field(default_factory=list)
+    arts: list[dict[str, Any]] = field(default_factory=list)
+    bonus_sources: list[tuple[str, list[dict[str, Any]]]] = field(default_factory=list)
+    seen_meta: set[str] = field(default_factory=set)
+    seen_art: set[str] = field(default_factory=set)
+
+    @property
+    def can_adept(self) -> bool:
+        return self.talent_name in {"Adept", "Mystic Adept"}
+
+    @property
+    def can_magician(self) -> bool:
+        return self.talent_name in MAG_TALENTS and self.talent_name != "Adept"
+
+
+def _kept_choices(state: CharacterState, grade: int) -> list[InitiationChoice]:
+    """One choice per grade up to the character's, the saved one where there
+    is one; written back to the state, so a grade dropped drops its choice."""
     by_grade: dict[int, InitiationChoice] = {}
     for inst in state.initiations or []:
         g = int(inst.grade or 0)
@@ -173,235 +235,209 @@ def resolve_initiation(
         kept_choices.append(choice)
     state.initiate_grade = grade
     state.initiations = kept_choices
+    return kept_choices
 
-    art_names: set[str] = set()
-    metamagic_names: set[str] = set()
-    public_choices: list[dict[str, Any]] = []
-    public_metas: list[dict[str, Any]] = []
-    public_arts: list[dict[str, Any]] = []
-    bonus_sources: list[tuple[str, list[dict[str, Any]]]] = []
-    seen_meta: set[str] = set()
-    seen_art: set[str] = set()
-    limits = _metamagic_limits_by_grade(metamagic_limits)
 
-    for choice in kept_choices:
-        g = choice.grade
-        kept_arts: list[str] = []
-        for aid in choice.art_ids:
-            art = _magic_art_by_id(aid)
-            if not art:
-                warnings.append(notice("engine.initiation.artUnknownDropped", grade=g))
-                continue
-            if art["name"] in seen_art:
-                warnings.append(notice("engine.initiation.duplicateDropped", name=term(str(art["name"]))))
-                continue
-            kept_arts.append(aid)
-            seen_art.add(art["name"])
-            art_names.add(art["name"])
-            public_arts.append(
-                {
-                    "id": f"{choice.id}:art:{aid}",
-                    "art_id": aid,
-                    "name": art["name"],
-                    "grade": g,
-                    "source": art.get("source") or "",
-                    "page": art.get("page") or "",
-                }
-            )
-            if art.get("bonus"):
-                bonus_sources.append((art["name"], list(art["bonus"])))
-        choice.art_ids = kept_arts
-        kind = "art" if choice.kind == "art" else "metamagic"
-        choice.kind = kind
-        option_id = (choice.option_id or "").strip()
-        row = {
-            "id": choice.id,
-            "grade": g,
-            "kind": kind,
-            "option_id": option_id,
-            "art_ids": list(choice.art_ids),
-            "name": "",
-            "karma": initiation_karma_for_grade(
-                g, group=choice.group, ordeal=choice.ordeal, schooling=choice.schooling
-            ),
-            "group": bool(choice.group),
-            "ordeal": bool(choice.ordeal),
-            "schooling": bool(choice.schooling),
-            "source": "",
-            "page": "",
-            "allowed_metamagics": list(limits.get(g) or []),
-        }
-        if not option_id:
-            warnings.append(notice("engine.initiation.pickOption", grade=g))
-            public_choices.append(row)
+def _keep_extra_arts(choice: InitiationChoice, tally: _Tally) -> None:
+    """The arts a grade lists besides its option: unknown and repeated ones
+    are dropped, the rest taken."""
+    g = choice.grade
+    kept_arts: list[str] = []
+    for aid in choice.art_ids:
+        art = _magic_art_by_id(aid)
+        if not art:
+            tally.warnings.append(notice("engine.initiation.artUnknownDropped", grade=g))
             continue
-
-        if kind == "art":
-            spec = _magic_art_by_id(option_id)
-            if not spec:
-                warnings.append(notice("engine.initiation.artUnknownDropped", grade=g))
-                choice.option_id = ""
-                row["option_id"] = ""
-                public_choices.append(row)
-                continue
-            if spec["name"] in seen_art:
-                warnings.append(notice("engine.initiation.duplicateDropped", name=term(str(spec["name"]))))
-                choice.option_id = ""
-                row["option_id"] = ""
-                public_choices.append(row)
-                continue
-            seen_art.add(spec["name"])
-            art_names.add(spec["name"])
-            public_arts.append(
-                {
-                    "id": choice.id,
-                    "art_id": spec["id"],
-                    "name": spec["name"],
-                    "grade": g,
-                    "source": spec.get("source") or "",
-                    "page": spec.get("page") or "",
-                }
-            )
-            if spec.get("bonus"):
-                bonus_sources.append((spec["name"], list(spec.get("bonus") or [])))
-            row.update(
-                {
-                    "option_id": spec["id"],
-                    "name": spec["name"],
-                    "source": spec.get("source") or "",
-                    "page": spec.get("page") or "",
-                }
-            )
-            public_choices.append(row)
+        if art["name"] in tally.seen_art:
+            tally.warnings.append(notice("engine.initiation.duplicateDropped", name=term(str(art["name"]))))
             continue
-
-        spec = _metamagic_by_id(option_id)
-        if not spec:
-            warnings.append(notice("engine.initiation.metamagicUnknownDropped", grade=g))
-            choice.option_id = ""
-            row["option_id"] = ""
-            public_choices.append(row)
-            continue
-        if not spec.get("repeatable") and spec["name"] in seen_meta:
-            warnings.append(notice("engine.initiation.duplicateDropped", name=term(str(spec["name"]))))
-            choice.option_id = ""
-            row["option_id"] = ""
-            public_choices.append(row)
-            continue
-        if can_adept and not can_magician and not spec.get("adept"):
-            warnings.append(notice("engine.initiation.notForAdepts", name=term(str(spec["name"]))))
-            choice.option_id = ""
-            row["option_id"] = ""
-            public_choices.append(row)
-            continue
-        if can_magician and not can_adept and not spec.get("magician"):
-            warnings.append(notice("engine.initiation.notForMagicians", name=term(str(spec["name"]))))
-            choice.option_id = ""
-            row["option_id"] = ""
-            public_choices.append(row)
-            continue
-
-        allowed = limits.get(g) or []
-        if allowed and spec["name"] not in allowed:
-            warnings.append(
-                notice(
-                    "engine.initiation.metamagicNotAllowed",
-                    grade=g,
-                    name=term(str(spec["name"])),
-                    allowed=terms(allowed),
-                )
-            )
-            choice.option_id = ""
-            row["option_id"] = ""
-            public_choices.append(row)
-            continue
-
-        ctx = {
-            "qualities": set(quality_names) | {talent_name},
-            "arts": set(art_names),
-            "ignore_art": current_rules().ignore_art
-            or (state.settings.ignore_art is None and bool(state.settings.books and "SG" not in state.settings.books)),
-            "metamagics": set(metamagic_names),
-            "powers": set(),
-            # Enhanced Mist Form needs the Mist Form power (an Infected's)
-            "critter_powers": set(critter_powers or ()),
-            "metatypes": set(),
-            "metatype_categories": set(),
-            "magenabled": True,
-            "resenabled": False,
-            "cyberware": set(),
-            "bioware": set(),
-            "spells": set(),
-            "tradition": "",
-            "skills": {},
-            "knowledge": {},
-            "essence": 6.0,
-            "ess_lost": 0.0,
-        }
-        if spec.get("required_tree") and not requirement_tree_met(spec.get("required_tree"), ctx):
-            needed = [name for names in (spec.get("required") or {}).values() for name in names]
-            tree = spec["required_tree"]
-            children = (tree[0].get("children") or []) if len(tree) == 1 else []
-            arts = [node["name"] for node in children if node.get("tag") == "art"]
-            qualities = [node["name"] for node in children if node.get("tag") == "quality"]
-            if arts and tree[0]["tag"] == "oneof" and len(arts) + len(qualities) == len(children):
-                warnings.append(
-                    notice(
-                        "engine.initiation.requiresArtOrQuality",
-                        name=term(str(spec["name"])),
-                        arts=terms(arts),
-                        qualities=terms(qualities),
-                    )
-                )
-            elif arts and len(arts) == len(children):
-                warnings.append(notice("engine.initiation.requiresArt", name=term(str(spec["name"])), arts=terms(arts)))
-            elif needed:
-                warnings.append(
-                    notice("engine.initiation.requires", name=term(str(spec["name"])), needed=terms(needed))
-                )
-            else:
-                warnings.append(notice("engine.initiation.requiresUnmet", name=term(str(spec["name"]))))
-
-        seen_meta.add(spec["name"])
-        metamagic_names.add(spec["name"])
-        public_metas.append(
+        kept_arts.append(aid)
+        tally.seen_art.add(art["name"])
+        tally.art_names.add(art["name"])
+        tally.arts.append(
             {
-                "id": choice.id,
-                "metamagic_id": spec["id"],
-                "name": spec["name"],
+                "id": f"{choice.id}:art:{aid}",
+                "art_id": aid,
+                "name": art["name"],
                 "grade": g,
-                "adept": bool(spec.get("adept")),
-                "magician": bool(spec.get("magician")),
-                "source": spec.get("source") or "",
-                "page": spec.get("page") or "",
+                "source": art.get("source") or "",
+                "page": art.get("page") or "",
             }
         )
-        if spec.get("bonus"):
-            bonus_sources.append((spec["name"], list(spec.get("bonus") or [])))
-        row.update(
-            {
-                "option_id": spec["id"],
-                "name": spec["name"],
-                "source": spec.get("source") or "",
-                "page": spec.get("page") or "",
-            }
-        )
-        public_choices.append(row)
+        if art.get("bonus"):
+            tally.bonus_sources.append((art["name"], list(art["bonus"])))
+    choice.art_ids = kept_arts
 
-    if grade > 0 and mag <= 0:
-        errors.append(notice("engine.initiation.needsMagic"))
-    elif grade > mag:
-        errors.append(notice("engine.initiation.gradeOverMagic", grade=grade, magic=mag))
 
+def _choice_row(choice: InitiationChoice, limits: dict[int, list[str]]) -> dict[str, Any]:
+    """The grade's public row, before its option is resolved into it."""
+    g = choice.grade
+    kind = "art" if choice.kind == "art" else "metamagic"
+    choice.kind = kind
     return {
-        "warnings": warnings,
-        "grade": grade,
-        "karma": initiation_karma_total(grade, kept_choices),
-        "choices": public_choices,
-        "metamagics": public_metas,
-        "arts": public_arts,
-        "art_names": art_names,
-        "metamagic_names": metamagic_names,
-        "bonus_sources": bonus_sources,
-        "mag_max_bonus": grade,
+        "id": choice.id,
+        "grade": g,
+        "kind": kind,
+        "option_id": (choice.option_id or "").strip(),
+        "art_ids": list(choice.art_ids),
+        "name": "",
+        "karma": initiation_karma_for_grade(g, group=choice.group, ordeal=choice.ordeal, schooling=choice.schooling),
+        "group": bool(choice.group),
+        "ordeal": bool(choice.ordeal),
+        "schooling": bool(choice.schooling),
+        "source": "",
+        "page": "",
+        "allowed_metamagics": list(limits.get(g) or []),
     }
+
+
+def _take_option(choice: InitiationChoice, row: dict[str, Any], tally: _Tally) -> None:
+    """The grade's metamagic or art, taken into `row` — or refused, which
+    clears it from both the row and the saved choice."""
+    if not row["option_id"]:
+        tally.warnings.append(notice("engine.initiation.pickOption", grade=choice.grade))
+        return
+    if row["kind"] == "art":
+        _take_art(choice, row, tally)
+    else:
+        _take_metamagic(choice, row, tally)
+
+
+def _refuse(choice: InitiationChoice, row: dict[str, Any], tally: _Tally, warning: Notice) -> None:
+    tally.warnings.append(warning)
+    choice.option_id = ""
+    row["option_id"] = ""
+
+
+def _named(row: dict[str, Any], spec: dict[str, Any]) -> None:
+    row.update(
+        {
+            "option_id": spec["id"],
+            "name": spec["name"],
+            "source": spec.get("source") or "",
+            "page": spec.get("page") or "",
+        }
+    )
+
+
+def _take_art(choice: InitiationChoice, row: dict[str, Any], tally: _Tally) -> None:
+    g = choice.grade
+    spec = _magic_art_by_id(row["option_id"])
+    if not spec:
+        _refuse(choice, row, tally, notice("engine.initiation.artUnknownDropped", grade=g))
+        return
+    if spec["name"] in tally.seen_art:
+        _refuse(choice, row, tally, notice("engine.initiation.duplicateDropped", name=term(str(spec["name"]))))
+        return
+    tally.seen_art.add(spec["name"])
+    tally.art_names.add(spec["name"])
+    tally.arts.append(
+        {
+            "id": choice.id,
+            "art_id": spec["id"],
+            "name": spec["name"],
+            "grade": g,
+            "source": spec.get("source") or "",
+            "page": spec.get("page") or "",
+        }
+    )
+    if spec.get("bonus"):
+        tally.bonus_sources.append((spec["name"], list(spec.get("bonus") or [])))
+    _named(row, spec)
+
+
+def _take_metamagic(choice: InitiationChoice, row: dict[str, Any], tally: _Tally) -> None:
+    g = choice.grade
+    spec = _metamagic_by_id(row["option_id"])
+    if not spec:
+        _refuse(choice, row, tally, notice("engine.initiation.metamagicUnknownDropped", grade=g))
+        return
+    refusal = _metamagic_refusal(spec, g, tally)
+    if refusal:
+        _refuse(choice, row, tally, refusal)
+        return
+    _warn_unmet_requirements(spec, tally)
+    tally.seen_meta.add(spec["name"])
+    tally.metamagic_names.add(spec["name"])
+    tally.metamagics.append(
+        {
+            "id": choice.id,
+            "metamagic_id": spec["id"],
+            "name": spec["name"],
+            "grade": g,
+            "adept": bool(spec.get("adept")),
+            "magician": bool(spec.get("magician")),
+            "source": spec.get("source") or "",
+            "page": spec.get("page") or "",
+        }
+    )
+    if spec.get("bonus"):
+        tally.bonus_sources.append((spec["name"], list(spec.get("bonus") or [])))
+    _named(row, spec)
+
+
+def _metamagic_refusal(spec: dict[str, Any], g: int, tally: _Tally) -> Notice | None:
+    """Why this grade cannot take this metamagic: taken already, not for this
+    kind of initiate, or not one the tradition allows at this grade."""
+    name = term(str(spec["name"]))
+    if not spec.get("repeatable") and spec["name"] in tally.seen_meta:
+        return notice("engine.initiation.duplicateDropped", name=name)
+    if tally.can_adept and not tally.can_magician and not spec.get("adept"):
+        return notice("engine.initiation.notForAdepts", name=name)
+    if tally.can_magician and not tally.can_adept and not spec.get("magician"):
+        return notice("engine.initiation.notForMagicians", name=name)
+    allowed = tally.limits.get(g) or []
+    if allowed and spec["name"] not in allowed:
+        return notice("engine.initiation.metamagicNotAllowed", grade=g, name=name, allowed=terms(allowed))
+    return None
+
+
+def _warn_unmet_requirements(spec: dict[str, Any], tally: _Tally) -> None:
+    """A metamagic whose prerequisites are not met is kept, with a warning
+    that names what is missing as precisely as the tree allows."""
+    state = tally.state
+    ctx = {
+        "qualities": set(tally.quality_names) | {tally.talent_name},
+        "arts": set(tally.art_names),
+        "ignore_art": current_rules().ignore_art
+        or (state.settings.ignore_art is None and bool(state.settings.books and "SG" not in state.settings.books)),
+        "metamagics": set(tally.metamagic_names),
+        "powers": set(),
+        # Enhanced Mist Form needs the Mist Form power (an Infected's)
+        "critter_powers": set(tally.critter_powers or ()),
+        "metatypes": set(),
+        "metatype_categories": set(),
+        "magenabled": True,
+        "resenabled": False,
+        "cyberware": set(),
+        "bioware": set(),
+        "spells": set(),
+        "tradition": "",
+        "skills": {},
+        "knowledge": {},
+        "essence": 6.0,
+        "ess_lost": 0.0,
+    }
+    if not spec.get("required_tree") or requirement_tree_met(spec.get("required_tree"), ctx):
+        return
+    warnings = tally.warnings
+    needed = [name for names in (spec.get("required") or {}).values() for name in names]
+    tree = spec["required_tree"]
+    children = (tree[0].get("children") or []) if len(tree) == 1 else []
+    arts = [node["name"] for node in children if node.get("tag") == "art"]
+    qualities = [node["name"] for node in children if node.get("tag") == "quality"]
+    if arts and tree[0]["tag"] == "oneof" and len(arts) + len(qualities) == len(children):
+        warnings.append(
+            notice(
+                "engine.initiation.requiresArtOrQuality",
+                name=term(str(spec["name"])),
+                arts=terms(arts),
+                qualities=terms(qualities),
+            )
+        )
+    elif arts and len(arts) == len(children):
+        warnings.append(notice("engine.initiation.requiresArt", name=term(str(spec["name"])), arts=terms(arts)))
+    elif needed:
+        warnings.append(notice("engine.initiation.requires", name=term(str(spec["name"])), needed=terms(needed)))
+    else:
+        warnings.append(notice("engine.initiation.requiresUnmet", name=term(str(spec["name"]))))
