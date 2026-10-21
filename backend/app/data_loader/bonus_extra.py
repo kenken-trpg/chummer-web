@@ -178,95 +178,115 @@ def quality_needs_extra(bonus: list[dict[str, Any]] | None) -> bool:
 
 
 def quality_extra_meta(bonus: list[dict[str, Any]] | None) -> dict[str, Any]:
-    tags = {node.get("tag") for node in (bonus or [])}
-    kind = None
+    nodes = bonus or []
+    kind = _extra_kind(nodes)
     select_options: list[str] = []
-    spirit_options: list[str] = []
-    spell_exclude: list[str] = []
     expertise_skill = ""
-    needs_spell_category = any(_limit_spell_category_needs_select(node) for node in (bonus or []))
-    needs_spirit_category = any(_limit_spirit_category_needs_select(node) for node in (bonus or []))
-    weapon_dv_skills: list[str] = []
-    weapon_acc_attrs: dict[str, str] = {}
-    for node in bonus or []:
-        skills = _weapon_category_dv_select_skills(node)
-        if skills:
-            weapon_dv_skills = skills
-            break
-    for node in bonus or []:
-        if _weaponskillaccuracy_needs_select(node):
-            weapon_acc_attrs = _weaponskillaccuracy_select_attrs(node)
-            break
-    add_spirit_fixed = sum(
-        1
-        for node in (bonus or [])
-        if node.get("tag") == "addspirit" and not str((node.get("attrs") or {}).get("skill") or "").strip()
-    )
-    if "selectexpertise" in tags:
-        kind = "expertise"
-        for node in bonus or []:
-            if node.get("tag") != "selectexpertise":
-                continue
-            limit = str((node.get("attrs") or {}).get("limittoskill") or node.get("value") or "").strip()
-            expertise_skill = next((part.strip() for part in limit.split(",") if part.strip()), "")
-            limit_spec = str((node.get("attrs") or {}).get("limittospecialization") or "").strip()
-            if limit_spec:
-                select_options = [part.strip() for part in limit_spec.split(",") if part.strip()]
-            break
-    elif weapon_dv_skills:
-        kind = "weapon_skill"
-        select_options = list(weapon_dv_skills)
-    elif weapon_acc_attrs or any(_weaponskillaccuracy_needs_select(node) for node in (bonus or [])):
-        kind = "weapon_skill"
-        # Options filled later in catalog() once skills.xml is loaded.
-    elif add_spirit_fixed:
-        kind = "add_spirit"
-    elif "selectquality" in tags:
-        kind = "quality"
-        for node in bonus or []:
-            if node.get("tag") != "selectquality":
-                continue
-            raw = (node.get("fields") or {}).get("quality") or node.get("value") or []
-            for item in raw if isinstance(raw, list) else [raw]:
-                text = str(item).strip()
-                if text and text not in select_options:
-                    select_options.append(text)
-    elif "skillgroupdisablechoice" in tags:
-        kind = "skillgroup"
-    elif "selectside" in tags:
-        kind = "side"
-    elif "actiondicepool" in tags:
-        kind = "matrix_action"
+    if kind == "expertise":
+        expertise_skill, select_options = _expertise_pick(nodes)
+    elif kind == "weapon_skill":
+        # Empty for `weaponskillaccuracy`: filled later in catalog() once
+        # skills.xml is loaded.
+        select_options = _weapon_dv_skills(nodes)
+    elif kind == "quality":
+        select_options = _selectquality_options(nodes)
+    elif kind == "matrix_action":
         select_options = list(MATRIX_ACTION_OPTIONS)
-    elif needs_spell_category and needs_spirit_category:
-        kind = "spell_spirit_category"
-    elif needs_spell_category:
-        kind = "spell_category"
-    elif needs_spirit_category:
-        kind = "spirit_category"
-    elif "selectattributes" in tags or "selectattribute" in tags:
-        kind = "attribute"
-    elif "selecttext" in tags or "selectsprite" in tags or "selectinherentaiprogram" in tags:
-        # `selectsprite` (Sprite Affinity) and `selectinherentaiprogram`
-        # (Inherent Program): options filled in catalog() once the sprites
-        # and the A.I. programs are loaded
-        kind = "text"
-    if needs_spell_category:
-        select_options = list(SPELL_SELECT_CATEGORIES)
-        for node in bonus or []:
-            if not _limit_spell_category_needs_select(node):
-                continue
-            exclude = str((node.get("attrs") or {}).get("exclude") or "").strip()
-            if exclude:
-                spell_exclude.append(exclude)
-                select_options = [name for name in select_options if name != exclude]
-    if needs_spirit_category:
-        spirit_options = list(STANDARD_SPIRIT_NAMES)
+    spell_exclude: list[str] = []
+    if any(_limit_spell_category_needs_select(node) for node in nodes):
+        select_options, spell_exclude = _spell_categories(nodes)
+    needs_spirit_category = any(_limit_spirit_category_needs_select(node) for node in nodes)
     return {
         "extra_kind": kind,
         "select_options": select_options,
-        "spirit_options": spirit_options,
+        "spirit_options": list(STANDARD_SPIRIT_NAMES) if needs_spirit_category else [],
         "spell_exclude": spell_exclude,
         "expertise_skill": expertise_skill,
-        "add_spirit_count": add_spirit_fixed,
+        "add_spirit_count": _fixed_add_spirits(nodes),
     }
+
+
+def _extra_kind(nodes: list[dict[str, Any]]) -> str | None:
+    """What the player picks for the quality; the first rule that matches wins."""
+    tags = {node.get("tag") for node in nodes}
+    needs_spell_category = any(_limit_spell_category_needs_select(node) for node in nodes)
+    needs_spirit_category = any(_limit_spirit_category_needs_select(node) for node in nodes)
+    if "selectexpertise" in tags:
+        return "expertise"
+    if _weapon_dv_skills(nodes) or any(_weaponskillaccuracy_needs_select(node) for node in nodes):
+        return "weapon_skill"
+    if _fixed_add_spirits(nodes):
+        return "add_spirit"
+    for tag, kind in (
+        ("selectquality", "quality"),
+        ("skillgroupdisablechoice", "skillgroup"),
+        ("selectside", "side"),
+        ("actiondicepool", "matrix_action"),
+    ):
+        if tag in tags:
+            return kind
+    if needs_spell_category and needs_spirit_category:
+        return "spell_spirit_category"
+    if needs_spell_category:
+        return "spell_category"
+    if needs_spirit_category:
+        return "spirit_category"
+    if "selectattributes" in tags or "selectattribute" in tags:
+        return "attribute"
+    # `selectsprite` (Sprite Affinity) and `selectinherentaiprogram`
+    # (Inherent Program): options filled in catalog() once the sprites
+    # and the A.I. programs are loaded
+    if tags & {"selecttext", "selectsprite", "selectinherentaiprogram"}:
+        return "text"
+    return None
+
+
+def _weapon_dv_skills(nodes: list[dict[str, Any]]) -> list[str]:
+    """The skills of the first `weaponcategorydv` that asks for one."""
+    return next((skills for node in nodes if (skills := _weapon_category_dv_select_skills(node))), [])
+
+
+def _fixed_add_spirits(nodes: list[dict[str, Any]]) -> int:
+    """`addspirit` grants with no skill of their own: the player names the spirit."""
+    return sum(
+        1
+        for node in nodes
+        if node.get("tag") == "addspirit" and not str((node.get("attrs") or {}).get("skill") or "").strip()
+    )
+
+
+def _expertise_pick(nodes: list[dict[str, Any]]) -> tuple[str, list[str]]:
+    """The first `selectexpertise`'s skill and its allowed specializations."""
+    node = next(node for node in nodes if node.get("tag") == "selectexpertise")
+    attrs = node.get("attrs") or {}
+    limit = str(attrs.get("limittoskill") or node.get("value") or "").strip()
+    skill = next((part.strip() for part in limit.split(",") if part.strip()), "")
+    limit_spec = str(attrs.get("limittospecialization") or "").strip()
+    return skill, [part.strip() for part in limit_spec.split(",") if part.strip()]
+
+
+def _selectquality_options(nodes: list[dict[str, Any]]) -> list[str]:
+    options: list[str] = []
+    for node in nodes:
+        if node.get("tag") != "selectquality":
+            continue
+        raw = (node.get("fields") or {}).get("quality") or node.get("value") or []
+        for item in raw if isinstance(raw, list) else [raw]:
+            text = str(item).strip()
+            if text and text not in options:
+                options.append(text)
+    return options
+
+
+def _spell_categories(nodes: list[dict[str, Any]]) -> tuple[list[str], list[str]]:
+    """The spell categories on offer, and the ones `limitspellcategory` excludes."""
+    options = list(SPELL_SELECT_CATEGORIES)
+    excluded: list[str] = []
+    for node in nodes:
+        if not _limit_spell_category_needs_select(node):
+            continue
+        exclude = str((node.get("attrs") or {}).get("exclude") or "").strip()
+        if exclude:
+            excluded.append(exclude)
+            options = [name for name in options if name != exclude]
+    return options, excluded
