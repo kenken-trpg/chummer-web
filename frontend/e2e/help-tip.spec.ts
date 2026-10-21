@@ -79,8 +79,9 @@ test.describe("help tips", () => {
     await waitForEditor(page);
     await page.getByRole("button", { name: "技能", exact: true }).click();
     const button = page.locator(".skill-cat-block .skill-row .help-tip-button").first();
-    await button.scrollIntoViewIfNeeded();
-    await button.click();
+    // focus, not click: at this width the sticky tab bar can sit over the
+    // first row, and the click lands on the bar instead
+    await button.focus();
     const tip = page.locator(`[id="${await button.getAttribute("aria-describedby")}"]`);
     await expect(tip).toBeVisible();
     const overflow = await tip.evaluate((el) => el.scrollWidth - el.clientWidth);
