@@ -36,14 +36,16 @@ const catalog = makeCatalog({
 });
 
 function setup(settings?: { name: string; books: string[]; unsupported?: string[] }) {
+  const character = makeCharacter({ settings });
   const patch = vi.fn();
   render(
     <SettingsPicker
       catalog={catalog}
-      character={makeCharacter({ settings })}
+      character={character}
       ui={testUi}
       tr={identityTr}
-      patch={patch}
+      // the editor hands an updater the character as saved: here, the one shown
+      patch={(body) => patch(typeof body === "function" ? body(character) : body)}
     />,
   );
   return { patch };

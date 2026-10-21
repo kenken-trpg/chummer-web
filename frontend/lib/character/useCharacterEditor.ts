@@ -8,7 +8,12 @@ import {
   portraitsPatch,
 } from "@/lib/character/portrait";
 import { clearPendingGear } from "@/lib/character/pending-gear-store";
-import { advancesOneLeaf, disjointKeys } from "@/lib/character/patch-queue";
+import {
+  advancesOneLeaf,
+  disjointKeys,
+  type PatchInput,
+  type Updater,
+} from "@/lib/character/patch-queue";
 import { useCatalogReload } from "@/lib/character/useCatalogReload";
 import { useCharacterExport } from "@/lib/character/useCharacterExport";
 import { useCharacterImport } from "@/lib/character/useCharacterImport";
@@ -52,6 +57,9 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
    *  only set while `busy`, so the unload guard below already covers them. */
   const inFlight = useRef<Record<string, unknown> | null>(null);
   const queued = useRef<Record<string, unknown> | null>(null);
+  /** Updaters that arrived while busy, in order. Each is composed against the
+   *  character the one before it left, so all of them can wait. */
+  const updaters = useRef<Updater[]>([]);
   // `lib/api` and `local-store` have no locale and no React — they report a
   // degraded save / a stale compute as a message key. See `lib/notices`.
   //
@@ -202,11 +210,16 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
    * character as stored. An edit that arrives during that window used to be
    * dropped, which a number input shows by springing back to its old value;
    * see `patch-queue` for why blindly queueing would be worse rather than
-   * better, and what makes the queued case safe.
+   * better, and what makes the queued case safe. An updater is always safe:
+   * it reads the character only once the edits in front of it have landed.
    */
-  async function patch(body: Record<string, unknown>) {
+  async function patch(body: PatchInput) {
     if (!ch) return;
     if (busy.current) {
+      if (typeof body === "function") {
+        updaters.current.push(body);
+        return;
+      }
       // Compare against what is *going* to be sent, not what is on the wire:
       // a third change while the second waits is a step on from the second.
       const previous = queued.current ?? inFlight.current;
@@ -223,7 +236,8 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     }
     busy.current = true;
     try {
-      let send: Record<string, unknown> | null = body;
+      let send: Record<string, unknown> | null =
+        typeof body === "function" ? body(lastCommitted.current ?? ch) : body;
       while (send) {
         inFlight.current = send;
         queued.current = null;
@@ -233,7 +247,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
         setCh(next);
         lastCommitted.current = next;
         setError(null);
-        send = queued.current;
+        send = queued.current ?? updaters.current.shift()?.(next) ?? null;
       }
     } catch (e) {
       setError(errorMessage(e, ui, "app.err.patch"));
@@ -244,6 +258,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
       busy.current = false;
       inFlight.current = null;
       queued.current = null;
+      updaters.current = [];
     }
   }
 
