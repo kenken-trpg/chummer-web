@@ -150,6 +150,9 @@ RULEBOOK_ONLY = {
     "Qi Focus": "氣収束具",  # 氣, not 気 — as the book and the catalog print it
     "Qi Foci": "氣収束具",
     "Mentor Spirit": "導師精霊",
+    # a mentor spirit's two headings, as the book prints them (#664)
+    "Advantage": "利点",
+    "Disadvantage": "欠点",
     "Vehicle Cost": "価格",
     # decided by the user (2026-10-17) where the UI had split or coined its own
     "Matrix Initiative": "マトリックス・イニシアティブ",
