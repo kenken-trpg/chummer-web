@@ -181,35 +181,37 @@ def _with_metavariants(metatypes: list[dict[str, Any]]) -> Iterator[dict[str, An
         yield from meta.get("metavariants") or []
 
 
-@lru_cache(maxsize=4)
-def _catalog_for(_overlay_key: str) -> CatalogDict:
-    if not (DATA_DIR / "metatypes.xml").exists():
-        raise FileNotFoundError(f"Chummer data not found in {DATA_DIR}. Run backend/scripts/fetch_chummer_data.py")
-    metatypes = load_metatypes()
-    playable = [
+def _playable_metatypes(metatypes: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [
         m
         for m in metatypes
         if m["name"] in {"Centaur", "A.I."}
         or m["category"] == "Shapeshifter"
         or (m["category"] in {"Metahuman", "Metavariant"} and m["name"] in {"Human", "Elf", "Dwarf", "Ork", "Troll"})
     ]
-    translations = load_translations()
+
+
+def _metatypes_by_name(metatypes: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     all_by_name: dict[str, dict[str, Any]] = {}
     for m in metatypes:
         all_by_name.setdefault(m["name"], m)
         for mv in m.get("metavariants") or []:
             all_by_name.setdefault(mv["name"], mv)
-    weapons = load_weapons()
-    gear = load_gear()
-    drug_grades = load_drug_grades()
+    return all_by_name
+
+
+def _add_drug_grades(gear: list[dict[str, Any]], drug_grades: list[dict[str, Any]]) -> None:
     gear_ids = {item["id"] for item in gear}
     for grade in drug_grades:
         if grade["id"] not in gear_ids:
             gear.append(grade)
             gear_ids.add(grade["id"])
-    cyberware = load_cyberware()
-    bioware = load_bioware()
-    weapon_ids = {item["name"]: item["id"] for item in weapons}
+
+
+def _link_gear_to_weapons(
+    gear: list[dict[str, Any]], weapons: list[dict[str, Any]], weapon_ids: dict[str, str]
+) -> None:
+    """A piece of gear that brings a weapon, and the weapon that came from it."""
     gear_for_weapon: dict[str, str] = {}
     for item in gear:
         add_name = str(item.get("add_weapon") or "")
@@ -217,46 +219,46 @@ def _catalog_for(_overlay_key: str) -> CatalogDict:
             continue
         item["add_weapon_id"] = weapon_ids.get(add_name) or ""
         gear_for_weapon[add_name] = item["id"]
-    for item in list(cyberware.get("items") or []) + list(bioware.get("items") or []):
-        add_name = str(item.get("add_weapon") or "")
-        if add_name:
-            item["add_weapon_id"] = weapon_ids.get(add_name) or ""
     for item in weapons:
         gear_id = gear_for_weapon.get(item["name"]) or ""
         item["from_gear"] = bool(gear_id)
         item["add_gear_id"] = gear_id
+
+
+def _link_added_weapons(items: list[dict[str, Any]], weapon_ids: dict[str, str]) -> None:
+    """The id of the weapon each row names in `<addweapon>`."""
+    for item in items:
+        add_name = str(item.get("add_weapon") or "")
+        if add_name:
+            item["add_weapon_id"] = weapon_ids.get(add_name) or ""
+
+
+def _add_drug_effects(gear: list[dict[str, Any]]) -> None:
     drug_effects = load_drug_components()
     for item in gear:
         eff = drug_effects.get(item["id"])
         if eff:
             item.update(eff)
-    drugs = [item for item in gear if item.get("category") in DRUG_CATEGORIES]
-    skills = load_skills()
-    skills["group_names"] = load_skill_group_names()
-    skills["spec_names"] = load_spec_names()
-    qualities = load_qualities()
-    armor = load_armor()
-    # A shield is armour you hit people with, and metagenetic claws are a
-    # quality that is also a weapon (RF p.104) — both name the weapon they
-    # bring in `<addweapon>`, the same way gear and ware do above.
-    for item in list(armor) + list(qualities):
-        add_name = str(item.get("add_weapon") or "")
-        if add_name:
-            item["add_weapon_id"] = weapon_ids.get(add_name) or ""
+
+
+def _resolve_species_grants(
+    metatypes: list[dict[str, Any]],
+    grantable_qualities: list[dict[str, Any]],
+    grantable_powers: list[dict[str, Any]],
+    weapon_ids: dict[str, str],
+) -> None:
     # Every species, not only the one that made the path necessary. An elf's
     # low-light vision is the same kind of grant as a centaur's, and leaving
     # it unresolved made the qualities tab answer differently depending on
     # which metatype was chosen. Metavariants are walked too: a `.chum5` can
     # name one even though chargen offers only the six base metatypes.
-    grantable_qualities = load_qualities(include_hidden=True)
-    grantable_powers = load_critter_powers(include_rules=True)
     for meta in _with_metavariants(metatypes):
         meta["quality_grants"] = resolve_metatype_grants(meta, meta.get("qualities") or [], grantable_qualities)
-        for quality in meta["quality_grants"]:
-            add_name = str(quality.get("add_weapon") or "")
-            if add_name:
-                quality["add_weapon_id"] = weapon_ids.get(add_name) or ""
+        _link_added_weapons(meta["quality_grants"], weapon_ids)
         meta["power_grants"] = resolve_metatype_grants(meta, meta.get("powers") or [], grantable_powers)
+
+
+def _attach_critter_power_effects(qualities: list[dict[str, Any]], grantable_powers: list[dict[str, Any]]) -> None:
     # The same for the powers a quality grants — an Infected's, a drake's, a
     # free insect spirit's. The catalog's own `critter_powers` rows are the
     # descriptive ones (no `<bonus>`), so without this a Dracoform's Hardened
@@ -284,6 +286,11 @@ def _catalog_for(_overlay_key: str) -> CatalogDict:
                     )
         if effects:
             quality["critter_power_effects"] = effects
+
+
+def _buyable_critter_powers(
+    qualities: list[dict[str, Any]], grantable_powers: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
     # What a Critter Powers tab can sell: the categories some quality limits
     # the tab to (`<limitcritterpowercategory>` — Infected, Drake). Nothing in
     # this app opens the tab without one, and the full 291 powers would only
@@ -294,7 +301,10 @@ def _catalog_for(_overlay_key: str) -> CatalogDict:
         for node in quality.get("bonus") or []
         if node.get("tag") == "limitcritterpowercategory"
     }
-    buyable_critter_powers = [row for row in grantable_powers if row.get("category") in shop_categories]
+    return [row for row in grantable_powers if row.get("category") in shop_categories]
+
+
+def _offer_expertise_specs(qualities: list[dict[str, Any]], skills: dict[str, Any]) -> None:
     skill_specs = {
         str(skill.get("name") or ""): list(skill.get("specs") or [])
         for skill in (skills.get("skills") or [])
@@ -306,6 +316,9 @@ def _catalog_for(_overlay_key: str) -> CatalogDict:
         skill_name = str(quality.get("expertise_skill") or "").strip()
         if skill_name and not quality.get("select_options"):
             quality["select_options"] = list(skill_specs.get(skill_name) or [])
+
+
+def _offer_weapon_skills(qualities: list[dict[str, Any]], skills: dict[str, Any]) -> None:
     active_skills = list(skills.get("skills") or [])
     for quality in qualities:
         if quality.get("extra_kind") != "weapon_skill" or quality.get("select_options"):
@@ -317,16 +330,9 @@ def _catalog_for(_overlay_key: str) -> CatalogDict:
                 active_skills, _weaponskillaccuracy_select_attrs(node)
             )
             break
-    spirits = load_spirits()
-    programs = load_programs()
-    selecttext_data = {
-        "vehicle_names": load_vehicle_names(),
-        "drones": load_drones(),
-        "weapons": weapons,
-        "skills": skills,
-        "spirits": spirits,
-        "programs": programs,
-    }
+
+
+def _offer_selecttext(qualities: list[dict[str, Any]], selecttext_data: dict[str, Any]) -> None:
     for quality in qualities:
         if quality.get("extra_kind") != "text" or quality.get("select_options"):
             continue
@@ -339,21 +345,79 @@ def _catalog_for(_overlay_key: str) -> CatalogDict:
                     options.append(name)
         if options:
             quality["select_options"] = options
-    sprites = load_sprites()
+
+
+def _offer_sprites(qualities: list[dict[str, Any]], sprites: list[dict[str, Any]]) -> None:
     for quality in qualities:
         if any(node.get("tag") == "selectsprite" for node in quality.get("bonus") or []):
             quality["select_options"] = [str(s["name"]) for s in sprites if s.get("name")]
-    ai_programs = load_ai_programs()
-    # the grants too: a Protosapient is born with Inherent Program, and its
-    # grant is a copy made from its own load of qualities.xml above
-    grants = [q for meta in _with_metavariants(metatypes) for q in meta.get("quality_grants") or []]
-    for quality in [*qualities, *grants]:
+
+
+def _offer_inherent_programs(qualities: list[dict[str, Any]], ai_programs: list[dict[str, Any]]) -> None:
+    for quality in qualities:
         if any(node.get("tag") == "selectinherentaiprogram" for node in quality.get("bonus") or []):
             # Inherent Program: one common or hacking program, which the A.I.
             # then has for free (Chummer's `selectinherentaiprogram`).
             quality["select_options"] = [
                 str(p["name"]) for p in ai_programs if p.get("category") in INHERENT_CATEGORIES
             ]
+
+
+@lru_cache(maxsize=4)
+def _catalog_for(_overlay_key: str) -> CatalogDict:
+    if not (DATA_DIR / "metatypes.xml").exists():
+        raise FileNotFoundError(f"Chummer data not found in {DATA_DIR}. Run backend/scripts/fetch_chummer_data.py")
+    metatypes = load_metatypes()
+    playable = _playable_metatypes(metatypes)
+    translations = load_translations()
+    all_by_name = _metatypes_by_name(metatypes)
+    weapons = load_weapons()
+    gear = load_gear()
+    drug_grades = load_drug_grades()
+    _add_drug_grades(gear, drug_grades)
+    cyberware = load_cyberware()
+    bioware = load_bioware()
+    weapon_ids = {item["name"]: item["id"] for item in weapons}
+    _link_gear_to_weapons(gear, weapons, weapon_ids)
+    _link_added_weapons(list(cyberware.get("items") or []) + list(bioware.get("items") or []), weapon_ids)
+    _add_drug_effects(gear)
+    drugs = [item for item in gear if item.get("category") in DRUG_CATEGORIES]
+    skills = load_skills()
+    skills["group_names"] = load_skill_group_names()
+    skills["spec_names"] = load_spec_names()
+    qualities = load_qualities()
+    armor = load_armor()
+    # A shield is armour you hit people with, and metagenetic claws are a
+    # quality that is also a weapon (RF p.104) — both name the weapon they
+    # bring in `<addweapon>`, the same way gear and ware do above.
+    _link_added_weapons(list(armor) + list(qualities), weapon_ids)
+    grantable_qualities = load_qualities(include_hidden=True)
+    grantable_powers = load_critter_powers(include_rules=True)
+    _resolve_species_grants(metatypes, grantable_qualities, grantable_powers, weapon_ids)
+    _attach_critter_power_effects(qualities, grantable_powers)
+    buyable_critter_powers = _buyable_critter_powers(qualities, grantable_powers)
+    _offer_expertise_specs(qualities, skills)
+    _offer_weapon_skills(qualities, skills)
+    spirits = load_spirits()
+    programs = load_programs()
+    _offer_selecttext(
+        qualities,
+        {
+            "vehicle_names": load_vehicle_names(),
+            "drones": load_drones(),
+            "weapons": weapons,
+            "skills": skills,
+            "spirits": spirits,
+            "programs": programs,
+        },
+    )
+    sprites = load_sprites()
+    _offer_sprites(qualities, sprites)
+    ai_programs = load_ai_programs()
+    # the grants too: a Protosapient is born with Inherent Program, and its
+    # grant is a copy made from its own load of qualities.xml above
+    grants = [q for meta in _with_metavariants(metatypes) for q in meta.get("quality_grants") or []]
+    _offer_inherent_programs([*qualities, *grants], ai_programs)
     return {
         "metatypes": playable,
         "all_metatypes": all_by_name,
