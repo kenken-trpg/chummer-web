@@ -77,7 +77,6 @@ def resolve_electronic_modifications(
 ) -> list[Notice]:
     warnings: list[Notice] = []
     specs = {str(s["id"]): s for s in catalog_list("gear")}
-    host_specs = {str(s["id"]): s for b in ("cyberdecks", "rccs", "commlinks") for s in catalog_list(b)}
     host_by_id = {str(h["id"]): h for h in hosts}
     for base_host in hosts:
         # UI estimates must use the same preconstruction values as completion,
@@ -86,106 +85,23 @@ def resolve_electronic_modifications(
             k: int(base_host.get(k) or 0) for k in ("device_rating", "attack", "sleaze", "dataprocessing", "firewall")
         }
     rows = {str(r["id"]): r for r in gear}
-    installs = {r.id: r for r in state.gear}
-    stock: dict[str, int] = {}
-    for inst in state.gear:
-        if inst.gear_id in (SINGLE_PARTS, FIVE_PARTS):
-            stock[inst.id] = (
-                inst.purchased_parts_units
-                if inst.purchased_parts_units is not None
-                else max(1, inst.qty) * (20 if inst.gear_id == FIVE_PARTS else 4)
-            ) * _held_multiplier(inst, installs, specs)
-    for supply in state.electronic_parts_supplies:
-        stock[supply.id] = supply.units
-    duplicate_sources = len(stock) != sum(i.gear_id in (SINGLE_PARTS, FIVE_PARTS) for i in state.gear) + len(
-        state.electronic_parts_supplies
-    )
-    equipment = [s.equipment_id for s in state.electronic_parts_supplies if s.kind == "equipment"]
-    equipment_invalid = len(equipment) != len(set(equipment)) or any(not e for e in equipment)
-    if duplicate_sources or equipment_invalid:
+    stock = _stock(state, specs)
+    sources_invalid = _sources_invalid(state, stock)
+    if sources_invalid:
         warnings.append(notice("engine.gear.materialAllocationInvalid", name="parts sources"))
     records = state.electronic_modification_records
-    record_ids = Counter(r.id for r in records)
-    mod_ids = Counter(r.modification_id for r in records if r.status != "cancelled")
-    used: Counter[str] = Counter()
-    reserved: Counter[str] = Counter()
-    for record in records:
-        allocation_totals = used if record.status == "completed" else reserved if record.status == "pending" else None
-        if allocation_totals is not None:
-            for a in record.allocations:
-                allocation_totals[a.source_id] += a.units
-    bad_sources = {sid for sid in used.keys() | reserved.keys() if used[sid] + reserved[sid] > stock.get(sid, 0)}
-    bad_records: set[str] = set()
-    for record in records:
-        ids = [a.source_id for a in record.allocations]
-        allocated = sum(a.units for a in record.allocations)
-        frozen_required = None
-        if record.status == "completed":
-            rule, attr = modification_rule(specs.get(record.gear_id) or {})
-            snap = record.host_snapshot
-            if snap:
-                frozen_required = {"module": 8, "modify": 16}.get(rule)
-                if rule == "add":
-                    frozen_required = int(snap.get("device_rating") or 0) * 8
-                elif rule == "increase":
-                    frozen_required = (int(snap.get(attr) or 0) + 1) * 8
-        if (
-            (
-                record.status == "completed"
-                and (frozen_required is None or frozen_required != record.required_units or frozen_required <= 0)
-            )
-            or record_ids[record.id] > 1
-            or mod_ids[record.modification_id] > 1
-            or (record.status in ("completed", "pending") and len(ids) != len(set(ids)))
-            or (record.status in ("completed", "pending") and any(s not in stock or s in bad_sources for s in ids))
-            or (record.status == "completed" and allocated != record.required_units)
-            or (record.status == "pending" and allocated > record.required_units)
-            or duplicate_sources
-            or equipment_invalid
-        ):
-            bad_records.add(record.id)
-            warnings.append(notice("engine.gear.materialAllocationInvalid", name=record.modification_id))
+    used, reserved = _allocated(records)
+    bad_records = _bad_records(records, specs, stock, used, reserved, sources_invalid, warnings)
     active: dict[str, ElectronicModificationRecord] = {r.modification_id: r for r in records}
     active.update({r.modification_id: r for r in records if r.status != "cancelled"})
+    available = sum(max(0, n - used[sid] - reserved[sid]) for sid, n in stock.items())
+    host_specs = {str(s["id"]): s for b in ("cyberdecks", "rccs", "commlinks") for s in catalog_list(b)}
     roots: dict[str, list[dict[str, Any]]] = {}
     for row in gear:
         if row.get("category") != "Electronic Modification":
             continue
-        parent = rows.get(str(row.get("parent_id") or ""))
-        host = host_by_id.get(str(row.get("parent_id") or ""))
-        # DT allows Increase nested below the corresponding Add.
-        if host is None and parent and parent.get("gear_id") in (ADD_ATTACK, ADD_SLEAZE):
-            host = host_by_id.get(str(parent.get("parent_id") or ""))
-        rec = active.get(str(row["id"]))
-        status = ("pending" if rec.status == "cancelled" else rec.status) if rec else "unverified"
-        spec = specs.get(str(row["gear_id"])) or {}
-        required, reason = requirement(spec, host or {}, host_specs.get(str((host or {}).get("gear_id"))) or {})
-        if host is None or int(row.get("qty") or 1) != 1:
-            reason = "invalidHost"
-        if parent and parent.get("gear_id") in (ADD_ATTACK, ADD_SLEAZE):
-            attr = "attack" if parent["gear_id"] == ADD_ATTACK else "sleaze"
-            rule, target = modification_rule(spec)
-            if rule != "increase" or target != attr:
-                reason = "invalidHost"
-            else:
-                required, reason = 16, ""  # new attribute 1 -> 2
-        if rec and (
-            rec.gear_id != row["gear_id"] or rec.host_id != str((host or {}).get("id")) or rec.id in bad_records
-        ):
-            reason = "recordMismatch"
-        valid = not reason and status in ("unverified", "historical", "completed")
-        row.update(
-            modification_status=status,
-            modification_valid=valid,
-            modification_reason=reason,
-            material_required_units=rec.required_units if rec and status in ("completed", "historical") else required,
-            material_available_units=sum(max(0, n - used[sid] - reserved[sid]) for sid, n in stock.items()),
-            material_allocated_units=sum(a.units for a in rec.allocations) if rec else 0,
-            modification_host_id=(host or {}).get("id"),
-        )
-        if status == "unverified":
-            warnings.append(notice("engine.gear.materialHistoryUnverified", name=term(str(row["name"]))))
-        if host is not None and row.get("parent_id") == host["id"] and status != "pending":
+        host = _judge_modification(row, rows, host_by_id, active, specs, host_specs, bad_records, available, warnings)
+        if host is not None and row.get("parent_id") == host["id"] and row["modification_status"] != "pending":
             roots.setdefault(str(host["id"]), []).append(row)
     for hid, mods in roots.items():
         if sum(int(r.get("qty") or 1) for r in mods if not r.get("included")) > 1:
@@ -202,6 +118,146 @@ def resolve_electronic_modifications(
             and not parent.get("modification_valid")
         ):
             row.update(modification_valid=False, modification_reason="invalidParent")
+    _add_supply_rows(state, gear, rows)
+    _show_stock(stock, rows, used, reserved)
+    return warnings
+
+
+def _stock(state: CharacterState, specs: dict[str, dict[str, Any]]) -> dict[str, int]:
+    """Quarter-packs per parts source: bought Electronic Parts rows and recorded supplies."""
+    installs = {r.id: r for r in state.gear}
+    stock: dict[str, int] = {}
+    for inst in state.gear:
+        if inst.gear_id in (SINGLE_PARTS, FIVE_PARTS):
+            stock[inst.id] = (
+                inst.purchased_parts_units
+                if inst.purchased_parts_units is not None
+                else max(1, inst.qty) * (20 if inst.gear_id == FIVE_PARTS else 4)
+            ) * _held_multiplier(inst, installs, specs)
+    for supply in state.electronic_parts_supplies:
+        stock[supply.id] = supply.units
+    return stock
+
+
+def _sources_invalid(state: CharacterState, stock: dict[str, int]) -> bool:
+    """Two sources share an id, or a piece of equipment is missing or listed twice."""
+    duplicate_sources = len(stock) != sum(i.gear_id in (SINGLE_PARTS, FIVE_PARTS) for i in state.gear) + len(
+        state.electronic_parts_supplies
+    )
+    equipment = [s.equipment_id for s in state.electronic_parts_supplies if s.kind == "equipment"]
+    return duplicate_sources or len(equipment) != len(set(equipment)) or any(not e for e in equipment)
+
+
+def _allocated(records: list[ElectronicModificationRecord]) -> tuple[Counter[str], Counter[str]]:
+    """Units per source, as ``(used by completed, reserved by pending)``."""
+    used: Counter[str] = Counter()
+    reserved: Counter[str] = Counter()
+    for record in records:
+        totals = used if record.status == "completed" else reserved if record.status == "pending" else None
+        if totals is not None:
+            for a in record.allocations:
+                totals[a.source_id] += a.units
+    return used, reserved
+
+
+def _frozen_required(record: ElectronicModificationRecord, specs: dict[str, dict[str, Any]]) -> int | None:
+    """The units a completed record needed, recomputed off its host snapshot."""
+    rule, attr = modification_rule(specs.get(record.gear_id) or {})
+    snap = record.host_snapshot
+    if not snap:
+        return None
+    if rule == "add":
+        return int(snap.get("device_rating") or 0) * 8
+    if rule == "increase":
+        return (int(snap.get(attr) or 0) + 1) * 8
+    return {"module": 8, "modify": 16}.get(rule)
+
+
+def _bad_records(
+    records: list[ElectronicModificationRecord],
+    specs: dict[str, dict[str, Any]],
+    stock: dict[str, int],
+    used: Counter[str],
+    reserved: Counter[str],
+    sources_invalid: bool,
+    warnings: list[Notice],
+) -> set[str]:
+    """Records whose allocations or bookkeeping do not add up, each warned about."""
+    record_ids = Counter(r.id for r in records)
+    mod_ids = Counter(r.modification_id for r in records if r.status != "cancelled")
+    bad_sources = {sid for sid in used.keys() | reserved.keys() if used[sid] + reserved[sid] > stock.get(sid, 0)}
+    bad: set[str] = set()
+    for record in records:
+        ids = [a.source_id for a in record.allocations]
+        allocated = sum(a.units for a in record.allocations)
+        frozen_required = _frozen_required(record, specs) if record.status == "completed" else None
+        if (
+            (
+                record.status == "completed"
+                and (frozen_required is None or frozen_required != record.required_units or frozen_required <= 0)
+            )
+            or record_ids[record.id] > 1
+            or mod_ids[record.modification_id] > 1
+            or (record.status in ("completed", "pending") and len(ids) != len(set(ids)))
+            or (record.status in ("completed", "pending") and any(s not in stock or s in bad_sources for s in ids))
+            or (record.status == "completed" and allocated != record.required_units)
+            or (record.status == "pending" and allocated > record.required_units)
+            or sources_invalid
+        ):
+            bad.add(record.id)
+            warnings.append(notice("engine.gear.materialAllocationInvalid", name=record.modification_id))
+    return bad
+
+
+def _judge_modification(
+    row: dict[str, Any],
+    rows: dict[str, dict[str, Any]],
+    host_by_id: dict[str, dict[str, Any]],
+    active: dict[str, ElectronicModificationRecord],
+    specs: dict[str, dict[str, Any]],
+    host_specs: dict[str, dict[str, Any]],
+    bad_records: set[str],
+    available: int,
+    warnings: list[Notice],
+) -> dict[str, Any] | None:
+    """Mark one modification row's status, validity and material; return its host."""
+    parent = rows.get(str(row.get("parent_id") or ""))
+    host = host_by_id.get(str(row.get("parent_id") or ""))
+    # DT allows Increase nested below the corresponding Add.
+    if host is None and parent and parent.get("gear_id") in (ADD_ATTACK, ADD_SLEAZE):
+        host = host_by_id.get(str(parent.get("parent_id") or ""))
+    rec = active.get(str(row["id"]))
+    status = ("pending" if rec.status == "cancelled" else rec.status) if rec else "unverified"
+    spec = specs.get(str(row["gear_id"])) or {}
+    required, reason = requirement(spec, host or {}, host_specs.get(str((host or {}).get("gear_id"))) or {})
+    if host is None or int(row.get("qty") or 1) != 1:
+        reason = "invalidHost"
+    if parent and parent.get("gear_id") in (ADD_ATTACK, ADD_SLEAZE):
+        attr = "attack" if parent["gear_id"] == ADD_ATTACK else "sleaze"
+        rule, target = modification_rule(spec)
+        if rule != "increase" or target != attr:
+            reason = "invalidHost"
+        else:
+            required, reason = 16, ""  # new attribute 1 -> 2
+    if rec and (rec.gear_id != row["gear_id"] or rec.host_id != str((host or {}).get("id")) or rec.id in bad_records):
+        reason = "recordMismatch"
+    valid = not reason and status in ("unverified", "historical", "completed")
+    row.update(
+        modification_status=status,
+        modification_valid=valid,
+        modification_reason=reason,
+        material_required_units=rec.required_units if rec and status in ("completed", "historical") else required,
+        material_available_units=available,
+        material_allocated_units=sum(a.units for a in rec.allocations) if rec else 0,
+        modification_host_id=(host or {}).get("id"),
+    )
+    if status == "unverified":
+        warnings.append(notice("engine.gear.materialHistoryUnverified", name=term(str(row["name"]))))
+    return host
+
+
+def _add_supply_rows(state: CharacterState, gear: list[dict[str, Any]], rows: dict[str, dict[str, Any]]) -> None:
+    """Show each recorded parts supply as an Electronic Parts row of its own."""
     for supply in state.electronic_parts_supplies:
         if supply.id in rows:
             continue
@@ -224,6 +280,11 @@ def resolve_electronic_modifications(
         }
         gear.append(row)
         rows[supply.id] = row
+
+
+def _show_stock(
+    stock: dict[str, int], rows: dict[str, dict[str, Any]], used: Counter[str], reserved: Counter[str]
+) -> None:
     for sid, total in stock.items():
         if sid not in rows:
             continue
@@ -239,4 +300,3 @@ def resolve_electronic_modifications(
         # Carrying/export quantity in packs; state retains purchased sales lots.
         row["qty"] = max(0, total - used[sid]) / 4
         row["costfor"] = 1
-    return warnings

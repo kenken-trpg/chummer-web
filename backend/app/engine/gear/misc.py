@@ -212,17 +212,74 @@ def _resolve_misc_gear(
     granted_installs, granted_by = _granted_gear_installs(granted or [], specs)
     granted_ids = set(granted_by)
     rows = [*state.gear, *granted_installs]
-    # Vehicle ware is connected equipment, but its contents do not supply
-    # personal improvements or skillsofts to the character. Keep this distinct
-    # from modular equip state and from a gear row's saved equipped setting.
+    vehicle_gear = _vehicle_gear(rows, hosted_ware_ids)
+    connection = _connections(rows, modular_states)
+    by_id = {row.id: row for row in rows}
+    unit_costs: dict[str, int] = {}
+    # Parents first so children can reference Parent Cost.
+    ordered = sorted(rows, key=lambda row: 1 if row.parent_id else 0)
+    for inst in ordered:
+        spec = specs.get(inst.gear_id)
+        if not spec:
+            continue
+        extra = _checked_extra(spec, inst, granted_ids, warnings)
+        inst.extra = extra or None
+        rating = _clamp_rating(spec, inst.rating)
+        inst.rating = rating
+        qty = max(1, min(MAX_QTY, int(inst.qty or 1)))
+        inst.qty = qty
+        cost = _line_cost(spec, inst, rating, qty, by_id, specs, unit_costs)
+        nuyen += cost
+        nodes = substitute_rating(list(spec.get("bonus") or []), rating)
+        if (
+            nodes
+            and spec.get("category") != "Cyberdeck Modules"
+            and connection.get(inst.id) is not False
+            and inst.id not in vehicle_gear
+        ):
+            bonus_sources.append((_program_label(spec, extra), nodes))
+        if inst.id not in granted_ids:
+            kept.append(inst)
+        public.append(_public_row(spec, inst, extra, rating, qty, cost, granted_by.get(inst.id, "")))
+    for item in public:
+        if item["id"] in vehicle_gear:
+            item["vehicle_hosted"] = True
+        if item["id"] in connection:
+            item["modular_equipped"] = connection[item["id"]]
+    children: dict[str, list[dict[str, Any]]] = {}
+    for item in public:
+        if item["parent_id"]:
+            children.setdefault(item["parent_id"], []).append(item)
+    _count_capacity(public, children, errors)
+    for row in vehicles or []:
+        kids = children.get(str(row.get("id") or "")) or []
+        row["gear"] = kids
+        extra_cost = sum(int(kid.get("nuyen") or 0) for kid in kids)
+        row["nuyen"] = int(row.get("nuyen") or 0) + extra_cost
+    for row in weapons or []:
+        _load_weapon(row, children, specs)
+    state.gear = kept
+    return public, nuyen, warnings, errors, bonus_sources
+
+
+def _vehicle_gear(rows: list[GearInstall], hosted_ware_ids: set[str] | None) -> set[str]:
+    """Vehicle ware and everything under it, at any depth.
+
+    Vehicle ware is connected equipment, but its contents do not supply
+    personal improvements or skillsofts to the character. Keep this distinct
+    from modular equip state and from a gear row's saved equipped setting.
+    """
     vehicle_gear = set(hosted_ware_ids or ())
     while True:
         descendants = {purchase.id for purchase in rows if purchase.parent_id in vehicle_gear}
         if descendants <= vehicle_gear:
-            break
+            return vehicle_gear
         vehicle_gear |= descendants
-    # Carry the owning ware's connection through arbitrary gear depth,
-    # independently of saved row order. Never change purchased equipped flags.
+
+
+def _connections(rows: list[GearInstall], modular_states: dict[str, bool] | None) -> dict[str, bool]:
+    """Carry the owning ware's connection through arbitrary gear depth,
+    independently of saved row order. Never change purchased equipped flags."""
     connection = dict(modular_states or {})
     pending = list(rows)
     while pending:
@@ -235,145 +292,139 @@ def _resolve_misc_gear(
         if len(following) == len(pending):
             break
         pending = following
-    by_id = {row.id: row for row in rows}
-    unit_costs: dict[str, int] = {}
-    # Parents first so children can reference Parent Cost.
-    ordered = sorted(rows, key=lambda row: 1 if row.parent_id else 0)
-    for inst in ordered:
-        spec = specs.get(inst.gear_id)
-        if not spec:
-            continue
-        extra_kind = str(spec.get("extra_kind") or "")
-        extra = (inst.extra or "").strip()
-        options = gear_extra_options(spec)
-        if extra_kind == "skill":
-            if extra and extra not in options:
-                warnings.append(notice("engine.gear.skillInvalid", name=term(str(spec["name"])), picked=term(extra)))
-                extra = ""
-            if not extra:
-                warnings.append(notice("engine.gear.pickSkill", name=term(str(spec["name"]))))
-        elif extra_kind == "group":
-            if extra and extra not in options:
-                warnings.append(notice("engine.gear.groupInvalid", name=term(str(spec["name"])), picked=term(extra)))
-                extra = ""
-            if not extra:
-                warnings.append(notice("engine.gear.pickGroup", name=term(str(spec["name"]))))
-        elif extra_kind == "text" and not extra and inst.id not in granted_ids:
-            # A granted row has no editor behind it — asking for a name would
-            # be a warning nobody can clear.
-            warnings.append(notice("engine.gear.pickExtra", name=term(str(spec["name"]))))
-        inst.extra = extra or None
-        rating = _clamp_rating(spec, inst.rating)
-        inst.rating = rating
-        qty = max(1, min(MAX_QTY, int(inst.qty or 1)))
-        inst.qty = qty
-        cost_expr = str(spec.get("cost") or "0")
-        extras: dict[str, int | float] = {}
-        if inst.parent_id and "Parent Cost" in cost_expr:
-            parent_unit = unit_costs.get(inst.parent_id)
-            if parent_unit is None:
-                parent = by_id.get(inst.parent_id)
-                parent_spec = specs.get(parent.gear_id) if parent else None
-                parent_unit = (
-                    0
-                    if not parent or not parent_spec or parent.included
-                    else int(eval_formula(str(parent_spec.get("cost") or "0"), int(parent.rating or 1), 0))
-                )
-            extras["Parent Cost"] = int(parent_unit)
-            extras["ParentCost"] = int(parent_unit)
-        picked = (
-            max(0, inst.cost)
-            if spec.get("category") == "Electronic Parts" and inst.cost is not None
-            else chosen_cost(spec, inst.cost)
-        )
-        inst.cost = picked
-        if (spec.get("category") or "") != "Custom":
-            inst.name = None
-        unit = 0 if inst.included else picked if picked is not None else int(eval_formula(cost_expr, rating, 0, extras))
-        unit_costs[inst.id] = unit
-        # Chummer's `Gear.TotalCost`: what is inside a gear item is bought
-        # once for each of it — three gas grenades, three loads of CS/Tear
-        # Gas — counting single items, not the lots a price is quoted for
-        cost = unit * qty * _held_multiplier(inst, by_id, specs)
-        if spec.get("category") == "Electronic Parts" and inst.purchased_parts_units is not None:
-            cost = int(
-                unit
-                * inst.purchased_parts_units
-                / (4 * max(1, int(spec.get("costfor") or 1)))
-                * _held_multiplier(inst, by_id, specs)
+    return connection
+
+
+def _checked_extra(spec: dict[str, Any], inst: GearInstall, granted_ids: set[str], warnings: list[Notice]) -> str:
+    """The row's pick (a skill, a group or free text), or "" when it is missing or not allowed."""
+    extra_kind = str(spec.get("extra_kind") or "")
+    extra = (inst.extra or "").strip()
+    options = gear_extra_options(spec)
+    if extra_kind == "skill":
+        if extra and extra not in options:
+            warnings.append(notice("engine.gear.skillInvalid", name=term(str(spec["name"])), picked=term(extra)))
+            extra = ""
+        if not extra:
+            warnings.append(notice("engine.gear.pickSkill", name=term(str(spec["name"]))))
+    elif extra_kind == "group":
+        if extra and extra not in options:
+            warnings.append(notice("engine.gear.groupInvalid", name=term(str(spec["name"])), picked=term(extra)))
+            extra = ""
+        if not extra:
+            warnings.append(notice("engine.gear.pickGroup", name=term(str(spec["name"]))))
+    elif extra_kind == "text" and not extra and inst.id not in granted_ids:
+        # A granted row has no editor behind it — asking for a name would
+        # be a warning nobody can clear.
+        warnings.append(notice("engine.gear.pickExtra", name=term(str(spec["name"]))))
+    return extra
+
+
+def _line_cost(
+    spec: dict[str, Any],
+    inst: GearInstall,
+    rating: int,
+    qty: int,
+    by_id: dict[str, GearInstall],
+    specs: dict[str, dict[str, Any]],
+    unit_costs: dict[str, int],
+) -> int:
+    """What the row costs; records its unit price for children priced off Parent Cost."""
+    cost_expr = str(spec.get("cost") or "0")
+    extras: dict[str, int | float] = {}
+    if inst.parent_id and "Parent Cost" in cost_expr:
+        parent_unit = unit_costs.get(inst.parent_id)
+        if parent_unit is None:
+            parent = by_id.get(inst.parent_id)
+            parent_spec = specs.get(parent.gear_id) if parent else None
+            parent_unit = (
+                0
+                if not parent or not parent_spec or parent.included
+                else int(eval_formula(str(parent_spec.get("cost") or "0"), int(parent.rating or 1), 0))
             )
-        nuyen += cost
-        plugin, cap_cost, cap_max = _misc_slot_stats(spec, inst, rating)
-        nodes = substitute_rating(list(spec.get("bonus") or []), rating)
-        if (
-            nodes
-            and spec.get("category") != "Cyberdeck Modules"
-            and connection.get(inst.id) is not False
-            and inst.id not in vehicle_gear
-        ):
-            bonus_sources.append((_program_label(spec, extra), nodes))
-        is_drug = (spec.get("category") or "") in DRUG_CATEGORIES
-        drug_bonus = list(spec.get("drug_bonus") or []) if is_drug else []
-        inst.active = bool(inst.active) and (is_drug and bool(drug_bonus))
-        if inst.id not in granted_ids:
-            kept.append(inst)
-        public.append(
-            {
-                "id": inst.id,
-                "gear_id": spec["id"],
-                "name": spec["name"],
-                "label": inst.name or _program_label(spec, extra),
-                "custom_name": inst.name or "",
-                "cost_range": spec.get("cost_range"),
-                "category": spec.get("category") or "",
-                "is_drug": is_drug,
-                "active": inst.active,
-                "equipped": inst.equipped,
-                "drug_speed": spec.get("drug_speed") or "" if is_drug else "",
-                "drug_vectors": list(spec.get("drug_vectors") or []) if is_drug else [],
-                "drug_duration": spec.get("drug_duration") or "" if is_drug else "",
-                "drug_effect": drug_effect_summary(drug_bonus) if drug_bonus else [],
-                "rating": rating,
-                "rating_max": int(spec.get("maxrating") or 0),
-                "qty": qty,
-                "parent_id": inst.parent_id,
-                "included": bool(inst.included),
-                "granted_by": granted_by.get(inst.id, ""),
-                "plugin": plugin,
-                "extra": extra,
-                "needs_extra": bool(extra_kind),
-                "extra_kind": extra_kind,
-                "extra_skill_kind": gear_extra_skill_kind(spec),
-                "nuyen": cost,
-                "capacity_cost": cap_cost,
-                "capacity_used": 0.0,
-                "capacity_max": cap_max,
-                "armor_capacity": armor_capacity_of(spec, inst, rating),
-                "addoncategories": list(spec.get("addoncategories") or []),
-                "requireparent": bool(spec.get("requireparent")),
-                "required_names": list(spec.get("required_names") or []),
-                "required_categories": list(spec.get("required_categories") or []),
-                "ammo_weapon_types": list(spec.get("ammo_weapon_types") or []),
-                "costfor": int(spec.get("costfor") or 0),
-                "add_weapon": spec.get("add_weapon") or "",
-                "add_weapon_id": spec.get("add_weapon_id") or "",
-                "weaponbonus": dict(spec.get("weaponbonus") or {}),
-                "loaded": False,
-                "device_rating": _device_rating_of(spec, rating),
-                "avail": spec.get("avail") or "",
-                "source": spec.get("source") or "",
-                "page": spec.get("page") or "",
-            }
+        extras["Parent Cost"] = int(parent_unit)
+        extras["ParentCost"] = int(parent_unit)
+    picked = (
+        max(0, inst.cost)
+        if spec.get("category") == "Electronic Parts" and inst.cost is not None
+        else chosen_cost(spec, inst.cost)
+    )
+    inst.cost = picked
+    if (spec.get("category") or "") != "Custom":
+        inst.name = None
+    unit = 0 if inst.included else picked if picked is not None else int(eval_formula(cost_expr, rating, 0, extras))
+    unit_costs[inst.id] = unit
+    # Chummer's `Gear.TotalCost`: what is inside a gear item is bought
+    # once for each of it — three gas grenades, three loads of CS/Tear
+    # Gas — counting single items, not the lots a price is quoted for
+    if spec.get("category") == "Electronic Parts" and inst.purchased_parts_units is not None:
+        return int(
+            unit
+            * inst.purchased_parts_units
+            / (4 * max(1, int(spec.get("costfor") or 1)))
+            * _held_multiplier(inst, by_id, specs)
         )
-    for item in public:
-        if item["id"] in vehicle_gear:
-            item["vehicle_hosted"] = True
-        if item["id"] in connection:
-            item["modular_equipped"] = connection[item["id"]]
-    children: dict[str, list[dict[str, Any]]] = {}
-    for item in public:
-        if item["parent_id"]:
-            children.setdefault(item["parent_id"], []).append(item)
+    return unit * qty * _held_multiplier(inst, by_id, specs)
+
+
+def _public_row(
+    spec: dict[str, Any], inst: GearInstall, extra: str, rating: int, qty: int, cost: int, granted_by: str
+) -> dict[str, Any]:
+    extra_kind = str(spec.get("extra_kind") or "")
+    plugin, cap_cost, cap_max = _misc_slot_stats(spec, inst, rating)
+    is_drug = (spec.get("category") or "") in DRUG_CATEGORIES
+    drug_bonus = list(spec.get("drug_bonus") or []) if is_drug else []
+    inst.active = bool(inst.active) and (is_drug and bool(drug_bonus))
+    return {
+        "id": inst.id,
+        "gear_id": spec["id"],
+        "name": spec["name"],
+        "label": inst.name or _program_label(spec, extra),
+        "custom_name": inst.name or "",
+        "cost_range": spec.get("cost_range"),
+        "category": spec.get("category") or "",
+        "is_drug": is_drug,
+        "active": inst.active,
+        "equipped": inst.equipped,
+        "drug_speed": spec.get("drug_speed") or "" if is_drug else "",
+        "drug_vectors": list(spec.get("drug_vectors") or []) if is_drug else [],
+        "drug_duration": spec.get("drug_duration") or "" if is_drug else "",
+        "drug_effect": drug_effect_summary(drug_bonus) if drug_bonus else [],
+        "rating": rating,
+        "rating_max": int(spec.get("maxrating") or 0),
+        "qty": qty,
+        "parent_id": inst.parent_id,
+        "included": bool(inst.included),
+        "granted_by": granted_by,
+        "plugin": plugin,
+        "extra": extra,
+        "needs_extra": bool(extra_kind),
+        "extra_kind": extra_kind,
+        "extra_skill_kind": gear_extra_skill_kind(spec),
+        "nuyen": cost,
+        "capacity_cost": cap_cost,
+        "capacity_used": 0.0,
+        "capacity_max": cap_max,
+        "armor_capacity": armor_capacity_of(spec, inst, rating),
+        "addoncategories": list(spec.get("addoncategories") or []),
+        "requireparent": bool(spec.get("requireparent")),
+        "required_names": list(spec.get("required_names") or []),
+        "required_categories": list(spec.get("required_categories") or []),
+        "ammo_weapon_types": list(spec.get("ammo_weapon_types") or []),
+        "costfor": int(spec.get("costfor") or 0),
+        "add_weapon": spec.get("add_weapon") or "",
+        "add_weapon_id": spec.get("add_weapon_id") or "",
+        "weaponbonus": dict(spec.get("weaponbonus") or {}),
+        "loaded": False,
+        "device_rating": _device_rating_of(spec, rating),
+        "avail": spec.get("avail") or "",
+        "source": spec.get("source") or "",
+        "page": spec.get("page") or "",
+    }
+
+
+def _count_capacity(
+    public: list[dict[str, Any]], children: dict[str, list[dict[str, Any]]], errors: list[Notice]
+) -> None:
     for item in public:
         kids = children.get(item["id"]) or []
         used = round(sum(float(kid.get("capacity_cost") or 0) for kid in kids), 4)
@@ -390,26 +441,24 @@ def _resolve_misc_gear(
                     max=f"{cap_max:g}",
                 )
             )
-    for row in vehicles or []:
-        kids = children.get(str(row.get("id") or "")) or []
-        row["gear"] = kids
-        extra_cost = sum(int(kid.get("nuyen") or 0) for kid in kids)
-        row["nuyen"] = int(row.get("nuyen") or 0) + extra_cost
-    for row in weapons or []:
-        kids = children.get(str(row.get("id") or "")) or []
-        kids = [kid for kid in kids if ammo_fits_weapon(specs.get(kid["gear_id"]) or {}, row)]
-        row["ammo_gear"] = kids
-        extra_cost = sum(int(kid.get("nuyen") or 0) for kid in kids)
-        row["nuyen"] = int(row.get("nuyen") or 0) + extra_cost
-        # before the loaded round changes them (the FVTT export's base values)
-        for key in ("damage", "ap", "mode"):
-            row[f"{key}_noammo"] = row.get(key)
-        loaded = _pick_loaded_ammo(kids, str(row.get("loaded_ammo_id") or "") or None)
-        if loaded:
-            loaded["loaded"] = True
-            row["loaded_ammo_id"] = loaded["id"]
-            _apply_loaded_ammo(row, loaded)
-        else:
-            row["loaded_ammo_id"] = ""
-    state.gear = kept
-    return public, nuyen, warnings, errors, bonus_sources
+
+
+def _load_weapon(
+    row: dict[str, Any], children: dict[str, list[dict[str, Any]]], specs: dict[str, dict[str, Any]]
+) -> None:
+    """Hang the ammo that fits under the weapon and apply the loaded round."""
+    kids = children.get(str(row.get("id") or "")) or []
+    kids = [kid for kid in kids if ammo_fits_weapon(specs.get(kid["gear_id"]) or {}, row)]
+    row["ammo_gear"] = kids
+    extra_cost = sum(int(kid.get("nuyen") or 0) for kid in kids)
+    row["nuyen"] = int(row.get("nuyen") or 0) + extra_cost
+    # before the loaded round changes them (the FVTT export's base values)
+    for key in ("damage", "ap", "mode"):
+        row[f"{key}_noammo"] = row.get(key)
+    loaded = _pick_loaded_ammo(kids, str(row.get("loaded_ammo_id") or "") or None)
+    if loaded:
+        loaded["loaded"] = True
+        row["loaded_ammo_id"] = loaded["id"]
+        _apply_loaded_ammo(row, loaded)
+    else:
+        row["loaded_ammo_id"] = ""
