@@ -40,6 +40,16 @@ describe("<ContactsTab>", () => {
     expect(screen.getByText(/無料枠 CHA×6 = 2\/18/)).toBeDefined();
   });
 
+  it("explains the point line, with the settings file's multiplier", () => {
+    renderTab({
+      character: { derived: { contact_points: { used: 2, free: 18, paid: 0, free_mult: 6 } } },
+    });
+    expect(screen.getByRole("button", { name: "コンタクトの点数 の説明" })).toBeDefined();
+    expect(screen.getByText(/無料の点数は魅力×6。/)).toBeDefined();
+    expect(screen.getByText(/資質の決めた分を差し引いて数える/)).toBeDefined();
+    expect(screen.getByText(/超えた分はカルマで払う/)).toBeDefined();
+  });
+
   it("adds a contact through the toolbar, appending to the patch payload", () => {
     const patch = vi.fn();
     renderTab({ patch });

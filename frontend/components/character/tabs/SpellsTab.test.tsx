@@ -50,6 +50,14 @@ describe("<SpellsTab>", () => {
     }
   });
 
+  it("explains where the free spells come from and what the rest cost", () => {
+    renderTab();
+    expect(screen.getByRole("button", { name: "呪文の無料枠 の説明" })).toBeDefined();
+    expect(screen.getByText(/魔法の欄で選んだタレントの呪文数/)).toBeDefined();
+    expect(screen.getByText(/接触射程の呪文にしか使えない枠/)).toBeDefined();
+    expect(screen.getByText(/1 つずつカルマで買う/)).toBeDefined();
+  });
+
   it("sets the tradition through patch", () => {
     const patch = vi.fn();
     renderTab({ patch });

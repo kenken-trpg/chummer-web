@@ -133,6 +133,10 @@ export const JA_HELP = {
     "コネ値：相手の人脈と力。高いほど良い品・良い情報に手が届く（SR5 p.388）",
   "help.contact.loyalty": "忠実値：相手がどれだけ親身か。高いほど無理を聞き、裏切りにくい",
   "help.contact.cost": "作成時のカルマはコネ値＋忠実値で、コンタクト値から払う",
+  "help.contact.pointsLabel": "コンタクトの点数",
+  "help.contact.pointsFree": "無料の点数は魅力×{mult}。コンタクト 1 件ごとにコネ値＋忠実値を使う",
+  "help.contact.pointsQuality": "資質がくれたコンタクトは、資質の決めた分を差し引いて数える",
+  "help.contact.pointsOver": "無料の点数を超えた分はカルマで払う。1 点のカルマは設定と資質で変わる",
   // The module totals stay English, as the panel around them is (#565); the
   // caps and the overflow follow the life.transfer.* lines they sit beside,
   // which are Japanese
@@ -150,6 +154,11 @@ export const JA_HELP = {
   "help.spell.drainResist": "ドレイン抵抗は意志力＋様式の能力値で振り、抵抗しきれない分を食らう",
   "help.spell.force": "フォースが魔力以下なら精神ダメージ、超えると身体ダメージになる（SR5 p.281）",
   "help.spell.range": "射程（LOS 視界内／T 接触／範囲）と持続（即時／維持／永続）",
+  "help.spell.pointsLabel": "呪文の無料枠",
+  "help.spell.pointsFree":
+    "無料枠は、優先度表の魔法の欄で選んだタレントの呪文数に、資質などが足す分を加えたもの",
+  "help.spell.pointsTouch": "資質によっては、接触射程の呪文にしか使えない枠を足す",
+  "help.spell.pointsPaid": "枠を超えた呪文は 1 つずつカルマで買う。1 つのカルマは資質で変わる",
   "help.ware.statsLabel": "ウェアの値",
   "help.ware.essence": "ESS −n はこの品が食うエッセンス。等級の倍率がかかった後の値",
   "help.ware.capacity":
@@ -182,6 +191,9 @@ export const JA_HELP = {
   "help.cf.fade": "フェイディング抵抗は意志力＋共振力で振り、抵抗しきれない分を食らう",
   "help.cf.level": "レベルが共振力以下なら精神ダメージ、超えると身体ダメージになる",
   "help.cf.target": "対象（ペルソナ／機器／ファイル／スプライトなど）と持続",
+  "help.cf.pointsLabel": "複合体の無料枠",
+  "help.cf.pointsFree": "無料枠は、優先度表の共振の欄で選んだタレントの複合体の数",
+  "help.cf.pointsPaid": "枠を超えた複合体は 1 つずつカルマで買う",
   "help.spirit.statsLabel": "精霊の値",
   "help.spirit.force": "F（フォース）：精霊の強さ。能力値もテストのダイスもここから決まる",
   "help.spirit.services": "助力：命じられる残り回数。1 つの仕事で助力を 1 回使う",

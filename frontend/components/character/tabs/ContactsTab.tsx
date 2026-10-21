@@ -15,6 +15,16 @@ export function ContactsTab({ character: ch, d, tr, ui, patch, setCharacter }: T
   return (
     <div className="card">
       <p className="muted">
+        <HelpTip
+          label={ui("help.open", { label: ui("help.contact.pointsLabel") })}
+          lines={[
+            { label: ui("help.contact.pointsFree", { mult: d.contact_points?.free_mult ?? 3 }) },
+            { label: ui("help.contact.pointsQuality") },
+            { label: ui("help.contact.pointsOver") },
+          ]}
+        >
+          {ui("help.contact.pointsLabel")}
+        </HelpTip>{" "}
         {ui("contact.free", {
           used: d.contact_points?.used || 0,
           free: d.contact_points?.free || 0,
