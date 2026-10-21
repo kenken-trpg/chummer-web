@@ -144,6 +144,13 @@ export const EN_HELP = {
     "Loyalty is how much they care: what they will risk, and how hard they are to turn",
   "help.contact.cost":
     "At creation a contact costs Connection + Loyalty out of your contact points",
+  "help.contact.pointsLabel": "Contact points",
+  "help.contact.pointsFree":
+    "The free points are Charisma \u00d7 {mult}; each contact uses its Connection + Loyalty",
+  "help.contact.pointsQuality":
+    "A contact a quality gave you counts less the part that quality pays for",
+  "help.contact.pointsOver":
+    "Points past the free ones are paid in karma; settings and qualities change the karma per point",
   // Life Module panel (#565)
   "help.lifeModule.karma":
     "Module karma is what the modules cost together. It comes out of the same creation karma as everything else: 750 unless the settings give another pool",
@@ -161,6 +168,12 @@ export const EN_HELP = {
   "help.spell.force":
     "At Force up to your Magic the drain is stun damage, above it physical (SR5 p.281)",
   "help.spell.range": "Range (LOS, touch, area) and duration (instant, sustained, permanent)",
+  "help.spell.pointsLabel": "Free spells",
+  "help.spell.pointsFree":
+    "The free spells are those of the talent picked in the priority table\u2019s Magic column, plus any a quality adds",
+  "help.spell.pointsTouch": "Some qualities add slots that only touch-range spells can use",
+  "help.spell.pointsPaid":
+    "Each spell past them is bought with karma; qualities can change how much",
   "help.ware.statsLabel": "Ware",
   "help.ware.essence": "ESS \u2212n is the essence this piece costs, after its grade multiplier",
   "help.ware.capacity":
@@ -200,6 +213,10 @@ export const EN_HELP = {
   "help.cf.fade": "Resist fading with Willpower + Resonance; the rest is damage",
   "help.cf.level": "At Level up to your Resonance the fading is stun damage, above it physical",
   "help.cf.target": "What it acts on (persona, device, file, sprite, …) and how long it lasts",
+  "help.cf.pointsLabel": "Free complex forms",
+  "help.cf.pointsFree":
+    "The free complex forms are those of the talent picked in the priority table\u2019s Resonance column",
+  "help.cf.pointsPaid": "Each complex form past them is bought with karma",
   "help.spirit.statsLabel": "Spirit",
   "help.spirit.force":
     "Force is the spirit\u2019s strength: its attributes and its dice pools follow from it",

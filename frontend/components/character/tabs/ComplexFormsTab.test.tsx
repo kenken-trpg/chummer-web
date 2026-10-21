@@ -32,6 +32,13 @@ describe("<ComplexFormsTab>", () => {
     expect(screen.getByPlaceholderText("複合体を検索")).toBeDefined();
   });
 
+  it("explains where the free slots come from and what the rest cost", () => {
+    renderTab();
+    expect(screen.getByRole("button", { name: "複合体の無料枠 の説明" })).toBeDefined();
+    expect(screen.getByText(/共振の欄で選んだタレント/)).toBeDefined();
+    expect(screen.getByText(/1 つずつカルマで買う/)).toBeDefined();
+  });
+
   it("adds a complex form via patch", () => {
     const patch = vi.fn();
     renderTab(patch);

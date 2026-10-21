@@ -12,6 +12,12 @@ export function ComplexFormsTab({ catalog, character: ch, d, tr, ui, patch }: Ta
   return (
     <div className="card">
       <p className="muted">
+        <HelpTip
+          label={ui("help.open", { label: ui("help.cf.pointsLabel") })}
+          lines={[{ label: ui("help.cf.pointsFree") }, { label: ui("help.cf.pointsPaid") }]}
+        >
+          {ui("help.cf.pointsLabel")}
+        </HelpTip>{" "}
         {ui("cf.free", {
           used: d.complex_form_points?.used || 0,
           free: d.complex_form_points?.free || 0,

@@ -14,6 +14,16 @@ export function SpellsTab({ catalog, character: ch, d, tr, ui, patch }: TabPanel
   return (
     <div className="card">
       <p className="muted">
+        <HelpTip
+          label={ui("help.open", { label: ui("help.spell.pointsLabel") })}
+          lines={[
+            { label: ui("help.spell.pointsFree") },
+            { label: ui("help.spell.pointsTouch") },
+            { label: ui("help.spell.pointsPaid") },
+          ]}
+        >
+          {ui("help.spell.pointsLabel")}
+        </HelpTip>{" "}
         {ui("spell.free", {
           used: (d.spell_points?.used || 0) - (d.spell_points?.paid || 0),
           free: d.spell_points?.free || 0,
