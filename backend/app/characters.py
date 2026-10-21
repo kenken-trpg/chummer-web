@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import uuid
 from collections import defaultdict, deque
+from typing import Any
 
 from . import ja_default
 from .engine import (
@@ -84,6 +85,38 @@ def apply_patch(state: CharacterState, patch: CharacterPatch) -> CharacterState:
     old_talent = state.talent
     old_method = normalize_build_method(state.build_method)
     was_career = bool(state.career)
+    updates = _merge_patch(state, patch, data)
+    if any(
+        k in updates
+        for k in (
+            "gear",
+            "cyberdecks",
+            "rccs",
+            "commlinks",
+            "electronic_parts_supplies",
+            "electronic_modification_records",
+        )
+    ):
+        from .electronic_construction import prepare_construction_patch
+
+        candidate = CharacterState.model_validate(data)
+        prepare_construction_patch(state, candidate)
+        data = candidate.model_dump()
+    _apply_career_and_rewards(state, data, updates, was_career)
+    _normalise_choices(data, updates)
+    _resolve_metatype_and_talent(data, patch)
+    method_changed = old_method != data["build_method"]
+    if old_letter != data["priorities"]["Talent"] or old_talent != data["talent"] or patch.metatype or method_changed:
+        _apply_talent_ratings(data)
+        _drop_what_the_talent_cannot_use(data)
+    from .life_module_mutations import finish_life_patch
+
+    finish_life_patch(state, data)
+    return compute(CharacterState.model_validate(data))
+
+
+def _merge_patch(state: CharacterState, patch: CharacterPatch, data: dict[str, Any]) -> dict[str, Any]:
+    """Lay the patch over `data` and return the fields it set."""
     updates = patch.model_dump(exclude_unset=True)
     # Collections replace whole rows. Preserve generated IDs and defaults on
     # nested installs; excluding them can silently reissue an inventory ID.
@@ -120,23 +153,12 @@ def apply_patch(state: CharacterState, patch: CharacterPatch) -> CharacterState:
         data["life_module_entry_ids"] = [
             available[mid].popleft() if available[mid] else str(uuid.uuid4()) for mid in data["life_modules"]
         ]
+    return updates
 
-    if any(
-        k in updates
-        for k in (
-            "gear",
-            "cyberdecks",
-            "rccs",
-            "commlinks",
-            "electronic_parts_supplies",
-            "electronic_modification_records",
-        )
-    ):
-        from .electronic_construction import prepare_construction_patch
 
-        candidate = CharacterState.model_validate(data)
-        prepare_construction_patch(state, candidate)
-        data = candidate.model_dump()
+def _apply_career_and_rewards(
+    state: CharacterState, data: dict[str, Any], updates: dict[str, Any], was_career: bool
+) -> None:
     if "career" in updates:
         now_career = bool(updates["career"])
         data["career"] = now_career
@@ -161,12 +183,20 @@ def apply_patch(state: CharacterState, patch: CharacterPatch) -> CharacterState:
         data["reward_log"] = log
         data["karma_earned"] = sum(max(0, int(row.get("karma") or 0)) for row in log if isinstance(row, dict))
         data["nuyen_earned"] = sum(max(0, int(row.get("nuyen") or 0)) for row in log if isinstance(row, dict))
+
+
+def _normalise_choices(data: dict[str, Any], updates: dict[str, Any]) -> None:
     if "tradition_id" in updates:
         data["tradition_id"] = updates.pop("tradition_id") or None
     if "stream_id" in updates:
         data["stream_id"] = updates.pop("stream_id") or None
     if "quality_ids" in updates:
         data["quality_ids"], _ = sanitize_quality_ids(list(data.get("quality_ids") or []))
+
+
+def _resolve_metatype_and_talent(data: dict[str, Any], patch: CharacterPatch) -> None:
+    """A new metatype resets the attributes; the talent is then resolved for
+    the priority, the build method and the metatype."""
     if patch.metatype or patch.metavariant is not None:
         meta = find_metatype(data["metatype"], data.get("metavariant"))
         data["attributes"] = default_attributes(meta)
@@ -184,39 +214,36 @@ def apply_patch(state: CharacterState, patch: CharacterPatch) -> CharacterState:
         data["priorities"]["Talent"], current_talent, data.get("build_method"), data.get("metatype")
     )
     data["talent"] = talent["name"]
-    method_changed = old_method != data["build_method"]
-    if old_letter != data["priorities"]["Talent"] or old_talent != data["talent"] or patch.metatype or method_changed:
-        _apply_talent_ratings(data)
-        if data["talent"] not in ADEPT_TALENTS:
-            data["adept_powers"] = []
-            data["mystic_pp"] = 0
-            data["qi_foci"] = []
-            data["adept_enhancements"] = []
-        if data["talent"] not in MAG_TALENTS:
-            data["mentor_id"] = None
-            data["mentor_choices"] = []
-            data["mentor_extras"] = {}
-            data["initiate_grade"] = 0
-            data["initiations"] = []
-        if data["talent"] not in SPELL_TALENTS:
-            data["spells"] = []
-            data["tradition_id"] = None
-        if data["talent"] not in SPIRIT_TALENTS:
-            data["spirits"] = []
-        if data["talent"] not in FOCUS_TALENTS:
-            data["foci"] = []
-        if data["talent"] not in COMPLEX_FORM_TALENTS and data["talent"] not in RES_TALENTS:
-            data["complex_forms"] = []
-            data["stream_id"] = None
-        if data["talent"] not in RES_TALENTS:
-            data["submersion_grade"] = 0
-            data["submersions"] = []
-        if data["talent"] not in SPRITE_TALENTS:
-            data["sprites"] = []
-    from .life_module_mutations import finish_life_patch
 
-    finish_life_patch(state, data)
-    return compute(CharacterState.model_validate(data))
+
+def _drop_what_the_talent_cannot_use(data: dict[str, Any]) -> None:
+    _apply_talent_ratings(data)
+    if data["talent"] not in ADEPT_TALENTS:
+        data["adept_powers"] = []
+        data["mystic_pp"] = 0
+        data["qi_foci"] = []
+        data["adept_enhancements"] = []
+    if data["talent"] not in MAG_TALENTS:
+        data["mentor_id"] = None
+        data["mentor_choices"] = []
+        data["mentor_extras"] = {}
+        data["initiate_grade"] = 0
+        data["initiations"] = []
+    if data["talent"] not in SPELL_TALENTS:
+        data["spells"] = []
+        data["tradition_id"] = None
+    if data["talent"] not in SPIRIT_TALENTS:
+        data["spirits"] = []
+    if data["talent"] not in FOCUS_TALENTS:
+        data["foci"] = []
+    if data["talent"] not in COMPLEX_FORM_TALENTS and data["talent"] not in RES_TALENTS:
+        data["complex_forms"] = []
+        data["stream_id"] = None
+    if data["talent"] not in RES_TALENTS:
+        data["submersion_grade"] = 0
+        data["submersions"] = []
+    if data["talent"] not in SPRITE_TALENTS:
+        data["sprites"] = []
 
 
 def import_character(payload: dict) -> CharacterState:
