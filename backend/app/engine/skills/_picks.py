@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from dataclasses import dataclass, field
 from typing import Any
 
 from ...improvements import EffectsDict, _as_int, substitute_rating
@@ -136,51 +138,93 @@ def resolve_skill_picks(
     reflex_optimized: bool = False,
     skip_ids: set[str] | frozenset[str] = frozenset(),
 ) -> SkillPicks:
-    slots: list[dict[str, Any]] = []
-    default_free: list[str] = []
-    disabled_specializations: set[str] = set()
-    warnings: list[Notice] = []
-    skill_max: dict[str, int] = {}
-    pick_bonus: dict[str, int] = {}
-    pick_notes: dict[str, list[str]] = {}
-    hardwire_active: dict[str, int] = {}
-    hardwire_knowledge: dict[str, int] = {}
-    picks = state.skill_picks or {}
+    picks = _Picks(state.skill_picks or {}, skills_data, skill_totals, reflex_optimized)
+    for key, source, source_kind, source_id, node in _pick_nodes(state, skip_ids):
+        picks.add_slot(key, source, source_kind, source_id, node)
+    # The Accuracy picks: the same picker, but the value is Accuracy on the
+    # chosen skill's weapons (bound earlier, in `bind_ware_skill_accuracy`),
+    # so the slot carries it as `accuracy` and adds no dice.
+    for key, name, kind, inst_id, node in ware_accuracy_picks(state, skip_ids):
+        picks.add_slot(
+            key,
+            name,
+            kind,
+            inst_id,
+            _accuracy_select_node(node),
+            accuracy=_as_int((node.get("fields") or {}).get("value")),
+        )
+    return {
+        "slots": picks.slots,
+        "warnings": picks.warnings,
+        "skill_max_bonus": picks.skill_max,
+        "skill_bonus": picks.bonus,
+        "skill_bonus_notes": picks.notes,
+        "hardwires": {"active": picks.hardwire_active, "knowledge": picks.hardwire_knowledge},
+        "no_default_penalty": sorted(picks.default_free),
+        "disabled_specializations": sorted(picks.disabled_specializations),
+    }
+
+
+def _pick_nodes(
+    state: CharacterState, skip_ids: set[str] | frozenset[str]
+) -> Iterator[tuple[str, str, str, str, dict[str, Any]]]:
+    """Every `<selectskill>` / `<hardwires>` on the character's qualities and
+    ware, as ``(key, source name, source kind, source id, node)``. The keys
+    number each source's picks in order; saved picks are keyed by them."""
+    for qid in state.quality_ids:
+        quality = _quality_by_id(qid)
+        if not quality:
+            continue
+        nodes = [node for node in quality.get("bonus") or [] if node.get("tag") in SKILL_PICK_TAGS]
+        for index, node in enumerate(nodes):
+            yield f"quality:{qid}:{index}", quality["name"], "quality", qid, node
+    for kind in ("cyberware", "bioware"):
+        for inst in getattr(state, kind):
+            if inst.id in skip_ids:
+                continue
+            resolved = _ware_bonus_nodes(kind, inst)
+            if not resolved:
+                continue
+            name, ware_nodes = resolved
+            nodes = [node for node in ware_nodes if node.get("tag") in SKILL_PICK_TAGS]
+            for index, node in enumerate(nodes):
+                yield f"ware:{inst.id}:{index}", name, kind, inst.id, node
+
+
+@dataclass
+class _Picks:
+    """The pick slots, and what the picks made in them add up to."""
+
+    picks: dict[str, str]
+    skills_data: dict[str, Any]
+    skill_totals: dict[str, int]
+    reflex_optimized: bool
+    slots: list[dict[str, Any]] = field(default_factory=list)
+    warnings: list[Notice] = field(default_factory=list)
+    default_free: list[str] = field(default_factory=list)
+    disabled_specializations: set[str] = field(default_factory=set)
+    skill_max: dict[str, int] = field(default_factory=dict)
+    bonus: dict[str, int] = field(default_factory=dict)
+    notes: dict[str, list[str]] = field(default_factory=dict)
+    hardwire_active: dict[str, int] = field(default_factory=dict)
+    hardwire_knowledge: dict[str, int] = field(default_factory=dict)
 
     def add_slot(
-        key: str, source: str, source_kind: str, source_id: str, node: dict[str, Any], accuracy: int = 0
+        self, key: str, source: str, source_kind: str, source_id: str, node: dict[str, Any], accuracy: int = 0
     ) -> None:
         hardwire = node.get("tag") == "hardwires"
         spec = parse_hardwires_spec(node) if hardwire else parse_selectskill_spec(node)
-        options = selectskill_options(spec, skills_data, skill_totals)
-        picked = picks.get(key) or ""
-        if picked and picked not in options:
-            warnings.append(notice("engine.skills.pickInvalid", source=term(source), picked=term(picked)))
-            picked = ""
-        if not picked:
-            warnings.append(notice("engine.skills.pickSkill", source=term(source)))
-        elif spec.get("bonus"):
-            pick_bonus[picked] = int(pick_bonus.get(picked, 0)) + int(spec["bonus"])
-            note = spec.get("condition") or ""
-            if note:
-                notes = pick_notes.setdefault(picked, [])
-                if note not in notes:
-                    notes.append(note)
-        if picked and spec.get("max"):
-            skill_max[picked] = int(skill_max.get(picked, 0)) + int(spec["max"])
-        if picked and spec.get("disablespecializationeffects"):
-            disabled_specializations.add(picked)
-        rating = int(spec.get("rating") or 0)
-        if picked and rating:
-            bucket = hardwire_knowledge if spec.get("knowledgeskills") else hardwire_active
-            bucket[picked] = max(int(bucket.get(picked) or 0), rating)
+        options = selectskill_options(spec, self.skills_data, self.skill_totals)
+        picked = self._checked_pick(key, source, options)
+        if picked:
+            self._apply(picked, spec)
         # Narrow: the geneware speaks of the recorder's skill, nobody else's.
-        optimized = reflex_optimized and source_kind == "bioware" and source.startswith(REFLEX_RECORDER)
-        covered = _default_free_skills(picked, skills_data) if optimized and picked else []
+        optimized = self.reflex_optimized and source_kind == "bioware" and source.startswith(REFLEX_RECORDER)
+        covered = _default_free_skills(picked, self.skills_data) if optimized and picked else []
         for name in covered:
-            if name not in default_free:
-                default_free.append(name)
-        slots.append(
+            if name not in self.default_free:
+                self.default_free.append(name)
+        self.slots.append(
             {
                 "key": key,
                 "source": source,
@@ -189,7 +233,7 @@ def resolve_skill_picks(
                 "picked": picked,
                 "bonus": int(spec.get("bonus") or 0),
                 "max": int(spec.get("max") or 0),
-                "rating": rating,
+                "rating": int(spec.get("rating") or 0),
                 "options": options,
                 "minimum_rating": int(spec.get("minimumrating") or 0),
                 "knowledgeskills": bool(spec.get("knowledgeskills")),
@@ -198,52 +242,31 @@ def resolve_skill_picks(
             }
         )
 
-    for qid in state.quality_ids:
-        quality = _quality_by_id(qid)
-        if not quality:
-            continue
-        index = 0
-        for node in quality.get("bonus") or []:
-            if node.get("tag") not in SKILL_PICK_TAGS:
-                continue
-            add_slot(f"quality:{qid}:{index}", quality["name"], "quality", qid, node)
-            index += 1
+    def _checked_pick(self, key: str, source: str, options: list[str]) -> str:
+        """The saved pick if it is one of the options, else "" — warned either way."""
+        picked = self.picks.get(key) or ""
+        if picked and picked not in options:
+            self.warnings.append(notice("engine.skills.pickInvalid", source=term(source), picked=term(picked)))
+            picked = ""
+        if not picked:
+            self.warnings.append(notice("engine.skills.pickSkill", source=term(source)))
+        return picked
 
-    for kind in ("cyberware", "bioware"):
-        for inst in getattr(state, kind):
-            if inst.id in skip_ids:
-                continue
-            resolved = _ware_bonus_nodes(kind, inst)
-            if not resolved:
-                continue
-            name, nodes = resolved
-            index = 0
-            for node in nodes:
-                if node.get("tag") not in SKILL_PICK_TAGS:
-                    continue
-                add_slot(f"ware:{inst.id}:{index}", name, kind, inst.id, node)
-                index += 1
-
-    # The Accuracy picks: the same picker, but the value is Accuracy on the
-    # chosen skill's weapons (bound earlier, in `bind_ware_skill_accuracy`),
-    # so the slot carries it as `accuracy` and adds no dice.
-    for key, name, kind, inst_id, node in ware_accuracy_picks(state, skip_ids):
-        add_slot(
-            key,
-            name,
-            kind,
-            inst_id,
-            _accuracy_select_node(node),
-            accuracy=_as_int((node.get("fields") or {}).get("value")),
-        )
-
-    return {
-        "slots": slots,
-        "warnings": warnings,
-        "skill_max_bonus": skill_max,
-        "skill_bonus": pick_bonus,
-        "skill_bonus_notes": pick_notes,
-        "hardwires": {"active": hardwire_active, "knowledge": hardwire_knowledge},
-        "no_default_penalty": sorted(default_free),
-        "disabled_specializations": sorted(disabled_specializations),
-    }
+    def _apply(self, picked: str, spec: dict[str, Any]) -> None:
+        """What the pick does to its skill: dice, a higher maximum, no
+        specialization effects, or a hardwired rating."""
+        if spec.get("bonus"):
+            self.bonus[picked] = int(self.bonus.get(picked, 0)) + int(spec["bonus"])
+            note = spec.get("condition") or ""
+            if note:
+                notes = self.notes.setdefault(picked, [])
+                if note not in notes:
+                    notes.append(note)
+        if spec.get("max"):
+            self.skill_max[picked] = int(self.skill_max.get(picked, 0)) + int(spec["max"])
+        if spec.get("disablespecializationeffects"):
+            self.disabled_specializations.add(picked)
+        rating = int(spec.get("rating") or 0)
+        if rating:
+            bucket = self.hardwire_knowledge if spec.get("knowledgeskills") else self.hardwire_active
+            bucket[picked] = max(int(bucket.get(picked) or 0), rating)
