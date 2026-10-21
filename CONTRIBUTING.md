@@ -151,11 +151,15 @@ ports so it never drives a server you already had running. It needs
 Keep it to flows the unit suite **cannot** reach. In vitest, `lib/api` is
 mocked, the local store is a `Map`, and happy-dom has no IndexedDB — so anything
 crossing browser storage or the Python engine for real belongs here, and
-anything else belongs in a fast unit test. Two specs today: create → edit →
-reload → `.chum5` export, and share-link → fragment → read-only view.
+anything else belongs in a fast unit test. `frontend/e2e/` has 24 specs; the
+first two were create → edit → reload → `.chum5` export, and share-link →
+fragment → read-only view.
 
-CI runs it on pushes to `main` and on tags, not on every PR push; the report is
-uploaded as an artifact when it fails.
+CI runs it on every pull request as well as on `main` and tags, with one retry
+(`playwright.config.ts`). The report is uploaded as an artifact when it fails.
+A test that only passes on its retry is still a bug to chase: see
+`critter-powers.spec.ts` in #681, where the flake was the app losing a
+rulebook tick.
 
 ### Accessibility
 
@@ -327,7 +331,8 @@ supplement content stays in English. See `docs/translation-*` and
 **New UI strings go through `lib/i18n`, not into the JSX.** A lint rule blocks
 Japanese literals in `app/`, `components/` and `lib/`, and there is no longer
 any way to record one as an exception — a violation simply fails the build.
-`docs/i18n.md` has the procedure for adding a string.
+`docs/i18n.md` has the procedure for adding a string, and for adding a "?"
+tooltip (`HelpTip`).
 
 The extraction pass is **done**: 997 down to **0**. The last two holdouts were
 `metadata` in `app/layout.tsx` and `app/share/layout.tsx`; those are
