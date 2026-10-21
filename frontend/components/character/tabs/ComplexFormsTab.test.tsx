@@ -39,6 +39,20 @@ describe("<ComplexFormsTab>", () => {
     expect(screen.getByText(/1 つずつカルマで買う/)).toBeDefined();
   });
 
+  it("prices a form past the free ones as the settings file does", () => {
+    const ch = makeCharacter({
+      derived: { complex_form_points: { used: 4, free: 3, paid: 1, karma: 6, form_karma: 6 } },
+    });
+    render(
+      <ComplexFormsTab
+        {...panelProps(ch, { catalog: makeCatalog({ complex_forms: [puppeteer] as never }) })}
+      />,
+    );
+    expect(screen.getByText(/追加 1×6カルマ/)).toBeDefined();
+    // and the picker's price for the next one
+    expect(screen.getByText(/\/ 6カルマ/, { selector: ".quality-item .muted" })).toBeDefined();
+  });
+
   it("adds a complex form via patch", () => {
     const patch = vi.fn();
     renderTab(patch);

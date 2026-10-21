@@ -121,7 +121,7 @@ export const EN_MAGIC = {
   "aiprog.cat.software": "Software",
   "aiprog.cat.autosofts": "Autosofts",
   "aiprog.cat.advanced": "Advanced Programs",
-  "cf.paid": " · {paid} extra × 4 karma",
+  "cf.paid": " · {paid} extra × {karma} karma",
   "cf.note": ". Threading is Software + RES[Level]; fading is physical if Level exceeds Resonance.",
   "cf.fadeAt": " @ L{level} → fading {fade}",
   "cf.fadeSpecial": "special",
