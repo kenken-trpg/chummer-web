@@ -37,7 +37,6 @@
 		-Server
 		X-Content-Type-Options nosniff
 		X-Frame-Options DENY
-		Referrer-Policy strict-origin-when-cross-origin
 		Cross-Origin-Opener-Policy same-origin
 		Cross-Origin-Resource-Policy same-site
 		Permissions-Policy "accelerometer=(), camera=(), display-capture=(), encrypted-media=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), usb=(), xr-spatial-tracking=()"
@@ -48,5 +47,9 @@
 		# static files, which the browser never renders as a page, so the
 		# fallback can afford to allow nothing.
 		?Content-Security-Policy "default-src 'none'; frame-ancestors 'none'; base-uri 'none'"
+		# Also only a fallback: the API sends the stricter `no-referrer`
+		# (backend/app/api/middleware.py), and a plain set here overwrote it on
+		# every /api answer. Next sends the page value itself.
+		?Referrer-Policy strict-origin-when-cross-origin
 	}
 }

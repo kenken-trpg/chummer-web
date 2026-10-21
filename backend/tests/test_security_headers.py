@@ -51,11 +51,12 @@ REFERRER = {"document": "strict-origin-when-cross-origin", "api": "no-referrer"}
 NOT_SENT = {"Cross-Origin-Embedder-Policy"}
 
 
-def _caddy_headers() -> dict[str, str]:
+def _caddy_headers(*, fallback: bool = False) -> dict[str, str]:
     """The `header { ... }` block, as `{name: value}`.
 
-    A leading `-` removes a header and `?` means "only if the upstream sent
-    none"; neither is a value this set is about, so both are skipped.
+    A leading `-` removes a header, which is not a value this set is about. A
+    leading `?` means "only if the upstream sent none": those are returned
+    instead of the plain ones when `fallback` is set.
     """
     text = _CADDYFILE.read_text(encoding="utf-8")
     block = text[text.index("\theader {") :]
@@ -63,9 +64,11 @@ def _caddy_headers() -> dict[str, str]:
     out: dict[str, str] = {}
     for line in block.split("\n")[1:]:
         line = line.strip()
-        if not line or line.startswith("#") or line.startswith("-") or line.startswith("?"):
+        if not line or line.startswith("#") or line.startswith("-"):
             continue
-        name, _, value = line.partition(" ")
+        if line.startswith("?") != fallback:
+            continue
+        name, _, value = line.removeprefix("?").partition(" ")
         out[name] = value.strip().strip('"')
     return out
 
@@ -106,7 +109,10 @@ def test_the_three_senders_agree_on_the_shared_headers() -> None:
 
 
 def test_the_referrer_policy_differs_only_where_it_is_meant_to() -> None:
-    assert _caddy_headers()["Referrer-Policy"] == REFERRER["document"]
+    # Caddy sits in front of the API too, so a plain set there would overwrite
+    # the API's `no-referrer` — as it did in production until this was a `?`.
+    assert "Referrer-Policy" not in _caddy_headers()
+    assert _caddy_headers(fallback=True)["Referrer-Policy"] == REFERRER["document"]
     assert _next_headers()["Referrer-Policy"] == REFERRER["document"]
     assert _SECURITY_HEADERS["Referrer-Policy"] == REFERRER["api"]
 
