@@ -191,6 +191,33 @@ describe("useCharacterEditor", () => {
     expect(api.patch).toHaveBeenCalledTimes(1);
   });
 
+  it("drops a second add to the same list instead of letting it undo the first", async () => {
+    // Two rulebooks ticked quickly, each built from the saved ["SR5"]. They
+    // differ in one element, but the second has no RF: sending it would untick it.
+    const settings = (books: string[]) => ({ settings: { name: "", books } });
+    api.create.mockResolvedValue(makeCharacter({ id: "c1", ...settings(["SR5"]) }));
+    let finish: (c: Character) => void = () => {};
+    api.patch.mockReturnValueOnce(new Promise<Character>((resolve) => (finish = resolve)));
+
+    const { result } = renderHook(() => useCharacterEditor());
+    await waitFor(() => expect(result.current.ch?.id).toBe("c1"));
+
+    let first: Promise<void> = Promise.resolve();
+    act(() => {
+      first = result.current.patch(settings(["SR5", "RF"]));
+    });
+    act(() => {
+      void result.current.patch(settings(["SR5", "DTR"]));
+    });
+
+    await act(async () => {
+      finish(makeCharacter({ id: "c1", ...settings(["SR5", "RF"]) }));
+      await first;
+    });
+    expect(api.patch).toHaveBeenCalledTimes(1);
+    expect(result.current.ch?.settings?.books).toEqual(["SR5", "RF"]);
+  });
+
   it("lets a career switch wait behind a rename instead of losing it", async () => {
     // the pair that sent us looking: 名前を変えた直後にキャリア移行を押すと、
     // 移行が黙って捨てられ、ボタンも無反応のままだった

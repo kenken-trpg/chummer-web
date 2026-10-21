@@ -224,7 +224,9 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
       // a third change while the second waits is a step on from the second.
       const previous = queued.current ?? inFlight.current;
       if (!previous) return;
-      if (advancesOneLeaf(previous, body)) {
+      // Both were composed against the character as last saved: the one in
+      // flight has not answered yet, so nothing newer has been committed.
+      if (advancesOneLeaf(previous, body, lastCommitted.current ?? ch)) {
         queued.current = body;
       } else if (disjointKeys(previous, body)) {
         // Fields that do not overlap cannot undo each other, so both edits can
