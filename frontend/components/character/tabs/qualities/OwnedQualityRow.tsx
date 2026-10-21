@@ -5,6 +5,7 @@ import type { UiFn } from "@/lib/i18n";
 import { SkillPickSelects } from "@/components/character/SkillPickSelects";
 import { QualityExtraEditor } from "@/components/character/tabs/qualities/QualityExtraEditor";
 import { CritterPowerRow } from "@/components/character/CritterPowerRow";
+import { HelpTip } from "@/components/help/HelpTip";
 import {
   dropSkillPicksForPrefix,
   qualityBlockReason,
@@ -67,7 +68,20 @@ export function OwnedQualityRow({
         </b>
         <div className="muted">
           {q.name} / {q.category === "Negative" ? ui("qual.negative") : ui("qual.positive")} /{" "}
-          {ui("qual.karmaLabel")} {q.karma}
+          <HelpTip
+            label={ui("help.open", { label: ui("help.qualityRow.of", { name: tr(q.name) }) })}
+            lines={[
+              { label: ui("help.qualityRow.karma") },
+              ...(q.karma_base != null && q.karma_base !== q.karma
+                ? [{ label: ui("help.qualityRow.base") }]
+                : []),
+              ...(q.free ? [{ label: ui("help.qualityRow.free") }] : []),
+              ...(careerPricing && !q.free ? [{ label: ui("help.quality.career") }] : []),
+            ]}
+          >
+            {ui("qual.karmaLabel")}
+          </HelpTip>{" "}
+          {q.karma}
           {q.karma_base != null && q.karma_base !== q.karma
             ? ui("qual.karmaBase", { base: q.karma_base })
             : ""}
