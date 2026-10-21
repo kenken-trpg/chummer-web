@@ -496,7 +496,14 @@ export interface Derived {
   critter_power_offer?: string[];
   /** the categories the qualities open the tab to (Infected, Drake) */
   critter_power_categories?: string[];
-  complex_form_points?: { used: number; free: number; paid: number };
+  complex_form_points?: {
+    used: number;
+    free: number;
+    paid: number;
+    karma?: number;
+    /** One form past the free ones; `karmanewcomplexform` in the settings. */
+    form_karma?: number;
+  };
   sprites?: InstalledSprite[];
   stream?: {
     id: string;

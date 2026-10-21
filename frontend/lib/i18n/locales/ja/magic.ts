@@ -122,7 +122,7 @@ export const JA_MAGIC = {
   "aiprog.cat.software": "ソフトウェア",
   "aiprog.cat.autosofts": "オートソフト",
   "aiprog.cat.advanced": "Advanced Programs",
-  "cf.paid": " ・ 追加 {paid}×4カルマ",
+  "cf.paid": " ・ 追加 {paid}×{karma}カルマ",
   "cf.note": "。スレッディングは Software+RES[Level]。Level が共振力超ならフェイディングは身体。",
   "cf.fadeAt": " @ L{level} → フェイディング {fade}",
   "cf.fadeSpecial": "特殊",

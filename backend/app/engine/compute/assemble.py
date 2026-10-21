@@ -313,6 +313,9 @@ def assemble(ctx: Ctx) -> None:
             "used": ctx.resonance.get("used") or 0,
             "free": ctx.resonance.get("free_max") or 0,
             "paid": ctx.resonance.get("paid") or 0,
+            "karma": ctx.resonance.get("karma") or 0,
+            # what one form past the free ones costs; the settings file sets it
+            "form_karma": current_rules().karma_complex_form,
         },
         "sprites": ctx.techno_sprites.get("public") or [],
         "stream": ctx.resonance.get("stream"),

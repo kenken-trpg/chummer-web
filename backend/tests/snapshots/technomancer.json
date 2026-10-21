@@ -58,7 +58,9 @@
   "commlink": null,
   "commlinks": [],
   "complex_form_points": {
+    "form_karma": 4,
     "free": 7,
+    "karma": 0,
     "paid": 0,
     "used": 2
   },

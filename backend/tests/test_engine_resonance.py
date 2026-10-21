@@ -159,6 +159,19 @@ def test_eighth_complex_form_costs_karma() -> None:
     assert out.derived["complex_form_points"]["paid"] == 1
     assert out.derived["complex_forms"][-1]["karma"] == 4
     assert out.derived["karma"]["spent"] == 4
+    assert out.derived["complex_form_points"]["karma"] == 4
+    assert out.derived["complex_form_points"]["form_karma"] == 4
+
+
+def test_the_settings_set_a_complex_forms_price() -> None:
+    # `karmanewcomplexform`: the sheet's "×N karma" reads this, not a constant
+    # priority C gives three free; the fourth is bought
+    forms = [ComplexFormInstall(form_id=fid) for fid in (CLEANER, EDITOR, STATIC_VEIL, PULSE_STORM)]
+    out = compute(_techno("cf-price", "C", complex_forms=forms, settings=SettingsState(karma_complex_form=6)))
+    points = out.derived["complex_form_points"]
+    assert points["form_karma"] == 6
+    assert points["paid"] == 1
+    assert points["karma"] == 6
 
 
 def test_duplicate_complex_form_is_dropped() -> None:

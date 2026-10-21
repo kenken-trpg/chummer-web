@@ -8,6 +8,7 @@ import { editRow } from "@/lib/character/rows";
 
 export function ComplexFormsTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   const [cfSearch, setCfSearch] = useState("");
+  const formKarma = d.complex_form_points?.form_karma ?? 4;
 
   return (
     <div className="card">
@@ -23,7 +24,7 @@ export function ComplexFormsTab({ catalog, character: ch, d, tr, ui, patch }: Ta
           free: d.complex_form_points?.free || 0,
         })}
         {(d.complex_form_points?.paid || 0) > 0
-          ? ui("cf.paid", { paid: d.complex_form_points?.paid || 0 })
+          ? ui("cf.paid", { paid: d.complex_form_points?.paid || 0, karma: formKarma })
           : ""}
         {d.fade_resist
           ? ui("res.fadeResist", { attrs: d.fade_resist.attrs, pool: d.fade_resist.pool })
@@ -152,7 +153,7 @@ export function ComplexFormsTab({ catalog, character: ch, d, tr, ui, patch }: Ta
                     {item.fv} / {sourceBit(item, ui)}
                     {item.needs_extra ? ui("cf.needsAttr") : ""}
                     {blocked ? ` / ${blocked}` : ""}
-                    {paid ? ui("common.karmaCost", { karma: 4 }) : ui("common.freeSlot")}
+                    {paid ? ui("common.karmaCost", { karma: formKarma }) : ui("common.freeSlot")}
                   </div>
                 </div>
                 <button

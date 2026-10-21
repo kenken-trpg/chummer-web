@@ -133,6 +133,8 @@ class _ComplexFormPoints(TypedDict):
     used: int
     free: int
     paid: int
+    karma: int
+    form_karma: int
 
 
 class _Points(TypedDict):
