@@ -74,6 +74,10 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
+  // `X-Powered-By: Next.js` tells a visitor nothing they need and a scanner
+  // which framework to look up. The bundled Caddy drops `Server` for the same
+  // reason (deploy/Caddyfile).
+  poweredByHeader: false,
 };
 
 export default nextConfig;

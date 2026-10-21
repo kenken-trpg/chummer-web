@@ -19,6 +19,8 @@ for (const path of ["/", "/share"]) {
     for (const [key, value] of Object.entries(BASELINE)) expect(headers[key]).toBe(value);
     expect(headers["referrer-policy"]).toBe("strict-origin-when-cross-origin");
     expect(headers["cross-origin-opener-policy"]).toBe("same-origin");
+    // poweredByHeader: false — nothing to tell a scanner which framework this is
+    expect(headers["x-powered-by"]).toBeUndefined();
 
     const csp = headers["content-security-policy"] ?? "";
     expect(csp).toMatch(/script-src [^;]*'nonce-/);
@@ -40,6 +42,8 @@ test("/api keeps the backend's own locked-down CSP through the rewrite", async (
   const csp = headers["content-security-policy"] ?? "";
   expect(csp).toContain("default-src 'none'");
   expect(csp).not.toContain("nonce-");
+  // the API's stricter referrer policy, not the page one next.config.ts sends
+  expect(headers["referrer-policy"]).toBe("no-referrer");
 });
 
 test("a request body over the backend's 12 MB cap is refused, not buffered", async ({
