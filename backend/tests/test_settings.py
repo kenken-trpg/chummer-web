@@ -293,6 +293,28 @@ def test_gear_outside_the_enabled_books_is_named_in_the_warnings() -> None:
     )
 
 
+def test_an_effect_rows_source_is_not_a_book() -> None:
+    """A dice-pool row's `source` names the quality that grants it. Heal from
+    the core book, with Quick Healer's bonus to it, is all in-book — and it
+    stays so whichever of the two rows the walk meets last."""
+    from app.engine.compute._assemble_books import _out_of_book_warning
+
+    spells = {"spells": [{"name": "Heal", "source": "SR5"}]}
+    pool = {"spell_dice_pool": [{"name": "Heal", "source": "Quick Healer", "value": 2}]}
+    for derived in ({**spells, **pool}, {**pool, **spells}):
+        assert _out_of_book_warning(derived, ["SR5"]) is None  # type: ignore[arg-type]
+
+
+def test_a_name_held_from_two_books_is_out_of_book_if_either_is() -> None:
+    from app.engine.compute._assemble_books import _out_of_book_warning
+
+    core = {"armor": [{"name": "Lined Coat", "source": "SR5"}]}
+    other = {"gear": [{"name": "Lined Coat", "source": "RG"}]}
+    for derived in ({**core, **other}, {**other, **core}):
+        warning = _out_of_book_warning(derived, ["SR5"])  # type: ignore[arg-type]
+        assert warning is not None and warning["params"]["books"] == "RG"
+
+
 def test_nothing_is_out_of_book_when_the_settings_name_no_books() -> None:
     """An empty book list means unrestricted, not "no books at all" — a
     character saved before the field existed must not light up in red."""
