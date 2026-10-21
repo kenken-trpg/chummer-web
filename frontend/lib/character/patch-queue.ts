@@ -37,6 +37,14 @@
  * most visibly — rename a character, then press 作成完了（キャリア）, and the
  * switch did nothing and said nothing.
  *
+ * "One leaf" is not quite enough on its own, though. Two *adds* to a list
+ * built from the same stale list differ in one place too — ticking two
+ * rulebooks quickly gave `[SR5, RF]` then `[SR5, DTR]`, and holding the second
+ * as "one step on" unticked RF. What tells them apart from a dropdown picked
+ * twice is the character as saved: a value moved on leaves the list as long
+ * as it was, while an add or a remove does not. So a list whose length differs
+ * from the saved one is never one step on.
+ *
  * Anything else — the same field composed twice against different characters,
  * a row added or removed — is still dropped.
  *
@@ -71,24 +79,30 @@ function isRecord(v: unknown): v is Record<string, unknown> {
  * have, an array of another length, an object where the other has a list.
  * A shape change is a different edit (a row added, a control that appeared),
  * never the same one a step on, so it never needs to be counted precisely.
+ *
+ * `saved` is the same place in the character as saved, walked alongside: a
+ * list that differs in length from it was added to or taken from, by both.
  */
-function leafDiffs(a: unknown, b: unknown, limit: number): number {
+function leafDiffs(a: unknown, b: unknown, saved: unknown, limit: number): number {
   if (a === b) return 0;
   if (isRecord(a) && isRecord(b)) {
     const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
     if (keys.size !== Object.keys(a).length || keys.size !== Object.keys(b).length) return limit;
+    const below = isRecord(saved) ? saved : {};
     let n = 0;
     for (const k of keys) {
-      n += leafDiffs(a[k], b[k], limit - n);
+      n += leafDiffs(a[k], b[k], below[k], limit - n);
       if (n >= limit) return limit;
     }
     return n;
   }
   if (Array.isArray(a) && Array.isArray(b)) {
     if (a.length !== b.length) return limit;
+    // an unset list saves as nothing, which a first add also lengthens
+    if (a.length !== (Array.isArray(saved) ? saved.length : 0)) return limit;
     let n = 0;
     for (let i = 0; i < a.length; i++) {
-      n += leafDiffs(a[i], b[i], limit - n);
+      n += leafDiffs(a[i], b[i], (saved as unknown[])[i], limit - n);
       if (n >= limit) return limit;
     }
     return n;
@@ -106,6 +120,7 @@ function leafDiffs(a: unknown, b: unknown, limit: number): number {
 /**
  * Whether `next` is `sent` with exactly one leaf changed — the same control,
  * one step on — so that sending `next` once `sent` has landed is right.
+ * `saved` is the character both were composed against, as saved.
  *
  * Two bodies that are identical count too: re-sending is harmless, and a
  * control that fires twice with the same value is not worth a special case.
@@ -113,8 +128,9 @@ function leafDiffs(a: unknown, b: unknown, limit: number): number {
 export function advancesOneLeaf(
   sent: Record<string, unknown>,
   next: Record<string, unknown>,
+  saved: unknown,
 ): boolean {
-  return leafDiffs(sent, next, 2) < 2;
+  return leafDiffs(sent, next, saved, 2) < 2;
 }
 
 /**
