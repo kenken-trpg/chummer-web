@@ -1,6 +1,7 @@
 """``DerivedDict`` — the shape of ``ctx.state.derived`` (the API payload).
 
-``assemble()`` builds this ~175-key dict literal; the frontend mirrors it as
+``assemble()`` builds this ~200-key dict, one part per step (the
+``_*Part`` types below, which ``DerivedDict`` joins); the frontend mirrors it as
 ``Derived`` in ``frontend/lib/types/derived.ts``, and
 ``tests/test_derived_contract.py`` holds the two to the same keys — at the top
 level, and inside every value typed here as a ``TypedDict``. Typing it here makes a key typo or a
@@ -216,9 +217,9 @@ class _MetatypeInfo(TypedDict):
     metahuman_form: NotRequired[dict[str, Any]]
 
 
-class DerivedDict(TypedDict):
-    life_module_skills: dict[str, Any] | None
-    # --- chargen budgets --------------------------------------------------
+class _BudgetsPart(TypedDict):
+    """The keys ``assemble._chargen_budgets`` builds."""
+
     errors: list[Notice]
     warnings: list[Notice]
     build_method: str
@@ -230,7 +231,10 @@ class DerivedDict(TypedDict):
     skill_karma: _SkillKarma
     power_points: _PowerPoints
 
-    # --- combat / body --------------------------------------------------
+
+class _CombatPart(TypedDict):
+    """The keys ``assemble._combat_and_body`` builds."""
+
     totals: dict[str, int]
     limits: _Limits
     limit_modifiers: list[Row]
@@ -269,7 +273,10 @@ class DerivedDict(TypedDict):
     test_mods: dict[str, int]
     cm_recovery: _CmRecovery
 
-    # --- gear ----------------------------------------------------------
+
+class _GearPart(TypedDict):
+    """The keys ``assemble._gear`` builds."""
+
     armor_items: list[Row]
     armor_mods: list[Row]
     weapons: list[Row]
@@ -295,7 +302,10 @@ class DerivedDict(TypedDict):
     matrix_initiative: MatrixInitiative | None
     lifestyle: Row | None
 
-    # --- economy -----------------------------------------------------
+
+class _EconomyPart(TypedDict):
+    """The keys ``assemble._economy`` builds."""
+
     nuyen: int
     nuyen_spent: int
     nuyen_pool: int
@@ -332,7 +342,10 @@ class DerivedDict(TypedDict):
     nuyen_spend_breakdown: list[Row]
     lifestyle_cost_mod: int
 
-    # --- caps -------------------------------------------------------
+
+class _CapsPart(TypedDict):
+    """The keys ``assemble._caps`` builds."""
+
     skill_rating_max: int
     knowledge_rating_max: int
     skill_group_max: int
@@ -341,7 +354,10 @@ class DerivedDict(TypedDict):
     ware_attr_limit: int | None
     ware_attr_bonus: dict[str, int]
 
-    # --- magic / adept / resonance --------------------------------
+
+class _MagicPart(TypedDict):
+    """The keys ``assemble._magic`` builds."""
+
     metagenic: dict[str, Any] | None
     adept_powers: list[Row]
     mystic_pp: int
@@ -380,7 +396,11 @@ class DerivedDict(TypedDict):
     unlock_skills: list[str]
     burnout_way: bool
 
-    # --- skills / knowledge / contacts / martial --------------
+
+class _SkillsPart(TypedDict):
+    """The keys ``assemble._skills`` builds."""
+
+    life_module_skills: dict[str, Any] | None
     skill_totals: dict[str, int]
     skill_specializations: dict[str, str]
     skill_specializations_disabled: list[str]
@@ -421,7 +441,10 @@ class DerivedDict(TypedDict):
     #: style (SR5 p.140) or a quality that widens the list (RF p.114).
     skill_spec_options: dict[str, list[str]]
 
-    # --- social / misc -------------------------------------------
+
+class _SocialPart(TypedDict):
+    """The keys ``assemble._social`` builds."""
+
     street_cred: int
     # the part earned from karma, and the karma it takes per point
     street_cred_earned: int
@@ -439,7 +462,10 @@ class DerivedDict(TypedDict):
     adapsin: bool
     disabled_bioware_grades: list[str]
 
-    # --- identity ----------------------------------------------
+
+class _IdentityPart(TypedDict):
+    """The keys ``assemble._identity`` builds."""
+
     enabled_tabs: list[str]
     unimplemented_bonuses: list[UnimplementedRow]
     qualities: list[Row]
@@ -456,3 +482,17 @@ class DerivedDict(TypedDict):
     talent: dict[str, Any]
     metatype_info: _MetatypeInfo
     translations: dict[str, str]
+
+
+class DerivedDict(
+    _BudgetsPart,
+    _CombatPart,
+    _GearPart,
+    _EconomyPart,
+    _CapsPart,
+    _MagicPart,
+    _SkillsPart,
+    _SocialPart,
+    _IdentityPart,
+):
+    """The whole payload: one part per step of ``assemble``."""

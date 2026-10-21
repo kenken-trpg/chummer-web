@@ -1,9 +1,11 @@
 """Phase 19 — assemble ``ctx.state.derived``.
 
 Writes ``ctx.state.attributes`` from the resolved ratings and builds the
-~195-key ``state.derived`` dict the API returns. The quality rows and the
-metatype-info block are built in ``_assemble_qualities``, the out-of-book
-warning in ``_assemble_books``.
+~200-key ``state.derived`` dict the API returns, one part per step:
+``assemble()`` is the list of them. Each step returns its own part of
+``DerivedDict``, so mypy still checks every key and value. The quality rows
+and the metatype-info block are built in ``_assemble_qualities``, the
+out-of-book warning in ``_assemble_books``.
 """
 
 from __future__ import annotations
@@ -35,7 +37,19 @@ from ..ware.limbs import body_limb_slots
 from ._assemble_books import _out_of_book_warning
 from ._assemble_qualities import metatype_info, quality_rows
 from .context import Ctx
-from .derived_types import DerivedDict, _DamageResist
+from .derived_types import (
+    DerivedDict,
+    _BudgetsPart,
+    _CapsPart,
+    _CombatPart,
+    _DamageResist,
+    _EconomyPart,
+    _GearPart,
+    _IdentityPart,
+    _MagicPart,
+    _SkillsPart,
+    _SocialPart,
+)
 
 
 def _damage_resist(ctx: Ctx) -> _DamageResist:
@@ -101,10 +115,9 @@ def assemble(ctx: Ctx) -> None:
     # what was bought, not what essence loss left: saved back, a reduced
     # rating would lose the loss again on every recompute
     ctx.state.attributes = ctx.bought_ratings
-    sum_spent = sum_to_ten_spent(ctx.state.priorities)
-    clamped = set(ctx.effects.get("attribute_max_clamp") or [])
     # A technomancer's persona is one of the personas the Matrix initiative
-    # below picks from, so it is resolved before the blob rather than inside it.
+    # picks from, and is shown on its own too, so it is resolved once here and
+    # handed to both steps.
     living = (
         living_persona(
             ctx.total,
@@ -116,6 +129,31 @@ def assemble(ctx: Ctx) -> None:
         else None
     )
     derived: DerivedDict = {
+        **_chargen_budgets(ctx),
+        **_combat_and_body(ctx),
+        **_gear(ctx, living),
+        **_economy(ctx),
+        **_caps(ctx),
+        **_magic(ctx, living),
+        **_skills(ctx),
+        **_social(ctx),
+        **_identity(ctx),
+    }
+    # Last, because it reads the finished blob. ``derived["warnings"]`` is
+    # ``ctx.warnings`` itself, so appending here lands in both.
+    out_of_books = _out_of_book_warning(derived, ctx.state.settings.books)
+    if out_of_books:
+        ctx.warnings.append(out_of_books)
+    # ``CharacterState.derived`` stays ``dict[str, Any]`` (Pydantic-friendly,
+    # no round-trip validation risk); the ``DerivedDict`` annotation above is
+    # what type-checks the literal.
+    ctx.state.derived = cast("dict[str, Any]", derived)
+
+
+def _chargen_budgets(ctx: Ctx) -> _BudgetsPart:
+    """What creation has to spend and what is left."""
+    sum_spent = sum_to_ten_spent(ctx.state.priorities)
+    return {
         "errors": ctx.errors,
         "warnings": ctx.warnings,
         "build_method": ctx.state.build_method,
@@ -149,6 +187,42 @@ def assemble(ctx: Ctx) -> None:
             + int(ctx.initiation.get("karma") or 0)
             + int(ctx.submersion.get("karma") or 0),
         },
+        "karma": {
+            "pool": ctx.karma_pool,
+            "spent": ctx.karma_spent,
+            "remaining": ctx.karma_left,
+            "negative": {
+                "used": ctx.negative_quality_karma,
+                "max": None if ctx.career else current_rules().quality_karma_cap_negative,
+            },
+        },
+        "power_points": {"used": ctx.power_spent, "max": ctx.power_pool},
+        "attribute_karma": {
+            "levels": dict(ctx.attr_karma_levels),
+            "floors": dict(ctx.attr_floors),
+            "karma": 0 if ctx.is_karma else ctx.attr_karma,
+        },
+        "skill_karma": {
+            "levels": dict(ctx.skill_karma_levels),
+            "group_levels": dict(ctx.skill_group_karma_levels),
+            "knowledge_levels": dict(ctx.knowledge_karma_levels),
+            "karma": 0 if ctx.is_karma else ctx.skill_buy_karma,
+            "knowledge_karma": 0 if ctx.is_karma else ctx.knowledge_karma,
+        },
+        "points": {
+            "attributes": {"used": ctx.spent_physical, "max": ctx.attr_points},
+            "special": {"used": ctx.spent_special, "max": ctx.special_from_meta},
+            "skills": {"used": ctx.skill_spent, "max": ctx.skill_points},
+            "skill_groups": {"used": ctx.group_spent, "max": ctx.group_points},
+            "knowledge": {"used": ctx.know_spent, "max": ctx.know_max},
+            "contacts": {"used": ctx.contacts.get("used") or 0, "max": ctx.contacts.get("free") or 0},
+        },
+    }
+
+
+def _combat_and_body(ctx: Ctx) -> _CombatPart:
+    """The body in a fight: limits, monitors, initiative, essence, armor and the dice it rolls."""
+    return {
         "totals": ctx.total,
         "limits": {
             "physical": ctx.physical_limit,
@@ -189,11 +263,41 @@ def assemble(ctx: Ctx) -> None:
         "armor": int(ctx.effects["armor"]) + int(ctx.gear.get("armor") or 0),
         "special_armor": special_armor_totals(ctx.effects),
         "worn_armor": ctx.gear.get("worn_name") or "",
+        "recoil": ctx.gear.get("recoil") or {"str": 0, "str_rc": 0, "free": 1},
+        "damage_resistance": int(ctx.effects.get("damage_resistance") or 0),
+        "unarmed_dv": int(ctx.effects.get("unarmed_dv") or 0),
+        "unarmed_physical": bool(ctx.effects.get("unarmed_physical")),
+        "unarmed_reach": int(ctx.effects.get("unarmed_reach") or 0) + int(ctx.effects.get("reach") or 0),
+        "unarmed_ap": int(ctx.effects.get("unarmed_ap") or 0),
+        "reach": int(ctx.effects.get("reach") or 0),
+        # STR added for thrown-weapon damage / range (the client resolves {STR}).
+        "throw_str": int(ctx.effects.get("throw_str") or 0),
+        "throw_range_str": int(ctx.effects.get("throw_range_str") or 0),
+        "fatigue_resist": int(ctx.effects.get("fatigue_resist") or 0),
+        "spell_resistance": int(ctx.effects.get("spell_resistance") or 0),
+        "spell_defense": spell_defense_pools(ctx.effects),
+        "spell_defense_pools": _spell_defense_pools(ctx, _damage_resist(ctx)),
+        "spell_dice_pool": list(ctx.effects.get("spell_dice_pool") or []),
+        "action_dice_pools": list(ctx.effects.get("action_dice_pools") or []),
+        "test_mods": dict(ctx.effects.get("test_mods") or {}),
+        "cm_recovery": {
+            "physical": int(ctx.effects.get("cm_recovery_physical") or 0)
+            + (int(ctx.ess) if ctx.effects.get("cm_recovery_physical_add_ess") else 0),
+            "stun": int(ctx.effects.get("cm_recovery_stun") or 0)
+            + (int(ctx.ess) if ctx.effects.get("cm_recovery_stun_add_ess") else 0),
+        },
+        "essence_penalty": round(float(ctx.effects.get("essence_penalty") or 0), 4),
+        "prototype_transhuman_ess": float(ctx.effects.get("prototype_transhuman_ess") or 0),
+    }
+
+
+def _gear(ctx: Ctx, living: dict[str, int] | None) -> _GearPart:
+    """What the character carries, and the Matrix initiative of the persona worth running."""
+    return {
         "armor_items": ctx.gear.get("armor_items") or [],
         "armor_mods": ctx.gear.get("armor_mods") or [],
         "weapons": ctx.gear.get("weapons") or [],
         "weapon_accessories": ctx.gear.get("weapon_accessories") or [],
-        "recoil": ctx.gear.get("recoil") or {"str": 0, "str_rc": 0, "free": 1},
         "active_drugs": ctx.active_drugs,
         "commlinks": ctx.gear.get("commlinks") or [],
         "cyberdecks": ctx.gear.get("cyberdecks") or [],
@@ -232,6 +336,12 @@ def assemble(ctx: Ctx) -> None:
             int(ctx.effects.get("matrix_initiative") or 0),
         ),
         "lifestyle": ctx.gear.get("lifestyle"),
+    }
+
+
+def _economy(ctx: Ctx) -> _EconomyPart:
+    """Nuyen and karma over time, and the qualities and settings that change prices."""
+    return {
         "nuyen": ctx.nuyen,
         "nuyen_spent": ctx.nuyen_spent,
         "nuyen_pool": ctx.nuyen_pool,
@@ -263,7 +373,23 @@ def assemble(ctx: Ctx) -> None:
         "dealer_connection_categories": list(ctx.effects.get("dealer_connection_categories") or []),
         "cyberware_ess_multiplier": int(ctx.effects.get("cyberware_ess_multiplier") or 100),
         "bioware_ess_multiplier": int(ctx.effects.get("bioware_ess_multiplier") or 100),
-        "life_module_skills": ctx.life.get("skill_public"),
+        "lifestyle_cost_mod": int(ctx.effects.get("lifestyle_cost") or 0),
+        "reward_log": [
+            {"id": row.id, "label": row.label, "karma": int(row.karma or 0), "nuyen": int(row.nuyen or 0)}
+            for row in (ctx.state.reward_log or [])
+        ],
+        "expense_log": [
+            {"id": row.id, "label": row.label, "karma": int(row.karma or 0), "nuyen": int(row.nuyen or 0)}
+            for row in (ctx.state.expense_log or [])
+        ],
+        "karma_spend_breakdown": ctx.karma_spend_lines,
+        "nuyen_spend_breakdown": ctx.nuyen_spend_lines,
+    }
+
+
+def _caps(ctx: Ctx) -> _CapsPart:
+    """The ratings and availability creation stops at."""
+    return {
         "skill_rating_max": ctx.skill_rating_cap,
         "knowledge_rating_max": ctx.knowledge_rating_cap,
         "skill_group_max": ctx.skill_group_cap,
@@ -271,16 +397,12 @@ def assemble(ctx: Ctx) -> None:
         "device_rating_limit": None if ctx.career else CHARGEN_DEVICE_RATING_MAX,
         "ware_attr_limit": None if ctx.career else CHARGEN_WARE_ATTR_BONUS_MAX,
         "ware_attr_bonus": ctx.ware_attr_bonus,
-        "karma": {
-            "pool": ctx.karma_pool,
-            "spent": ctx.karma_spent,
-            "remaining": ctx.karma_left,
-            "negative": {
-                "used": ctx.negative_quality_karma,
-                "max": None if ctx.career else current_rules().quality_karma_cap_negative,
-            },
-        },
-        "power_points": {"used": ctx.power_spent, "max": ctx.power_pool},
+    }
+
+
+def _magic(ctx: Ctx, living: dict[str, int] | None) -> _MagicPart:
+    """Magic, adept powers and resonance."""
+    return {
         "metagenic": ctx.quality_report.get("metagenic"),
         "adept_powers": ctx.adept["public"],
         "mystic_pp": ctx.state.mystic_pp,
@@ -293,9 +415,6 @@ def assemble(ctx: Ctx) -> None:
         "focus_limits": ctx.focus_limits,
         "spirits": ctx.spirits.get("public") or [],
         "enhancements": ctx.enhancements.get("public") or [],
-        "damage_resistance": int(ctx.effects.get("damage_resistance") or 0),
-        "unarmed_dv": int(ctx.effects.get("unarmed_dv") or 0),
-        "unarmed_physical": bool(ctx.effects.get("unarmed_physical")),
         "unlock_skills": list(ctx.effects.get("unlock_skills") or []),
         "spells": ctx.magic.get("public") or [],
         "spell_points": {
@@ -324,101 +443,7 @@ def assemble(ctx: Ctx) -> None:
             "attrs": ctx.resonance.get("resist_attrs") or "WIL+RES",
         },
         "living_persona": living,
-        "attribute_karma": {
-            "levels": dict(ctx.attr_karma_levels),
-            "floors": dict(ctx.attr_floors),
-            "karma": 0 if ctx.is_karma else ctx.attr_karma,
-        },
-        "skill_karma": {
-            "levels": dict(ctx.skill_karma_levels),
-            "group_levels": dict(ctx.skill_group_karma_levels),
-            "knowledge_levels": dict(ctx.knowledge_karma_levels),
-            "karma": 0 if ctx.is_karma else ctx.skill_buy_karma,
-            "knowledge_karma": 0 if ctx.is_karma else ctx.knowledge_karma,
-        },
-        "points": {
-            "attributes": {"used": ctx.spent_physical, "max": ctx.attr_points},
-            "special": {"used": ctx.spent_special, "max": ctx.special_from_meta},
-            "skills": {"used": ctx.skill_spent, "max": ctx.skill_points},
-            "skill_groups": {"used": ctx.group_spent, "max": ctx.group_points},
-            "knowledge": {"used": ctx.know_spent, "max": ctx.know_max},
-            "contacts": {"used": ctx.contacts.get("used") or 0, "max": ctx.contacts.get("free") or 0},
-        },
-        "knowledge_skills": ctx.knowledge["public"],
-        "contacts": ctx.contacts.get("public") or [],
-        "contact_points": {
-            "used": ctx.contacts.get("used") or 0,
-            "free": ctx.contacts.get("free") or 0,
-            "paid": ctx.contacts.get("paid") or 0,
-            "karma": int(ctx.contacts.get("karma") or 0),
-            "karma_per_point": int(ctx.contacts.get("karma_per_point", 1)),
-            "free_mult": current_rules().contact_free_mult,
-        },
-        "martial_arts": ctx.martial.get("public") or [],
-        "ai_programs": ctx.ai_programs["public"],
-        "critter_powers": ctx.critter_powers["public"],
-        "critter_power_offer": ctx.critter_powers["offer"],
-        "critter_power_categories": ctx.critter_powers["categories"],
-        "martial_art_points": {
-            "styles": ctx.martial.get("style_count") or 0,
-            "style_max": ctx.martial.get("style_max") or MARTIAL_ART_CHARGEN_STYLE_MAX,
-            "techniques": ctx.martial.get("technique_count") or 0,
-            "technique_max": ctx.martial.get("technique_max") or MARTIAL_ART_CHARGEN_TECHNIQUE_MAX,
-            "karma": ctx.martial.get("karma") or 0,
-        },
-        "skill_spec_options": {k: list(v) for k, v in (ctx.effects.get("skill_spec_options") or {}).items()},
-        "unarmed_reach": int(ctx.effects.get("unarmed_reach") or 0) + int(ctx.effects.get("reach") or 0),
-        "unarmed_ap": int(ctx.effects.get("unarmed_ap") or 0),
-        "reach": int(ctx.effects.get("reach") or 0),
-        # STR added for thrown-weapon damage / range (the client resolves {STR}).
-        "throw_str": int(ctx.effects.get("throw_str") or 0),
-        "throw_range_str": int(ctx.effects.get("throw_range_str") or 0),
-        "lifestyle_cost_mod": int(ctx.effects.get("lifestyle_cost") or 0),
-        "street_cred": ctx.street_cred_total,
-        "street_cred_earned": ctx.street_cred_earned,
-        "street_cred_divisor": ctx.street_cred_divisor,
-        "street_cred_burnt": int(ctx.state.burnt_street_cred or 0),
-        "notoriety": ctx.notoriety_total,
-        "notoriety_quality": ctx.quality_notoriety,
-        "notoriety_bonus": int(ctx.state.notoriety_bonus or 0),
-        "fame": int(ctx.effects.get("fame") or 0),
-        "public_awareness": ctx.public_awareness_total,
-        "erased": bool(ctx.effects.get("erased")),
-        "excon": bool(ctx.effects.get("excon")),
-        "reward_log": [
-            {"id": row.id, "label": row.label, "karma": int(row.karma or 0), "nuyen": int(row.nuyen or 0)}
-            for row in (ctx.state.reward_log or [])
-        ],
-        "expense_log": [
-            {"id": row.id, "label": row.label, "karma": int(row.karma or 0), "nuyen": int(row.nuyen or 0)}
-            for row in (ctx.state.expense_log or [])
-        ],
-        "karma_spend_breakdown": ctx.karma_spend_lines,
-        "nuyen_spend_breakdown": ctx.nuyen_spend_lines,
-        "fatigue_resist": int(ctx.effects.get("fatigue_resist") or 0),
-        "spell_resistance": int(ctx.effects.get("spell_resistance") or 0),
-        "spell_defense": spell_defense_pools(ctx.effects),
-        "spell_defense_pools": _spell_defense_pools(ctx, _damage_resist(ctx)),
-        "spell_dice_pool": list(ctx.effects.get("spell_dice_pool") or []),
-        "action_dice_pools": list(ctx.effects.get("action_dice_pools") or []),
-        "test_mods": dict(ctx.effects.get("test_mods") or {}),
-        "cm_recovery": {
-            "physical": int(ctx.effects.get("cm_recovery_physical") or 0)
-            + (int(ctx.ess) if ctx.effects.get("cm_recovery_physical_add_ess") else 0),
-            "stun": int(ctx.effects.get("cm_recovery_stun") or 0)
-            + (int(ctx.ess) if ctx.effects.get("cm_recovery_stun_add_ess") else 0),
-        },
-        "essence_penalty": round(float(ctx.effects.get("essence_penalty") or 0), 4),
-        "attribute_max_bonus": dict(ctx.attr_max_bonus),
-        "disabled_skills": list(ctx.effects.get("disabled_skills") or []),
-        "disabled_skill_groups": list(ctx.effects.get("disabled_skill_groups") or []),
-        "blocked_default_categories": list(ctx.effects.get("blocked_default_categories") or []),
-        "native_language_limit": int(ctx.knowledge.get("native_limit") or 1),
-        "prototype_transhuman_ess": float(ctx.effects.get("prototype_transhuman_ess") or 0),
         "burnout_way": bool(ctx.effects.get("burnout_way")),
-        "disabled_cyberware_grades": list(ctx.effects.get("disabled_cyberware_grades") or []),
-        "adapsin": ctx.adapsin,
-        "disabled_bioware_grades": list(ctx.effects.get("disabled_bioware_grades") or []),
         "limit_spell_categories": list(ctx.effects.get("limit_spell_categories") or []),
         "limit_spirit_categories": list(ctx.effects.get("limit_spirit_categories") or []),
         "allow_spell_categories": list(ctx.effects.get("allow_spell_categories") or []),
@@ -445,6 +470,40 @@ def assemble(ctx: Ctx) -> None:
             "choices": ctx.submersion.get("choices") or [],
             "echoes": ctx.submersion.get("echoes") or [],
         },
+    }
+
+
+def _skills(ctx: Ctx) -> _SkillsPart:
+    """Skills, knowledge, contacts, martial arts, A.I. programs and critter powers."""
+    return {
+        "life_module_skills": ctx.life.get("skill_public"),
+        "knowledge_skills": ctx.knowledge["public"],
+        "contacts": ctx.contacts.get("public") or [],
+        "contact_points": {
+            "used": ctx.contacts.get("used") or 0,
+            "free": ctx.contacts.get("free") or 0,
+            "paid": ctx.contacts.get("paid") or 0,
+            "karma": int(ctx.contacts.get("karma") or 0),
+            "karma_per_point": int(ctx.contacts.get("karma_per_point", 1)),
+            "free_mult": current_rules().contact_free_mult,
+        },
+        "martial_arts": ctx.martial.get("public") or [],
+        "ai_programs": ctx.ai_programs["public"],
+        "critter_powers": ctx.critter_powers["public"],
+        "critter_power_offer": ctx.critter_powers["offer"],
+        "critter_power_categories": ctx.critter_powers["categories"],
+        "martial_art_points": {
+            "styles": ctx.martial.get("style_count") or 0,
+            "style_max": ctx.martial.get("style_max") or MARTIAL_ART_CHARGEN_STYLE_MAX,
+            "techniques": ctx.martial.get("technique_count") or 0,
+            "technique_max": ctx.martial.get("technique_max") or MARTIAL_ART_CHARGEN_TECHNIQUE_MAX,
+            "karma": ctx.martial.get("karma") or 0,
+        },
+        "skill_spec_options": {k: list(v) for k, v in (ctx.effects.get("skill_spec_options") or {}).items()},
+        "disabled_skills": list(ctx.effects.get("disabled_skills") or []),
+        "disabled_skill_groups": list(ctx.effects.get("disabled_skill_groups") or []),
+        "blocked_default_categories": list(ctx.effects.get("blocked_default_categories") or []),
+        "native_language_limit": int(ctx.knowledge.get("native_limit") or 1),
         "skill_totals": ctx.skill_totals,
         "skill_specializations": ctx.specs["specs"],
         "skill_specializations_disabled": ctx.skill_picks["disabled_specializations"],
@@ -464,6 +523,34 @@ def assemble(ctx: Ctx) -> None:
         "skill_pick_slots": ctx.skill_picks["slots"],
         "talent_skills": ctx.talent_skills,
         "no_default_penalty_skills": ctx.skill_picks["no_default_penalty"],
+    }
+
+
+def _social(ctx: Ctx) -> _SocialPart:
+    """Reputation, and what qualities forbid."""
+    return {
+        "street_cred": ctx.street_cred_total,
+        "street_cred_earned": ctx.street_cred_earned,
+        "street_cred_divisor": ctx.street_cred_divisor,
+        "street_cred_burnt": int(ctx.state.burnt_street_cred or 0),
+        "notoriety": ctx.notoriety_total,
+        "notoriety_quality": ctx.quality_notoriety,
+        "notoriety_bonus": int(ctx.state.notoriety_bonus or 0),
+        "fame": int(ctx.effects.get("fame") or 0),
+        "public_awareness": ctx.public_awareness_total,
+        "erased": bool(ctx.effects.get("erased")),
+        "excon": bool(ctx.effects.get("excon")),
+        "attribute_max_bonus": dict(ctx.attr_max_bonus),
+        "disabled_cyberware_grades": list(ctx.effects.get("disabled_cyberware_grades") or []),
+        "adapsin": ctx.adapsin,
+        "disabled_bioware_grades": list(ctx.effects.get("disabled_bioware_grades") or []),
+    }
+
+
+def _identity(ctx: Ctx) -> _IdentityPart:
+    """Who the character is: metatype, talent, qualities, ware and the tabs that open."""
+    clamped = set(ctx.effects.get("attribute_max_clamp") or [])
+    return {
         "enabled_tabs": sorted(ctx.enabled),
         "unimplemented_bonuses": ctx.effects["unimplemented"],
         "qualities": quality_rows(ctx),
@@ -481,12 +568,3 @@ def assemble(ctx: Ctx) -> None:
             k: ctx.data["translations"].get(k, k) for k in [ctx.state.metatype, ctx.state.metavariant or ""]
         },
     }
-    # Last, because it reads the finished blob. ``derived["warnings"]`` is
-    # ``ctx.warnings`` itself, so appending here lands in both.
-    out_of_books = _out_of_book_warning(derived, ctx.state.settings.books)
-    if out_of_books:
-        ctx.warnings.append(out_of_books)
-    # ``CharacterState.derived`` stays ``dict[str, Any]`` (Pydantic-friendly,
-    # no round-trip validation risk); the ``DerivedDict`` annotation above is
-    # what type-checks the literal.
-    ctx.state.derived = cast("dict[str, Any]", derived)
