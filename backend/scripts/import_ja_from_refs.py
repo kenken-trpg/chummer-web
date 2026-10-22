@@ -411,7 +411,7 @@ def _report(ordered: dict[str, str], by_src: dict[str, list[tuple[str, str]]], v
     return "\n".join(lines) + "\n"
 
 
-def main(argv: list[str] | None = None) -> int:
+def main(argv: list[str] | None = None) -> int:  # noqa: C901 — a hand-run converter, one step per flag
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--chumja", type=Path, default=DEFAULT_CHUMJA)
     ap.add_argument("--report", type=Path, default=DEFAULT_REPORT)

@@ -24,6 +24,11 @@ select = [
     # Untrusted input must go through `app.data_loader._xml.parse_untrusted`
     # (defusedxml); a raw parse is only allowed where the file is ours.
     "S313", "S314", "S318", "S319",
+    # Function complexity. The ceiling is where the long functions were
+    # split down to in October 2026 (from 53); it stops a new one growing back.
+    # A function that is long by nature — a flat table spelled out, a fixture —
+    # says so with `# noqa: C901` on its `def`, never a file-wide ignore.
+    "C901",
 ]
 ignore = [
     "E501",  # line length is handled by the formatter, not enforced hard
@@ -34,6 +39,9 @@ ignore = [
 "tests/**" = ["B011", "S313", "S314", "S318", "S319"]
 # Offline maintenance tools run by hand on vendored / checked-in files.
 "scripts/**" = ["S313", "S314", "S318", "S319"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 20
 
 [tool.ruff.lint.isort]
 known-first-party = ["app"]
