@@ -83,36 +83,41 @@ try {
       notes: "マニュアル用の操作サンプルです。",
     },
   });
-  await page.goto(origin);
-  await expect(
-    page.getByRole("textbox", { name: "キャラクター名" }),
-  ).toBeVisible();
-  await page.evaluate(async (ch) => {
-    const db = await new Promise((resolve, reject) => {
-      const request = indexedDB.open("chummer-web", 1);
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
-    await new Promise((resolve, reject) => {
-      const tx = db.transaction("characters", "readwrite");
-      const store = tx.objectStore("characters");
-      store.clear();
-      store.put({
-        id: ch.id,
-        savedAt: Date.now(),
-        schemaVersion: 2,
-        character: ch,
+  // Puts `ch` in the browser's store as the only character and reopens the
+  // editor on it, the way the app itself restores the last one.
+  const open = async (ch) => {
+    await page.goto(origin);
+    await expect(
+      page.getByRole("textbox", { name: "キャラクター名" }),
+    ).toBeVisible();
+    await page.evaluate(async (ch) => {
+      const db = await new Promise((resolve, reject) => {
+        const request = indexedDB.open("chummer-web", 1);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
       });
-      tx.oncomplete = resolve;
-      tx.onerror = () => reject(tx.error);
-    });
-    db.close();
-    localStorage.setItem("lastCharacterId", ch.id);
-  }, character);
-  await page.reload();
-  await expect(
-    page.getByRole("textbox", { name: "キャラクター名" }),
-  ).toHaveValue("カイト");
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction("characters", "readwrite");
+        const store = tx.objectStore("characters");
+        store.clear();
+        store.put({
+          id: ch.id,
+          savedAt: Date.now(),
+          schemaVersion: 2,
+          character: ch,
+        });
+        tx.oncomplete = resolve;
+        tx.onerror = () => reject(tx.error);
+      });
+      db.close();
+      localStorage.setItem("lastCharacterId", ch.id);
+    }, ch);
+    await page.reload();
+    await expect(
+      page.getByRole("textbox", { name: "キャラクター名" }),
+    ).toHaveValue(ch.name);
+  };
+  await open(character);
   await page.evaluate(() => document.fonts.ready);
   const shot = async (name, locator) => {
     await page.mouse.move(0, 0);
@@ -171,6 +176,105 @@ try {
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.getByRole("button", { name: "書き出し ▾" }).click();
   await shot("ui-export-menu");
+  await page.keyboard.press("Escape");
+
+  // The tabs a mundane orc never shows: one sample per kind of character that
+  // opens them. Each is a starting point for the screenshot, not a finished
+  // build, so a leftover point or a warning in the sidebar is fine.
+  const sample = async (name, metatype, patch) =>
+    api("characters/patch", {
+      state: await api("characters/new", { name, metatype }),
+      patch,
+    });
+  const samples = [
+    [
+      await sample("アヤ", "Human", {
+        priorities: {
+          Heritage: "E",
+          Attributes: "B",
+          Talent: "A",
+          Skills: "C",
+          Resources: "D",
+        },
+        talent: "Mystic Adept",
+        tradition_id: item("traditions", "Hermetic"),
+        mystic_pp: 2,
+        spells: ["Manabolt", "Heal", "Invisibility"].map((n) => ({
+          spell_id: item("spells", n),
+        })),
+        adept_powers: [
+          { power_id: item("powers", "Improved Reflexes"), rating: 1 },
+          { power_id: item("powers", "Killing Hands") },
+        ],
+        spirits: [
+          {
+            spirit_id: item("spirits", "Spirit of Air"),
+            force: 4,
+            services: 2,
+          },
+        ],
+        foci: [{ gear_id: item("foci", "Power Focus"), force: 1 }],
+      }),
+      { spells: "呪文", adept: "アデプト", spirits: "精霊", foci: "収束具" },
+    ],
+    [
+      await sample("レン", "Human", {
+        priorities: {
+          Heritage: "E",
+          Attributes: "B",
+          Talent: "A",
+          Skills: "C",
+          Resources: "D",
+        },
+        talent: "Technomancer",
+        complex_forms: ["Puppeteer", "Editor", "Cleaner"].map((n) => ({
+          form_id: item("complex_forms", n),
+        })),
+        sprites: [
+          { sprite_id: item("sprites", "Crack Sprite"), level: 3, services: 2 },
+        ],
+      }),
+      { complexforms: "複合体", sprites: "スプライト" },
+    ],
+    [
+      await sample("ゴースト", "A.I.", {
+        metavariant: "E-Ghost",
+        talent: "A.I.",
+        priorities: {
+          Heritage: "A",
+          Attributes: "B",
+          Talent: "C",
+          Skills: "D",
+          Resources: "E",
+        },
+        ai_programs: ["Exploit", "Armor"].map((n) => ({
+          program_id: item("ai_programs", n),
+        })),
+      }),
+      { aiprograms: "プログラム" },
+    ],
+    [
+      // Karma build: the quality alone costs more than a priority build's 25.
+      await sample("ジャック", "Human", {
+        build_method: "Karma",
+        quality_ids: [item("qualities", "Infected: Ghoul (Human)")],
+        quality_extras: {
+          [item("qualities", "Infected: Ghoul (Human)")]: "STR",
+        },
+        critter_powers: [
+          { power_id: item("buyable_critter_powers", "Tunneling Claws") },
+        ],
+      }),
+      { critterpowers: "クリッター・パワー" },
+    ],
+  ];
+  for (const [ch, tabs] of samples) {
+    await open(ch);
+    for (const [key, label] of Object.entries(tabs)) {
+      await tab(label);
+      await shot(`tab-${key}`);
+    }
+  }
 } finally {
   await browser.close();
 }
