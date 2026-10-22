@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ....data_loader import catalog
+from ....data_loader import catalog, catalog_list
 from ....models import (
     CharacterState,
     GearInstall,
@@ -17,73 +17,63 @@ from .slots import _iter_vehicle_hosts
 
 
 def _ensure_drone_equipment(state: CharacterState) -> None:
-    sensors = {item["id"]: item for item in catalog().get("sensors") or []}
-    sensors_by_name = {item["name"]: item for item in sensors.values()}
-    gear = {item["id"]: item for item in catalog().get("gear") or []}
-    gear_by_name = {item["name"]: item for item in gear.values()}
-    programs = {item["id"]: item for item in catalog().get("programs") or []}
-    programs_by_name = {item["name"]: item for item in programs.values()}
-    mods = {item["id"]: item for item in catalog().get("vehicle_mods") or []}
-    mods_by_name = {item["name"]: item for item in mods.values()}
-    have_sensors = {(row.parent_id, (sensors.get(row.gear_id) or {}).get("name")) for row in state.sensors or []}
-    extra_sensors: list[GearInstall] = []
-    have_gear = {(row.parent_id, (gear.get(row.gear_id) or {}).get("name")) for row in state.gear or []}
-    extra_gear: list[GearInstall] = []
-    have_programs = {(row.parent_id, (programs.get(row.gear_id) or {}).get("name")) for row in state.programs or []}
-    extra_programs: list[GearInstall] = []
+    _ensure_included_gear(state)
+    _ensure_included_mods(state)
+    _ensure_included_mounts(state)
+    _ensure_included_weapons(state)
+
+
+#: where an `included_gears` entry may land, tried in this order: a name that
+#: is both a sensor and a piece of gear is the sensor
+_GEAR_KINDS = ("sensors", "programs", "gear")
+
+
+def _ensure_included_gear(state: CharacterState) -> None:
+    """The sensors, autosofts and gear a vehicle's entry comes with."""
+    by_id = {kind: {item["id"]: item for item in catalog_list(kind)} for kind in _GEAR_KINDS}
+    by_name = {kind: {item["name"]: item for item in by_id[kind].values()} for kind in _GEAR_KINDS}
+    have = {
+        kind: {(row.parent_id, (by_id[kind].get(row.gear_id) or {}).get("name")) for row in _rows(state, kind)}
+        for kind in _GEAR_KINDS
+    }
+    extra: dict[str, list[GearInstall]] = {kind: [] for kind in _GEAR_KINDS}
     for host, spec in _iter_vehicle_hosts(state):
         for gift in spec.get("included_gears") or []:
             name = gift.get("name") or ""
-            child = sensors_by_name.get(name)
-            if child:
-                if (host.id, child["name"]) in have_sensors:
-                    continue
-                extra_sensors.append(
-                    GearInstall(
-                        gear_id=child["id"],
-                        parent_id=host.id,
-                        included=True,
-                        rating=int(gift.get("rating") or 1),
-                    )
-                )
-                have_sensors.add((host.id, child["name"]))
+            kind = next((kind for kind in _GEAR_KINDS if name in by_name[kind]), None)
+            if kind is None:
                 continue
-            # an autosoft the entry grants runs on the drone it came with
-            child = programs_by_name.get(name)
-            if child:
-                if (host.id, child["name"]) in have_programs:
-                    continue
-                extra_programs.append(
-                    GearInstall(
-                        gear_id=child["id"],
-                        parent_id=host.id,
-                        included=True,
-                        rating=int(gift.get("rating") or 1),
-                        extra=gift.get("extra") or None,
-                        running=True,
-                    )
-                )
-                have_programs.add((host.id, child["name"]))
+            child = by_name[kind][name]
+            if (host.id, child["name"]) in have[kind]:
                 continue
-            child = gear_by_name.get(name)
-            if not child or (host.id, child["name"]) in have_gear:
-                continue
-            extra_gear.append(
-                GearInstall(
+            rating = int(gift.get("rating") or 1)
+            if kind == "programs":
+                # an autosoft the entry grants runs on the drone it came with
+                row = GearInstall(
                     gear_id=child["id"],
                     parent_id=host.id,
                     included=True,
-                    rating=int(gift.get("rating") or 1),
+                    rating=rating,
+                    extra=gift.get("extra") or None,
+                    running=True,
                 )
-            )
-            have_gear.add((host.id, child["name"]))
-    if extra_sensors:
-        state.sensors = list(state.sensors or []) + extra_sensors
-    if extra_gear:
-        state.gear = list(state.gear or []) + extra_gear
-    if extra_programs:
-        state.programs = list(state.programs or []) + extra_programs
+            else:
+                row = GearInstall(gear_id=child["id"], parent_id=host.id, included=True, rating=rating)
+            extra[kind].append(row)
+            have[kind].add((host.id, child["name"]))
+    for kind in _GEAR_KINDS:
+        if extra[kind]:
+            setattr(state, kind, _rows(state, kind) + extra[kind])
 
+
+def _rows(state: CharacterState, kind: str) -> list[GearInstall]:
+    rows: list[GearInstall] = list(getattr(state, kind) or [])
+    return rows
+
+
+def _ensure_included_mods(state: CharacterState) -> None:
+    mods = {item["id"]: item for item in catalog().get("vehicle_mods") or []}
+    mods_by_name = {item["name"]: item for item in mods.values()}
     have_mods = {(row.parent_id, (mods.get(row.mod_id) or {}).get("name")) for row in state.vehicle_mods or []}
     extra_mods: list[VehicleModInstall] = []
     for host, spec in _iter_vehicle_hosts(state):
@@ -96,6 +86,8 @@ def _ensure_drone_equipment(state: CharacterState) -> None:
     if extra_mods:
         state.vehicle_mods = list(state.vehicle_mods or []) + extra_mods
 
+
+def _ensure_included_mounts(state: CharacterState) -> None:
     have_mounts = {
         (row.parent_id, row.size_id, row.visibility_id, row.flexibility_id, row.control_id): row
         for row in state.weapon_mounts or []
@@ -141,8 +133,6 @@ def _ensure_drone_equipment(state: CharacterState) -> None:
             have_mounts[key] = extra_mounts[-1]
     if extra_mounts:
         state.weapon_mounts = list(state.weapon_mounts or []) + extra_mounts
-
-    _ensure_included_weapons(state)
 
 
 def _ensure_included_weapons(state: CharacterState) -> None:
