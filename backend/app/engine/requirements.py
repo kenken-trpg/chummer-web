@@ -20,6 +20,25 @@ def _pool_rating(pool: dict[str, int], name: str) -> int:
     return best
 
 
+#: tags met when the node's name is in the context set every caller builds
+_IN_CONTEXT = {
+    "quality": "qualities",
+    "metatype": "metatypes",
+    "metatypecategory": "metatype_categories",
+    "power": "powers",
+    "cyberware": "cyberware",
+    "bioware": "bioware",
+    "spell": "spells",
+}
+#: the same, for sets only some callers build; a missing one is empty.
+#: `critterpower`: Soul Swallower needs Essence Drain (DTR p.164); an Infected
+#: optional power is forbidden to whoever has it already (RF p.126)
+_IN_OPTIONAL_CONTEXT = {
+    "critterpower": "critter_powers",
+    "metamagic": "metamagics",
+}
+
+
 def _requirement_item_met(node: dict[str, Any], ctx: dict[str, Any]) -> bool:
     tag = node.get("tag") or ""
     children = list(node.get("children") or [])
@@ -28,32 +47,14 @@ def _requirement_item_met(node: dict[str, Any], ctx: dict[str, Any]) -> bool:
     if tag in {"allof", "group"}:
         return all(_requirement_item_met(child, ctx) for child in children) if children else True
     name = str(node.get("name") or "")
-    if tag == "quality":
-        return name in ctx["qualities"]
-    if tag == "metatype":
-        return name in ctx["metatypes"]
-    if tag == "metatypecategory":
-        return name in ctx["metatype_categories"]
-    if tag == "magenabled":
-        return bool(ctx["magenabled"])
-    if tag == "resenabled":
-        return bool(ctx["resenabled"])
-    if tag == "power":
-        return name in ctx["powers"]
-    if tag == "critterpower":
-        # Soul Swallower needs Essence Drain (DTR p.164); an Infected optional
-        # power is forbidden to whoever has it already (RF p.126)
-        return name in (ctx.get("critter_powers") or set())
+    if tag in _IN_CONTEXT:
+        return name in ctx[_IN_CONTEXT[tag]]
+    if tag in _IN_OPTIONAL_CONTEXT:
+        return name in (ctx.get(_IN_OPTIONAL_CONTEXT[tag]) or set())
+    if tag in {"magenabled", "resenabled"}:
+        return bool(ctx[tag])
     if tag == "art":
         return bool(ctx.get("ignore_art")) or name in (ctx.get("arts") or set())
-    if tag == "metamagic":
-        return name in (ctx.get("metamagics") or set())
-    if tag == "cyberware":
-        return name in ctx["cyberware"]
-    if tag == "bioware":
-        return name in ctx["bioware"]
-    if tag == "spell":
-        return name in ctx["spells"]
     if tag == "tradition":
         return bool(name == ctx["tradition"])
     if tag == "skill":
@@ -65,8 +66,7 @@ def _requirement_item_met(node: dict[str, Any], ctx: dict[str, Any]) -> bool:
         if value < 0:
             return float(ctx["ess_lost"]) + 1e-9 >= abs(value)
         return float(ctx["essence"]) + 1e-9 >= value
-    if tag == "gameplayoption":
-        return False
+    # `gameplayoption` and anything unknown: not met
     return False
 
 
