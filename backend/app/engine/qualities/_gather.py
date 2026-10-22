@@ -104,36 +104,11 @@ def gather_qualities(
     free_ids: set[str] = set()
     state.quality_ids, dropped = sanitize_quality_ids(list(state.quality_ids))
     pending = list(state.quality_ids)
-    # Each line of the grant list is one copy: an E-Ghost is born with
-    # Hello World! three times, a Gnome with Arcane Arrester twice (Chummer's
-    # Character.Create adds a quality per `<quality>` node). An explicit Life
-    # Module rating stands for that many free levels.
-    innate: dict[str, dict[str, Any]] = {}
-    copies: dict[str, int] = {}
-    for grant in metatype_grants or []:
-        if grant.get("id"):
-            innate.setdefault(grant["id"], grant)
-            copies[grant["id"]] = copies.get(grant["id"], 0) + int(grant.get("life_rating", 1))
-    for qid in innate:
-        free_ids.add(qid)
-        if qid not in pending:
-            pending.extend([qid] * copies[qid])
+    innate = _add_innate(pending, free_ids, metatype_grants or [])
     talent_quality = _quality_by_name(talent.get("quality") or "")
     if talent_quality:
         pending.append(talent_quality["id"])
-    # The tradition's own grants come free, like the ones a quality chains in
-    # below: the follower never chose them, so they cost no karma either way.
-    forced_extras: dict[str, str] = {}
-    for name, select in tradition_quality_grants(state, talent):
-        granted = _quality_by_name(name)
-        if not granted or granted["id"] in pending:
-            continue
-        pending.append(granted["id"])
-        free_ids.add(granted["id"])
-        if select:
-            forced_extras[granted["id"]] = select
-    if forced_extras:
-        state.quality_extras = {**(state.quality_extras or {}), **forced_extras}
+    _add_tradition_grants(state, talent, pending, free_ids)
     extras = {key: str(value).strip() for key, value in (state.quality_extras or {}).items() if str(value).strip()}
     index = 0
     while index < len(pending):
@@ -148,27 +123,68 @@ def gather_qualities(
         counts[qid] = taken + 1
         qualities.append(spec)
         for node in spec.get("bonus") or []:
-            tag = node.get("tag")
-            if tag == "freequality":
-                child_id = str(node.get("value") or "").strip()
-                if child_id and counts.get(child_id, 0) == 0:
+            for child_id in _chained_ids(node, extras.get(qid, "")):
+                if counts.get(child_id, 0) == 0:
                     free_ids.add(child_id)
                     pending.append(child_id)
-            elif tag == "addqualities":
-                raw = (node.get("fields") or {}).get("addquality") or node.get("value") or ""
-                names = raw if isinstance(raw, list) else [raw]
-                for name in names:
-                    child = _quality_by_name(str(name).strip())
-                    if child and counts.get(child["id"], 0) == 0:
-                        free_ids.add(child["id"])
-                        pending.append(child["id"])
-            elif tag == "selectquality":
-                raw = (node.get("fields") or {}).get("quality") or node.get("value") or []
-                options = [str(item).strip() for item in (raw if isinstance(raw, list) else [raw]) if str(item).strip()]
-                picked = extras.get(qid, "")
-                if picked and picked in options:
-                    child = _quality_by_name(picked)
-                    if child and counts.get(child["id"], 0) == 0:
-                        free_ids.add(child["id"])
-                        pending.append(child["id"])
     return qualities, sorted(free_ids), dropped
+
+
+def _add_innate(
+    pending: list[str], free_ids: set[str], metatype_grants: list[dict[str, Any]]
+) -> dict[str, dict[str, Any]]:
+    """Queue the metatype's own qualities, free; return their rows by id.
+
+    Each line of the grant list is one copy: an E-Ghost is born with
+    Hello World! three times, a Gnome with Arcane Arrester twice (Chummer's
+    Character.Create adds a quality per `<quality>` node). An explicit Life
+    Module rating stands for that many free levels.
+    """
+    innate: dict[str, dict[str, Any]] = {}
+    copies: dict[str, int] = {}
+    for grant in metatype_grants:
+        if grant.get("id"):
+            innate.setdefault(grant["id"], grant)
+            copies[grant["id"]] = copies.get(grant["id"], 0) + int(grant.get("life_rating", 1))
+    for qid in innate:
+        free_ids.add(qid)
+        if qid not in pending:
+            pending.extend([qid] * copies[qid])
+    return innate
+
+
+def _add_tradition_grants(
+    state: CharacterState, talent: dict[str, Any], pending: list[str], free_ids: set[str]
+) -> None:
+    """The tradition's own grants come free, like the ones a quality chains in:
+    the follower never chose them, so they cost no karma either way."""
+    forced_extras: dict[str, str] = {}
+    for name, select in tradition_quality_grants(state, talent):
+        granted = _quality_by_name(name)
+        if not granted or granted["id"] in pending:
+            continue
+        pending.append(granted["id"])
+        free_ids.add(granted["id"])
+        if select:
+            forced_extras[granted["id"]] = select
+    if forced_extras:
+        state.quality_extras = {**(state.quality_extras or {}), **forced_extras}
+
+
+def _chained_ids(node: dict[str, Any], picked: str) -> list[str]:
+    """The qualities one bonus node brings in: `<freequality>` by id,
+    `<addqualities>` by name, `<selectquality>` by the player's pick."""
+    tag = node.get("tag")
+    if tag == "freequality":
+        child_id = str(node.get("value") or "").strip()
+        return [child_id] if child_id else []
+    if tag == "addqualities":
+        raw = (node.get("fields") or {}).get("addquality") or node.get("value") or ""
+        names = [str(name).strip() for name in (raw if isinstance(raw, list) else [raw])]
+    elif tag == "selectquality":
+        raw = (node.get("fields") or {}).get("quality") or node.get("value") or []
+        options = [str(item).strip() for item in (raw if isinstance(raw, list) else [raw]) if str(item).strip()]
+        names = [picked] if picked and picked in options else []
+    else:
+        return []
+    return [child["id"] for name in names if (child := _quality_by_name(name))]
