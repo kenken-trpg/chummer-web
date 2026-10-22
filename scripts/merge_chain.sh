@@ -117,8 +117,19 @@ for pair in "$@"; do
     sleep 10
   done
   [ "$pending" = 0 ] || { echo "STOP: checks still pending after 20 min"; exit 1; }
-  gh pr merge "$n" --squash --auto >/dev/null 2>&1 ||
-    { echo "STOP: could not enable auto-merge"; exit 1; }
+  # GitHub refuses to arm auto-merge on a PR that is already CLEAN — up to date
+  # and every check reported — because there is nothing left to wait for. That
+  # happens when the push needed no rebase and GitHub settled before this got
+  # here (#702). Every check was just read green above, so merging it outright
+  # is the same decision `--auto` would have carried out.
+  if ! gh pr merge "$n" --squash --auto >/dev/null 2>&1; then
+    if [ "$(gh pr view "$n" --json mergeStateStatus -q .mergeStateStatus)" = CLEAN ]; then
+      gh pr merge "$n" --squash >/dev/null 2>&1 || { echo "STOP: could not merge a CLEAN PR"; exit 1; }
+    else
+      echo "STOP: could not enable auto-merge"
+      exit 1
+    fi
+  fi
   # The queue still has to wait: the next PR is rebased onto a main that
   # contains this one. Everything has reported by now, so this is short — and
   # if it does not merge, auto-merge is disarmed on the way out rather than
