@@ -188,6 +188,11 @@ export const JA_HELP = {
   "help.aiprog.price":
     "1 つにつき 5 カルマ、Advanced Programs は 8 カルマ（DT）。作成後に足しても同じ価格",
   "help.aiprog.inherent": "資質 Inherent Program で選んだ 1 つは無料で、資質を外すと消える",
+  "help.aiprog.statsLabel": "プログラムの値",
+  "help.aiprog.category": "カテゴリーで価格が決まる。Advanced Programs だけが高い",
+  "help.aiprog.required": "「前提」に並ぶプログラムのどれか 1 つを先に持っていないと買えない",
+  "help.aiprog.extra": "オートソフトは対象（機種・武器・技能）を書く",
+  "help.aiprog.free": "資質が持たせたものなので、ここでは消せない。資質を外すと消える",
   "help.cpower.statsLabel": "パワーの値",
   "help.cpower.stats": "タイプ／アクション／射程／効果時間の順。タイプの P は物理、M はマナ",
   "help.cpower.blank": "空欄はデータにその値がないもの",

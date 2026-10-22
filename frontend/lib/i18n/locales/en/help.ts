@@ -208,6 +208,11 @@ export const EN_HELP = {
   "help.aiprog.price":
     "5 karma each, 8 for an Advanced Program (DT). The same price after creation",
   "help.aiprog.inherent": "The one Inherent Program picks is free, and goes when the quality does",
+  "help.aiprog.statsLabel": "Program",
+  "help.aiprog.category": "The category sets the price: only Advanced Programs cost more",
+  "help.aiprog.required": "Needs one of the programs after “Requires” first",
+  "help.aiprog.extra": "An autosoft names what it is for: a model, a weapon or a skill",
+  "help.aiprog.free": "A quality gave it, so it cannot be removed here; it goes with the quality",
   "help.cpower.statsLabel": "Power",
   "help.cpower.stats": "Type / action / range / duration. Type P is physical, M is mana",
   "help.cpower.blank": "A blank is a value the data does not give",
