@@ -9,9 +9,10 @@ have already established is the wrong one.
 So `docs/translation-banned-terms.md` records the mistakes that actually reached
 the UI, and this walks `frontend/lib/i18n/locales/ja/` for them. Each entry is
 written once, when the drift is fixed, and from then on that word cannot come
-back. It catches recurrence, not a brand new mistranslation. The Markdown is
-held to the part of the list that cannot be ordinary prose (`doc_terms`), and
-the English strings to their own short list (`en_rules`).
+back. It catches recurrence, not a brand new mistranslation. The illustrated
+manual (`frontend/public/manual/`) is screen text too and gets the whole list;
+the Markdown is held to the part of the list that cannot be ordinary prose
+(`doc_terms`), and the English strings to their own short list (`en_rules`).
 
     python scripts/check_ja_terms.py
 """
@@ -66,6 +67,25 @@ def check(locale: Path, banned: Path) -> list[str]:
         for number, line in enumerate(path.read_text(encoding="utf-8").split("\n"), start=1):
             for rule in found:
                 if rule.hits(line):
+                    where = path.relative_to(ROOT) if path.is_relative_to(ROOT) else path
+                    problems.append(f"{where}:{number}: 「{rule.wrong}」は「{rule.right}」（{rule.source}）")
+    return problems
+
+
+MANUAL = ROOT / "frontend/public/manual"
+
+
+def check_manual(manual: Path, banned: Path) -> list[str]:
+    """`check` for the manual. It tells a player what the screen says, in the
+    screen's words, so the whole list applies — `判定` included, which the docs
+    may use as ordinary prose. A `<code>` span is a quotation and is skipped."""
+    found = rules(banned.read_text(encoding="utf-8"))
+    problems = []
+    for path in sorted(manual.rglob("*.html")):
+        for number, line in enumerate(path.read_text(encoding="utf-8").split("\n"), start=1):
+            prose = re.sub(r"<code>[^<]*</code>", "", line)
+            for rule in found:
+                if rule.hits(prose):
                     where = path.relative_to(ROOT) if path.is_relative_to(ROOT) else path
                     problems.append(f"{where}:{number}: 「{rule.wrong}」は「{rule.right}」（{rule.source}）")
     return problems
@@ -159,11 +179,13 @@ def main() -> int:
     if not LOCALE.is_dir():
         print("frontend/ not checked out — nothing to check")
         return 0
-    problems = check(LOCALE, BANNED) + check_docs(ROOT, BANNED) + check_en(EN_LOCALE, BANNED)
+    problems = (
+        check(LOCALE, BANNED) + check_manual(MANUAL, BANNED) + check_docs(ROOT, BANNED) + check_en(EN_LOCALE, BANNED)
+    )
     if problems:
         print("\n".join(["", *problems, "", f"See docs/{BANNED.name} and docs/translation-glossary.md."]))
         return 1
-    print(f"ok — no banned term in {LOCALE.relative_to(ROOT)}, its English twin or the docs")
+    print(f"ok — no banned term in {LOCALE.relative_to(ROOT)}, its English twin, the manual or the docs")
     return 0
 
 
