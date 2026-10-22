@@ -59,6 +59,28 @@ def test_rules_fire_on_the_wrong_word_and_not_the_right_one(tmp_path: Path, text
     assert bool(_checker().check(locale, BANNED)) is flagged
 
 
+MANUAL = ROOT / "frontend/public/manual"
+
+
+@pytest.mark.skipif(not MANUAL.is_dir(), reason="frontend/ not checked out")
+def test_no_banned_term_reached_the_manual() -> None:
+    assert _checker().check_manual(MANUAL, BANNED) == []
+
+
+@pytest.mark.parametrize(
+    ("text", "flagged"),
+    [
+        ("<p>結合や召喚の判定のヒット数</p>", True),  # the docs allow 判定; the manual is screen text
+        ('<img alt="マトリクスの画面" />', True),  # alt text is read out, so it counts
+        ("<p>結合や召喚のテストのヒット数</p>", False),
+        ("<p><code>判定</code> は旧表記</p>", False),  # a code span quotes the old word
+    ],
+)
+def test_the_manual_is_held_to_the_ui_list(tmp_path: Path, text: str, flagged: bool) -> None:
+    (tmp_path / "index.html").write_text(text, encoding="utf-8")
+    assert bool(_checker().check_manual(tmp_path, BANNED)) is flagged
+
+
 def test_no_banned_term_reached_the_docs() -> None:
     assert _checker().check_docs(ROOT, BANNED) == []
 
