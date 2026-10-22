@@ -208,6 +208,9 @@ export const EN_HELP = {
   "help.aiprog.price":
     "5 karma each, 8 for an Advanced Program (DT). The same price after creation",
   "help.aiprog.inherent": "The one Inherent Program picks is free, and goes when the quality does",
+  "help.cpower.statsLabel": "Power",
+  "help.cpower.stats": "Type / action / range / duration. Type P is physical, M is mana",
+  "help.cpower.blank": "A blank is a value the data does not give",
   "help.cf.fv":
     "FV is the fading; L is the Level chosen when threading, so L\u22121 is Level \u2212 1 (minimum 2)",
   "help.cf.fade": "Resist fading with Willpower + Resonance; the rest is damage",

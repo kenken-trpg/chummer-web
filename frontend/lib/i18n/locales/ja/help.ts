@@ -188,6 +188,9 @@ export const JA_HELP = {
   "help.aiprog.price":
     "1 つにつき 5 カルマ、Advanced Programs は 8 カルマ（DT）。作成後に足しても同じ価格",
   "help.aiprog.inherent": "資質 Inherent Program で選んだ 1 つは無料で、資質を外すと消える",
+  "help.cpower.statsLabel": "パワーの値",
+  "help.cpower.stats": "タイプ／アクション／射程／効果時間の順。タイプの P は物理、M はマナ",
+  "help.cpower.blank": "空欄はデータにその値がないもの",
   "help.cf.fade": "フェイディング抵抗は意志力＋共振力で振り、抵抗しきれない分を食らう",
   "help.cf.level": "レベルが共振力以下なら精神ダメージ、超えると身体ダメージになる",
   "help.cf.target": "対象（ペルソナ／機器／ファイル／スプライトなど）と持続",
