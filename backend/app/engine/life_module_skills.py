@@ -209,86 +209,12 @@ def resolve_life_module_skills(
         if event.stage not in STAGES:
             result.errors.append(notice("engine.life.skillGrantInvalid", name=term(event.name)))
             continue
-        amounts: dict[str, int] = defaultdict(int)
-        for grant in event.grants:
-            if type(grant.amount) is not int or not 0 <= grant.amount <= 1000:
-                result.errors.append(notice("engine.life.skillGrantInvalid", name=term(grant.name)))
-                continue
-            if grant.kind == "knowledge_skills":
-                _knowledge(result, event, grant)
-                continue
-            if grant.kind == "skill_groups":
-                if grant.name not in groups:
-                    result.errors.append(notice("engine.life.skillGrantInvalid", name=term(grant.name)))
-                for member in groups.get(grant.name, []):
-                    amounts[member["id"]] += grant.amount
-                continue
-            skill = by_name.get(grant.name)
-            if not skill or skill.get("exotic") or skill.get("knowledge"):
-                result.errors.append(notice("engine.life.skillGrantInvalid", name=term(grant.name)))
-                continue
-            amounts[skill["id"]] += grant.amount
-        pools: list[LifeSkillPool] = []
+        amounts = _event_amounts(result, event, by_name, groups)
         # All direct grants are applied before any transfers from this event.
-        for sid, amount in sorted(amounts.items()):
-            skill = skills[sid]
-            key = life_skill_key(sid)
-            before = result.free_active.get(key, 0)
-            kept = min(amount, max(0, policy.active_cap - before))
-            if kept:
-                result.free_active[key] = before + kept
-            excess = amount - kept
-            if not excess:
-                continue
-            if event.stage == "Real Life" and not skill.get("skillgroup"):
-                pools.append(
-                    LifeSkillPool(
-                        key=f"{event.entry_id}:{sid}",
-                        entry_id=event.entry_id,
-                        source_skill_id=sid,
-                        source_name=skill["name"],
-                        stage=event.stage,
-                        before=before,
-                        grant=amount,
-                        kept=kept,
-                        total=excess,
-                        remaining=excess,
-                        grant_fingerprint=_fingerprint(event, skill, amount, policy),
-                        candidates=[],
-                    )
-                )
-            else:
-                result.losses.append(
-                    {
-                        "entry_id": event.entry_id,
-                        "skill_key": key,
-                        "before": before,
-                        "grant": amount,
-                        "kept": kept,
-                        "lost": excess,
-                        "reason": "grouped" if skill.get("skillgroup") else "general",
-                    }
-                )
-                result.warnings.append(
-                    notice("engine.life.skillExcessLost", name=term(skill["name"]), lost=excess, stage=event.stage)
-                )
+        pools = _apply_direct(result, event, amounts, skills)
         for pool in pools:
             pool.provisional = bool(result.errors)
-            source = skills[pool.source_skill_id]
-            pool.candidates = [
-                LifeSkillCandidate(
-                    skill_id=sid,
-                    name=s["name"],
-                    attribute=s.get("attribute") or "",
-                    specific_required=bool(s.get("exotic")),
-                    capacity=0 if sid in unavailable_skill_ids else _capacity(result.free_active, s, policy),
-                    unavailable_reason="unavailable" if sid in unavailable_skill_ids else "",
-                )
-                for sid, s in sorted(skills.items())
-                if sid != pool.source_skill_id
-                and s.get("attribute") == source.get("attribute")
-                and not s.get("knowledge")
-            ]
+            pool.candidates = _candidates(result, pool, skills, unavailable_skill_ids)
             group_key = (event.entry_id, pool.source_skill_id)
             consumed.add(group_key)
             _allocate(result, pool, picks.get(group_key, []), skills, unavailable_skill_ids, duplicate_ids)
@@ -296,6 +222,113 @@ def resolve_life_module_skills(
     for group_key, rows in picks.items():
         if group_key not in consumed:
             result.errors.extend(notice("engine.life.transferOrphan", transfer=t.id) for t in rows)
+    _summarize_groups(result, groups)
+    return result
+
+
+def _event_amounts(
+    result: LifeSkillResolution,
+    event: LifeSkillEvent,
+    by_name: dict[str, dict[str, Any]],
+    groups: dict[str, list[dict[str, Any]]],
+) -> dict[str, int]:
+    """Free active levels per skill id from one module; knowledge grants are applied as they come."""
+    amounts: dict[str, int] = defaultdict(int)
+    for grant in event.grants:
+        if type(grant.amount) is not int or not 0 <= grant.amount <= 1000:
+            result.errors.append(notice("engine.life.skillGrantInvalid", name=term(grant.name)))
+            continue
+        if grant.kind == "knowledge_skills":
+            _knowledge(result, event, grant)
+            continue
+        if grant.kind == "skill_groups":
+            if grant.name not in groups:
+                result.errors.append(notice("engine.life.skillGrantInvalid", name=term(grant.name)))
+            for member in groups.get(grant.name, []):
+                amounts[member["id"]] += grant.amount
+            continue
+        skill = by_name.get(grant.name)
+        if not skill or skill.get("exotic") or skill.get("knowledge"):
+            result.errors.append(notice("engine.life.skillGrantInvalid", name=term(grant.name)))
+            continue
+        amounts[skill["id"]] += grant.amount
+    return amounts
+
+
+def _apply_direct(
+    result: LifeSkillResolution, event: LifeSkillEvent, amounts: dict[str, int], skills: dict[str, dict[str, Any]]
+) -> list[LifeSkillPool]:
+    """Raise each skill up to the cap. What does not fit opens a transfer pool
+    in Real Life for an ungrouped skill, and is lost everywhere else."""
+    pools: list[LifeSkillPool] = []
+    for sid, amount in sorted(amounts.items()):
+        skill = skills[sid]
+        key = life_skill_key(sid)
+        before = result.free_active.get(key, 0)
+        kept = min(amount, max(0, result.policy.active_cap - before))
+        if kept:
+            result.free_active[key] = before + kept
+        excess = amount - kept
+        if not excess:
+            continue
+        if event.stage == "Real Life" and not skill.get("skillgroup"):
+            pools.append(
+                LifeSkillPool(
+                    key=f"{event.entry_id}:{sid}",
+                    entry_id=event.entry_id,
+                    source_skill_id=sid,
+                    source_name=skill["name"],
+                    stage=event.stage,
+                    before=before,
+                    grant=amount,
+                    kept=kept,
+                    total=excess,
+                    remaining=excess,
+                    grant_fingerprint=_fingerprint(event, skill, amount, result.policy),
+                    candidates=[],
+                )
+            )
+            continue
+        result.losses.append(
+            {
+                "entry_id": event.entry_id,
+                "skill_key": key,
+                "before": before,
+                "grant": amount,
+                "kept": kept,
+                "lost": excess,
+                "reason": "grouped" if skill.get("skillgroup") else "general",
+            }
+        )
+        result.warnings.append(
+            notice("engine.life.skillExcessLost", name=term(skill["name"]), lost=excess, stage=event.stage)
+        )
+    return pools
+
+
+def _candidates(
+    result: LifeSkillResolution,
+    pool: LifeSkillPool,
+    skills: dict[str, dict[str, Any]],
+    unavailable: frozenset[str],
+) -> list[LifeSkillCandidate]:
+    """The active skills on the same attribute the pool's excess may move to."""
+    source = skills[pool.source_skill_id]
+    return [
+        LifeSkillCandidate(
+            skill_id=sid,
+            name=s["name"],
+            attribute=s.get("attribute") or "",
+            specific_required=bool(s.get("exotic")),
+            capacity=0 if sid in unavailable else _capacity(result.free_active, s, result.policy),
+            unavailable_reason="unavailable" if sid in unavailable else "",
+        )
+        for sid, s in sorted(skills.items())
+        if sid != pool.source_skill_id and s.get("attribute") == source.get("attribute") and not s.get("knowledge")
+    ]
+
+
+def _summarize_groups(result: LifeSkillResolution, groups: dict[str, list[dict[str, Any]]]) -> None:
     for name, members in sorted(groups.items()):
         values = {life_skill_key(s["id"]): result.free_active.get(life_skill_key(s["id"]), 0) for s in members}
         uniform = len(set(values.values())) == 1
@@ -308,7 +341,6 @@ def resolve_life_module_skills(
                 "free_uniform_rating": next(iter(values.values())) if uniform else None,
             }
         )
-    return result
 
 
 def _knowledge(result: LifeSkillResolution, event: LifeSkillEvent, grant: LifeSkillGrant) -> None:
