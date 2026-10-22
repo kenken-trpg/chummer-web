@@ -3,6 +3,16 @@
 Notable changes. Format follows [Keep a Changelog](https://keepachangelog.com/);
 self-hosters can pin to a tag instead of tracking `main`.
 
+## [0.5.13] — 2026-10-23
+
+### Security
+
+- **A formula in uploaded custom data can no longer write warnings to the
+  server log.** A string literal with an invalid escape made the parser print
+  a `SyntaxWarning`; the expression was refused, but the warning reached
+  stderr. The evaluator also refuses an operator it has no rule for instead of
+  computing it as `%` (`2**3` came out as 2), although no caller allowed one.
+
 ## [0.5.12] — 2026-10-21
 
 ### Added
