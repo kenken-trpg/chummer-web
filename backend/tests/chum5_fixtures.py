@@ -83,7 +83,7 @@ def _gear_nodes(parent: ET.Element, rows: list[dict[str, Any]]) -> None:
             _gear_nodes(_e(g, "children"), kids)
 
 
-def build_chum5(
+def build_chum5(  # noqa: C901 — one keyword per save section, written out in order
     *,
     name: str = "RoundTrip",
     metatype: str = "Human",

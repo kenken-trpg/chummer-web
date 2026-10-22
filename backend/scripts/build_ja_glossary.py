@@ -418,7 +418,7 @@ def build_glossary_doc(
     return "\n".join(lines)
 
 
-def build_mismatch_doc(
+def build_mismatch_doc(  # noqa: C901 — a report run by hand, one section after another
     rows: list[tuple[str, str]],
     sr5eja: dict[str, tuple[str, str]],
     ui_en: dict[str, str],

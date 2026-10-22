@@ -73,6 +73,11 @@ recipes (new `<bonus>` tag, new gear category, new sheet section, …).
 cd backend && ruff check . && ruff format . && python -m pytest -q
 ```
 
+`ruff` also caps function complexity (C901) at 20. Over it, split the
+function into its steps rather than raising the ceiling; a function that is
+long by nature (a flat table spelled out, a test fixture) says so with
+`# noqa: C901` and a reason on its `def`.
+
 `mypy` is clean and **blocking** (CI + `make check`), and now strict across
 the whole `app` package (`disallow_untyped_defs`, `warn_return_any`, …). New
 code needs full annotations; see `docs/plans/refactor-mypy-plan.md` for how it
