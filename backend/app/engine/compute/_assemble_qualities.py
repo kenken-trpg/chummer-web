@@ -12,7 +12,7 @@ from ..constants import (
     quality_spirit_category_extra_key,
 )
 from ..lookups import critter_power_label, critter_power_rows
-from ..qualities import _quality_has_selectside, quality_needs_extra
+from ..qualities import _quality_has_selectside, is_free_take, quality_needs_extra
 from ._shapeshifter import metahuman_form
 from .context import Ctx
 from .derived_types import _MetatypeInfo
@@ -71,7 +71,7 @@ def quality_rows(ctx: Ctx) -> list[dict[str, Any]]:
         {
             "id": q["id"],
             "name": q["name"],
-            "karma": 0 if q["id"] in ctx.free_quality_ids else q["karma"],
+            "karma": 0 if is_free_take(q, ctx.free_quality_ids) else q["karma"],
             "category": q["category"],
             "source": q["source"],
             "has_levels": bool(q.get("has_levels")),
@@ -85,7 +85,7 @@ def quality_rows(ctx: Ctx) -> list[dict[str, Any]]:
             "add_spirit_count": int(q.get("add_spirit_count") or 0),
             "selectside": _quality_has_selectside(q),
             "side": _normalize_side(ctx.state.quality_extras.get(q["id"])) if _quality_has_selectside(q) else None,
-            "free": q["id"] in ctx.free_quality_ids or bool(q.get("onlyprioritygiven")),
+            "free": is_free_take(q, ctx.free_quality_ids) or bool(q.get("onlyprioritygiven")),
             **(
                 {
                     "origin": q["origin"],

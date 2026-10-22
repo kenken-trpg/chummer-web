@@ -2,6 +2,7 @@ import { testUi } from "@/tests/fixtures";
 import {
   dropRemovedWarePicks,
   dropSkillPicksForPrefix,
+  grantedLevels,
   qualityBlockReason,
   qualityDisplayRows,
   qualityLevelMax,
@@ -212,6 +213,29 @@ describe("quality levels", () => {
     expect(setQualityLevel(ids, "ind", 2)).toEqual(["ind", "other", "ind", "third"]);
     expect(setQualityLevel(ids, "ind", 4)).toEqual([...ids, "ind"]);
     expect(setQualityLevel(ids, "ind", 0)).toEqual(["other", "third"]);
+  });
+});
+
+describe("levels a Life Module granted", () => {
+  const hpt = { id: "hpt", name: "High Pain Tolerance", max_takes: 3, has_levels: true };
+  const level = (free: boolean) => ({ id: "hpt", name: "High Pain Tolerance", free }) as never;
+
+  it("counts only the free levels of a leveled quality", () => {
+    expect(grantedLevels([level(true), level(true), level(false)], hpt as never)).toBe(2);
+    expect(grantedLevels([level(true)], { ...hpt, has_levels: false } as never)).toBe(0);
+  });
+
+  it("leaves only the rest of the cap to buy", () => {
+    expect(qualityLevelMax(hpt as never, [], [hpt] as never, 2)).toBe(1);
+    expect(qualityPickState(hpt as never, ["hpt"], [hpt] as never, 2)).toMatchObject({
+      ownedCount: 1,
+      canAddMore: false,
+      levelMax: 1,
+    });
+    expect(qualityPickState(hpt as never, [], [hpt] as never, 3)).toMatchObject({
+      canAddMore: false,
+      levelMax: 0,
+    });
   });
 });
 

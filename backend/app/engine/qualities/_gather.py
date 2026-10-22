@@ -17,6 +17,13 @@ from ..constants import MAG_TALENTS
 from ..lookups import _quality_by_id, _quality_by_name, _tradition_by_id
 
 
+def is_free_take(spec: dict[str, Any], free_ids: set[str] | list[str]) -> bool:
+    """One take of a quality the character did not pay for: a whole id that
+    came free, or one of the levels a Life Module granted (`free_copy`), which
+    leaves the levels bought beside it paid."""
+    return spec["id"] in free_ids or bool(spec.get("free_copy"))
+
+
 def is_way_quality(name: str) -> bool:
     return bool(re.fullmatch(r"The .+ Way", (name or "").strip()))
 
@@ -104,7 +111,7 @@ def gather_qualities(
     free_ids: set[str] = set()
     state.quality_ids, dropped = sanitize_quality_ids(list(state.quality_ids))
     pending = list(state.quality_ids)
-    innate = _add_innate(pending, free_ids, metatype_grants or [])
+    innate, free_copies = _add_innate(pending, free_ids, metatype_grants or [])
     talent_quality = _quality_by_name(talent.get("quality") or "")
     if talent_quality:
         pending.append(talent_quality["id"])
@@ -121,6 +128,9 @@ def gather_qualities(
             continue
         taken = counts.get(qid, 0)
         counts[qid] = taken + 1
+        if free_copies.get(qid):
+            free_copies[qid] -= 1
+            spec = {**spec, "free_copy": True}
         qualities.append(spec)
         for node in spec.get("bonus") or []:
             for child_id in _chained_ids(node, extras.get(qid, "")):
@@ -132,25 +142,34 @@ def gather_qualities(
 
 def _add_innate(
     pending: list[str], free_ids: set[str], metatype_grants: list[dict[str, Any]]
-) -> dict[str, dict[str, Any]]:
-    """Queue the metatype's own qualities, free; return their rows by id.
+) -> tuple[dict[str, dict[str, Any]], dict[str, int]]:
+    """Queue the metatype's own qualities, free; return their rows by id, and
+    how many free levels each rated grant holds.
 
     Each line of the grant list is one copy: an E-Ghost is born with
     Hello World! three times, a Gnome with Arcane Arrester twice (Chummer's
     Character.Create adds a quality per `<quality>` node). An explicit Life
-    Module rating stands for that many free levels.
+    Module rating stands for that many free levels, and those stack with the
+    levels the player buys (Chummer adds one free quality per level, and the
+    quality's limit counts both): only the granted levels are free.
     """
     innate: dict[str, dict[str, Any]] = {}
     copies: dict[str, int] = {}
+    rated: dict[str, int] = {}
     for grant in metatype_grants:
         if grant.get("id"):
             innate.setdefault(grant["id"], grant)
             copies[grant["id"]] = copies.get(grant["id"], 0) + int(grant.get("life_rating", 1))
+            if "life_rating" in grant:
+                rated[grant["id"]] = rated.get(grant["id"], 0) + int(grant["life_rating"])
     for qid in innate:
+        if qid in rated:
+            pending.extend([qid] * copies[qid])
+            continue
         free_ids.add(qid)
         if qid not in pending:
             pending.extend([qid] * copies[qid])
-    return innate
+    return innate, rated
 
 
 def _add_tradition_grants(

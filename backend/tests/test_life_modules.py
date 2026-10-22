@@ -356,17 +356,45 @@ def test_rated_quality_grants_apply_each_free_level_and_restore(name, quality_na
     assert apply_patch(state, CharacterPatch(life_modules=[])).derived == base.derived
 
 
-def test_rated_quality_grants_reject_over_cap_and_manual_purchase_conflicts(monkeypatch):
+def test_rated_quality_grants_reject_over_cap(monkeypatch):
     spec = module("Pit Fighter")
     other = {**spec, "id": "other-pit-fighter", "family_id": "other-pit-fighter"}
     monkeypatch.setitem(catalog(), "life_modules", [*catalog()["life_modules"], other])
     state = apply_patch(runner(), CharacterPatch(life_modules=[spec["id"], other["id"]]))
     assert has(state.derived["errors"], "engine.life.ratingCap", name="High Pain Tolerance", rating=4, cap=3)
+
+
+def _spent_on_qualities(state) -> int:
+    rows = state.derived["karma_spend_breakdown"]
+    return next((row["amount"] for row in rows if row["notice"]["key"] == "engine.spend.qualities"), 0)
+
+
+def test_a_bought_level_stacks_on_the_granted_ones_and_alone_is_paid():
+    # Chummer adds one free quality per granted level; the player may buy
+    # more up to the quality's limit, and pays for those alone.
+    spec = module("Pit Fighter")
     qid = next(q["id"] for q in catalog()["qualities"] if q["name"] == "High Pain Tolerance")
-    base = apply_patch(runner(), CharacterPatch(quality_ids=[qid]))
-    state = apply_patch(base, CharacterPatch(life_modules=[spec["id"]]))
-    assert has(state.derived["errors"], "engine.life.ratedQualityConflict")
+    granted = apply_patch(runner(), CharacterPatch(life_modules=[spec["id"]]))
+    state = apply_patch(granted, CharacterPatch(quality_ids=[qid]))
+    assert not has(state.derived["errors"], "engine.life.ratingCap")
+    rows = [q for q in state.derived["qualities"] if q["id"] == qid]
+    assert sorted((q["free"], q["karma"]) for q in rows) == [(False, 7), (True, 0), (True, 0)]
+    assert _spent_on_qualities(state) == _spent_on_qualities(granted) + 7
+    assert state.derived["condition_monitor"]["threshold_offset"] == 3
     assert state.quality_ids == [qid]
+    # the bought level stays when the module goes
+    alone = apply_patch(state, CharacterPatch(life_modules=[]))
+    assert [q["free"] for q in alone.derived["qualities"] if q["id"] == qid] == [False]
+    assert compute(state).model_dump() == state.model_dump()
+
+
+def test_bought_levels_count_against_the_cap_with_the_granted_ones():
+    spec = module("Pit Fighter")
+    qid = next(q["id"] for q in catalog()["qualities"] if q["name"] == "High Pain Tolerance")
+    base = apply_patch(runner(), CharacterPatch(quality_ids=[qid, qid]))
+    state = apply_patch(base, CharacterPatch(life_modules=[spec["id"]]))
+    assert has(state.derived["errors"], "engine.life.ratingCap", name="High Pain Tolerance", rating=4, cap=3)
+    assert state.quality_ids == [qid, qid]
     assert apply_patch(state, CharacterPatch(life_modules=[])).derived == base.derived
 
 

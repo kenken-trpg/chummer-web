@@ -45,14 +45,33 @@ export function qualityDisplayRows(
   return result;
 }
 
-/** Own cap and shared cap (Indomitable / Tough as Nails), excluding this quality's levels. */
-export function qualityLevelMax(q: QualitySpec, ids: string[], specs: QualitySpec[]): number {
-  const ownMax = q.max_takes ?? 1;
+/**
+ * Own cap and shared cap (Indomitable / Tough as Nails), excluding this
+ * quality's levels: the most levels the player can buy. `granted` levels (a
+ * Life Module's free ones) sit under the same cap, so they come off it.
+ */
+export function qualityLevelMax(
+  q: QualitySpec,
+  ids: string[],
+  specs: QualitySpec[],
+  granted = 0,
+): number {
+  const ownMax = (q.max_takes ?? 1) - granted;
   const siblings = new Set(q.include_in_limit || []);
-  if (!siblings.size) return ownMax;
+  if (!siblings.size) return Math.max(0, ownMax);
   const byId = new Map(specs.map((item) => [item.id, item.name]));
   const otherLevels = ids.filter((id) => id !== q.id && siblings.has(byId.get(id) || "")).length;
-  return Math.max(0, Math.min(ownMax, (q.limit_with_inclusions || ownMax) - otherLevels));
+  return Math.max(0, Math.min(ownMax, (q.limit_with_inclusions || ownMax) - otherLevels - granted));
+}
+
+/**
+ * The free levels of a leveled quality the character holds without having
+ * bought them — a Life Module's High Pain Tolerance 2. The engine lists each
+ * level as its own row; the free ones are the ones not in `quality_ids`.
+ */
+export function grantedLevels(rows: QualityRow[], q: QualitySpec): number {
+  if (!q.has_levels) return 0;
+  return rows.filter((row) => row.id === q.id && row.free).length;
 }
 
 /**
@@ -94,6 +113,7 @@ export function qualityPickState(
   q: QualitySpec,
   ids: string[],
   specs: QualitySpec[] = [],
+  granted = 0,
 ): QualityPickState {
   const ownedCount = ids.filter((id) => id === q.id).length;
   const maxTakes = q.max_takes == null ? null : Number(q.max_takes ?? 1);
@@ -114,10 +134,11 @@ export function qualityPickState(
     sharedCap,
     sharedCount,
     canAddMore:
-      (maxTakes == null || ownedCount < maxTakes) && (sharedCap == null || sharedCount < sharedCap),
+      (maxTakes == null || ownedCount + granted < maxTakes) &&
+      (sharedCap == null || sharedCount + granted < sharedCap),
     added: ownedCount > 0,
     hasLevels,
-    levelMax: hasLevels ? qualityLevelMax(q, ids, specs) : 1,
+    levelMax: hasLevels ? qualityLevelMax(q, ids, specs, granted) : 1,
     replaces:
       ownedCount === 0 &&
       Boolean(q.is_way) &&

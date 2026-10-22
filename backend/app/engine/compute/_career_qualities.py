@@ -19,6 +19,7 @@ from typing import Any
 
 from ...rules import current_rules
 from ..lookups import _quality_by_id
+from ..qualities import is_free_take
 
 CAREER_MULT = 2
 
@@ -46,7 +47,7 @@ def career_quality_karma(
     costs: list[int | None] = []
     for spec in qualities:
         qid = spec["id"]
-        if spec.get("onlyprioritygiven") or qid in free:
+        if spec.get("onlyprioritygiven") or is_free_take(spec, free):
             costs.append(None)
             continue
         seen[qid] += 1

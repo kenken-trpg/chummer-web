@@ -135,8 +135,6 @@ export const JA_CHARGEN = {
   "engine.life.specializationConflict":
     "The Life Module specialization for “{name}” conflicts with the existing selection",
   "engine.life.qualityUnknown": "Life Module quality “{name}” was not found",
-  "engine.life.ratedQualityConflict":
-    "Combining module-granted levels of “{name}” with a manual purchase of the same quality is not yet supported.",
   "engine.life.qualityChoiceConflict":
     "The extra selection for Life Module quality “{name}” conflicts with an existing selection. Different selections for the same quality are not yet supported together.",
   "engine.life.qualityLevelUnknown":
@@ -229,6 +227,7 @@ export const JA_CHARGEN = {
   "qual.removed": "キャリアで外した資質",
   "qual.removedBuyoff": "買い戻し {cost}カルマ",
   "qual.removedPositive": "返金なし",
+  "qual.grantedLevels": " / 無料で {count} レベル取得済み（上限に含む）",
   "qual.restore": "戻す",
   "qual.restoreHint": "{name} を取り直して、キャリアで外す前に戻す",
   "qual.innateRemove": "外す（{cost}カルマ）",

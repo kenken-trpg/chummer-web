@@ -8,6 +8,7 @@ import { CritterPowerRow } from "@/components/character/CritterPowerRow";
 import { HelpTip } from "@/components/help/HelpTip";
 import {
   dropSkillPicksForPrefix,
+  grantedLevels,
   qualityBlockReason,
   qualityLevelMax,
   setQualityLevel,
@@ -130,7 +131,12 @@ export function OwnedQualityRow({
                   {
                     length: Math.max(
                       q.level,
-                      qualityLevelMax(catalogById.get(q.id)!, ch.quality_ids, catalog.qualities),
+                      qualityLevelMax(
+                        catalogById.get(q.id)!,
+                        ch.quality_ids,
+                        catalog.qualities,
+                        grantedLevels(d.qualities || [], catalogById.get(q.id)!),
+                      ),
                     ),
                   },
                   (_, i) => i + 1,

@@ -30,6 +30,7 @@ from ._context import (
 from ._gather import (
     _at_quality_limit,
     gather_qualities,
+    is_free_take,
     is_way_quality,
     sanitize_quality_ids,
     tradition_quality_grants,
@@ -62,6 +63,7 @@ __all__ = [
     "counts_toward_quality_limit",
     "free_powers_from_grants",
     "gather_qualities",
+    "is_free_take",
     "is_way_quality",
     "quality_needs_extra",
     "as_before_taking",
