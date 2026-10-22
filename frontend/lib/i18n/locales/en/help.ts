@@ -216,6 +216,11 @@ export const EN_HELP = {
   "help.cpower.statsLabel": "Power",
   "help.cpower.stats": "Type / action / range / duration. Type P is physical, M is mana",
   "help.cpower.blank": "A blank is a value the data does not give",
+  "help.mentor.what":
+    "Shown once the Mentor Spirit quality is taken (Paragon for a technomancer). The spirit's fixed effects and the options picked below are computed",
+  "help.mentor.choices":
+    "The checkboxes are the advantage's options. One per group applies; with none picked, the group's first does. Options the talent cannot use are not shown",
+  "help.mentor.disadvantage": "The disadvantage is shown, not computed — it is for the table",
   "help.cf.fv":
     "FV is the fading; L is the Level chosen when threading, so L\u22121 is Level \u2212 1 (minimum 2)",
   "help.cf.fade": "Resist fading with Willpower + Resonance; the rest is damage",
