@@ -61,7 +61,6 @@ def resolve_mentor(
     errors: list[Notice] = []
     bonus_sources: list[tuple[str, list[dict[str, Any]]]] = []
     free_powers: list[dict[str, Any]] = []
-    public: dict[str, Any] | None = None
     if not needs_mentor:
         state.mentor_id = None
         state.mentor_choices = []
@@ -87,6 +86,37 @@ def resolve_mentor(
     allowed = [
         choice for choice in spec.get("choices") or [] if _choice_allowed(choice.get("audience") or "all", talent_name)
     ]
+    selected: list[str] = []
+    wanted = {name for name in (state.mentor_choices or []) if name}
+    for choices in _choice_groups(allowed).values():
+        names = [choice["name"] for choice in choices]
+        picked = next((name for name in names if name in wanted), "") or names[0]
+        selected.append(picked)
+        choice = next(item for item in choices if item["name"] == picked)
+        choice_nodes = [node for node in (choice.get("bonus") or []) if node.get("tag") != "specificpower"]
+        bonus_sources.append((f"{spec['name']}: {picked}", choice_nodes))
+        free_powers.extend(_granted_powers(state, spec, choice, skills_data, warnings))
+    state.mentor_choices = selected
+    public = {
+        "id": spec["id"],
+        "name": spec["name"],
+        "advantage": spec.get("advantage") or "",
+        "disadvantage": spec.get("disadvantage") or "",
+        "source": spec.get("source"),
+        "choices": [_public_choice(state, choice, selected, skills_data) for choice in allowed],
+    }
+    return {
+        "warnings": warnings,
+        "errors": errors,
+        "bonus_sources": bonus_sources,
+        "free_powers": free_powers,
+        "public": public,
+    }
+
+
+def _choice_groups(allowed: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
+    """The choices one pick is made from: a numbered set, every unrestricted
+    choice together, or an audience-restricted choice on its own."""
     groups: dict[str, list[dict[str, Any]]] = {}
     for choice in allowed:
         audience = choice.get("audience") or "all"
@@ -98,95 +128,87 @@ def resolve_mentor(
         else:
             key = f"solo:{choice['name']}"
         groups.setdefault(key, []).append(choice)
-    selected: list[str] = []
-    wanted = {name for name in (state.mentor_choices or []) if name}
-    for _key, choices in groups.items():
-        names = [choice["name"] for choice in choices]
-        picked = next((name for name in names if name in wanted), "")
-        if not picked:
-            picked = names[0]
-        selected.append(picked)
-        choice = next(item for item in choices if item["name"] == picked)
-        extra = (state.mentor_extras or {}).get(picked, "")
-        choice_nodes = [node for node in (choice.get("bonus") or []) if node.get("tag") != "specificpower"]
-        bonus_sources.append((f"{spec['name']}: {picked}", choice_nodes))
-        for power in choice.get("powers") or []:
-            power_spec = _power_by_name(power["name"])
-            if not power_spec:
-                continue
-            options = power_select_options(power_spec, skills_data)
-            own = (state.mentor_extras or {}).get(_power_target_key(picked, power_spec["name"]), "")
-            bound_extra = next((value for value in (own, extra) if value in options), "")
-            if power_spec.get("select") and not bound_extra:
-                warnings.append(
-                    notice(
-                        "engine.qualities.mentorPowerTarget",
-                        mentor=term(str(spec["name"])),
-                        power=term(str(power_spec["name"])),
-                    )
+    return groups
+
+
+def _granted_powers(
+    state: CharacterState,
+    spec: dict[str, Any],
+    choice: dict[str, Any],
+    skills_data: dict[str, Any],
+    warnings: list[Notice],
+) -> list[dict[str, Any]]:
+    """The free powers a picked choice grants, each bound to its own pick or the choice's."""
+    picked = choice["name"]
+    extra = (state.mentor_extras or {}).get(picked, "")
+    granted: list[dict[str, Any]] = []
+    for power in choice.get("powers") or []:
+        power_spec = _power_by_name(power["name"])
+        if not power_spec:
+            continue
+        options = power_select_options(power_spec, skills_data)
+        own = (state.mentor_extras or {}).get(_power_target_key(picked, power_spec["name"]), "")
+        bound_extra = next((value for value in (own, extra) if value in options), "")
+        if power_spec.get("select") and not bound_extra:
+            warnings.append(
+                notice(
+                    "engine.qualities.mentorPowerTarget",
+                    mentor=term(str(spec["name"])),
+                    power=term(str(power_spec["name"])),
                 )
-            free_powers.append(
-                {
-                    "power_id": power_spec["id"],
-                    "name": power_spec["name"],
-                    "rating": int(power.get("rating") or 1),
-                    "extra": bound_extra,
-                    "source": spec["name"],
-                }
             )
-    state.mentor_choices = selected
-    public_choices = []
-    for choice in allowed:
-        power_options: list[str] = []
-        for node in choice.get("bonus") or []:
-            if node.get("tag") == "selectpowers":
-                power_options = list(parse_select_power_slot(node).get("options") or [])
-                break
-        extras = power_options
-        if not extras:
-            for power in choice.get("powers") or []:
-                power_spec = _power_by_name(power["name"])
-                if power_spec:
-                    extras = power_select_options(power_spec, skills_data)
-        power_targets: list[dict[str, Any]] = []
-        if power_options:
-            for power in choice.get("powers") or []:
-                power_spec = _power_by_name(power["name"])
-                if not power_spec or not power_spec.get("select"):
-                    continue
-                key = _power_target_key(choice["name"], power_spec["name"])
-                power_targets.append(
-                    {
-                        "power": power_spec["name"],
-                        "key": key,
-                        "kind": str(power_spec.get("select") or ""),
-                        "extra": (state.mentor_extras or {}).get(key, ""),
-                        "options": power_select_options(power_spec, skills_data),
-                    }
-                )
-        public_choices.append(
+        granted.append(
             {
-                "name": choice["name"],
-                "set": choice.get("set") or "",
-                "audience": choice.get("audience") or "all",
-                "selected": choice["name"] in selected,
-                "extra": (state.mentor_extras or {}).get(choice["name"], ""),
-                "extra_options": extras,
-                "power_targets": power_targets,
+                "power_id": power_spec["id"],
+                "name": power_spec["name"],
+                "rating": int(power.get("rating") or 1),
+                "extra": bound_extra,
+                "source": spec["name"],
             }
         )
-    public = {
-        "id": spec["id"],
-        "name": spec["name"],
-        "advantage": spec.get("advantage") or "",
-        "disadvantage": spec.get("disadvantage") or "",
-        "source": spec.get("source"),
-        "choices": public_choices,
-    }
+    return granted
+
+
+def _public_choice(
+    state: CharacterState, choice: dict[str, Any], selected: list[str], skills_data: dict[str, Any]
+) -> dict[str, Any]:
+    power_options: list[str] = next(
+        (
+            list(parse_select_power_slot(node).get("options") or [])
+            for node in choice.get("bonus") or []
+            if node.get("tag") == "selectpowers"
+        ),
+        [],
+    )
+    extras = power_options
+    if not extras:
+        # the last granted power that exists names the options
+        for power in choice.get("powers") or []:
+            power_spec = _power_by_name(power["name"])
+            if power_spec:
+                extras = power_select_options(power_spec, skills_data)
+    power_targets: list[dict[str, Any]] = []
+    if power_options:
+        for power in choice.get("powers") or []:
+            power_spec = _power_by_name(power["name"])
+            if not power_spec or not power_spec.get("select"):
+                continue
+            key = _power_target_key(choice["name"], power_spec["name"])
+            power_targets.append(
+                {
+                    "power": power_spec["name"],
+                    "key": key,
+                    "kind": str(power_spec.get("select") or ""),
+                    "extra": (state.mentor_extras or {}).get(key, ""),
+                    "options": power_select_options(power_spec, skills_data),
+                }
+            )
     return {
-        "warnings": warnings,
-        "errors": errors,
-        "bonus_sources": bonus_sources,
-        "free_powers": free_powers,
-        "public": public,
+        "name": choice["name"],
+        "set": choice.get("set") or "",
+        "audience": choice.get("audience") or "all",
+        "selected": choice["name"] in selected,
+        "extra": (state.mentor_extras or {}).get(choice["name"], ""),
+        "extra_options": extras,
+        "power_targets": power_targets,
     }
