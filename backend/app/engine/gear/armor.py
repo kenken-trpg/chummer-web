@@ -9,6 +9,7 @@ fit rules, cost, armor bonus, wireless — and collects their ``<bonus>`` nodes;
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass, field
 from typing import Any
 
 from ...data_loader import catalog, eval_formula
@@ -104,133 +105,69 @@ def _resolve_armor_mods(
     state: CharacterState,
     armor_items: list[dict[str, Any]],
 ) -> tuple[list[dict[str, Any]], int, list[Notice], list[Notice], list[tuple[str, list[dict[str, Any]]]]]:
-    warnings = _ensure_armor_mods(state)
-    errors: list[Notice] = []
-    bonus_sources: list[tuple[str, list[dict[str, Any]]]] = []
-    specs = {item["id"]: item for item in catalog().get("armor_mods") or []}
-    armor_specs = {item["id"]: item for item in catalog().get("armor") or []}
-    public: list[dict[str, Any]] = []
-    kept: list[ArmorModInstall] = []
-    nuyen = 0
+    mods = _ArmorMods(warnings=_ensure_armor_mods(state))
     children: dict[str, list[ArmorModInstall]] = {}
     for inst in list(state.armor_mods or []):
         children.setdefault(inst.parent_id or "", []).append(inst)
-
     for item in armor_items:
-        used = 0.0
-        cap_bonus = 0.0
-        seen_names: set[str] = set()
-        seen_unique: set[str] = set()
+        mods.armor(item, children.get(item["id"]) or [])
+    state.armor_mods = mods.kept
+    return mods.public, mods.nuyen, mods.warnings, mods.errors, mods.bonus_sources
+
+
+@dataclass
+class _Fit:
+    """What one armor's mods take up so far."""
+
+    cap_max_base: float
+    parent_unit: int
+    used: float = 0.0
+    cap_bonus: float = 0.0
+    seen_names: set[str] = field(default_factory=set)
+    seen_unique: set[str] = field(default_factory=set)
+
+
+@dataclass
+class _ArmorMods:
+    """The mod rows of every armor, and what they cost and grant."""
+
+    warnings: list[Notice]
+    errors: list[Notice] = field(default_factory=list)
+    bonus_sources: list[tuple[str, list[dict[str, Any]]]] = field(default_factory=list)
+    public: list[dict[str, Any]] = field(default_factory=list)
+    kept: list[ArmorModInstall] = field(default_factory=list)
+    nuyen: int = 0
+    specs: dict[str, dict[str, Any]] = field(
+        default_factory=lambda: {item["id"]: item for item in catalog().get("armor_mods") or []}
+    )
+    armor_specs: dict[str, dict[str, Any]] = field(
+        default_factory=lambda: {item["id"]: item for item in catalog().get("armor") or []}
+    )
+
+    def armor(self, item: dict[str, Any], mods: list[ArmorModInstall]) -> None:
+        """Fit one armor's mods, then total its capacity and armor value."""
         item["mod_armor"] = 0
         item.pop("stack_with", None)
-        cap_max_base = eval_formula(str(item.get("armorcapacity") or "0"), int(item.get("rating") or 1), 0)
-        parent_unit = int(
-            eval_formula(
-                str((armor_specs.get(str(item.get("armor_id") or "")) or {}).get("cost") or "0"),
-                int(item.get("rating") or 1),
-                0,
-            )
+        rating = int(item.get("rating") or 1)
+        armor_cost = str((self.armor_specs.get(str(item.get("armor_id") or "")) or {}).get("cost") or "0")
+        fit = _Fit(
+            cap_max_base=eval_formula(str(item.get("armorcapacity") or "0"), rating, 0),
+            parent_unit=int(eval_formula(armor_cost, rating, 0)),
         )
-        for inst in children.get(item["id"]) or []:
-            spec = specs.get(inst.mod_id)
-            if not spec:
-                continue
-            if inst.included:
-                rating = max(1, int(inst.rating or 1))
-            else:
-                rating = _clamp_rating(spec, inst.rating)
-            inst.rating = rating
-            if spec["name"] in seen_names or (spec.get("unique") and spec["unique"] in seen_unique):
-                warnings.append(
-                    notice("engine.gear.duplicateMod", name=term(str(spec["name"])), host=term(str(item["name"])))
-                )
-                continue
-            names_without = seen_names - {spec["name"]}
-            # what the armor came with (a Victory liner picked at purchase)
-            # is on it, whatever its category says
-            if not inst.included and not armor_mod_fits(spec, item, names_without):
-                warnings.append(
-                    notice("engine.gear.doesNotFit", name=term(str(spec["name"])), host=term(str(item["name"])))
-                )
-                continue
-            cap_cost = (
-                0.0
-                if inst.included
-                else armor_plugin_capacity(
-                    str(spec.get("armorcapacity") or ""),
-                    rating,
-                    extras={"Capacity": cap_max_base},
-                )
-            )
-            extra, _additive = parse_armor_value(str(spec.get("armor") or "0"), rating)
-            cost = (
-                0
-                if inst.included
-                else int(eval_formula(str(spec.get("cost") or "0"), rating, 0, extras={"Armor Cost": parent_unit}))
-            )
-            nuyen += cost
-            if cap_cost < 0:
-                cap_bonus += -cap_cost
-            else:
-                used += cap_cost
-            if extra:
-                item["mod_armor"] = int(item.get("mod_armor") or 0) + extra
-            item["nuyen"] = int(item.get("nuyen") or 0) + cost
-            seen_names.add(spec["name"])
-            if spec.get("unique"):
-                seen_unique.add(str(spec["unique"]))
-            inst.wireless = bool(inst.wireless)
-            mod_has_wireless = bool(spec.get("wirelessbonus"))
-            wireless_on = mod_has_wireless and inst.wireless
-            display_nodes = list(spec.get("bonus") or [])
-            if wireless_on:
-                display_nodes = display_nodes + list(spec.get("wirelessbonus") or [])
-            if item.get("equipped"):
-                nodes = substitute_rating(display_nodes, rating)
-                if nodes:
-                    bonus_sources.append((spec["name"], nodes))
-            kept.append(inst)
-            row: dict[str, Any] = {
-                "id": inst.id,
-                "mod_id": spec["id"],
-                "name": spec["name"],
-                "category": spec.get("category") or "General",
-                "parent_id": inst.parent_id,
-                "included": bool(inst.included),
-                "rating": rating,
-                "rating_max": int(spec.get("maxrating") or 0),
-                "nuyen": cost,
-                "capacity_cost": int(cap_cost) if cap_cost == int(cap_cost) else cap_cost,
-                "armor": spec.get("armor") or "0",
-                "unique": spec.get("unique") or "",
-                "wireless": inst.wireless,
-                "has_wireless": mod_has_wireless,
-                "avail": spec.get("avail") or "",
-                "source": spec.get("source") or "",
-                "page": spec.get("page") or "",
-            }
-            if any(node.get("tag") == "selectarmor" for node in spec.get("bonus") or []):
-                inst.stack_with = str(inst.stack_with or "")
-                row["select_armor"] = True
-                row["stack_with"] = inst.stack_with
-                if inst.stack_with:
-                    item["stack_with"] = inst.stack_with
-            special = special_armor_from_nodes(display_nodes, rating)
-            if special:
-                row["special_armor"] = special
-            limits = limit_modifiers_from_nodes(display_nodes, rating)
-            if limits:
-                row["limit_modifiers"] = limits
-            public.append(row)
-        cap_max = cap_max_base + cap_bonus
+        for inst in mods:
+            spec = self.specs.get(inst.mod_id)
+            if spec:
+                self._mod(item, inst, spec, fit)
+        cap_max = fit.cap_max_base + fit.cap_bonus
+        used = fit.used
         item["capacity_used"] = int(used) if used == int(used) else used
         item["capacity_max"] = int(cap_max) if cap_max == int(cap_max) else cap_max
-        item["mods"] = [row for row in public if row.get("parent_id") == item["id"]]
+        item["mods"] = [row for row in self.public if row.get("parent_id") == item["id"]]
         extra = int(item.get("mod_armor") or 0)
         if extra:
             item["armor_value"] = int(item.get("armor_value") or 0) + extra
         if current_rules().enforce_capacity and used > cap_max + 1e-9:
-            errors.append(
+            self.errors.append(
                 notice(
                     "engine.gear.capacityOver",
                     name=term(str(item["name"])),
@@ -238,8 +175,102 @@ def _resolve_armor_mods(
                     max=f"{item['capacity_max']:g}",
                 )
             )
-    state.armor_mods = kept
-    return public, nuyen, warnings, errors, bonus_sources
+
+    def _mod(self, item: dict[str, Any], inst: ArmorModInstall, spec: dict[str, Any], fit: _Fit) -> None:
+        rating = max(1, int(inst.rating or 1)) if inst.included else _clamp_rating(spec, inst.rating)
+        inst.rating = rating
+        refusal = self._refusal(item, inst, spec, fit)
+        if refusal:
+            self.warnings.append(notice(refusal, name=term(str(spec["name"])), host=term(str(item["name"]))))
+            return
+        cap_cost = (
+            0.0
+            if inst.included
+            else armor_plugin_capacity(
+                str(spec.get("armorcapacity") or ""), rating, extras={"Capacity": fit.cap_max_base}
+            )
+        )
+        extra, _additive = parse_armor_value(str(spec.get("armor") or "0"), rating)
+        cost = (
+            0
+            if inst.included
+            else int(eval_formula(str(spec.get("cost") or "0"), rating, 0, extras={"Armor Cost": fit.parent_unit}))
+        )
+        self.nuyen += cost
+        if cap_cost < 0:
+            fit.cap_bonus += -cap_cost
+        else:
+            fit.used += cap_cost
+        if extra:
+            item["mod_armor"] = int(item.get("mod_armor") or 0) + extra
+        item["nuyen"] = int(item.get("nuyen") or 0) + cost
+        fit.seen_names.add(spec["name"])
+        if spec.get("unique"):
+            fit.seen_unique.add(str(spec["unique"]))
+        inst.wireless = bool(inst.wireless)
+        display_nodes = list(spec.get("bonus") or [])
+        if spec.get("wirelessbonus") and inst.wireless:
+            display_nodes = display_nodes + list(spec.get("wirelessbonus") or [])
+        if item.get("equipped"):
+            nodes = substitute_rating(display_nodes, rating)
+            if nodes:
+                self.bonus_sources.append((spec["name"], nodes))
+        self.kept.append(inst)
+        self.public.append(_mod_row(item, inst, spec, rating, cost, cap_cost, display_nodes))
+
+    @staticmethod
+    def _refusal(item: dict[str, Any], inst: ArmorModInstall, spec: dict[str, Any], fit: _Fit) -> str:
+        """The warning that keeps the mod off this armor, or "" when it fits."""
+        if spec["name"] in fit.seen_names or (spec.get("unique") and spec["unique"] in fit.seen_unique):
+            return "engine.gear.duplicateMod"
+        # what the armor came with (a Victory liner picked at purchase)
+        # is on it, whatever its category says
+        if not inst.included and not armor_mod_fits(spec, item, fit.seen_names - {spec["name"]}):
+            return "engine.gear.doesNotFit"
+        return ""
+
+
+def _mod_row(
+    item: dict[str, Any],
+    inst: ArmorModInstall,
+    spec: dict[str, Any],
+    rating: int,
+    cost: int,
+    cap_cost: float,
+    display_nodes: list[dict[str, Any]],
+) -> dict[str, Any]:
+    row: dict[str, Any] = {
+        "id": inst.id,
+        "mod_id": spec["id"],
+        "name": spec["name"],
+        "category": spec.get("category") or "General",
+        "parent_id": inst.parent_id,
+        "included": bool(inst.included),
+        "rating": rating,
+        "rating_max": int(spec.get("maxrating") or 0),
+        "nuyen": cost,
+        "capacity_cost": int(cap_cost) if cap_cost == int(cap_cost) else cap_cost,
+        "armor": spec.get("armor") or "0",
+        "unique": spec.get("unique") or "",
+        "wireless": inst.wireless,
+        "has_wireless": bool(spec.get("wirelessbonus")),
+        "avail": spec.get("avail") or "",
+        "source": spec.get("source") or "",
+        "page": spec.get("page") or "",
+    }
+    if any(node.get("tag") == "selectarmor" for node in spec.get("bonus") or []):
+        inst.stack_with = str(inst.stack_with or "")
+        row["select_armor"] = True
+        row["stack_with"] = inst.stack_with
+        if inst.stack_with:
+            item["stack_with"] = inst.stack_with
+    special = special_armor_from_nodes(display_nodes, rating)
+    if special:
+        row["special_armor"] = special
+    limits = limit_modifiers_from_nodes(display_nodes, rating)
+    if limits:
+        row["limit_modifiers"] = limits
+    return row
 
 
 def _stack_value(item: dict[str, Any]) -> int:
