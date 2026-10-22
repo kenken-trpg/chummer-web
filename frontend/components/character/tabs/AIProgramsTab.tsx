@@ -41,6 +41,22 @@ export function AIProgramsTab({ catalog, character: ch, d, tr, ui, patch }: TabP
   const categoryLabel = (name: string) =>
     CATEGORY_KEYS[name] ? ui(CATEGORY_KEYS[name]) : tr(name);
   const spent = owned.reduce((sum, row) => sum + row.karma, 0);
+  const statsTip = (
+    name: string,
+    row: { required: string[]; needs_extra: boolean; free?: boolean },
+  ) => (
+    <HelpTip
+      label={ui("help.open", { label: tr(name) })}
+      lines={[
+        { label: ui("help.aiprog.category") },
+        ...(row.required.length ? [{ label: ui("help.aiprog.required") }] : []),
+        ...(row.needs_extra ? [{ label: ui("help.aiprog.extra") }] : []),
+        ...(row.free ? [{ label: ui("help.aiprog.free") }] : []),
+      ]}
+    >
+      {ui("help.aiprog.statsLabel")}
+    </HelpTip>
+  );
   const setExtra = (id: string, extra: string) =>
     patch({
       ai_programs: editRow(ch.ai_programs, id, { extra }),
@@ -62,7 +78,7 @@ export function AIProgramsTab({ catalog, character: ch, d, tr, ui, patch }: TabP
           <div>
             <b>{tr(row.name)}</b>
             <div className="muted">
-              {row.name} / {categoryLabel(row.category)}
+              {statsTip(row.name, row)} {row.name} / {categoryLabel(row.category)}
               {row.free
                 ? ui("aiprog.grantedBy", { name: tr(row.granted_by) })
                 : ui("common.karmaCost", { karma: row.karma })}
@@ -140,7 +156,7 @@ export function AIProgramsTab({ catalog, character: ch, d, tr, ui, patch }: TabP
                 <div>
                   <b>{tr(item.name)}</b>
                   <div className="muted">
-                    {item.name} / {categoryLabel(item.category)}
+                    {statsTip(item.name, item)} {item.name} / {categoryLabel(item.category)}
                     {ui("common.karmaCost", { karma: price(item.advanced) })}
                     {item.required.length
                       ? ` / ${ui("aiprog.required", {

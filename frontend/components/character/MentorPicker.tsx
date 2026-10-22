@@ -5,6 +5,7 @@ import { filterByBooks, isBookEnabled, useAllowedBooks } from "@/lib/character/b
 import { useUiText } from "@/lib/i18n";
 import { makeTextTr } from "@/lib/ui-strings";
 import { limitLabel, sourceBit } from "@/lib/character/format";
+import { HelpTip } from "@/components/help/HelpTip";
 
 export function MentorPicker({
   catalog,
@@ -38,7 +39,18 @@ export function MentorPicker({
   return (
     <div className="cyber-item">
       <div>
-        <b>{ui(paragon ? "mentor.paragonTitle" : "mentor.title")}</b>
+        <b>
+          <HelpTip
+            label={ui("help.open", { label: ui(paragon ? "mentor.paragonTitle" : "mentor.title") })}
+            lines={[
+              { label: ui("help.mentor.what") },
+              { label: ui("help.mentor.choices") },
+              { label: ui("help.mentor.disadvantage") },
+            ]}
+          >
+            {ui(paragon ? "mentor.paragonTitle" : "mentor.title")}
+          </HelpTip>
+        </b>
         <div className="muted">
           {mentor ? `${tr(mentor.name)} / ${sourceBit(mentor, ui)}` : ui("mentor.none")}
         </div>

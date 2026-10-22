@@ -68,18 +68,18 @@ describe("<AIProgramsTab>", () => {
   it("adds a program via patch", () => {
     const patch = vi.fn();
     renderTab([], patch);
-    fireEvent.click(pickerRow("Browse").querySelector("button")!);
+    fireEvent.click(pickerRow("Browse").querySelector("button.btn")!);
     expect(patch).toHaveBeenCalledWith({ ai_programs: [{ program_id: "browse" }] });
   });
 
   it("holds an advanced program back until its base program is there", () => {
     renderTab();
-    expect((pickerRow("Authority").querySelector("button") as HTMLButtonElement).disabled).toBe(
+    expect((pickerRow("Authority").querySelector("button.btn") as HTMLButtonElement).disabled).toBe(
       true,
     );
     document.body.innerHTML = "";
     renderTab([owned("Exploit")]);
-    expect((pickerRow("Authority").querySelector("button") as HTMLButtonElement).disabled).toBe(
+    expect((pickerRow("Authority").querySelector("button.btn") as HTMLButtonElement).disabled).toBe(
       false,
     );
   });
@@ -90,7 +90,19 @@ describe("<AIProgramsTab>", () => {
     ]);
     const row = document.querySelector(".cyber-item") as HTMLElement;
     expect(row.textContent).toContain("Inherent Program で無料");
-    expect(row.querySelector("button")).toBeNull();
+    expect(row.querySelector("button.btn")).toBeNull();
+  });
+
+  it("explains a row's lines that only some programs have", () => {
+    renderTab([
+      owned("Exploit", { id: "inherent:q", free: true, karma: 0, granted_by: "Inherent Program" }),
+    ]);
+    const tip = (el: HTMLElement) => el.querySelector('[role="tooltip"]')?.textContent || "";
+    const mine = tip(document.querySelector(".cyber-item") as HTMLElement);
+    expect(mine).toContain("ここでは消せない");
+    expect(mine).not.toContain("前提");
+    expect(tip(pickerRow("Authority"))).toContain("前提");
+    expect(tip(pickerRow("Browse"))).not.toContain("前提");
   });
 
   it("narrows the list to one category", () => {

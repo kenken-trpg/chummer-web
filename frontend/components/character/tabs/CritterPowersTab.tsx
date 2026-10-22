@@ -31,6 +31,15 @@ export function CritterPowersTab({ catalog, character: ch, d, tr, ui, patch }: T
       range: tr(row.range),
       duration: tr(row.duration),
     });
+  // the stats line is the data's own terms, some of them blank
+  const statsTip = (name: string) => (
+    <HelpTip
+      label={ui("help.open", { label: tr(name) })}
+      lines={[{ label: ui("help.cpower.stats") }, { label: ui("help.cpower.blank") }]}
+    >
+      {ui("help.cpower.statsLabel")}
+    </HelpTip>
+  );
   const q = search.trim().toLowerCase();
   const items = (catalog.buyable_critter_powers || []).filter(
     (item) =>
@@ -64,7 +73,7 @@ export function CritterPowersTab({ catalog, character: ch, d, tr, ui, patch }: T
             <div>
               <b>{tr(row.name)}</b>
               <div className="muted">
-                {row.name} / {row.category} / {stats(row)}
+                {statsTip(row.name)} {row.name} / {row.category} / {stats(row)}
                 {ui("common.karmaCost", { karma: row.karma })}
                 {" / "}
                 {sourceBit(row, ui)}
@@ -125,7 +134,7 @@ export function CritterPowersTab({ catalog, character: ch, d, tr, ui, patch }: T
                 <div>
                   <b>{tr(item.name)}</b>
                   <div className="muted">
-                    {item.name} / {item.category} / {stats(item)}
+                    {statsTip(item.name)} {item.name} / {item.category} / {stats(item)}
                     {ui("common.karmaCost", { karma: item.karma })}
                     {" / "}
                     {sourceBit(item, ui)}

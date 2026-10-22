@@ -77,9 +77,9 @@ describe("CritterPowersTab", () => {
       [...document.querySelectorAll(".quality-list .quality-item")].find((el) =>
         el.querySelector("b")?.textContent?.includes(name),
       ) as HTMLElement;
-    fireEvent.click(row("Mimicry").querySelector("button")!);
+    fireEvent.click(row("Mimicry").querySelector("button.btn")!);
     expect(patch).toHaveBeenLastCalledWith({ critter_powers: [{ power_id: "mimicry" }] });
-    fireEvent.click(row("Mystic Armor").querySelector("button")!);
+    fireEvent.click(row("Mystic Armor").querySelector("button.btn")!);
     expect(patch).toHaveBeenLastCalledWith({
       critter_powers: [{ power_id: "mystic armor (infected)", rating: 1 }],
     });

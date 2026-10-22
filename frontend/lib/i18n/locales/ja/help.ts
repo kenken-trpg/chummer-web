@@ -188,6 +188,19 @@ export const JA_HELP = {
   "help.aiprog.price":
     "1 つにつき 5 カルマ、Advanced Programs は 8 カルマ（DT）。作成後に足しても同じ価格",
   "help.aiprog.inherent": "資質 Inherent Program で選んだ 1 つは無料で、資質を外すと消える",
+  "help.aiprog.statsLabel": "プログラムの値",
+  "help.aiprog.category": "カテゴリーで価格が決まる。Advanced Programs だけが高い",
+  "help.aiprog.required": "「前提」に並ぶプログラムのどれか 1 つを先に持っていないと買えない",
+  "help.aiprog.extra": "オートソフトは対象（機種・武器・技能）を書く",
+  "help.aiprog.free": "資質が持たせたものなので、ここでは消せない。資質を外すと消える",
+  "help.cpower.statsLabel": "パワーの値",
+  "help.cpower.stats": "タイプ／アクション／射程／効果時間の順。タイプの P は物理、M はマナ",
+  "help.cpower.blank": "空欄はデータにその値がないもの",
+  "help.mentor.what":
+    "資質「導師精霊」（テクノマンサーは「パラゴン」）を取ると出る欄。選んだ精霊の固定の効果と、選択肢で選んだ効果が計算に入る",
+  "help.mentor.choices":
+    "チェック欄は利点の選択肢。組ごとに 1 つだけ効き、選ばなければ組の先頭が効く。タレントに合わない選択肢は出ない",
+  "help.mentor.disadvantage": "欠点は表示だけで、計算には入らない（卓で扱う）",
   "help.cf.fade": "フェイディング抵抗は意志力＋共振力で振り、抵抗しきれない分を食らう",
   "help.cf.level": "レベルが共振力以下なら精神ダメージ、超えると身体ダメージになる",
   "help.cf.target": "対象（ペルソナ／機器／ファイル／スプライトなど）と持続",
