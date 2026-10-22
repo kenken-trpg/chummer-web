@@ -35,7 +35,7 @@ from ..resonance import living_persona
 from ..ware import _public_installed, ware_ranges
 from ..ware.limbs import body_limb_slots
 from ._assemble_books import _out_of_book_warning
-from ._assemble_qualities import metatype_info, quality_rows
+from ._assemble_qualities import metatype_info, quality_rows, removed_innate_rows
 from .context import Ctx
 from .derived_types import (
     DerivedDict,
@@ -554,6 +554,7 @@ def _identity(ctx: Ctx) -> _IdentityPart:
         "enabled_tabs": sorted(ctx.enabled),
         "unimplemented_bonuses": ctx.effects["unimplemented"],
         "qualities": quality_rows(ctx),
+        "removed_innate_qualities": removed_innate_rows(ctx),
         "qualities_removed": ctx.qualities_removed,
         "quality_career_pricing": ctx.quality_career_pricing,
         "cyberware": [_public_installed(item) for item in ctx.cyber_installed],

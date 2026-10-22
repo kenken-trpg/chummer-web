@@ -231,6 +231,13 @@ export const JA_CHARGEN = {
   "qual.removedPositive": "返金なし",
   "qual.restore": "戻す",
   "qual.restoreHint": "{name} を取り直して、キャリアで外す前に戻す",
+  "qual.innateRemove": "外す（{cost}カルマ）",
+  "qual.innateRemoveRefund": "外す（{cost}カルマ戻る）",
+  "qual.innateRemoveHint": "{name} は生得の資質だが、作成中に限り外せる",
+  "qual.innateRemoved": "外した生得資質",
+  "qual.innateRemovedCost": "{metatype}の生得 / 外すのに {cost}カルマ",
+  "qual.innateRemovedRefund": "{metatype}の生得 / 外して {cost}カルマ戻った",
+  "qual.innateRestoreHint": "{name} を生得の資質に戻す（外した分のカルマも戻る）",
   "qual.rebaseline": "今の資質を作成時のものとして扱う",
   "qual.rebaselineHint":
     "作成時のミスをキャリアで直したときに。キャリアでの取得・買い戻しの請求をすべて取り消します",

@@ -32,10 +32,14 @@ def export_metatype_qualities(qualities: ET.Element, state: CharacterState, ctx:
     if not grants:
         return
     definitions = _definitions("qualities.xml", "./qualities/quality")
+    removed = set(state.removed_innate_qualities)
     for index, grant in enumerate(grants):
         if grant.get("unresolved"):
             continue
         quality = _sub(qualities, "quality")
+        if grant.get("removable") and grant["id"] in removed:
+            _removed_at_chargen(quality, state, grant, index)
+            continue
         fields = {
             "sourceid": grant["id"],
             "guid": _grant_guid(state, grant, index, "quality"),
@@ -65,6 +69,31 @@ def export_metatype_qualities(qualities: ET.Element, state: CharacterState, ctx:
                 node = definition.find(tag)
                 if node is not None:
                     quality.append(deepcopy(node))
+
+
+def _removed_at_chargen(quality: ET.Element, state: CharacterState, grant: dict[str, Any], index: int) -> None:
+    """The row Chummer's CharacterCreate leaves in place of a removable grant
+    taken off: the same quality turned the other way (a negative one bought
+    off is a positive cost), its value negated, no bonus, not printed, and
+    outside the quality limits."""
+    negative = grant["category"] == "Negative"
+    for key, value in {
+        "sourceid": grant["id"],
+        "guid": _grant_guid(state, grant, index, "quality"),
+        "name": grant["name"],
+        "extra": "Removed Negative Quality" if negative else "Removed Positive Quality",
+        "bp": -int(grant["karma"]),
+        "qualitytype": "Positive" if negative else "Negative",
+        "qualitysource": "MetatypeRemovedAtChargen",
+        "contributetobp": "True",
+        "contributetolimit": "False",
+        "implemented": "True",
+        "print": "False",
+        "metagenic": str(bool(grant.get("metagenic"))),
+        "source": grant.get("source") or "",
+        "page": grant.get("page") or "",
+    }.items():
+        _sub(quality, key, value)
 
 
 def export_metatype_powers(root: ET.Element, state: CharacterState, ctx: _Ctx) -> None:

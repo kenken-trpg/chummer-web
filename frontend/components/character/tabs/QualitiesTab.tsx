@@ -138,6 +138,42 @@ export function QualitiesTab({
       ) : (
         <p className="muted">{ui("qual.empty")}</p>
       )}
+      {d.removed_innate_qualities?.length ? (
+        <>
+          <h3>{ui("qual.innateRemoved")}</h3>
+          {d.removed_innate_qualities.map((q) => (
+            <div className="quality-item" key={`innate-removed-${q.id}`}>
+              <div>
+                <b>{tr(q.name)}</b>
+                <div className="muted">
+                  {q.name} /{" "}
+                  {q.karma < 0
+                    ? ui("qual.innateRemovedRefund", {
+                        metatype: tr(q.origin_name),
+                        cost: -q.karma,
+                      })
+                    : ui("qual.innateRemovedCost", { metatype: tr(q.origin_name), cost: q.karma })}
+                </div>
+              </div>
+              {ch.career ? null : (
+                <button
+                  className="btn"
+                  title={ui("qual.innateRestoreHint", { name: tr(q.name) })}
+                  onClick={() =>
+                    patch({
+                      removed_innate_qualities: (ch.removed_innate_qualities || []).filter(
+                        (id) => id !== q.id,
+                      ),
+                    })
+                  }
+                >
+                  {ui("qual.restore")}
+                </button>
+              )}
+            </div>
+          ))}
+        </>
+      ) : null}
       {d.qualities_removed?.length ? (
         <>
           <h3>{ui("qual.removed")}</h3>

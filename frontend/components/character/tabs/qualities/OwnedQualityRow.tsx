@@ -206,7 +206,9 @@ export function OwnedQualityRow({
           ) : null}
         </div>
       </div>
-      {q.free ? (
+      {q.origin === "Metatype" && q.removable && !ch.career ? (
+        <RemoveInnateButton q={q} ch={ch} tr={tr} ui={ui} patch={patch} catalogById={catalogById} />
+      ) : q.free ? (
         <span className="muted">
           {ui(q.origin === "Metatype" ? "meta.innateFixed" : "qual.attached")}
         </span>
@@ -246,5 +248,42 @@ export function OwnedQualityRow({
         </button>
       )}
     </div>
+  );
+}
+
+/**
+ * A metatype's `removable` quality (a Shapeshifter's Uneducated), which
+ * Chummer lets go at creation for its value the other way round: a negative
+ * one is bought off, a positive one gives its karma back. The row itself
+ * shows 0 karma, being innate, so the price comes from the catalog.
+ */
+function RemoveInnateButton({
+  q,
+  ch,
+  tr,
+  ui,
+  patch,
+  catalogById,
+}: {
+  q: QualityDisplayRow;
+  ch: Character;
+  tr: (name: string) => string;
+  ui: UiFn;
+  patch: (body: Record<string, unknown>) => void | Promise<void>;
+  catalogById: Map<string, CatalogQuality>;
+}) {
+  const cost = -(catalogById.get(q.id)?.karma ?? 0);
+  return (
+    <button
+      className="btn"
+      title={ui("qual.innateRemoveHint", { name: tr(q.name) })}
+      onClick={() =>
+        patch({ removed_innate_qualities: [...(ch.removed_innate_qualities || []), q.id] })
+      }
+    >
+      {cost < 0
+        ? ui("qual.innateRemoveRefund", { cost: -cost })
+        : ui("qual.innateRemove", { cost })}
+    </button>
   );
 }

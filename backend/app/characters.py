@@ -201,6 +201,9 @@ def _resolve_metatype_and_talent(data: dict[str, Any], patch: CharacterPatch) ->
         meta = find_metatype(data["metatype"], data.get("metavariant"))
         data["attributes"] = default_attributes(meta)
         data["attribute_karma"] = {}
+        # A new metatype comes with its own innate qualities, all on
+        # (Chummer drops the removed rows along with the old metatype's).
+        data["removed_innate_qualities"] = []
     data["build_method"] = normalize_build_method(data.get("build_method"))
     current_talent = data.get("talent")
     if patch.metatype and current_talent:

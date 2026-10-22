@@ -233,6 +233,13 @@ export const EN_CHARGEN = {
   "qual.removedPositive": "no refund",
   "qual.restore": "Restore",
   "qual.restoreHint": "Take {name} again, as it was before it was dropped in career",
+  "qual.innateRemove": "Remove ({cost} karma)",
+  "qual.innateRemoveRefund": "Remove ({cost} karma back)",
+  "qual.innateRemoveHint": "{name} is innate, but can be removed during creation",
+  "qual.innateRemoved": "Innate qualities removed",
+  "qual.innateRemovedCost": "innate to {metatype} / removed for {cost} karma",
+  "qual.innateRemovedRefund": "innate to {metatype} / removed, {cost} karma back",
+  "qual.innateRestoreHint": "Give {name} back as an innate quality (and its karma with it)",
   "qual.rebaseline": "Treat the current qualities as chargen",
   "qual.rebaselineHint":
     "For fixing a chargen slip in play. Cancels every career purchase and buy-off charge",

@@ -86,6 +86,25 @@ def _critter_power_sources(q: dict[str, Any], extras: dict[str, str]) -> list[tu
     return out
 
 
+def _without_removed(ctx: Ctx) -> list[dict[str, Any]]:
+    """The metatype's grants less the `removable` ones taken off at chargen.
+
+    Only a `removable="True"` grant can go (Chummer refuses the rest), and a
+    pick left over from another metatype names nothing here, so the list is
+    trimmed to what this metatype still offers.
+    """
+    removed = set(ctx.state.removed_innate_qualities)
+    kept: list[dict[str, Any]] = []
+    ctx.removed_innate = []
+    for grant in ctx.meta.get("quality_grants") or []:
+        if grant.get("removable") and grant.get("id") in removed:
+            ctx.removed_innate.append(grant)
+        else:
+            kept.append(grant)
+    ctx.state.removed_innate_qualities = [str(grant["id"]) for grant in ctx.removed_innate]
+    return kept
+
+
 def gather(ctx: Ctx) -> None:
     ctx.talent = resolve_talent_for_method(
         ctx.state.priorities.Talent, ctx.state.talent, ctx.state.build_method, ctx.state.metatype
@@ -100,7 +119,8 @@ def gather(ctx: Ctx) -> None:
             metatype=term(ctx.state.metatype),
         )
     ctx.sources = [(ctx.meta["name"], ctx.meta.get("bonus") or [])]
-    quality_grants = [*(ctx.meta.get("quality_grants") or []), *(ctx.life.get("qualities") or [])]
+    innate_grants = _without_removed(ctx)
+    quality_grants = [*innate_grants, *(ctx.life.get("qualities") or [])]
     power_grants = ctx.meta.get("power_grants") or []
     for grant in quality_grants + power_grants:
         if grant.get("unresolved"):

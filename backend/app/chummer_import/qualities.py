@@ -28,8 +28,17 @@ def _import_qualities(root: ET.Element, cat: CatalogDict, st: dict[str, Any], wa
     quality_ids: list[str] = []
     quality_extras: dict[str, str] = {}
     picks: dict[str, str] = {}
+    removed_innate: list[str] = []
     for q in root.findall("./qualities/quality"):
         src = _text(q.find("qualitysource")).lower()
+        if src == "metatyperemovedatchargen":
+            # an innate quality taken off at chargen; the engine checks it
+            # against the metatype, which is still the one to say it may go
+            refs = (_text(q.find("sourceid")), _text(q.find("id")))
+            gone = next((c for c in refs if c in q_ids), None) or q_by_name.get(_text(q.find("name")).lower())
+            if gone and gone not in removed_innate:
+                removed_innate.append(gone)
+            continue
         if src in ("metatype", "metatyperemovable"):
             # The engine re-derives the grant itself, but not what the player
             # picked for it: a Protosapient's Inherent Program, an A.I.'s
@@ -67,6 +76,7 @@ def _import_qualities(root: ET.Element, cat: CatalogDict, st: dict[str, Any], wa
     _import_optional_powers(root, cat, quality_ids, quality_extras)
     st["quality_ids"] = quality_ids
     st["quality_extras"] = quality_extras
+    st["removed_innate_qualities"] = removed_innate
     # Merged rather than assigned: `_import_ware` fills in the implant picks,
     # and the two sections run in either order.
     st["skill_picks"] = {**(st.get("skill_picks") or {}), **picks}

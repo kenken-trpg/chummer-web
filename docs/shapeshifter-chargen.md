@@ -71,7 +71,9 @@
    扱っていない。現在は動物の姿で計算し、人間形態は並べて表示するだけ。
 4. **噛みつき**。動物の姿の自然武器（Bite (… Form)）を、人間形態でも常に武器一覧に出している。
    武器の由来（`natural_source`）にはメタバリアント名（Human）が入る。
-5. **外せる生得資質**。Uneducatedは`MetatypeRemovable`として保存するが、
-   画面から外す（買い戻す）操作はない。メタバリアント全般にかかわる。
+5. ~~**外せる生得資質**~~ → 作成中は資質タブから外せる（`removed_innate_qualities`）。
+   Chummerの`CharacterCreate`と同じく、値を逆向きに払う（Uneducatedは8カルマで外し、
+   WakyambiのCelerityは外すと6カルマ戻る）。資質の上限には数えない。`.chum5`には
+   `MetatypeRemovedAtChargen`の行として書き、読み込みでも戻す。キャリアでは外せない。
 6. **`.chum5`の`walkalt`/`runalt`/`sprintalt`**。書き出していない。`Mittens Chargen`は動物と同じ値
    （1/1/0）を書いており、`alt`属性の値ではない。fidelityの検査は通る。
