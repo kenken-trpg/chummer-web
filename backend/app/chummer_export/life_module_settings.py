@@ -16,90 +16,101 @@ from copy import deepcopy
 
 from ..data_loader import catalog
 from ..data_loader._xml import DATA_DIR, parse_vendored
-from ..models import CharacterState
+from ..models import CharacterState, SettingsState
 from ..settings_file import _ATTR_FIELDS, _BOOL_FIELDS, _INT_FIELDS, _KARMA_FIELDS
 
 
 def life_module_settings(state: CharacterState) -> tuple[str, bytes]:
     """Return the exact settings key and XML to install in Chummer/settings."""
+    root = _preset(state.settings.name)
+    _set(root, "id", "00000000-0000-0000-0000-000000000000")
+    _set(root, "name", "Chummer Web Life Modules")
+    _set(root, "buildmethod", "LifeModule")
+    _write_rules(root, state.settings)
+    _write_lists(root, state.settings)
+    ET.indent(root, space="  ")
+    xml = ET.tostring(root, encoding="utf-8", xml_declaration=True) + b"\n"
+    key = "chummer-web-life-module-" + hashlib.sha256(xml).hexdigest()[:16] + ".xml"
+    return key, xml
+
+
+def _preset(name: str) -> ET.Element:
+    """A copy of the desktop preset the character's settings are named after, else Standard."""
     presets = parse_vendored(DATA_DIR / "settings.xml").findall("./settings/setting")
-    preset = next((p for p in presets if p.findtext("name") == state.settings.name), None)
+    preset = next((p for p in presets if p.findtext("name") == name), None)
     if preset is None:
         preset = next(p for p in presets if p.findtext("name") == "Standard")
     root = deepcopy(preset)
     root.tag = "settings"
+    return root
 
-    def set_value(tag: str, value: object, parent: ET.Element = root) -> None:
-        node = parent.find(tag)
-        if node is None:
-            node = ET.SubElement(parent, tag)
-        node.text = str(value)
 
-    set_value("id", "00000000-0000-0000-0000-000000000000")
-    set_value("name", "Chummer Web Life Modules")
-    set_value("buildmethod", "LifeModule")
+def _set(parent: ET.Element, tag: str, value: object) -> None:
+    node = parent.find(tag)
+    if node is None:
+        node = ET.SubElement(parent, tag)
+    node.text = str(value)
+
+
+def _write_rules(root: ET.Element, settings: SettingsState) -> None:
+    """Every rule the character's settings change, over the preset's own values."""
     # LifeModule has a 750-karma pool and RF caps, independently of Standard.
-    set_value(
-        "buildpoints", state.settings.karma_chargen_pool if state.settings.karma_chargen_pool is not None else 750
-    )
-    set_value(
-        "maxskillratingcreate", state.settings.chargen_skill_max if state.settings.chargen_skill_max is not None else 7
-    )
-    set_value(
+    _set(root, "buildpoints", settings.karma_chargen_pool if settings.karma_chargen_pool is not None else 750)
+    _set(root, "maxskillratingcreate", settings.chargen_skill_max if settings.chargen_skill_max is not None else 7)
+    _set(
+        root,
         "maxknowledgeskillratingcreate",
-        state.settings.chargen_knowledge_skill_max if state.settings.chargen_knowledge_skill_max is not None else 9,
+        settings.chargen_knowledge_skill_max if settings.chargen_knowledge_skill_max is not None else 9,
     )
     for tag, field in (_INT_FIELDS | _BOOL_FIELDS).items():
         if field in {"chargen_karma", "chargen_skill_max", "chargen_knowledge_skill_max"}:
             continue
-        value = getattr(state.settings, field)
+        value = getattr(settings, field)
         if value is not None:
-            set_value(tag, value)
+            _set(root, tag, value)
     costs = root.find("karmacost")
     if costs is None:
         costs = ET.SubElement(root, "karmacost")
     for tag, field in _KARMA_FIELDS.items():
-        value = getattr(state.settings, field)
+        value = getattr(settings, field)
         if value is not None:
-            set_value(tag, value, costs)
+            _set(costs, tag, value)
     for tag, field in _ATTR_FIELDS.items():
-        value = getattr(state.settings, field)
+        value = getattr(settings, field)
         if value is not None:
-            set_value(tag, "{" + value + "}")
+            _set(root, tag, "{" + value + "}")
     for field, tag in {
         "knowledge_points_expression": "knowledgepointsexpression",
         "exclude_limb_slot": "excludelimbslot",
         "priority_table": "prioritytable",
     }.items():
-        value = getattr(state.settings, field)
+        value = getattr(settings, field)
         if value is not None:
-            set_value(tag, value)
-    if state.settings.contact_free_mult is not None:
-        set_value("contactpointsexpression", "{CHAUnaug} * " + str(state.settings.contact_free_mult))
-    if state.settings.karma_to_nuyen is not None:
-        set_value("nuyenperbpwftp", state.settings.karma_to_nuyen)
-        set_value(
-            "chargenkarmatonuyenexpression", "{Karma} * " + str(state.settings.karma_to_nuyen) + " + {PriorityNuyen}"
-        )
+            _set(root, tag, value)
+    if settings.contact_free_mult is not None:
+        _set(root, "contactpointsexpression", "{CHAUnaug} * " + str(settings.contact_free_mult))
+    if settings.karma_to_nuyen is not None:
+        _set(root, "nuyenperbpwftp", settings.karma_to_nuyen)
+        _set(root, "chargenkarmatonuyenexpression", "{Karma} * " + str(settings.karma_to_nuyen) + " + {PriorityNuyen}")
+
+
+def _write_lists(root: ET.Element, settings: SettingsState) -> None:
+    """The books, custom data and banned grades, replacing the preset's lists."""
     for tag in ("books", "customdatadirectorynames", "bannedwaregrades"):
         old = root.find(tag)
         if old is not None:
             root.remove(old)
     books = ET.SubElement(root, "books")
-    for code in sorted(state.settings.books or [book["code"] for book in catalog()["books"]]):
+    for code in sorted(settings.books or [book["code"] for book in catalog()["books"]]):
         ET.SubElement(books, "book").text = code
     directories = ET.SubElement(root, "customdatadirectorynames")
-    for name in state.settings.customdata:
+    for name in settings.customdata:
         directory = ET.SubElement(directories, "customdatadirectoryname")
         ET.SubElement(directory, "directoryname").text = name
         ET.SubElement(directory, "enabled").text = "True"
     grades = ET.SubElement(root, "bannedwaregrades")
-    for grade in state.settings.banned_ware_grades:
+    for grade in settings.banned_ware_grades:
         ET.SubElement(grades, "grade").text = grade
-    ET.indent(root, space="  ")
-    xml = ET.tostring(root, encoding="utf-8", xml_declaration=True) + b"\n"
-    key = "chummer-web-life-module-" + hashlib.sha256(xml).hexdigest()[:16] + ".xml"
-    return key, xml
 
 
 def life_module_bundle(state: CharacterState) -> bytes:
