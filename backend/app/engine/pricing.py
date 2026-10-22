@@ -5,6 +5,7 @@ connection / used-gear / build-repair discounts, Overclocker.
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from typing import Any
 
 from ..data_loader import DRUG_CATEGORIES, format_avail
@@ -126,6 +127,27 @@ def apply_black_market_avail(
                 _apply(row)
 
 
+#: the gear lists a Black Market Pipeline pick may sit in, in the order they are priced
+_BLACK_MARKET_GEAR_KEYS = (
+    "vehicles",
+    "drones",
+    "weapons",
+    "armor_items",
+    "armor_mods",
+    "weapon_accessories",
+    "commlinks",
+    "cyberdecks",
+    "rccs",
+    "optics",
+    "sensors",
+    "programs",
+    "apps",
+    "gear",
+    "vehicle_mods",
+    "weapon_mounts",
+)
+
+
 def apply_purchase_discounts(
     gear: dict[str, Any],
     cyber_installed: list[dict[str, Any]],
@@ -141,77 +163,68 @@ def apply_purchase_discounts(
     vehicle of the categories it names. The Black Market Pipeline does not:
     it lets the buyer take 10% off an item of its category, one item at a
     time (Chummer's `<discountedcost>`), so only what `discounted_ids` names
-    is cheaper.
+    is cheaper. On a vehicle that has both, the dealer's 10% comes first.
     """
     dealer = list(effects.get("dealer_connection_categories") or [])
-    picked = discounted_ids or set()
-    bmp = bool(effects.get("black_market_discount")) and bool(black_market_category)
-    bmp_keys = set(BLACK_MARKET_CATEGORY_HINTS.get(black_market_category) or ())
     saved = 0
-
-    def _discount(row: dict[str, Any], pct: int) -> None:
-        nonlocal saved
-        base = int(row.get("nuyen") or 0)
-        if base <= 0 or pct <= 0:
-            return
-        new_cost = int(round(base * (100 - pct) / 100.0))
-        saved += base - new_cost
-        row["nuyen"] = new_cost
-        row["discount_pct"] = int(row.get("discount_pct") or 0) + pct
-
     for key in ("vehicles", "drones"):
         for row in gear.get(key) or []:
             if _dealer_matches(str(row.get("category") or ""), dealer):
-                _discount(row, 10)
-            if bmp and key in bmp_keys and str(row.get("id") or "") in picked:
-                _discount(row, 10)
-
-    for key in (
-        "weapons",
-        "armor_items",
-        "armor_mods",
-        "weapon_accessories",
-        "commlinks",
-        "cyberdecks",
-        "rccs",
-        "optics",
-        "sensors",
-        "programs",
-        "apps",
-        "gear",
-        "vehicle_mods",
-        "weapon_mounts",
-    ):
-        for row in gear.get(key) or []:
-            if not (bmp and key in bmp_keys and str(row.get("id") or "") in picked):
-                continue
-            if key == "gear" and black_market_category == "Drugs":
-                if str(row.get("category") or "") not in DRUG_CATEGORIES:
-                    continue
-            _discount(row, 10)
-
-    if bmp and black_market_category == "Cyberware":
-        for row in cyber_installed:
-            if str(row.get("id") or "") in picked:
-                _discount(row, 10)
-    if bmp and black_market_category == "Bioware":
-        for row in bio_installed:
-            if str(row.get("id") or "") in picked:
-                _discount(row, 10)
-
-    trust = int(effects.get("trustfund") or 0)
-    covered = TRUST_FUND_LIFESTYLE.get(trust)
-    if covered:
-        for row in gear.get("lifestyles") or []:
-            if str(row.get("name") or "") == covered:
-                base = int(row.get("nuyen") or 0)
-                if base:
-                    saved += base
-                    row["nuyen"] = 0
-                    row["trustfund"] = True
-
+                saved += _discount(row, 10)
+    if effects.get("black_market_discount") and black_market_category:
+        rows = _black_market_picks(gear, cyber_installed, bio_installed, black_market_category, discounted_ids or set())
+        saved += sum(_discount(row, 10) for row in rows)
+    saved += _trust_fund(gear, effects)
     if saved:
         gear["nuyen"] = max(0, int(gear.get("nuyen") or 0) - saved)
+
+
+def _discount(row: dict[str, Any], pct: int) -> int:
+    """Take ``pct`` percent off the row; return what that saved."""
+    base = int(row.get("nuyen") or 0)
+    if base <= 0 or pct <= 0:
+        return 0
+    new_cost = int(round(base * (100 - pct) / 100.0))
+    row["nuyen"] = new_cost
+    row["discount_pct"] = int(row.get("discount_pct") or 0) + pct
+    return base - new_cost
+
+
+def _black_market_picks(
+    gear: dict[str, Any],
+    cyber_installed: list[dict[str, Any]],
+    bio_installed: list[dict[str, Any]],
+    category: str,
+    picked: set[str],
+) -> Iterator[dict[str, Any]]:
+    """The rows the player took the Black Market Pipeline's 10% on."""
+    keys = set(BLACK_MARKET_CATEGORY_HINTS.get(category) or ())
+    for key in _BLACK_MARKET_GEAR_KEYS:
+        if key not in keys:
+            continue
+        for row in gear.get(key) or []:
+            if str(row.get("id") or "") not in picked:
+                continue
+            if key == "gear" and category == "Drugs" and str(row.get("category") or "") not in DRUG_CATEGORIES:
+                continue
+            yield row
+    ware = cyber_installed if category == "Cyberware" else bio_installed if category == "Bioware" else []
+    yield from (row for row in ware if str(row.get("id") or "") in picked)
+
+
+def _trust_fund(gear: dict[str, Any], effects: EffectsDict) -> int:
+    """A Trust Fund pays for its lifestyle outright; return the nuyen that saved."""
+    covered = TRUST_FUND_LIFESTYLE.get(int(effects.get("trustfund") or 0))
+    if not covered:
+        return 0
+    saved = 0
+    for row in gear.get("lifestyles") or []:
+        base = int(row.get("nuyen") or 0)
+        if str(row.get("name") or "") == covered and base:
+            saved += base
+            row["nuyen"] = 0
+            row["trustfund"] = True
+    return saved
 
 
 def apply_overclocker(gear: GearBundle, enabled: bool) -> None:
