@@ -9,7 +9,7 @@ test("a multi-MB save written by Chummer imports, edits, persists and exports", 
 
   await page.goto("/");
   await waitForEditor(page);
-  await page.getByLabel("読込 (JSON/.chum5/.xlsx)").setInputFiles(file);
+  await page.getByLabel("読込 (JSON/.chum5/.xlsx)", { exact: true }).setInputFiles(file);
 
   const name = page.getByRole("textbox", { name: "キャラクター名" });
   await expect(name).toHaveValue("Ghile Mear");
@@ -47,7 +47,7 @@ test("a multi-MB save written by Chummer imports, edits, persists and exports", 
   await openExportMenu(page);
   const download = await Promise.all([
     page.waitForEvent("download"),
-    page.getByRole("button", { name: ".chum5書出" }).click(),
+    page.getByRole("button", { name: ".chum5書出", exact: true }).click(),
   ]).then(([d]) => d);
   const out = test.info().outputPath("export.chum5");
   await download.saveAs(out);

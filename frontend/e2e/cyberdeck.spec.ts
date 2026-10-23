@@ -13,7 +13,7 @@ test("deck programs and parts consumption survive real browser saves", async ({
   ];
   await page.goto("/");
   await waitForEditor(page);
-  await page.getByLabel("読込 (JSON/.chum5/.xlsx)").setInputFiles({
+  await page.getByLabel("読込 (JSON/.chum5/.xlsx)", { exact: true }).setInputFiles({
     name: "cyberdeck.json",
     mimeType: "application/json",
     buffer: Buffer.from(JSON.stringify(state)),
@@ -109,7 +109,7 @@ test("one spare module can be fitted and detached without changing ownership or 
   ];
   await page.goto("/");
   await waitForEditor(page);
-  await page.getByLabel("読込 (JSON/.chum5/.xlsx)").setInputFiles({
+  await page.getByLabel("読込 (JSON/.chum5/.xlsx)", { exact: true }).setInputFiles({
     name: "module.json",
     mimeType: "application/json",
     buffer: Buffer.from(JSON.stringify(state)),

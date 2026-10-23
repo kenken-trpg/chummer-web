@@ -1,6 +1,7 @@
 "use client";
 
 import type { BookInfo } from "@/lib/types";
+import { HelpTip } from "@/components/help/HelpTip";
 import { useLocale, type UiFn } from "@/lib/i18n";
 
 /** The core rulebook, which "all off" keeps. */
@@ -65,20 +66,20 @@ export function BookChecklist({
   return (
     <>
       <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-        <button
-          className="btn"
-          onClick={() => onSet(() => allBooks.map((book) => book.code))}
-          title={ui("settings.booksAllOnHint")}
+        <HelpTip
+          label={ui("help.open", { label: ui("help.settings.booksBulkLabel") })}
+          lines={[
+            { label: ui("help.settings.booksAllOn") },
+            { label: ui("help.settings.booksAllOff") },
+          ]}
         >
-          {ui("settings.booksAllOn")}
-        </button>
-        <button
-          className="btn"
-          onClick={() => onSet(() => [CORE_BOOK])}
-          title={ui("settings.booksAllOffHint")}
-        >
-          {ui("settings.booksAllOff")}
-        </button>
+          <button className="btn" onClick={() => onSet(() => allBooks.map((book) => book.code))}>
+            {ui("settings.booksAllOn")}
+          </button>
+          <button className="btn" onClick={() => onSet(() => [CORE_BOOK])}>
+            {ui("settings.booksAllOff")}
+          </button>
+        </HelpTip>
       </div>
       <div className="book-grid" style={{ marginTop: 8 }}>
         {allBooks.filter((book) => !book.group).map(check)}

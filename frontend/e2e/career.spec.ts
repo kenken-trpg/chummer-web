@@ -16,8 +16,8 @@ import { storedCharacters, waitForEditor } from "./helpers";
 /** Creation errors are expected on a bare character; the switch asks first. */
 async function intoCareer(page: import("@playwright/test").Page) {
   page.once("dialog", (dialog) => void dialog.accept());
-  await page.getByRole("button", { name: "作成完了（キャリア）" }).click();
-  await expect(page.getByRole("button", { name: "キャリア中" })).toBeVisible();
+  await page.getByRole("button", { name: "作成完了（キャリア）", exact: true }).click();
+  await expect(page.getByRole("button", { name: "キャリア中", exact: true })).toBeVisible();
 }
 
 test("a reward is logged, a raise is priced against the chargen baseline, and both survive a reload", async ({
@@ -64,7 +64,7 @@ test("a reward is logged, a raise is priced against the chargen baseline, and bo
   // the same raise — nor make it free by snapshotting the raised rating.
   await page.reload();
   await waitForEditor(page);
-  await expect(page.getByRole("button", { name: "キャリア中" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "キャリア中", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "成長／買い物の内訳" }).click();
   const again = page.locator(".career-breakdown .stat").first();
   await expect(again).toContainText("BOD");

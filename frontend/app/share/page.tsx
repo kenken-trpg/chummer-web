@@ -117,7 +117,6 @@ export default function SharePage() {
               className="btn"
               value={sheetLayout}
               onChange={(e) => setSheetLayout(e.target.value as SheetLayout)}
-              title={ui("share.layout")}
               aria-label={ui("share.layout")}
             >
               <option value="standard">{ui("sheet.layout.standard")}</option>

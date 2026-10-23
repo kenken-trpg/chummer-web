@@ -344,8 +344,6 @@ export const EN_CHARGEN = {
   "prio.leftoverSlider": "Leftover karma → nuyen ({k}K = {nuyen}¥)",
   "prio.leftoverSliderLabel": "Leftover karma converted to nuyen",
   "settings.folder": "Load a ruleset folder",
-  "settings.folderHint":
-    "Pick the folder holding settings and customdata — the folder itself, not a file. Every settings file in it joins the pulldown, and picking one merges the custom data it names. The files stay in this browser; only the merged result is held on the server, and only for a while",
   "settings.customDataFailed": "That custom data could not be loaded.",
   "settings.zipNotAZip":
     "That did not read as a zip. A .zip name is no guarantee the archive inside is intact.",
@@ -367,16 +365,11 @@ export const EN_CHARGEN = {
   "settings.customDataNeeded":
     "This ruleset names {count} custom-data directories. Until they are loaded, nothing they add or change applies at all — the character is worked out from the stock data.",
   "settings.customDataPick": "Load it with its customdata",
-  "settings.customDataPickHint":
-    "Pick the folder that holds settings and customdata side by side — the folder itself. A settings file on its own does not bring its custom data with it",
   "settings.groupLoaded": "Loaded files",
   "settings.groupShipped": "Shipped with Chummer",
   "settings.load": "Load settings file",
-  "settings.loadHint":
-    "Read an .xml from your Chummer settings folder, or a .zip of the folder holding settings and customdata. The file is not stored anywhere but this browser (the zip is also the way in on a device that cannot pick a folder, such as Android)",
   "settings.loadFailed": "That settings file could not be read.",
   "settings.forget": "Remove this ruleset",
-  "settings.forgetHint": "Remove {name} from this browser (characters are untouched)",
   "settings.knob.allowbiowaresuites":
     "Allow bioware suites (this app has no suites, so their bundled entries never appear)",
   "settings.knob.alloweditpartofbaseweapon":
@@ -439,18 +432,13 @@ export const EN_CHARGEN = {
     "{count} further setting(s) have no bearing on anything worked out here: {items}",
   "settings.preset": "Ruleset",
   "settings.presetNone": "Unrestricted (all rulebooks)",
-  "settings.presetHint":
-    "A settings file shipped with Chummer. Sets the rulebooks and the build method",
   "settings.booksAll": "All rulebooks available",
   "settings.booksCount": "Rulebooks {count} / {total}",
   "settings.custom": "Custom",
   "settings.booksShow": "Choose rulebooks",
   "settings.booksHide": "Close",
   "settings.booksAllOn": "All on",
-  "settings.booksAllOnHint": "Tick every rulebook",
   "settings.booksAllOff": "All off",
-  "settings.booksAllOffHint": "Untick every rulebook but the core one (SR5)",
-  "settings.booksHint": "Narrow what can be bought to the books you own",
   "settings.booksNote":
     "Entries from an unticked book drop out of the buy lists. Gear and qualities you already own are kept. Unticking every book means no restriction.",
   "prio.karmaSliderLabel": "Karma converted to nuyen",

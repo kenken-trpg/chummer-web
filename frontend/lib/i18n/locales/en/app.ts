@@ -6,9 +6,7 @@ export const EN_APP = {
     "Unofficial Shadowrun 5e character creator. Not affiliated with Catalyst / Topps. Data from Chummer5a (GPL-3.0).",
   "app.footer.author": "Made by {author}",
   "app.footer.repo": "GitHub repository",
-  "app.footer.repoHint": "Source, bug reports and requests (GPL-3.0)",
   "app.footer.manual": "How to use",
-  "app.footer.manualHint": "The illustrated manual (opens in a new tab)",
 
   "app.footer.license": "GPL-3.0",
   "nav.sections": "Sections",
@@ -159,66 +157,33 @@ export const EN_APP = {
   "toolbar.careerTag": " (career)",
   "toolbar.newCharacter": "+ New character",
   "toolbar.duplicate": "Duplicate",
-  "toolbar.duplicateHint": "Duplicate under a new name",
   "toolbar.delete": "Delete",
-  "toolbar.deleteHint": "Delete the character on screen",
   "toolbar.undo": "↶ Undo",
   "toolbar.undoCount": "↶ Undo ({count})",
-  "toolbar.undoHint": "Undo (Ctrl/⌘+Z)",
   "toolbar.redo": "↷ Redo",
   "toolbar.redoCount": "↷ Redo ({count})",
-  "toolbar.redoHint": "Redo (Ctrl/⌘+Shift+Z)",
   "toolbar.name": "Character name",
   "toolbar.saveJson": "Save JSON",
   "toolbar.exportMenu": "Export",
-  "toolbar.exportMenuHint":
-    "Exports and copies for Chummer5a, the spreadsheet, Foundry VTT, Cocofolia and Udonarium",
   "toolbar.exportChum5": "Export .chum5",
-  "toolbar.exportChum5Hint": "Export as .chum5 (XML), which Chummer5a can open",
   "toolbar.exportXlsx": "Export .xlsx",
   "toolbar.sheetUrl": "From URL",
-  "toolbar.sheetUrlHint":
-    "Read the 「［SR5］キャラシテンプレート」 Google Sheet by 音の兔 (Nenousa), the one the Japanese Shadowrun 5th unofficial wiki links to straight from its Google Sheets URL. Only that template\u2019s sheet can be read \u2014 no other spreadsheet and no other site.",
   "toolbar.sheetUrlRead": "Read",
   "toolbar.sheetUrlReading": "Reading\u2026",
   "toolbar.sheetUrlShared":
     "Paste a https://docs.google.com/spreadsheets/d/\u2026 URL; only a sheet shared with \u201cAnyone with the link\u201d can be read",
-  "toolbar.exportXlsxHint":
-    "Export an .xlsx with the same sheets and the same input cells as the 「［SR5］キャラシテンプレート」 Google Sheet by 音の兔 (Nenousa), the one the Japanese Shadowrun 5th unofficial wiki links to (the template itself is not bundled)",
   "toolbar.exportFvtt": "Export FVTT",
   "app.exportReview.fvttTitle": "{count} items are not included in the Foundry JSON:",
-  "toolbar.exportFvttHint":
-    "Export JSON for Foundry VTT's Chummer/Data Import (shadowrun5e 0.34.5) — the system builds the actor. Innate metatype powers do not become items, so they are listed before the file is written",
   "toolbar.import": "Load (JSON/.chum5/.xlsx)",
-  "toolbar.importHint":
-    "Four things can be read: this app\u2019s own JSON, a Foundry VTT (shadowrun5e) actor\u2019s Export Data JSON, a Chummer5a .chum5/.chum5lz save, and the 「［SR5］キャラシテンプレート」 Google Sheet by 音の兔 (Nenousa), the one the Japanese Shadowrun 5th unofficial wiki links to, downloaded as .xlsx. An ordinary Excel workbook or any other JSON cannot be read.",
-  "toolbar.shareHint":
-    "Copy a read-only share link. The character rides in the URL and is never stored on the server (the portrait is left out).",
   "toolbar.udonariumConjured": "Udonarium (retinue)",
-  "toolbar.udonariumConjuredHint":
-    "Download every bound spirit, registered sprite, vehicle and drone as a piece, one .zip per kind. Udonarium reads every xml an archive holds, so each kind lands on the table in one drop.",
   "toolbar.udonarium": "Udonarium",
-  "toolbar.udonariumHint":
-    "Download an Udonarium character piece as .zip — drop it straight on the table. The chat palette targets BCDice ShadowRun5; attributes, weapons, magic and the Matrix are variables, so the table can retune a pool without re-exporting.",
   "toolbar.cocofolia": "Cocofolia",
-  "toolbar.cocofoliaHint":
-    "Copy a Cocofolia piece as JSON (paste to import). Rolls use BCDice's ShadowRun5.",
   "toolbar.chatPalette": "Chat palette",
-  "toolbar.chatPaletteHint": "Copy the chat palette (BCDice ShadowRun5 commands)",
   "toolbar.cocoUntrained": "Unlearned skills too",
-  "toolbar.cocoUntrainedHint":
-    "Add the unlearned skills you can default on (attribute − 1) and the knowledge skills you have to the Cocofolia piece and chat palette",
   "toolbar.conjured": "Spirit pieces",
-  "toolbar.conjuredHint":
-    "Export each bound spirit / registered sprite as its own Cocofolia piece (a JSON array)",
   "toolbar.career": "In career",
   "toolbar.toCareer": "Finish chargen (career)",
-  "toolbar.careerHint": "Go back to character creation",
-  "toolbar.toCareerHint": "Finish creation → spend leftover karma / nuyen to advance",
   "toolbar.careerConfirm": "There are still creation errors. Continue into career mode anyway?",
-  "toolbar.layoutHint": "Sheet layout",
-  "toolbar.printHint":
-    "Switch to the print layout and print. The dialog can also \u201cSave as PDF\u201d.",
 
   "toolbar.showSheet": "Show sheet",
   "common.selectShort": "Select",

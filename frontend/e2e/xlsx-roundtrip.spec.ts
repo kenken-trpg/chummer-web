@@ -28,7 +28,7 @@ test("a character exports as the sheet's .xlsx and comes back in through the bro
   // the check always finds that one difference and the panel always appears —
   // this is the .xlsx path's normal flow, not an edge case.
   await openExportMenu(page);
-  await page.getByRole("button", { name: ".xlsx書出" }).click();
+  await page.getByRole("button", { name: ".xlsx書出", exact: true }).click();
   const review = page.getByRole("alertdialog");
   await expect(review).toContainText(".xlsx");
 
@@ -41,7 +41,7 @@ test("a character exports as the sheet's .xlsx and comes back in through the bro
   const xlsx = test.info().outputPath("roundtrip.xlsx");
   await download.saveAs(xlsx);
 
-  await page.getByLabel("読込 (JSON/.chum5/.xlsx)").setInputFiles(xlsx);
+  await page.getByLabel("読込 (JSON/.chum5/.xlsx)", { exact: true }).setInputFiles(xlsx);
 
   // The template carries no character name, so the import names the runner
   // itself — that the roster grew and the metatype survived is what says the

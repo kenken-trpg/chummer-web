@@ -49,7 +49,9 @@ function darkBackgrounds(page: Page): Promise<string[]> {
 async function openSheet(page: Page) {
   await page.goto("/");
   await waitForEditor(page);
-  await page.getByLabel("読込 (JSON/.chum5/.xlsx)").setInputFiles(await chummerFixture());
+  await page
+    .getByLabel("読込 (JSON/.chum5/.xlsx)", { exact: true })
+    .setInputFiles(await chummerFixture());
   await expect(page.getByRole("textbox", { name: "キャラクター名" })).toHaveValue("Ghile Mear");
   await page.getByRole("button", { name: "シート", exact: true }).click();
 }

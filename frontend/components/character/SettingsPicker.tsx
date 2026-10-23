@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { HelpTip } from "@/components/help/HelpTip";
 import type { Catalog, Character } from "@/lib/types";
 import { BookChecklist } from "@/components/character/ruleset/BookChecklist";
 import { MergeSummary } from "@/components/character/ruleset/MergeSummary";
@@ -79,11 +80,16 @@ export function SettingsPicker({
     <div className="card settings-picker" style={{ marginBottom: 12 }}>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
         <label>
-          {ui("settings.preset")}
+          <HelpTip
+            label={ui("help.open", { label: ui("settings.preset") })}
+            lines={[{ label: ui("help.settings.preset") }]}
+          >
+            {ui("settings.preset")}
+          </HelpTip>{" "}
           <select
+            aria-label={ui("settings.preset")}
             value={known ? name : ""}
             onChange={(e) => onPick(e.target.value)}
-            title={ui("settings.presetHint")}
           >
             <option value="">{ui("settings.presetNone")}</option>
             {files.length > 0 ? (
@@ -105,13 +111,14 @@ export function SettingsPicker({
           </select>
         </label>
 
-        <button
-          className="btn"
-          onClick={() => fileRef.current?.click()}
-          title={ui("settings.loadHint")}
+        <HelpTip
+          label={ui("help.open", { label: ui("settings.load") })}
+          lines={[{ label: ui("help.settings.load") }]}
         >
-          {ui("settings.load")}
-        </button>
+          <button className="btn" onClick={() => fileRef.current?.click()}>
+            {ui("settings.load")}
+          </button>
+        </HelpTip>
         <input
           ref={fileRef}
           type="file"
@@ -130,13 +137,14 @@ export function SettingsPicker({
           }}
         />
 
-        <button
-          className="btn"
-          onClick={() => folderRef.current?.click()}
-          title={ui("settings.folderHint")}
+        <HelpTip
+          label={ui("help.open", { label: ui("settings.folder") })}
+          lines={[{ label: ui("help.settings.folder") }]}
         >
-          {ui("settings.folder")}
-        </button>
+          <button className="btn" onClick={() => folderRef.current?.click()}>
+            {ui("settings.folder")}
+          </button>
+        </HelpTip>
         <input
           ref={folderRef}
           type="file"
@@ -162,22 +170,23 @@ export function SettingsPicker({
           {name && !known ? ` ・ ${name}` : ""}
           {!name && books.length > 0 ? ` ・ ${ui("settings.custom")}` : ""}
         </span>
-        <button
-          className="btn"
-          onClick={() => setOpen(!open)}
-          aria-expanded={open}
-          title={ui("settings.booksHint")}
+        <HelpTip
+          label={ui("help.open", { label: ui(open ? "settings.booksHide" : "settings.booksShow") })}
+          lines={[{ label: ui("help.settings.books") }]}
         >
-          {ui(open ? "settings.booksHide" : "settings.booksShow")}
-        </button>
-        {known && files.some((f) => f.name === name) ? (
-          <button
-            className="btn"
-            onClick={() => onForget(name)}
-            title={ui("settings.forgetHint", { name })}
-          >
-            {ui("settings.forget")}
+          <button className="btn" onClick={() => setOpen(!open)} aria-expanded={open}>
+            {ui(open ? "settings.booksHide" : "settings.booksShow")}
           </button>
+        </HelpTip>
+        {known && files.some((f) => f.name === name) ? (
+          <HelpTip
+            label={ui("help.open", { label: ui("settings.forget") })}
+            lines={[{ label: ui("help.settings.forget", { name }) }]}
+          >
+            <button className="btn" onClick={() => onForget(name)}>
+              {ui("settings.forget")}
+            </button>
+          </HelpTip>
         ) : null}
       </div>
 
@@ -189,13 +198,14 @@ export function SettingsPicker({
         // cannot load house rules".
         <p className="notice notice-warn">
           {ui("settings.customDataNeeded", { count: (ch.settings?.customdata || []).length })}{" "}
-          <button
-            className="linklike"
-            onClick={() => folderRef.current?.click()}
-            title={ui("settings.customDataPickHint")}
+          <HelpTip
+            label={ui("help.open", { label: ui("settings.customDataPick") })}
+            lines={[{ label: ui("help.settings.customDataPick") }]}
           >
-            {ui("settings.customDataPick")}
-          </button>
+            <button className="linklike" onClick={() => folderRef.current?.click()}>
+              {ui("settings.customDataPick")}
+            </button>
+          </HelpTip>
         </p>
       ) : null}
       {merge ? <MergeSummary merge={merge} ui={ui} /> : null}

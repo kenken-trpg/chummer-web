@@ -12,7 +12,7 @@ test("life modules persist across reload and removing a module removes its grant
   };
   await page.goto("/");
   await waitForEditor(page);
-  await page.getByLabel("読込 (JSON/.chum5/.xlsx)").setInputFiles({
+  await page.getByLabel("読込 (JSON/.chum5/.xlsx)", { exact: true }).setInputFiles({
     name: "history.json",
     mimeType: "application/json",
     buffer: Buffer.from(JSON.stringify(seed)),
@@ -71,7 +71,7 @@ test("life module layout keeps choices and actions inside desktop and mobile vie
   };
   await page.goto("/");
   await waitForEditor(page);
-  await page.getByLabel("読込 (JSON/.chum5/.xlsx)").setInputFiles({
+  await page.getByLabel("読込 (JSON/.chum5/.xlsx)", { exact: true }).setInputFiles({
     name: "layout.json",
     mimeType: "application/json",
     buffer: Buffer.from(JSON.stringify(seed)),
@@ -133,7 +133,7 @@ test("skill overflow survives reload, career growth and undo", async ({ page, re
   };
   await page.goto("/");
   await waitForEditor(page);
-  await page.getByLabel("読込 (JSON/.chum5/.xlsx)").setInputFiles({
+  await page.getByLabel("読込 (JSON/.chum5/.xlsx)", { exact: true }).setInputFiles({
     name: "overflow.json",
     mimeType: "application/json",
     buffer: Buffer.from(JSON.stringify(seed)),

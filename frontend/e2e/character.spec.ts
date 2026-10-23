@@ -44,7 +44,7 @@ test("a character survives a reload and exports to .chum5", async ({ page }) => 
   await openExportMenu(page);
   const download = await Promise.all([
     page.waitForEvent("download"),
-    page.getByRole("button", { name: ".chum5書出" }).click(),
+    page.getByRole("button", { name: ".chum5書出", exact: true }).click(),
   ]).then(([d]) => d);
 
   // the name carries when it was written, so two exports do not collide;
@@ -66,7 +66,7 @@ test("the sheet renders and a share link round-trips through the URL fragment", 
   await page.getByRole("button", { name: "シート", exact: true }).click();
   await expect(page.getByRole("combobox", { name: "レイアウト" })).toBeVisible();
 
-  await page.getByRole("button", { name: /共有リンク|コピー ✓/ }).click();
+  await page.getByRole("button", { name: /^(共有リンク|コピー ✓)$/ }).click();
   const url = await page.evaluate(() => navigator.clipboard.readText());
   expect(url).toContain("/share#c=");
 
@@ -93,7 +93,7 @@ test("a .chum5 written by this app is readable by it again", async ({ page }) =>
   await openExportMenu(page);
   const download = await Promise.all([
     page.waitForEvent("download"),
-    page.getByRole("button", { name: ".chum5書出" }).click(),
+    page.getByRole("button", { name: ".chum5書出", exact: true }).click(),
   ]).then(([d]) => d);
   // saveAs, not path(): Playwright's temp file has no extension, and the
   // editor picks its reader off the file name
@@ -102,7 +102,7 @@ test("a .chum5 written by this app is readable by it again", async ({ page }) =>
 
   // the hidden input is what the toolbar button clicks
   // by name, not by type: the editor has more than one file input now
-  await page.getByLabel("読込 (JSON/.chum5/.xlsx)").setInputFiles(chum5);
+  await page.getByLabel("読込 (JSON/.chum5/.xlsx)", { exact: true }).setInputFiles(chum5);
 
   // a second character with the same name: the import minted a new id rather
   // than overwriting the one that produced the file

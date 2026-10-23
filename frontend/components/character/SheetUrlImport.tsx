@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { HelpTip } from "@/components/help/HelpTip";
 import type { CharacterEditor } from "@/lib/character/useCharacterEditor";
 import { useUiText } from "@/lib/i18n";
 
@@ -29,9 +30,14 @@ export function SheetUrlImport({ ed }: { ed: CharacterEditor }) {
   if (!open) {
     return (
       <div className="option-row">
-        <button className="btn" onClick={() => setOpen(true)} title={ui("toolbar.sheetUrlHint")}>
-          {ui("toolbar.sheetUrl")}
-        </button>
+        <HelpTip
+          label={ui("help.open", { label: ui("toolbar.sheetUrl") })}
+          lines={[{ label: ui("help.toolbar.sheetUrl") }]}
+        >
+          <button className="btn" onClick={() => setOpen(true)}>
+            {ui("toolbar.sheetUrl")}
+          </button>
+        </HelpTip>
       </div>
     );
   }

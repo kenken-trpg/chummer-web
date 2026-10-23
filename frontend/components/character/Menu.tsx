@@ -7,15 +7,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
  * the e2e suite click the items inside, and a native `<summary>` toggle is not
  * something every DOM implementation we test against performs.
  */
-export function Menu({
-  label,
-  title,
-  children,
-}: {
-  label: string;
-  title?: string;
-  children: ReactNode;
-}) {
+export function Menu({ label, children }: { label: string; children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   const body = useRef<HTMLDivElement>(null);
@@ -37,7 +29,8 @@ export function Menu({
     // before the click reaches React, and the item's own handler never runs.
     const onPick = (e: Event) => {
       const el = e.target as HTMLElement;
-      if (body.current?.contains(el) && el.closest("button")) setOpen(false);
+      // a "?" (HelpTip) is a button too, but opening it is not picking an item
+      if (body.current?.contains(el) && el.closest("button:not(.help-tip-button)")) setOpen(false);
     };
     document.addEventListener("mousedown", onDown);
     document.addEventListener("keydown", onKey);
@@ -51,7 +44,7 @@ export function Menu({
 
   return (
     <div className="menu" ref={box}>
-      <button className="btn" title={title} aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+      <button className="btn" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
         {label} ▾
       </button>
       {open ? (

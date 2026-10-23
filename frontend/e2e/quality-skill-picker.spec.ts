@@ -19,7 +19,7 @@ test("Confidence suppresses a specialization and can move to a learned exotic ta
   });
   await page.goto("/");
   await waitForEditor(page);
-  await page.getByLabel("読込 (JSON/.chum5/.xlsx)").setInputFiles({
+  await page.getByLabel("読込 (JSON/.chum5/.xlsx)", { exact: true }).setInputFiles({
     name: "confidence.json",
     mimeType: "application/json",
     buffer: Buffer.from(JSON.stringify(seed)),
