@@ -62,6 +62,8 @@ describe("<AttrsTab>", () => {
     expect(agi.value).toBe("1");
     expect(agi.max).toBe("3"); // AGI 4 over a floor of 1
     expect(screen.getByText("カルマで上げた能力値：20 カルマ")).toBeDefined();
+    // what the field means is on the row's "?", not a hover-only title
+    expect(screen.getAllByText(/上げた後の値×5 カルマかかります/).length).toBeGreaterThan(0);
     fireEvent.change(screen.getByRole("spinbutton", { name: /BOD.*うちカルマ/ }), {
       target: { value: "2" },
     });

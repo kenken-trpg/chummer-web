@@ -80,6 +80,7 @@ export function ExoticSkills({
                     { label: ui("help.exotic.what") },
                     { label: ui("help.skill.pool") },
                     { label: ui("help.exotic.nodefault") },
+                    { label: ui("skills.ratingHint", { max: row.rating_max }) },
                   ]}
                 >
                   {tr(row.skill_name)}
@@ -91,7 +92,6 @@ export function ExoticSkills({
                 disabled={d.life_module_skills?.frozen}
                 value={rating}
                 label={tr(row.skill_name)}
-                title={ui("skills.ratingHint", { max: row.rating_max })}
                 onDraft={(value) =>
                   d.life_module_skills
                     ? setCharacter({ ...ch, exotic_skills: lifeRatingRows(row, value) })

@@ -78,6 +78,15 @@ export function KnowledgeSkills(props: TabPanelProps) {
                     { label: ui("help.knowledge.free") },
                     { label: ui("help.knowledge.cost") },
                     { label: ui("help.skill.spec") },
+                    ...(row.native
+                      ? []
+                      : [
+                          { label: ui("skills.ratingHint", { max: knowledgeMax }) },
+                          ...(splitKarma ? [{ label: ui("skills.karmaHint") }] : []),
+                          ...(splitKarma && specValue
+                            ? [{ label: ui("skills.specKarmaHint") }]
+                            : []),
+                        ]),
                   ]}
                 >
                   {tr(row.name)}
@@ -122,7 +131,6 @@ export function KnowledgeSkills(props: TabPanelProps) {
                       : ch.knowledge_skills[row.name] || row.rating
                   }
                   label={tr(row.name)}
-                  title={ui("skills.ratingHint", { max: knowledgeMax })}
                   onDraft={(value) =>
                     setCharacter({
                       ...ch,
