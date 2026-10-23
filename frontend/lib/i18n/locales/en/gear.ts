@@ -87,8 +87,6 @@ export const EN_GEAR = {
   "gear.blackMarket": "Black market",
   "gear.homeNode": "Home node",
   "gear.stackWith": "Stacks with",
-  "gear.stackWithHint":
-    "Worn with the armor it was tailored to, this piece adds its + value on top of that armor (RG p.59)",
   "gear.addSensorFn": "Add a function",
   "gear.addToSlot": "Add to slot",
   "gear.addAccessory": "Add an accessory",
@@ -97,7 +95,6 @@ export const EN_GEAR = {
   "gear.granted": "comes with {source}",
   "gear.weaponized": "as weapon",
   "gear.inUse": "In use",
-  "gear.drugToggleHint": "Apply to attributes, initiative and skills",
   "customDrug.addComponent": "Add a component",
   "customDrug.addiction": "Addiction R{rating}/threshold {threshold}",
   "customDrug.avail": "Avail {avail}",
@@ -126,8 +123,6 @@ export const EN_GEAR = {
   "gear.takeOut": "Take out",
   "gear.takeOutLabel": "Take {name} out",
   "gear.putInto": "Carry inside…",
-  "gear.putIntoHint":
-    "Carry this inside another piece of gear. Several of the container means several of what is in it, as Chummer counts it",
   "gear.idleDrugs": "Showing SR5 and drugs only (search to reach the supplements)",
 
   // --- sidebar ----------------------------------------------------------
@@ -219,7 +214,6 @@ export const EN_GEAR = {
   "gear.searchRcc": "Search RCCs",
   "gear.searchArmor": "Search armor",
   "gear.price": "Price",
-  "gear.priceHint": "Set the price, {lo}–{hi}¥",
   "gear.customName": "Name",
   "gear.searchLifestyle": "Search lifestyles",
   "gear.searchSensor": "Search sensors",

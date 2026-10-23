@@ -109,7 +109,7 @@ export function MiscGearRow({
             ui={ui}
             onChange={(cost) => patch({ gear: editRow(ch.gear, item.id, { cost }) })}
           />
-          <label title={ui("common.qtyHint")}>
+          <label>
             {ui("common.qty")}
             <input
               type="number"
@@ -122,7 +122,7 @@ export function MiscGearRow({
             />
           </label>
           {item.rating_max > 0 ? (
-            <label title={ui("common.ratingHint")}>
+            <label>
               {ui("common.rating")}
               <input
                 type="number"
@@ -191,16 +191,23 @@ export function MiscGearRow({
               {item.drug_speed ? ` ／ ${ui("gear.onset")} ${item.drug_speed}` : ""}
             </div>
             <div className="cyber-controls" style={{ marginTop: 4 }}>
-              <label title={ui("gear.drugToggleHint")}>
-                <input
-                  type="checkbox"
-                  checked={Boolean((ch.gear || []).find((row) => row.id === item.id)?.active)}
-                  onChange={(e) =>
-                    patch({ gear: editRow(ch.gear, item.id, { active: e.target.checked }) })
-                  }
-                />
-                {ui("gear.inUse")}
-              </label>
+              <HelpTip
+                label={ui("help.open", {
+                  label: `${tr(item.label || item.name)}: ${ui("gear.inUse")}`,
+                })}
+                lines={[{ label: ui("help.gear.inUse") }]}
+              >
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={Boolean((ch.gear || []).find((row) => row.id === item.id)?.active)}
+                    onChange={(e) =>
+                      patch({ gear: editRow(ch.gear, item.id, { active: e.target.checked }) })
+                    }
+                  />
+                  {ui("gear.inUse")}
+                </label>
+              </HelpTip>
             </div>
           </>
         ) : null}
@@ -217,25 +224,32 @@ export function MiscGearRow({
         ))}
         {containers.length && !item.granted_by ? (
           <div className="cyber-controls">
-            <label title={ui("gear.putIntoHint")}>
-              {ui("gear.putInto")}
-              <select
-                aria-label={`${tr(item.label || item.name)}: ${ui("gear.putInto")}`}
-                value=""
-                onChange={(e) => {
-                  const into = e.target.value;
-                  if (!into) return;
-                  patch({ gear: editRow(ch.gear, item.id, { parent_id: into }) });
-                }}
-              >
-                <option value="">{ui("gear.putInto")}</option>
-                {containers.map((row) => (
-                  <option key={row.id} value={row.id}>
-                    {tr(row.label || row.name)}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <HelpTip
+              label={ui("help.open", {
+                label: `${tr(item.label || item.name)}: ${ui("gear.putInto")}`,
+              })}
+              lines={[{ label: ui("help.gear.putInto1") }, { label: ui("help.gear.putInto2") }]}
+            >
+              <label>
+                {ui("gear.putInto")}
+                <select
+                  aria-label={`${tr(item.label || item.name)}: ${ui("gear.putInto")}`}
+                  value=""
+                  onChange={(e) => {
+                    const into = e.target.value;
+                    if (!into) return;
+                    patch({ gear: editRow(ch.gear, item.id, { parent_id: into }) });
+                  }}
+                >
+                  <option value="">{ui("gear.putInto")}</option>
+                  {containers.map((row) => (
+                    <option key={row.id} value={row.id}>
+                      {tr(row.label || row.name)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </HelpTip>
           </div>
         ) : null}
         <GearAddonPicker

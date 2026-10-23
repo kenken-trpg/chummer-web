@@ -86,8 +86,6 @@ export const JA_GEAR = {
   "gear.blackMarket": "闇市",
   "gear.homeNode": "Home Node",
   "gear.stackWith": "重ねる防具",
-  "gear.stackWithHint":
-    "仕立てた相手の防具と一緒に着ると、この防具の +値が相手に上乗せされる（RG p.59）",
   "gear.addSensorFn": "機能を追加",
   "gear.addToSlot": "スロットに追加",
   "gear.addAccessory": "アクセサリを追加",
@@ -96,7 +94,6 @@ export const JA_GEAR = {
   "gear.granted": "{source}付属",
   "gear.weaponized": "武器化",
   "gear.inUse": "使用中",
-  "gear.drugToggleHint": "能力値・イニシアティブ・技能に反映",
   "customDrug.addComponent": "コンポーネントを足す",
   "customDrug.addiction": "依存症 R{rating}/目標値{threshold}",
   "customDrug.avail": "入手値 {avail}",
@@ -125,8 +122,6 @@ export const JA_GEAR = {
   "gear.takeOut": "取り出す",
   "gear.takeOutLabel": "{name} を取り出す",
   "gear.putInto": "…に入れる",
-  "gear.putIntoHint":
-    "手持ちの装備の中に入れて持ち歩きます。入れ物が複数あると、中身もその数だけ買ったものとして数えます（Chummer と同じ）",
   "gear.idleDrugs": "SR5 とドラッグのみ表示中（検索するとサプリメントも探します）",
 
   // --- sidebar ----------------------------------------------------------
@@ -221,7 +216,6 @@ export const JA_GEAR = {
   "gear.searchRcc": "RCCを検索",
   "gear.searchArmor": "防具を検索",
   "gear.price": "価格",
-  "gear.priceHint": "価格は {lo}〜{hi}¥ の範囲で決めます",
   "gear.customName": "名前",
   "gear.searchLifestyle": "ライフスタイルを検索",
   "gear.searchSensor": "センサーを検索",

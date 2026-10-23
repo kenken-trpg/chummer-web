@@ -58,9 +58,22 @@ export function LifestyleGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                   {sourceBit(item, ui)}
                 </div>
                 <div className="cyber-controls">
+                  {item.raise_max?.comforts || item.raise_max?.area || item.raise_max?.security ? (
+                    <HelpTip
+                      label={ui("help.open", {
+                        label: `${tr(item.name)}: ${ui("help.life.raiseLabel")}`,
+                      })}
+                      lines={[
+                        { label: ui("help.life.raise") },
+                        { label: ui("help.life.raiseCost") },
+                      ]}
+                    >
+                      {ui("help.life.raiseLabel")}
+                    </HelpTip>
+                  ) : null}
                   {(["comforts", "area", "security"] as const).map((key) =>
                     item.raise_max?.[key] ? (
-                      <label key={key} title={ui("life.raiseHint")}>
+                      <label key={key}>
                         {ui(`life.${key}`)}
                         <input
                           type="number"

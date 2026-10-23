@@ -479,8 +479,6 @@ export const EN_CHARGEN = {
   "life.comforts": "Comforts +",
   "life.area": "Neighborhood +",
   "life.security": "Security +",
-  "life.raiseHint":
-    "Points raised above what this lifestyle starts with. Each costs 1 LP and 10% of the base cost (plus its own price, where it has one) (RF p.219).",
   "life.base": "base {cost}¥",
   "life.multiplier": " / ×{pct}%",
   "life.qualityCost": " / qualities +{cost}¥",

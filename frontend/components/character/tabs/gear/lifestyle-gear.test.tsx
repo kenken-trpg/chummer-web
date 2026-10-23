@@ -572,6 +572,9 @@ describe("<LifestyleGear> comforts / neighborhood / security", () => {
     expect(comforts.value).toBe("1");
     expect(comforts.max).toBe("1");
     expect(screen.queryByRole("spinbutton", { name: /防犯/ })).toBeNull(); // Low's security cannot rise
+    // one "?" for the three fields, not one each
+    expect(screen.getAllByRole("button", { name: /段数の上げ方 の説明/ })).toHaveLength(1);
+    expect(screen.getByText(/1 段ごとに LP 1 と、基本額の 10%/)).toBeDefined();
     fireEvent.change(screen.getByRole("spinbutton", { name: /地域/ }), { target: { value: "2" } });
     expect(patch).toHaveBeenCalledWith({
       lifestyles: [{ id: "l1", lifestyle_id: "c-l1", months: 1, comforts: 1, area: 2 }],

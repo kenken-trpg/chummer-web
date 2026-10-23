@@ -1,5 +1,6 @@
 "use client";
 import type { UiFn } from "@/lib/i18n";
+import { HelpTip } from "@/components/help/HelpTip";
 
 /**
  * The price of an item the rules leave to the player — `Variable(lo-hi)` in
@@ -22,16 +23,23 @@ export function PriceField({
   if (!range) return null;
   const [lo, hi] = range;
   return (
-    <label title={ui("gear.priceHint", { lo: lo.toLocaleString(), hi: hi.toLocaleString() })}>
-      {ui("gear.price")}
-      <input
-        type="number"
-        aria-label={`${label}: ${ui("gear.price")}`}
-        min={lo}
-        max={hi}
-        value={value}
-        onChange={(e) => onChange(Math.max(lo, Math.min(hi, Number(e.target.value) || 0)))}
-      />
-    </label>
+    <HelpTip
+      label={ui("help.open", { label: `${label}: ${ui("gear.price")}` })}
+      lines={[
+        { label: ui("help.gear.price", { lo: lo.toLocaleString(), hi: hi.toLocaleString() }) },
+      ]}
+    >
+      <label>
+        {ui("gear.price")}
+        <input
+          type="number"
+          aria-label={`${label}: ${ui("gear.price")}`}
+          min={lo}
+          max={hi}
+          value={value}
+          onChange={(e) => onChange(Math.max(lo, Math.min(hi, Number(e.target.value) || 0)))}
+        />
+      </label>
+    </HelpTip>
   );
 }

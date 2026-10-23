@@ -1,5 +1,6 @@
 "use client";
 import { AddonSelect } from "@/components/character/AddonSelect";
+import { HelpTip } from "@/components/help/HelpTip";
 import type { TabPanelProps } from "@/components/character/types";
 import { dropTree } from "@/lib/character/gear";
 import { availBit, limitModifierLine, specialArmorLine } from "@/lib/character/format";
@@ -57,7 +58,7 @@ export function ArmorModRow({
         </>
       )}
       {mod.rating_max > 1 && !mod.included ? (
-        <label title={ui("common.ratingHint")}>
+        <label>
           {ui("common.rating")}
           <input
             type="number"
@@ -73,29 +74,34 @@ export function ArmorModRow({
         </label>
       ) : null}
       {mod.select_armor ? (
-        <label title={ui("gear.stackWithHint")}>
-          {" "}
-          {ui("gear.stackWith")}{" "}
-          <select
-            aria-label={ui("gear.stackWith")}
-            value={mod.stack_with || ""}
-            onChange={(e) =>
-              patch({
-                armor_mods: editRow(ch.armor_mods, mod.id, { stack_with: e.target.value }),
-              })
-            }
-          >
-            <option value="">—</option>
-            {stackOptions.map((name) => (
-              <option key={name} value={name}>
-                {tr(name)}
-              </option>
-            ))}
-          </select>
-        </label>
+        <HelpTip
+          label={ui("help.open", { label: ui("gear.stackWith") })}
+          lines={[{ label: ui("help.gear.stackWith") }]}
+        >
+          <label>
+            {" "}
+            {ui("gear.stackWith")}{" "}
+            <select
+              aria-label={ui("gear.stackWith")}
+              value={mod.stack_with || ""}
+              onChange={(e) =>
+                patch({
+                  armor_mods: editRow(ch.armor_mods, mod.id, { stack_with: e.target.value }),
+                })
+              }
+            >
+              <option value="">—</option>
+              {stackOptions.map((name) => (
+                <option key={name} value={name}>
+                  {tr(name)}
+                </option>
+              ))}
+            </select>
+          </label>
+        </HelpTip>
       ) : null}
       {mod.has_wireless ? (
-        <label title={ui("common.wirelessHint")}>
+        <label>
           {" "}
           <input
             type="checkbox"
@@ -157,7 +163,7 @@ export function CarriedGearRow({
         </>
       )}
       {gear.rating_max > 1 && !gear.included ? (
-        <label title={ui("common.ratingHint")}>
+        <label>
           {ui("common.rating")}
           <input
             type="number"

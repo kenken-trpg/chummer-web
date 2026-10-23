@@ -397,4 +397,15 @@ export const JA_HELP = {
   "help.construction.add": "Add Attack / Sleaze：DR×2 パック",
   "help.construction.module": "Add Module：2 パック（DT pp.64–66）",
   "help.construction.frozen": "施工前の機器本体の値で決まり、施工済みにした時点で固定される",
+  "help.gear.price": "この品目の価格は {lo}〜{hi}¥ の範囲で決める",
+  "help.gear.stackWith":
+    "仕立てた相手の防具と一緒に着ると、この防具の +値が相手に上乗せされる（RG p.59）",
+  "help.gear.inUse": "使用中にすると、効果が能力値・イニシアティブ・技能に入る",
+  "help.gear.putInto1": "手持ちの装備の中に入れて持ち歩く",
+  "help.gear.putInto2":
+    "入れ物が複数あると、中身もその数だけ買ったものとして数える（Chummer と同じ）",
+  "help.life.raiseLabel": "段数の上げ方",
+  "help.life.raise": "このライフスタイルの基本値から上げた段数",
+  "help.life.raiseCost":
+    "1 段ごとに LP 1 と、基本額の 10%（その段に価格があれば、それも）がかかる（RF p.219）",
 } as const;

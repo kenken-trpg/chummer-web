@@ -165,7 +165,7 @@ export function CustomDrugMixer({ catalog, character: ch, d, tr, ui, patch }: Ta
                 >
                   {ui("common.add")}
                 </button>
-                <label title={ui("common.qtyHint")}>
+                <label>
                   {ui("common.qty")}
                   <input
                     type="number"
@@ -174,14 +174,19 @@ export function CustomDrugMixer({ catalog, character: ch, d, tr, ui, patch }: Ta
                     onChange={(e) => editDrug(index, { qty: Number(e.target.value) })}
                   />
                 </label>
-                <label title={ui("gear.drugToggleHint")}>
-                  <input
-                    type="checkbox"
-                    checked={Boolean(drug.active)}
-                    onChange={(e) => editDrug(index, { active: e.target.checked })}
-                  />
-                  {ui("gear.inUse")}
-                </label>
+                <HelpTip
+                  label={ui("help.open", { label: ui("gear.inUse") })}
+                  lines={[{ label: ui("help.gear.inUse") }]}
+                >
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={Boolean(drug.active)}
+                      onChange={(e) => editDrug(index, { active: e.target.checked })}
+                    />
+                    {ui("gear.inUse")}
+                  </label>
+                </HelpTip>
               </div>
             </div>
             <button
