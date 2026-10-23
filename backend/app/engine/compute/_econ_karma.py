@@ -181,6 +181,9 @@ def _karma_totals(ctx: Ctx) -> None:
                 baseline = snapshot_career_baseline(ctx.state)
                 baseline.attributes = {k: int(v) for k, v in ctx.bought_ratings.items() if k != "ESS"}
                 ctx.state.career_baseline = baseline
+            if baseline.special_drop is None:
+                baseline.special_drop = _special_drop_now(ctx)
+            now = _special_drop_now(ctx)
             ctx.career_adv_karma, ctx.career_adv_lines = career_raise_karma(
                 ctx.state,
                 baseline,
@@ -189,6 +192,8 @@ def _karma_totals(ctx: Ctx) -> None:
                 effects=ctx.effects,
                 ratings=ctx.bought_ratings,
                 minimums=_attribute_minimums(ctx),
+                # never more than now: cyberware taken out gives nothing back
+                value_drop={key: min(drop, now.get(key, 0)) for key, drop in baseline.special_drop.items()},
             )
             ctx.karma_spent += ctx.career_adv_karma
 
@@ -199,6 +204,12 @@ def _priced_ratings(ctx: Ctx) -> dict[str, int]:
     counts from `TotalBase`), so a cyber-laden adept's karma levels are the
     cheap ones."""
     return {key: rating - ctx.special_min_drop.get(key, 0) for key, rating in ctx.bought_ratings.items()}
+
+
+def _special_drop_now(ctx: Ctx) -> dict[str, int]:
+    """How far essence loss holds MAG / RES / DEP below what was bought."""
+    drops = {key: ctx.bought_ratings[key] - ctx.ratings.get(key, 0) for key in ctx.special_floors}
+    return {key: drop for key, drop in drops.items() if drop > 0 and key in ctx.bought_ratings}
 
 
 def _attribute_minimums(ctx: Ctx) -> dict[str, int]:

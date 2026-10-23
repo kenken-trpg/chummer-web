@@ -12,8 +12,8 @@ MAG 1 for 5 karma), `SCSi` and `Bastion` (technomancers, ESS 1, RES 3 + 1:
 RES 1 for 5).
 """
 
-from app.engine import compute
-from app.models import CyberwareInstall, SettingsState
+from app.engine import compute, snapshot_career_baseline
+from app.models import CharacterState, CyberwareInstall, SettingsState
 from tests.engine_support import DATAJACK, WIRED, _adept
 
 
@@ -63,3 +63,36 @@ def test_a_karma_build_prices_from_the_lowered_minimum_too() -> None:
     # MAG 1 -> 3 is 10 + 15; ESS 3 takes the minimum to 0, so 5 + 10 for MAG 2
     assert (plain["totals"]["MAG"], _attr_karma(plain)) == (3, 25)
     assert (wired["totals"]["MAG"], _attr_karma(wired)) == (2, 15)
+
+
+def _career_adept(cyberware: list[CyberwareInstall]) -> CharacterState:
+    state = _adept("ess-career", "D", cyberware=cyberware)
+    state.attributes = {**state.attributes, "MAG": 3}
+    state.attribute_karma = {"MAG": 1}
+    state = compute(state)
+    state.career = True
+    state.career_baseline = snapshot_career_baseline(state)
+    return state
+
+
+def test_a_career_raise_is_priced_from_the_value_after_the_loss() -> None:
+    # Wired Reflexes 2: ESS 3, MAG 3 bought stands at 1
+    state = compute(_career_adept([CyberwareInstall(ware_id=WIRED, rating=2)]))
+    assert state.career_baseline is not None
+    assert state.career_baseline.special_drop == {"MAG": 2}
+    state.attributes = {**state.attributes, "MAG": 4}
+    out = compute(state)
+    assert out.derived["totals"]["MAG"] == 2
+    # Chummer's UpgradeKarmaCost: (1 + 1) x 5, not the bought 4 x 5
+    assert out.derived["career_advancement_karma"] == 10
+
+
+def test_cyberware_after_a_raise_gives_no_karma_back() -> None:
+    state = compute(_career_adept([]))
+    state.attributes = {**state.attributes, "MAG": 4}
+    raised = compute(state)
+    assert raised.derived["career_advancement_karma"] == 20
+    raised.cyberware = [CyberwareInstall(ware_id=DATAJACK)]
+    out = compute(raised)
+    assert out.derived["totals"]["MAG"] == 3
+    assert out.derived["career_advancement_karma"] == 20

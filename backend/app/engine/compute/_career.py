@@ -136,11 +136,14 @@ def career_raise_karma(
     effects: EffectsDict | None = None,
     ratings: dict[str, int] | None = None,
     minimums: dict[str, int] | None = None,
+    value_drop: dict[str, int] | None = None,
 ) -> tuple[int, list[dict[str, Any]]]:
     """Karma to raise Priority/SumToTen characters from chargen snapshot to current ratings.
 
     ``ratings`` are the attribute ratings compute settled on (``state.attributes``
-    otherwise), the same ones the baseline is taken from."""
+    otherwise), the same ones the baseline is taken from. ``value_drop`` is
+    how far essence loss holds MAG / RES / DEP below that rating: Chummer's
+    `UpgradeKarmaCost` prices a raise from the value after the loss."""
     total = 0
     lines: list[dict[str, Any]] = []
     eff = effects or empty_effects()
@@ -152,6 +155,7 @@ def career_raise_karma(
         from_r = int(base_attrs.get(key, rating))
         to_r = int(rating or 0)
         shift = alternate_attribute_shift(key, int((minimums or {}).get(key) or 1))
+        shift += int((value_drop or {}).get(key) or 0)
         cost = _karma_cost_with_category_mods(
             from_r - shift,
             to_r - shift,
