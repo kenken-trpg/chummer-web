@@ -83,6 +83,8 @@ def test_no_form_chosen_is_the_human_form(method: str, cost: int) -> None:
     assert all(q["free"] and q["karma"] == 0 for q in grants.values())
     bite = [w for w in out.derived["weapons"] if w.get("natural")]
     assert [(w["name"], w["damage"]) for w in bite] == [("Bite (Vulpine Form)", "2P")]
+    # the animal's bite, not a plain Human's, though the bonus sits on the form
+    assert bite[0]["natural_source"] == "Shapeshifter: Vulpine"
 
 
 def test_attributes_are_checked_against_the_animal_range() -> None:
