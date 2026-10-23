@@ -7,6 +7,7 @@ import { sourceText } from "@/lib/character/books";
 import {
   dropSkillPicksForPrefix,
   qualityBlockReason,
+  grantedLevels,
   qualityPickState,
   setQualityLevel,
   type QualityReqCtx,
@@ -47,6 +48,7 @@ export function QualityPickerRow({
   careerPricing: boolean;
 }) {
   const [level, setLevel] = useState<number | null>(null);
+  const granted = grantedLevels(ch.derived.qualities || [], q);
   const {
     ownedCount,
     maxTakes,
@@ -57,7 +59,7 @@ export function QualityPickerRow({
     hasLevels,
     levelMax,
     replaces,
-  } = qualityPickState(q, ch.quality_ids, catalog.qualities);
+  } = qualityPickState(q, ch.quality_ids, catalog.qualities, granted);
   const selectedLevel = Math.max(1, Math.min(level ?? (ownedCount || 1), levelMax || 1));
   const increasing = hasLevels ? selectedLevel > ownedCount : canAddMore;
   const shownKarma = q.karma * (hasLevels ? selectedLevel : 1);
@@ -89,6 +91,7 @@ export function QualityPickerRow({
           {ownedCount > 0 && (maxTakes == null || maxTakes > 1)
             ? ui("qual.taken", { count: ownedCount })
             : ""}
+          {granted ? ui("qual.grantedLevels", { count: granted }) : ""}
           {sharedCap != null
             ? ui("qual.sharedLimit", {
                 names: [...siblings].map(tr).join(ui("common.listSep")),

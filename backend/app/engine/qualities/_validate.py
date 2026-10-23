@@ -21,6 +21,7 @@ from ..constants import (
 from ..lookups import critter_power_label
 from ..requirements import requirement_tree_met
 from ._context import as_before_taking
+from ._gather import is_free_take
 from ._limits import counts_toward_quality_limit, surge_metagenic_limit
 from ._picks import (
     _quality_extra_key_owned,
@@ -74,7 +75,7 @@ def apply_quality_rules(
     negative_gain = 0
     positive_spend = 0
     for spec in qualities:
-        is_free = bool(spec.get("onlyprioritygiven") or spec["id"] in free_ids)
+        is_free = bool(spec.get("onlyprioritygiven") or is_free_take(spec, free_ids))
         # Chummer's `PositiveQualityLimitKarma` / `NegativeQualityLimitKarma`
         counted = not is_free and counts_toward_quality_limit(spec, surge)
         if counted and spec["karma"] < 0:

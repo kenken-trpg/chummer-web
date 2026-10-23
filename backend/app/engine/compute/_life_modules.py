@@ -322,8 +322,13 @@ def _raise_ratings(ctx: Ctx, bonuses: dict[str, dict[str, int]]) -> None:
 
 
 def _merge_rated_qualities(ctx: Ctx, granted: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Add up rated qualities granted by several modules, refusing those the player
-    already bought or that go over the quality's cap."""
+    """Add up rated qualities granted by several modules, refusing those that,
+    with the levels the player bought beside them, go over the quality's cap.
+
+    The granted levels are free and the bought ones paid (Chummer's
+    `AddQuality` makes one free quality per granted level, and the limit
+    counts both).
+    """
     rated: dict[str, dict[str, Any]] = {}
     for quality in granted:
         if "life_rating" in quality:
@@ -331,14 +336,14 @@ def _merge_rated_qualities(ctx: Ctx, granted: list[dict[str, Any]]) -> list[dict
             previous = rated.get(qid, {}).get("life_rating", 0)
             rated[qid] = {**quality, "life_rating": previous + quality["life_rating"]}
     merged = [q for q in granted if q["id"] not in rated]
+    bought = ctx.life["original"]["quality_ids"]
     for qid, quality in rated.items():
-        if qid in ctx.life["original"]["quality_ids"]:
-            ctx.err("engine.life.ratedQualityConflict", name=term(quality["name"]))
-        elif quality["life_rating"] > quality["max_takes"]:
+        total = quality["life_rating"] + bought.count(qid)
+        if total > quality["max_takes"]:
             ctx.err(
                 "engine.life.ratingCap",
                 name=term(quality["name"]),
-                rating=quality["life_rating"],
+                rating=total,
                 cap=quality["max_takes"],
             )
         else:

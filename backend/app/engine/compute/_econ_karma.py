@@ -15,7 +15,7 @@ from ..karma import (
     skill_karma_cost,
     skill_levels_karma_cost,
 )
-from ..qualities import apply_cost_discounts, counts_toward_quality_limit, surge_metagenic_limit
+from ..qualities import apply_cost_discounts, counts_toward_quality_limit, is_free_take, surge_metagenic_limit
 from ._career import (
     career_raise_karma,
     snapshot_career_baseline,
@@ -33,7 +33,7 @@ def _karma_totals(ctx: Ctx) -> None:
     # `<costdiscount>` decides what a quality costs, so before the sum
     ctx.qualities = apply_cost_discounts(ctx.qualities, quality_req_ctx(ctx))
     paid_qualities = [
-        q for q in ctx.qualities if not q.get("onlyprioritygiven") and q["id"] not in ctx.free_quality_ids
+        q for q in ctx.qualities if not q.get("onlyprioritygiven") and not is_free_take(q, ctx.free_quality_ids)
     ]
     positive_quality_karma = sum(max(0, int(q["karma"])) for q in paid_qualities)
     negative_quality_karma = sum(max(0, -int(q["karma"])) for q in paid_qualities)
