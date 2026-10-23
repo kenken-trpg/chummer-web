@@ -7,6 +7,8 @@ import {
   qualityDisplayRows,
   qualityLevelMax,
   qualityPickState,
+  qualityTakeIndex,
+  removeQualityTake,
   setQualityLevel,
   qualityTreeMet,
   reqNodeMet,
@@ -213,6 +215,44 @@ describe("quality levels", () => {
     expect(setQualityLevel(ids, "ind", 2)).toEqual(["ind", "other", "ind", "third"]);
     expect(setQualityLevel(ids, "ind", 4)).toEqual([...ids, "ind"]);
     expect(setQualityLevel(ids, "ind", 0)).toEqual(["other", "third"]);
+  });
+});
+
+describe("a quality whose every take has its own text", () => {
+  const take = (n: number, extra: string) => ({
+    id: "rof",
+    name: "Pilot Origins",
+    karma: 8,
+    has_levels: true,
+    category: "Positive",
+    source: "DT",
+    extra,
+    extra_key: n ? `rof:take:${n}` : "rof",
+  });
+
+  it("lists each take apart, even a leveled quality's with the same text", () => {
+    expect(qualityDisplayRows([take(0, "A"), take(1, "A"), take(2, "B")])).toHaveLength(3);
+  });
+
+  it("reads which take a key names", () => {
+    expect(qualityTakeIndex("rof", "rof")).toBe(0);
+    expect(qualityTakeIndex("rof", "rof:take:2")).toBe(2);
+  });
+
+  it("drops the one take and moves the later texts down", () => {
+    const extras = { rof: "Ares", "rof:take:1": "Horizon", "rof:take:2": "NeoNET", other: "keep" };
+    expect(removeQualityTake(["rof", "other", "rof", "rof"], extras, "rof", 1)).toEqual({
+      quality_ids: ["rof", "other", "rof"],
+      quality_extras: { rof: "Ares", "rof:take:1": "NeoNET", other: "keep" },
+    });
+    expect(removeQualityTake(["rof", "rof"], { "rof:take:1": "Horizon" }, "rof", 0)).toEqual({
+      quality_ids: ["rof"],
+      quality_extras: { rof: "Horizon" },
+    });
+    expect(removeQualityTake(["rof"], { rof: "Ares", other: "keep" }, "rof", 0)).toEqual({
+      quality_ids: [],
+      quality_extras: { other: "keep" },
+    });
   });
 });
 

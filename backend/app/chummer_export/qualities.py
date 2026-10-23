@@ -18,9 +18,10 @@ from ..engine.constants import (
     quality_contact_extra_key,
     quality_optional_power_extra_key,
     quality_spirit_category_extra_key,
+    quality_take_extra_key,
 )
 from ..engine.lookups import critter_power_label
-from ..engine.qualities import _quality_needs_spell_category, _quality_needs_spirit_category
+from ..engine.qualities import _quality_needs_spell_category, _quality_needs_spirit_category, has_extra_per_take
 from ..models import CharacterState
 from ._common import _Ctx, _Names, _sub, improvements_of
 from .life_modules import export_life_modules
@@ -34,13 +35,18 @@ def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ct
     ids_by_name = {str(row["name"]): str(row["id"]) for row in catalog()["qualities"]}
     spell_limits: list[tuple[str, str]] = []
     granted: list[tuple[str, str]] = []  # (granting quality id, granted quality's guid)
+    takes: dict[str, int] = {}
     for qid in state.quality_ids:
         q = _sub(quals, "quality")
         _sub(q, "sourceid", qid)
         _sub(q, "name", names["quality"].get(qid, ""))
+        take = takes.get(qid, 0)
+        takes[qid] = take + 1
         extra, spell_category = _quality_extra_out(
             specs.get(qid) or {}, qid, state.quality_extras, {c.id: c.name for c in state.contacts}
         )
+        if take and has_extra_per_take(specs.get(qid) or {}):
+            extra = state.quality_extras.get(quality_take_extra_key(qid, take), "")
         if spell_category:
             _sub(q, "guid", qid)
             spell_limits.append((qid, spell_category))

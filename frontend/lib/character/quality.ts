@@ -15,7 +15,8 @@ export function qualityDisplayRows(
   const groups = new Map<string, QualityDisplayRow>();
   const result: QualityDisplayRow[] = [];
   for (const row of rows) {
-    if (!(row.has_levels ?? byId.get(row.id)?.has_levels)) {
+    // a take with its own text (Pilot Origins for two vehicles) is a row of its own
+    if (row.extra_key || !(row.has_levels ?? byId.get(row.id)?.has_levels)) {
       result.push({ ...row });
       continue;
     }
@@ -152,6 +153,39 @@ export function setQualityLevel(ids: string[], id: string, level: number): strin
   if (level >= owned) return [...ids, ...Array<string>(level - owned).fill(id)];
   let kept = 0;
   return ids.filter((item) => item !== id || ++kept <= level);
+}
+
+const TAKE_MARKER = ":take:";
+
+/** Which take of its quality a row's `extra_key` names: 0 for the id itself. */
+export function qualityTakeIndex(id: string, extraKey: string): number {
+  return extraKey.startsWith(`${id}${TAKE_MARKER}`)
+    ? Number(extraKey.slice(id.length + TAKE_MARKER.length))
+    : 0;
+}
+
+/**
+ * Drop one take of a quality whose every take has its own text, and move the
+ * later takes' texts down a place — the engine numbers the takes in order, so
+ * leaving them put would hand the third megacorp to the second Records on File.
+ */
+export function removeQualityTake(
+  ids: string[],
+  extras: Record<string, string>,
+  id: string,
+  take: number,
+): { quality_ids: string[]; quality_extras: Record<string, string> } {
+  let seen = 0;
+  const quality_ids = ids.filter((item) => item !== id || seen++ !== take);
+  const owned = ids.filter((item) => item === id).length;
+  const key = (n: number) => (n === 0 ? id : `${id}${TAKE_MARKER}${n}`);
+  const quality_extras = { ...extras };
+  for (let n = take; n < owned; n++) {
+    const next = extras[key(n + 1)];
+    if (next) quality_extras[key(n)] = next;
+    else delete quality_extras[key(n)];
+  }
+  return { quality_ids, quality_extras };
 }
 
 export type QualityReqCtx = {

@@ -12,7 +12,7 @@ from ..constants import (
     quality_spirit_category_extra_key,
 )
 from ..lookups import critter_power_label, critter_power_rows
-from ..qualities import _quality_has_selectside, is_free_take, quality_needs_extra
+from ..qualities import _quality_has_selectside, has_extra_per_take, is_free_take, quality_needs_extra, take_extra_keys
 from ._shapeshifter import metahuman_form
 from .context import Ctx
 from .derived_types import _MetatypeInfo
@@ -67,6 +67,9 @@ def _effective_attr_spec(
 
 def quality_rows(ctx: Ctx) -> list[dict[str, Any]]:
     """``derived["qualities"]``: one row per taken quality, in order."""
+    extra_keys = take_extra_keys(
+        ctx.qualities, lambda q: bool(q.get("onlyprioritygiven") or is_free_take(q, ctx.free_quality_ids))
+    )
     return [
         {
             "id": q["id"],
@@ -76,7 +79,9 @@ def quality_rows(ctx: Ctx) -> list[dict[str, Any]]:
             "source": q["source"],
             "has_levels": bool(q.get("has_levels")),
             "needs_extra": quality_needs_extra(q),
-            "extra": ctx.state.quality_extras.get(q["id"]) or "",
+            "extra": ctx.state.quality_extras.get(extra_key) or "",
+            # where this take's own text goes (Records on File, twice)
+            **({"extra_key": extra_key} if has_extra_per_take(q) else {}),
             "spirit_extra": ctx.state.quality_extras.get(quality_spirit_category_extra_key(q["id"])) or "",
             "extra_kind": q.get("extra_kind"),
             "select_options": list(q.get("select_options") or []),
@@ -105,7 +110,7 @@ def quality_rows(ctx: Ctx) -> list[dict[str, Any]]:
             # taken after chargen: what it cost then (SR5 p.107)
             **({"career_cost": cost} if (cost := _nth(ctx.quality_career_costs, idx)) is not None else {}),
         }
-        for idx, q in enumerate(ctx.qualities)
+        for idx, (q, extra_key) in enumerate(zip(ctx.qualities, extra_keys, strict=True))
     ]
 
 

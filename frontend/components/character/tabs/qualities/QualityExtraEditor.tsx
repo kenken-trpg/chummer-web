@@ -47,6 +47,7 @@ export function QualityExtraEditor({
     id: string;
     name: string;
     needs_extra?: boolean;
+    extra_key?: string;
     extra_kind?: string | null;
     select_options?: string[];
     spirit_options?: string[];
@@ -267,19 +268,21 @@ export function QualityExtraEditor({
     );
   }
   if (kind === "text" || q.needs_extra) {
+    // Records on File taken twice: each take keeps its own text
+    const textKey = q.extra_key ?? q.id;
     if (!options.length) {
       // what the box is for varies by quality — an allergen, a drug, a code
       // of honour — and a single prompt named one quality's examples for all
       const prompt = ui(qualityPlaceholder(q.name));
       return (
-        <ExtraText extras={extras} storeKey={q.id} placeholder={prompt} name={named(prompt)} />
+        <ExtraText extras={extras} storeKey={textKey} placeholder={prompt} name={named(prompt)} />
       );
     }
     return (
       <ExtraRow>
         <ExtraSelect
           extras={extras}
-          storeKey={q.id}
+          storeKey={textKey}
           named={named}
           prompt={ui("quality.target")}
           options={options}
@@ -288,7 +291,7 @@ export function QualityExtraEditor({
         />
         <ExtraText
           extras={extras}
-          storeKey={q.id}
+          storeKey={textKey}
           placeholder={ui("quality.orType")}
           name={named(ui("quality.targetFree"))}
         />

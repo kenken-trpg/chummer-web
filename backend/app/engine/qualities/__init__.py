@@ -43,7 +43,9 @@ from ._picks import (
     _quality_limb_slot,
     _quality_needs_spell_category,
     _quality_needs_spirit_category,
+    has_extra_per_take,
     quality_needs_extra,
+    take_extra_keys,
 )
 from ._sides import resolve_quality_sides
 from ._validate import apply_quality_rules
@@ -58,6 +60,7 @@ __all__ = [
     "_quality_needs_spirit_category",
     "apply_cost_discounts",
     "apply_quality_rules",
+    "has_extra_per_take",
     "bind_action_dice_pools",
     "bind_select_powers",
     "counts_toward_quality_limit",
@@ -75,5 +78,6 @@ __all__ = [
     "resolve_quality_sides",
     "sanitize_quality_ids",
     "surge_metagenic_limit",
+    "take_extra_keys",
     "tradition_quality_grants",
 ]

@@ -30,6 +30,7 @@ from ._picks import (
     _quality_needs_spell_category,
     _quality_needs_spirit_category,
     quality_needs_extra,
+    take_extra_keys,
 )
 
 
@@ -63,18 +64,22 @@ def apply_quality_rules(
     free_negative_karma: int = 0,
     restriction: dict[str, list[str]] | None = None,
 ) -> int:
-    owned = {item["id"] for item in qualities}
+    free_ids = set(free_quality_ids)
+    extra_keys = take_extra_keys(
+        qualities, lambda spec: bool(spec.get("onlyprioritygiven") or is_free_take(spec, free_ids))
+    )
+    # a later take's key only while that take is there
+    owned = {item["id"] for item in qualities} | set(extra_keys)
     extras = {
         key: str(value).strip()
         for key, value in (state.quality_extras or {}).items()
         if _quality_extra_key_owned(key, owned) and str(value).strip()
     }
     state.quality_extras = extras
-    free_ids = set(free_quality_ids)
     surge = surge_metagenic_limit(qualities) > 0
     negative_gain = 0
     positive_spend = 0
-    for spec in qualities:
+    for spec, extra_key in zip(qualities, extra_keys, strict=True):
         is_free = bool(spec.get("onlyprioritygiven") or is_free_take(spec, free_ids))
         # Chummer's `PositiveQualityLimitKarma` / `NegativeQualityLimitKarma`
         counted = not is_free and counts_toward_quality_limit(spec, surge)
@@ -82,7 +87,7 @@ def apply_quality_rules(
             negative_gain += -int(spec["karma"])
         if counted and spec["karma"] > 0:
             positive_spend += int(spec["karma"])
-        _check_missing_pick(spec, extras, errors, warnings)
+        _check_missing_pick(spec, extras, errors, warnings, extra_key)
         _check_pick_values(spec, extras, errors)
         if is_free or career:
             # `<required>` / `<forbidden>` are a purchase-time gate, not a
@@ -103,14 +108,18 @@ def apply_quality_rules(
 
 
 def _check_missing_pick(
-    spec: dict[str, Any], extras: dict[str, str], errors: list[Notice], warnings: list[Notice] | None
+    spec: dict[str, Any],
+    extras: dict[str, str],
+    errors: list[Notice],
+    warnings: list[Notice] | None,
+    extra_key: str,
 ) -> None:
     """A pick the quality needs and the character has not made yet."""
     if str(spec.get("extra_kind") or "") == "add_spirit":
         count = max(1, int(spec.get("add_spirit_count") or 1))
         if any(quality_addspirit_extra_key(spec["id"], idx) not in extras for idx in range(count)):
             errors.append(notice("engine.qualities.pickAddSpirit", name=term(str(spec["name"]))))
-    elif quality_needs_extra(spec) and spec["id"] not in extras:
+    elif quality_needs_extra(spec) and extra_key not in extras:
         if _quality_has_selectside(spec):
             errors.append(notice("engine.qualities.pickSide", name=term(str(spec["name"]))))
         elif _quality_has_actiondicepool(spec):
