@@ -23,7 +23,7 @@ test("a commlink goes into the headware Commlink and back out", async ({ page, r
   });
   await page.goto("/");
   await waitForEditor(page);
-  await page.getByLabel("読込 (JSON/.chum5/.xlsx)").setInputFiles({
+  await page.getByLabel("読込 (JSON/.chum5/.xlsx)", { exact: true }).setInputFiles({
     name: "implant.json",
     mimeType: "application/json",
     buffer: Buffer.from(JSON.stringify(state)),

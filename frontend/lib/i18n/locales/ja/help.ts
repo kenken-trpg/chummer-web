@@ -424,4 +424,43 @@ export const JA_HELP = {
   "help.side.scBurn": "ストリートの評判を 2 点燃やして、悪名を 1 点下げる（SR5 p.373）",
   "help.qual.rebaseline": "作成時のミスを、キャリアに入ってから直したときに使う",
   "help.qual.rebaselineEffect": "キャリアでの資質の取得・買い戻しの請求を、すべて取り消す",
+  "help.toolbar.import":
+    "読めるのは 4 種類だけです：このアプリで書き出した JSON ／ Foundry VTT（shadowrun5e）のアクターを Export Data した JSON ／ Chummer5a の .chum5・.chum5lz ／ シャドウラン5th 日本版非公式wiki で紹介されている、音の兔（ねのうさ）様の「［SR5］キャラシテンプレート」 を .xlsx で書き出したもの。一般の Excel ブックや他の JSON は読めません",
+  "help.toolbar.share":
+    "読み取り専用の共有リンクをコピー。キャラは URL に埋め込まれ、サーバーには保存されません（ポートレートは含みません）",
+  "help.toolbar.exportChum5": "Chummer5a で開ける .chum5（XML）で書き出す",
+  "help.toolbar.exportXlsx":
+    "シャドウラン5th 日本版非公式wiki で紹介されている、音の兔（ねのうさ）様の「［SR5］キャラシテンプレート」 と同じシート構成・同じ入力セルの .xlsx で書き出す（テンプレート自体は同梱していません）",
+  "help.toolbar.exportFvtt":
+    "Foundry VTT（shadowrun5e 0.34.5）の Chummer/Data Import で読める JSON で書き出す。アクターはシステム側が組み立てます。メタタイプ固有の生得パワーは品目にならないので、書き出す前に一覧で知らせます",
+  "help.toolbar.cocofolia":
+    "ココフォリアのコマ JSON をコピー（貼り付けで取り込み）。テストは BCDice の ShadowRun5",
+  "help.toolbar.udonarium":
+    "ユドナリウムのキャラクターコマを .zip で書き出します（そのまま卓にドロップ）。チャットパレットは BCDice の ShadowRun5 で、能力値・武器・魔法・マトリックスは変数なので卓で修正値をいじれます。",
+  "help.toolbar.chatPalette": "チャットパレット（BCDice ShadowRun5 のコマンド一覧）をコピー",
+  "help.toolbar.cocoUntrained":
+    "ココフォリア／チャットパレットに、未修得の技能（能力値−1で代用できるもの）と取得済みの知識技能も出す",
+  "help.toolbar.conjured":
+    "束縛済み精霊／登録スプライトを、それぞれ別のココフォリアのコマ（JSON 配列）として書き出す",
+  "help.toolbar.udonariumConjured":
+    "束縛した精霊・登録したスプライト・ヴィークル・ドローンを、1 体 1 コマで書き出します。種類ごとに別の .zip で、ユドナリウムは zip の中の xml を全部読むので、まとめて卓に出ます。",
+  "help.toolbar.career": "作成モードに戻す",
+  "help.toolbar.toCareer": "作成完了 → 残カルマ／新円で成長",
+  "help.toolbar.print":
+    "印刷用レイアウトに切り替えて印刷。ダイアログで「PDF として保存」も選べます",
+  "help.settings.preset": "Chummer 同梱のセッティング。使用ルールブックと作成方式が切り替わります",
+  "help.settings.load":
+    "Chummer の settings フォルダにある .xml か、settings と customdata が入ったフォルダを固めた .zip を読み込みます。ファイルは送信されず、このブラウザにだけ残ります（zip はフォルダを選べない端末 ―― Android など ―― のための入口でもあります）",
+  "help.settings.folder":
+    "settings と customdata が入ったフォルダごと選びます。中のセッティングは全部プルダウンに入り、選んだものに合わせてカスタムデータが結合されます。ファイルはこのブラウザに残り、サーバーには結合結果だけが一時的に置かれます",
+  "help.settings.books": "購入できる項目をルールブックで絞り込みます",
+  "help.settings.forget": "{name} をこのブラウザから削除します（キャラクターは消えません）",
+  "help.settings.customDataPick":
+    "settings と customdata が並んでいるフォルダを、フォルダごと選びます。セッティングファイル単体ではカスタムデータは付いてきません",
+  "help.settings.booksAllOn": "すべてのルールブックにチェックを入れます",
+  "help.settings.booksAllOff":
+    "基本ルールブック（SR5）だけを残して、ほかのチェックをすべて外します",
+  "help.toolbar.sheetUrl":
+    "シャドウラン5th 日本版非公式wiki で紹介されている、音の兔（ねのうさ）様の「［SR5］キャラシテンプレート」 を、Google スプレッドシートの URL から直接読み込みます。読めるのはこのテンプレートのシートだけで、他のスプレッドシートや他サイトの URL は読めません",
+  "help.settings.booksBulkLabel": "まとめて切り替え",
 } as const;

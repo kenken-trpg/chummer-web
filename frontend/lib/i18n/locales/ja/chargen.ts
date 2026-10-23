@@ -345,8 +345,6 @@ export const JA_CHARGEN = {
   "prio.karmaSlider": "カルマ→新円（{k}K = {nuyen}¥）",
   "prio.leftoverSliderLabel": "新円に回す残カルマ",
   "settings.folder": "スタイル一式を読み込む",
-  "settings.folderHint":
-    "settings と customdata が入ったフォルダごと選びます。中のセッティングは全部プルダウンに入り、選んだものに合わせてカスタムデータが結合されます。ファイルはこのブラウザに残り、サーバーには結合結果だけが一時的に置かれます",
   "settings.customDataFailed": "カスタムデータを読み込めませんでした。",
   "settings.zipNotAZip":
     "zip として読めませんでした。拡張子が .zip でも中身が壊れていることがあります。",
@@ -368,16 +366,11 @@ export const JA_CHARGEN = {
   "settings.customDataNeeded":
     "このセッティングはカスタムデータ（ハウスルール）を {count} 件参照しています。読み込むまで、そこでの追加・変更はいっさい効きません（素のデータで計算されます）。",
   "settings.customDataPick": "customdata ごと読み込む",
-  "settings.customDataPickHint":
-    "settings と customdata が並んでいるフォルダを、フォルダごと選びます。セッティングファイル単体ではカスタムデータは付いてきません",
   "settings.groupLoaded": "読み込んだファイル",
   "settings.groupShipped": "Chummer 同梱",
   "settings.load": "セッティングを読み込む",
-  "settings.loadHint":
-    "Chummer の settings フォルダにある .xml か、settings と customdata が入ったフォルダを固めた .zip を読み込みます。ファイルは送信されず、このブラウザにだけ残ります（zip はフォルダを選べない端末 ―― Android など ―― のための入口でもあります）",
   "settings.loadFailed": "セッティングファイルを読み込めませんでした。",
   "settings.forget": "このセッティングを削除",
-  "settings.forgetHint": "{name} をこのブラウザから削除します（キャラクターは消えません）",
   "settings.knob.allowbiowaresuites":
     "バイオウェア・スイートの使用を認める（このアプリはスイートを扱わないので、まとめ買いの項目が出てきません）",
   "settings.knob.alloweditpartofbaseweapon":
@@ -437,17 +430,13 @@ export const JA_CHARGEN = {
     "ほかに {count} 件、このアプリの計算に関係しない設定があります: {items}",
   "settings.preset": "セッティング",
   "settings.presetNone": "制限なし（全ルールブック）",
-  "settings.presetHint": "Chummer 同梱のセッティング。使用ルールブックと作成方式が切り替わります",
   "settings.booksAll": "全ルールブックが対象",
   "settings.booksCount": "使用ルールブック {count} / {total}",
   "settings.custom": "カスタム",
   "settings.booksShow": "ルールブックを選ぶ",
   "settings.booksHide": "閉じる",
   "settings.booksAllOn": "全部オン",
-  "settings.booksAllOnHint": "すべてのルールブックにチェックを入れます",
   "settings.booksAllOff": "全部オフ",
-  "settings.booksAllOffHint": "基本ルールブック（SR5）だけを残して、ほかのチェックをすべて外します",
-  "settings.booksHint": "購入できる項目をルールブックで絞り込みます",
   "settings.booksNote":
     "チェックを外したルールブックの項目は購入一覧に出なくなります。すでに所持している装備・資質は消えません。すべて外すと制限なしに戻ります。",
   "prio.karmaSliderLabel": "新円に回すカルマ",

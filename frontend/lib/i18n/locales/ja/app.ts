@@ -6,9 +6,7 @@ export const JA_APP = {
     "非公式 Shadowrun 5e キャラクター作成。Catalyst / Topps 非提携。データは Chummer5a (GPL-3.0)。",
   "app.footer.author": "制作: {author}",
   "app.footer.repo": "GitHub リポジトリ",
-  "app.footer.repoHint": "ソースコード・不具合報告・要望はこちら（GPL-3.0）",
   "app.footer.manual": "使い方",
-  "app.footer.manualHint": "実画面つきの利用マニュアル（別タブで開きます）",
 
   // accessible names for landmarks — announced by screen readers, never drawn
   "app.footer.license": "GPL-3.0",
@@ -166,65 +164,33 @@ export const JA_APP = {
   "toolbar.careerTag": "（キャリア）",
   "toolbar.newCharacter": "＋ 新規キャラ",
   "toolbar.duplicate": "複製",
-  "toolbar.duplicateHint": "名前を付けて複製",
   "toolbar.delete": "削除",
-  "toolbar.deleteHint": "表示中のキャラクターを削除",
   "toolbar.undo": "↶ 元に戻す",
   "toolbar.undoCount": "↶ 元に戻す（{count}）",
-  "toolbar.undoHint": "元に戻す (Ctrl/⌘+Z)",
   "toolbar.redo": "↷ やり直し",
   "toolbar.redoCount": "↷ やり直し（{count}）",
-  "toolbar.redoHint": "やり直し (Ctrl/⌘+Shift+Z)",
   "toolbar.name": "キャラクター名",
   "toolbar.saveJson": "JSON保存",
   "toolbar.exportMenu": "書き出し",
-  "toolbar.exportMenuHint":
-    "Chummer5a・スプレッドシート・Foundry VTT・ココフォリア・ユドナリウム向けの書き出しとコピー",
   "toolbar.exportChum5": ".chum5書出",
-  "toolbar.exportChum5Hint": "Chummer5a で開ける .chum5（XML）で書き出す",
   "toolbar.exportXlsx": ".xlsx書出",
   "toolbar.sheetUrl": "URLから読込",
-  "toolbar.sheetUrlHint":
-    "シャドウラン5th 日本版非公式wiki で紹介されている、音の兔（ねのうさ）様の「［SR5］キャラシテンプレート」 を、Google スプレッドシートの URL から直接読み込みます。読めるのはこのテンプレートのシートだけで、他のスプレッドシートや他サイトの URL は読めません",
   "toolbar.sheetUrlRead": "読み込む",
   "toolbar.sheetUrlReading": "読み込み中…",
   "toolbar.sheetUrlShared":
     "貼れるのは https://docs.google.com/spreadsheets/d/… の URL で、「リンクを知っている全員」で共有されたシートだけ読めます",
-  "toolbar.exportXlsxHint":
-    "シャドウラン5th 日本版非公式wiki で紹介されている、音の兔（ねのうさ）様の「［SR5］キャラシテンプレート」 と同じシート構成・同じ入力セルの .xlsx で書き出す（テンプレート自体は同梱していません）",
   "toolbar.exportFvtt": "FVTT書出",
   "app.exportReview.fvttTitle": "Foundry向けJSONに含まれない項目が {count} 件あります：",
-  "toolbar.exportFvttHint":
-    "Foundry VTT（shadowrun5e 0.34.5）の Chummer/Data Import で読める JSON で書き出す。アクターはシステム側が組み立てます。メタタイプ固有の生得パワーは品目にならないので、書き出す前に一覧で知らせます",
   "toolbar.import": "読込 (JSON/.chum5/.xlsx)",
-  "toolbar.importHint":
-    "読めるのは 4 種類だけです：このアプリで書き出した JSON ／ Foundry VTT（shadowrun5e）のアクターを Export Data した JSON ／ Chummer5a の .chum5・.chum5lz ／ シャドウラン5th 日本版非公式wiki で紹介されている、音の兔（ねのうさ）様の「［SR5］キャラシテンプレート」 を .xlsx で書き出したもの。一般の Excel ブックや他の JSON は読めません",
-  "toolbar.shareHint":
-    "読み取り専用の共有リンクをコピー。キャラは URL に埋め込まれ、サーバーには保存されません（ポートレートは含みません）",
   "toolbar.udonariumConjured": "ユドナリウム（お供のコマ）",
-  "toolbar.udonariumConjuredHint":
-    "束縛した精霊・登録したスプライト・ヴィークル・ドローンを、1 体 1 コマで書き出します。種類ごとに別の .zip で、ユドナリウムは zip の中の xml を全部読むので、まとめて卓に出ます。",
   "toolbar.udonarium": "ユドナリウム",
-  "toolbar.udonariumHint":
-    "ユドナリウムのキャラクターコマを .zip で書き出します（そのまま卓にドロップ）。チャットパレットは BCDice の ShadowRun5 で、能力値・武器・魔法・マトリックスは変数なので卓で修正値をいじれます。",
   "toolbar.cocofolia": "ココフォリア",
-  "toolbar.cocofoliaHint":
-    "ココフォリアのコマ JSON をコピー（貼り付けで取り込み）。テストは BCDice の ShadowRun5",
   "toolbar.chatPalette": "チャットパレット",
-  "toolbar.chatPaletteHint": "チャットパレット（BCDice ShadowRun5 のコマンド一覧）をコピー",
   "toolbar.cocoUntrained": "未修得技能も",
-  "toolbar.cocoUntrainedHint":
-    "ココフォリア／チャットパレットに、未修得の技能（能力値−1で代用できるもの）と取得済みの知識技能も出す",
   "toolbar.conjured": "精霊コマ",
-  "toolbar.conjuredHint":
-    "束縛済み精霊／登録スプライトを、それぞれ別のココフォリアのコマ（JSON 配列）として書き出す",
   "toolbar.career": "キャリア中",
   "toolbar.toCareer": "作成完了（キャリア）",
-  "toolbar.careerHint": "作成モードに戻す",
-  "toolbar.toCareerHint": "作成完了 → 残カルマ／新円で成長",
   "toolbar.careerConfirm": "作成エラーが残っています。このままキャリアに進みますか？",
-  "toolbar.layoutHint": "シートのレイアウト",
-  "toolbar.printHint": "印刷用レイアウトに切り替えて印刷。ダイアログで「PDF として保存」も選べます",
 
   "toolbar.showSheet": "シート表示",
   "common.selectShort": "選択",

@@ -140,7 +140,7 @@ test("Centaur grants and purchased MAG survive share adoption, reload, undo/redo
   await download.saveAs(path);
   const saved = JSON.parse(readFileSync(path, "utf8")) as Character;
   expect(summary(saved)).toEqual(expected(4));
-  await page.getByLabel("読込 (JSON/.chum5/.xlsx)").setInputFiles(path);
+  await page.getByLabel("読込 (JSON/.chum5/.xlsx)", { exact: true }).setInputFiles(path);
   await expect.poll(async () => (await currentCharacter(page)).id).not.toBe(sourceId);
   await expect.poll(async () => summary(await currentCharacter(page))).toEqual(expected(4));
   await page.reload();
@@ -159,8 +159,8 @@ test("Centaur career keeps purchased MAG as its baseline across growth, undo and
   // This development import has unfinished chargen budgets. Accept the existing
   // warning; this test verifies persistence and prices, not chargen legality.
   page.once("dialog", (dialog) => void dialog.accept());
-  await page.getByRole("button", { name: "作成完了（キャリア）" }).click();
-  await expect(page.getByRole("button", { name: "キャリア中" })).toBeVisible();
+  await page.getByRole("button", { name: "作成完了（キャリア）", exact: true }).click();
+  await expect(page.getByRole("button", { name: "キャリア中", exact: true })).toBeVisible();
   await expect.poll(async () => (await currentCharacter(page)).career).toBe(true);
   const baseline = (await currentCharacter(page)).career_baseline;
   expect(baseline?.attributes?.MAG).toBe(3);
@@ -239,13 +239,13 @@ test("Centaur career keeps purchased MAG as its baseline across growth, undo and
   // The MAG raise records how far essence loss held it down that day (none here).
   expect(saved.career_baseline).toEqual({ ...baseline, raise_drops: { MAG: [0] } });
   expect(saved.derived.career_advancement_karma).toBe(40);
-  await page.getByLabel("読込 (JSON/.chum5/.xlsx)").setInputFiles(path);
+  await page.getByLabel("読込 (JSON/.chum5/.xlsx)", { exact: true }).setInputFiles(path);
   await expect.poll(async () => (await currentCharacter(page)).id).not.toBe(sourceId);
   await expectCareer(4, 4, 40);
   await page.reload();
   await waitForEditor(page);
   await expectCareer(4, 4, 40);
-  await expect(page.getByRole("button", { name: "キャリア中" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "キャリア中", exact: true })).toBeVisible();
 });
 
 test("XLSX warns about Centaur's lost grants and does not import its kick as a purchase", async ({
@@ -260,7 +260,7 @@ test("XLSX warns about Centaur's lost grants and does not import its kick as a p
   page.on("download", (file) => downloads.push(file.suggestedFilename()));
 
   await openExportMenu(page);
-  await page.getByRole("button", { name: ".xlsx書出" }).click();
+  await page.getByRole("button", { name: ".xlsx書出", exact: true }).click();
   const review = page.getByRole("alertdialog");
   await expect(review.locator("li").filter({ hasText: "生得付与" })).toHaveCount(7);
   await expect(review).toContainText("Centaur");
@@ -273,7 +273,7 @@ test("XLSX warns about Centaur's lost grants and does not import its kick as a p
   await expect.poll(async () => summary(await currentCharacter(page))).toEqual(expected(3));
 
   await openExportMenu(page);
-  await page.getByRole("button", { name: ".xlsx書出" }).click();
+  await page.getByRole("button", { name: ".xlsx書出", exact: true }).click();
   await expect(review.locator("li").filter({ hasText: "生得付与" })).toHaveCount(7);
   const [download] = await Promise.all([
     page.waitForEvent("download"),
@@ -283,7 +283,7 @@ test("XLSX warns about Centaur's lost grants and does not import its kick as a p
   await download.saveAs(path);
   // Exporting itself must leave the source Centaur untouched.
   await expect.poll(async () => summary(await currentCharacter(page))).toEqual(expected(3));
-  await page.getByLabel("読込 (JSON/.chum5/.xlsx)").setInputFiles(path);
+  await page.getByLabel("読込 (JSON/.chum5/.xlsx)", { exact: true }).setInputFiles(path);
   await expect.poll(async () => (await currentCharacter(page)).id).not.toBe(sourceId);
   await expect.poll(async () => (await currentCharacter(page)).metatype).toBe("Human");
   const imported = await currentCharacter(page);
@@ -349,7 +349,7 @@ test("Centaur career chum5 reimport preserves balance and prices only subsequent
   ]) {
     const sourceId = (await currentCharacter(page)).id;
     await openExportMenu(page);
-    await page.getByRole("button", { name: ".chum5書出" }).click();
+    await page.getByRole("button", { name: ".chum5書出", exact: true }).click();
     const review = page.getByRole("alertdialog");
     await expect(review).toContainText(`成長費用${growth}Kは残高調整へ移り`);
     const [download] = await Promise.all([
@@ -358,7 +358,7 @@ test("Centaur career chum5 reimport preserves balance and prices only subsequent
     ]);
     const path = test.info().outputPath(`centaur-career-${magic}.chum5`);
     await download.saveAs(path);
-    await page.getByLabel("読込 (JSON/.chum5/.xlsx)").setInputFiles(path);
+    await page.getByLabel("読込 (JSON/.chum5/.xlsx)", { exact: true }).setInputFiles(path);
     await expect.poll(async () => (await currentCharacter(page)).id).not.toBe(sourceId);
     await expectImported(magic, adjustment, balance - (magic === 5 ? 25 : 0));
     await page.reload();

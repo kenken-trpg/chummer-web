@@ -497,4 +497,43 @@ export const EN_HELP = {
   "help.side.scBurn": "Burn two points of Street Cred to take one off Notoriety (SR5 p.373)",
   "help.qual.rebaseline": "For a creation mistake put right after entering career",
   "help.qual.rebaselineEffect": "Cancels every career charge for taking or buying off a quality",
+  "help.toolbar.import":
+    "Four things can be read: this app\u2019s own JSON, a Foundry VTT (shadowrun5e) actor\u2019s Export Data JSON, a Chummer5a .chum5/.chum5lz save, and the 「［SR5］キャラシテンプレート」 Google Sheet by 音の兔 (Nenousa), the one the Japanese Shadowrun 5th unofficial wiki links to, downloaded as .xlsx. An ordinary Excel workbook or any other JSON cannot be read.",
+  "help.toolbar.share":
+    "Copy a read-only share link. The character rides in the URL and is never stored on the server (the portrait is left out).",
+  "help.toolbar.exportChum5": "Export as .chum5 (XML), which Chummer5a can open",
+  "help.toolbar.exportXlsx":
+    "Export an .xlsx with the same sheets and the same input cells as the 「［SR5］キャラシテンプレート」 Google Sheet by 音の兔 (Nenousa), the one the Japanese Shadowrun 5th unofficial wiki links to (the template itself is not bundled)",
+  "help.toolbar.exportFvtt":
+    "Export JSON for Foundry VTT's Chummer/Data Import (shadowrun5e 0.34.5) — the system builds the actor. Innate metatype powers do not become items, so they are listed before the file is written",
+  "help.toolbar.cocofolia":
+    "Copy a Cocofolia piece as JSON (paste to import). Rolls use BCDice's ShadowRun5.",
+  "help.toolbar.udonarium":
+    "Download an Udonarium character piece as .zip — drop it straight on the table. The chat palette targets BCDice ShadowRun5; attributes, weapons, magic and the Matrix are variables, so the table can retune a pool without re-exporting.",
+  "help.toolbar.chatPalette": "Copy the chat palette (BCDice ShadowRun5 commands)",
+  "help.toolbar.cocoUntrained":
+    "Add the unlearned skills you can default on (attribute − 1) and the knowledge skills you have to the Cocofolia piece and chat palette",
+  "help.toolbar.conjured":
+    "Export each bound spirit / registered sprite as its own Cocofolia piece (a JSON array)",
+  "help.toolbar.udonariumConjured":
+    "Download every bound spirit, registered sprite, vehicle and drone as a piece, one .zip per kind. Udonarium reads every xml an archive holds, so each kind lands on the table in one drop.",
+  "help.toolbar.career": "Go back to character creation",
+  "help.toolbar.toCareer": "Finish creation → spend leftover karma / nuyen to advance",
+  "help.toolbar.print":
+    "Switch to the print layout and print. The dialog can also \u201cSave as PDF\u201d.",
+  "help.settings.preset":
+    "A settings file shipped with Chummer. Sets the rulebooks and the build method",
+  "help.settings.load":
+    "Read an .xml from your Chummer settings folder, or a .zip of the folder holding settings and customdata. The file is not stored anywhere but this browser (the zip is also the way in on a device that cannot pick a folder, such as Android)",
+  "help.settings.folder":
+    "Pick the folder holding settings and customdata — the folder itself, not a file. Every settings file in it joins the pulldown, and picking one merges the custom data it names. The files stay in this browser; only the merged result is held on the server, and only for a while",
+  "help.settings.books": "Narrow what can be bought to the books you own",
+  "help.settings.forget": "Remove {name} from this browser (characters are untouched)",
+  "help.settings.customDataPick":
+    "Pick the folder that holds settings and customdata side by side — the folder itself. A settings file on its own does not bring its custom data with it",
+  "help.settings.booksAllOn": "Tick every rulebook",
+  "help.settings.booksAllOff": "Untick every rulebook but the core one (SR5)",
+  "help.toolbar.sheetUrl":
+    "Read the 「［SR5］キャラシテンプレート」 Google Sheet by 音の兔 (Nenousa), the one the Japanese Shadowrun 5th unofficial wiki links to straight from its Google Sheets URL. Only that template\u2019s sheet can be read \u2014 no other spreadsheet and no other site.",
+  "help.settings.booksBulkLabel": "Switching them all",
 } as const;

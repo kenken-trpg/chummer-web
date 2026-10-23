@@ -80,6 +80,14 @@ describe("<Toolbar>", () => {
     expect(toggle.getAttribute("aria-expanded")).toBe("true");
     expect(screen.getByRole("button", { name: ".chum5書出" })).toBeDefined();
 
+    // each format explains itself on its own "?", and opening one keeps the menu
+    const help = screen.getByRole("button", { name: ".xlsx書出 の説明" });
+    fireEvent.click(help);
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    expect(document.getElementById(help.getAttribute("aria-describedby")!)?.textContent).toMatch(
+      /キャラシテンプレート/,
+    );
+
     fireEvent.keyDown(document, { key: "Escape" });
     expect(toggle.getAttribute("aria-expanded")).toBe("false");
     expect(screen.queryByRole("button", { name: ".chum5書出" })).toBeNull();
@@ -100,6 +108,18 @@ describe("<Toolbar>", () => {
     rerender(<Toolbar ed={makeEd()} {...base} tab={"sheet"} sheetLayout={"standard"} />);
     expect(screen.getByRole("button", { name: "印刷 / PDF" })).toBeDefined();
     expect(screen.queryByRole("button", { name: "シート表示" })).toBeNull();
+  });
+
+  it('explains import, share, career and print on their "?", and names undo\'s shortcut', () => {
+    render(<Toolbar ed={makeEd()} {...base} tab={"sheet"} sheetLayout={"standard"} />);
+    for (const name of ["共有リンク の説明", "印刷 / PDF の説明"]) {
+      expect(screen.getByRole("button", { name })).toBeDefined();
+    }
+    expect(screen.getAllByRole("button", { name: /^読込.* の説明$/ })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: /キャリア.* の説明$/ })).toHaveLength(1);
+    expect(screen.getByRole("button", { name: /元に戻す/ }).getAttribute("aria-keyshortcuts")).toBe(
+      "Control+Z Meta+Z",
+    );
   });
 
   it("disables undo / redo when the history is empty", () => {

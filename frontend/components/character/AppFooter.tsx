@@ -14,21 +14,11 @@ export function AppFooter() {
     <footer className="app-footer no-print">
       <span>{ui("app.footer.author", { author: AUTHOR })}</span>
       <span aria-hidden="true">・</span>
-      <a
-        href={MANUAL_URL}
-        target="_blank"
-        rel="noopener noreferrer"
-        title={ui("app.footer.manualHint")}
-      >
+      <a href={MANUAL_URL} target="_blank" rel="noopener noreferrer">
         {ui("app.footer.manual")}
       </a>
       <span aria-hidden="true">・</span>
-      <a
-        href={REPO_URL}
-        target="_blank"
-        rel="noopener noreferrer"
-        title={ui("app.footer.repoHint")}
-      >
+      <a href={REPO_URL} target="_blank" rel="noopener noreferrer">
         {ui("app.footer.repo")}
       </a>
       <span aria-hidden="true">・</span>

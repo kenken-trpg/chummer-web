@@ -280,8 +280,12 @@ describe("SettingsPicker with custom data", () => {
   it("puts the way out in the warning itself", () => {
     setup(withCustom);
 
-    const fix = screen.getByRole("button", { name: "customdata ごと読み込む" });
-    expect(fix.getAttribute("title")).toMatch(/フォルダごと選びます/);
+    expect(screen.getByRole("button", { name: "customdata ごと読み込む" })).toBeDefined();
+    // what picking it does is on its "?", which a phone and a screen reader get too
+    const tip = screen.getByRole("button", { name: "customdata ごと読み込む の説明" });
+    expect(document.getElementById(tip.getAttribute("aria-describedby")!)?.textContent).toMatch(
+      /フォルダごと選びます/,
+    );
   });
 
   it("offers the folder load whether or not the ruleset needs custom data", () => {

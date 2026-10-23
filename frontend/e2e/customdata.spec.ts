@@ -58,7 +58,7 @@ test("custom data the server forgot is re-uploaded from IndexedDB", async ({ pag
 
   await page.goto("/");
   await waitForEditor(page);
-  await page.getByLabel("スタイル一式を読み込む").setInputFiles(table);
+  await page.getByLabel("スタイル一式を読み込む", { exact: true }).setInputFiles(table);
   await expect(page.getByText("カスタムデータを 1 件適用しました")).toBeVisible();
   // the report shows before the patch carrying the hash lands; evicting any
   // sooner races that patch rather than the reload below
