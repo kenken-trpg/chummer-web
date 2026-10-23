@@ -14,9 +14,10 @@ from ..engine.constants import (
     quality_contact_extra_key,
     quality_optional_power_extra_key,
     quality_spirit_category_extra_key,
+    quality_take_extra_key,
 )
 from ..engine.lookups import critter_power_label
-from ..engine.qualities import _quality_needs_spell_category, _quality_needs_spirit_category
+from ..engine.qualities import _quality_needs_spell_category, _quality_needs_spirit_category, has_extra_per_take
 from ..notices import Notice, notice, ui
 from ._common import _by_name
 
@@ -25,6 +26,7 @@ def _import_qualities(root: ET.Element, cat: CatalogDict, st: dict[str, Any], wa
     """Read positive/negative qualities and the targets they were taken with."""
     q_by_name = _by_name(cat["qualities"])
     q_ids = {r["id"] for r in cat["qualities"]}
+    q_specs = {str(r["id"]): r for r in cat["qualities"]}
     quality_ids: list[str] = []
     quality_extras: dict[str, str] = {}
     picks: dict[str, str] = {}
@@ -65,8 +67,14 @@ def _import_qualities(root: ET.Element, cat: CatalogDict, st: dict[str, Any], wa
         # every take, not every kind: Chummer saves a quality taken twice
         # (Gremlins at 2, Favored against two targets) as two `<quality>`s,
         # and `quality_ids` holds a repeat the same way
+        take = quality_ids.count(qid)
         quality_ids.append(qid)
         extra = _text(q.find("extra"))
+        if take and has_extra_per_take(q_specs.get(qid) or {}):
+            # each take's own text: Records on File against a second megacorp
+            if extra:
+                quality_extras[quality_take_extra_key(qid, take)] = extra
+            continue
         quality_extras.update(_quality_extra_in(cat, qid, extra, _text(q.find("guid")), root))
         for pick in q.findall("./skillpicks/pick"):
             skill = _text(pick.find("skill"))

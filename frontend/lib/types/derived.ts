@@ -552,6 +552,9 @@ export interface Derived {
     needs_extra?: boolean;
     extra?: string;
     spirit_extra?: string;
+    /** a quality whose every take has its own text (Records on File): the
+     *  `quality_extras` key this take's is under */
+    extra_key?: string;
     extra_kind?: string | null;
     select_options?: string[];
     spirit_options?: string[];

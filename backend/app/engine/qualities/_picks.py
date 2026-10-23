@@ -16,6 +16,8 @@ from ..constants import (
     QUALITY_CONTACT_EXTRA_SUFFIX,
     QUALITY_OPTIONAL_POWER_EXTRA_SUFFIX,
     QUALITY_SPIRIT_CATEGORY_EXTRA_SUFFIX,
+    QUALITY_TAKE_EXTRA_MARKER,
+    quality_take_extra_key,
 )
 
 
@@ -102,4 +104,37 @@ def _quality_extra_key_owned(key: str, owned: set[str]) -> bool:
         return key.split(QUALITY_ATTRIBUTE_EXTRA_MARKER, 1)[0] in owned
     if QUALITY_ADDSPIRIT_EXTRA_MARKER in key:
         return key.split(QUALITY_ADDSPIRIT_EXTRA_MARKER, 1)[0] in owned
+    if QUALITY_TAKE_EXTRA_MARKER in key:
+        return key in owned
     return False
+
+
+def has_extra_per_take(spec: dict[str, Any]) -> bool:
+    """A quality taken more than once whose pick is a line of text, which
+    each take answers for itself: Records on File names a megacorp per take,
+    Close Combat Mage a spell. Chummer asks again on every take; a mechanical
+    pick (a skill, an attribute) stays one per quality."""
+    return (
+        int(spec.get("max_takes") or 1) > 1
+        and str(spec.get("extra_kind") or "") == "text"
+        and quality_needs_extra(spec)
+    )
+
+
+def take_extra_keys(qualities: list[dict[str, Any]], is_free: Any) -> list[str]:
+    """The `quality_extras` key each row of `qualities` reads its pick from.
+
+    The takes the player bought are numbered in order; a free one (a Life
+    Module's, a metatype's) and every quality without a pick per take reads
+    the id, as before."""
+    taken: dict[str, int] = {}
+    keys: list[str] = []
+    for spec in qualities:
+        qid = str(spec["id"])
+        if not has_extra_per_take(spec) or is_free(spec):
+            keys.append(qid)
+            continue
+        take = taken.get(qid, 0)
+        taken[qid] = take + 1
+        keys.append(quality_take_extra_key(qid, take))
+    return keys

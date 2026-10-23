@@ -721,6 +721,42 @@ describe("<QualitiesTab> leveled qualities", () => {
     });
   });
 
+  it("gives each take of a text pick its own box and deletes only that take", () => {
+    const records = {
+      id: "rof",
+      name: "Records on File",
+      karma: -1,
+      category: "Negative",
+      source: "RF",
+      max_takes: 10,
+      needs_extra: true,
+      extra_kind: "text",
+    };
+    const patch = vi.fn();
+    renderTab({
+      catalog: makeCatalog({ qualities: [records] as never }),
+      patch,
+      character: {
+        quality_ids: ["rof", "rof"],
+        quality_extras: { rof: "Ares", "rof:take:1": "Horizon" },
+        derived: {
+          qualities: [
+            { ...records, extra: "Ares", extra_key: "rof" },
+            { ...records, extra: "Horizon", extra_key: "rof:take:1" },
+          ] as never,
+        },
+      },
+    });
+    const rows = document.querySelectorAll<HTMLElement>(".card > .quality-item");
+    expect(rows).toHaveLength(2);
+    expect(within(rows[1]).getByRole("textbox")).toHaveProperty("value", "Horizon");
+    fireEvent.click(within(rows[0]).getByRole("button", { name: "削除" }));
+    expect(patch).toHaveBeenCalledWith({
+      quality_ids: ["rof"],
+      quality_extras: { rof: "Horizon" },
+    });
+  });
+
   it("changes a full quality without using the catalog button to delete it", () => {
     const patch = vi.fn();
     renderTab({

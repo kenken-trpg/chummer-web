@@ -74,10 +74,18 @@ QUALITY_CONTACT_EXTRA_SUFFIX = ":contact"
 QUALITY_SPIRIT_CATEGORY_EXTRA_SUFFIX = ":spiritcategory"
 QUALITY_ADDSPIRIT_EXTRA_MARKER = ":addspirit:"
 QUALITY_ATTRIBUTE_EXTRA_MARKER = ":attribute:"
+QUALITY_TAKE_EXTRA_MARKER = ":take:"
 
 
 def quality_attribute_extra_key(quality_id: str, index: int) -> str:
     return quality_id if index == 0 else f"{quality_id}{QUALITY_ATTRIBUTE_EXTRA_MARKER}{index}"
+
+
+def quality_take_extra_key(quality_id: str, take: int) -> str:
+    """The `<selecttext>` of one take of a quality taken more than once
+    (Records on File against two megacorps): the first under the id, as
+    every other pick, the rest numbered from 1."""
+    return quality_id if take == 0 else f"{quality_id}{QUALITY_TAKE_EXTRA_MARKER}{int(take)}"
 
 
 QUALITY_OPTIONAL_POWER_EXTRA_SUFFIX = ":optionalpower"

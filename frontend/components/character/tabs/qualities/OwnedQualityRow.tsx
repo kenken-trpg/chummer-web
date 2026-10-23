@@ -11,6 +11,8 @@ import {
   grantedLevels,
   qualityBlockReason,
   qualityLevelMax,
+  qualityTakeIndex,
+  removeQualityTake,
   setQualityLevel,
   type QualityDisplayRow,
   type QualityReqCtx,
@@ -222,6 +224,18 @@ export function OwnedQualityRow({
         <button
           className="btn danger"
           onClick={() => {
+            if (q.extra_key) {
+              // this take only, with its own text; the later takes' move down
+              patch(
+                removeQualityTake(
+                  ch.quality_ids,
+                  ch.quality_extras || {},
+                  q.id,
+                  qualityTakeIndex(q.id, q.extra_key),
+                ),
+              );
+              return;
+            }
             const extras = { ...(ch.quality_extras || {}) };
             const remaining =
               q.level != null ? 0 : ch.quality_ids.filter((id) => id === q.id).length - 1;
