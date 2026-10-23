@@ -63,6 +63,13 @@ describe("<PriorityTab>", () => {
     expect(screen.getByText("カルマ 1 点＝2,000¥")).toBeDefined();
   });
 
+  it('explains the four build methods on one "?", and the swap on the table\'s', () => {
+    renderTab();
+    expect(screen.getByRole("button", { name: "作成法の違い の説明" })).toBeDefined();
+    expect(screen.getByText(/合計 10：同じ表で A=4/)).toBeDefined();
+    expect(screen.getByText(/その項目と文字が入れ替わる/)).toBeDefined();
+  });
+
   it("switches build method via the header buttons", () => {
     const patch = vi.fn();
     renderTab({ patch });

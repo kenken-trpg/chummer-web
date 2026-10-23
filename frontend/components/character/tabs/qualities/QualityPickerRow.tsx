@@ -131,20 +131,6 @@ export function QualityPickerRow({
               ? !!blocked
               : !added
         }
-        // the same button reads 追加 / 差替 / 削除 depending on what is
-        // already taken; say which quality it is about to act on
-        title={ui("picker.buyLabel", {
-          name: tr(q.name),
-          action: hasLevels
-            ? added
-              ? ui("qual.changeLevel")
-              : ui("common.add")
-            : added && !canAddMore
-              ? ui("common.delete")
-              : replaces
-                ? ui("qual.replace")
-                : ui("common.add"),
-        })}
         onClick={() => {
           if (hasLevels) {
             if (levelMax < 1 || blocked || selectedLevel === ownedCount) return;

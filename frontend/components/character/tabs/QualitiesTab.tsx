@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { HelpTip } from "@/components/help/HelpTip";
 import { PickerFootnote } from "@/components/character/CatalogPicker";
 import { filterByBooks, useAllowedBooks } from "@/lib/character/books";
 import type { TabPanelProps } from "@/components/character/types";
@@ -158,7 +159,7 @@ export function QualitiesTab({
               {ch.career ? null : (
                 <button
                   className="btn"
-                  title={ui("qual.innateRestoreHint", { name: tr(q.name) })}
+                  aria-label={ui("qual.innateRestoreLabel", { name: tr(q.name) })}
                   onClick={() =>
                     patch({
                       removed_innate_qualities: (ch.removed_innate_qualities || []).filter(
@@ -190,7 +191,7 @@ export function QualitiesTab({
               </div>
               <button
                 className="btn"
-                title={ui("qual.restoreHint", { name: tr(q.name) })}
+                aria-label={ui("qual.restoreLabel", { name: tr(q.name) })}
                 // back to the chargen count: the buy-off charge goes with it
                 onClick={() => patch({ quality_ids: [...ch.quality_ids, q.id] })}
               >
@@ -202,9 +203,17 @@ export function QualitiesTab({
       ) : null}
       {careerChanged ? (
         <p className="muted">
-          <button className="btn" onClick={rebaseline} title={ui("qual.rebaselineHint")}>
-            {ui("qual.rebaseline")}
-          </button>
+          <HelpTip
+            label={ui("help.open", { label: ui("qual.rebaseline") })}
+            lines={[
+              { label: ui("help.qual.rebaseline") },
+              { label: ui("help.qual.rebaselineEffect") },
+            ]}
+          >
+            <button className="btn" onClick={rebaseline}>
+              {ui("qual.rebaseline")}
+            </button>
+          </HelpTip>
         </p>
       ) : null}
       <div className="option-row">

@@ -66,14 +66,12 @@ describe("<TabBar>", () => {
 
   // "メタタイプ" and "資質" are guessable at best; the hover line says what the
   // section is for before the user commits to a click.
-  it("explains each section on hover", () => {
+  // What each section is for is a line at the top of its panel (TabPanels),
+  // not a hover-only title a phone or a screen reader never gets.
+  it("leaves the explanation to the panel", () => {
     render(<TabBar tab="priority" setTab={vi.fn()} enabledTabs={[]} />);
-
-    expect(screen.getByRole("button", { name: "メタタイプ" }).getAttribute("title")).toBe(
-      "メタタイプと種族。能力値の下限・上限がここで決まります",
-    );
-    for (const name of ["優先度", "能力値", "技能", "資質", "装備", "チェック"]) {
-      expect(screen.getByRole("button", { name }).getAttribute("title")).toBeTruthy();
+    for (const name of ["優先度", "メタタイプ", "能力値", "技能", "資質", "装備", "チェック"]) {
+      expect(screen.getByRole("button", { name }).getAttribute("title")).toBeNull();
     }
   });
 });

@@ -94,7 +94,7 @@ describe("<QualitiesTab>", () => {
     });
     const row = document.querySelector<HTMLElement>(".card > .quality-item")!;
     expect(within(row).queryByText("生得付与・削除不可")).toBeNull();
-    fireEvent.click(within(row).getByRole("button", { name: "外す（8カルマ）" }));
+    fireEvent.click(within(row).getByRole("button", { name: /: 外す（8カルマ）$/ }));
     expect(patch).toHaveBeenCalledWith({ removed_innate_qualities: ["uneducated"] });
   });
 
@@ -129,7 +129,7 @@ describe("<QualitiesTab>", () => {
     });
     expect(screen.getByRole("heading", { name: "外した生得資質" })).toBeDefined();
     expect(screen.getByText(/Humanの生得 \/ 外すのに 8カルマ/)).toBeDefined();
-    fireEvent.click(screen.getByRole("button", { name: "戻す" }));
+    fireEvent.click(screen.getByRole("button", { name: /^戻す：/ }));
     expect(patch).toHaveBeenCalledWith({ removed_innate_qualities: [] });
   });
 
@@ -534,7 +534,7 @@ describe("<QualitiesTab> undoing career changes", () => {
         derived: { quality_career_pricing: true, qualities_removed: removed } as never,
       },
     });
-    fireEvent.click(screen.getByRole("button", { name: "戻す" }));
+    fireEvent.click(screen.getByRole("button", { name: /^戻す：/ }));
     expect(patch).toHaveBeenCalledWith({ quality_ids: ["amb", "dist"] });
   });
 
@@ -549,6 +549,9 @@ describe("<QualitiesTab> undoing career changes", () => {
         derived: { quality_career_pricing: true, qualities_removed: removed } as never,
       },
     });
+    expect(
+      screen.getByRole("button", { name: "今の資質を作成時のものとして扱う の説明" }),
+    ).toBeDefined();
     fireEvent.click(screen.getByRole("button", { name: "今の資質を作成時のものとして扱う" }));
     expect(confirm).toHaveBeenCalled();
     expect(patch).toHaveBeenCalledWith({

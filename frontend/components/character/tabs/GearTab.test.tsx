@@ -26,6 +26,11 @@ describe("<GearTab>", () => {
     expect(screen.getByPlaceholderText("防具を検索")).toBeDefined();
   });
 
+  it("says what the open kind is for", () => {
+    renderTab();
+    expect(screen.getByText(/着る防具。同時に着られるのは基本 1 着/)).toBeDefined();
+  });
+
   it("swaps the sub-panel when another kind tab is clicked", () => {
     renderTab();
     fireEvent.click(screen.getByRole("button", { name: "武器" }));

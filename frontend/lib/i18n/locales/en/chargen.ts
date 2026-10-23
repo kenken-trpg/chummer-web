@@ -231,17 +231,14 @@ export const EN_CHARGEN = {
   "qual.removedPositive": "no refund",
   "qual.grantedLevels": " / {count} free levels held (count toward the cap)",
   "qual.restore": "Restore",
-  "qual.restoreHint": "Take {name} again, as it was before it was dropped in career",
+  "qual.restoreLabel": "Restore: {name} (as it was before it was dropped in career)",
   "qual.innateRemove": "Remove ({cost} karma)",
   "qual.innateRemoveRefund": "Remove ({cost} karma back)",
-  "qual.innateRemoveHint": "{name} is innate, but can be removed during creation",
   "qual.innateRemoved": "Innate qualities removed",
   "qual.innateRemovedCost": "innate to {metatype} / removed for {cost} karma",
   "qual.innateRemovedRefund": "innate to {metatype} / removed, {cost} karma back",
-  "qual.innateRestoreHint": "Give {name} back as an innate quality (and its karma with it)",
+  "qual.innateRestoreLabel": "Restore: {name} (back as an innate quality, karma and all)",
   "qual.rebaseline": "Treat the current qualities as chargen",
-  "qual.rebaselineHint":
-    "For fixing a chargen slip in play. Cancels every career purchase and buy-off charge",
   "qual.rebaselineConfirm":
     "Treat the current qualities as chargen and cancel the career purchase and buy-off karma?",
   "qual.attached": "attached",
@@ -346,8 +343,6 @@ export const EN_CHARGEN = {
   "prio.leftoverToNuyen": "Leftover karma → ¥, max {max}K",
   "prio.leftoverSlider": "Leftover karma → nuyen ({k}K = {nuyen}¥)",
   "prio.leftoverSliderLabel": "Leftover karma converted to nuyen",
-  "prio.cellHint": "Set {cat} to priority {letter}",
-  "prio.cellSwapHint": "Set {cat} to priority {letter} (swaps with {other}, which holds it now)",
   "settings.folder": "Load a ruleset folder",
   "settings.folderHint":
     "Pick the folder holding settings and customdata — the folder itself, not a file. Every settings file in it joins the pulldown, and picking one merges the custom data it names. The files stay in this browser; only the merged result is held on the server, and only for a while",
@@ -458,10 +453,6 @@ export const EN_CHARGEN = {
   "settings.booksHint": "Narrow what can be bought to the books you own",
   "settings.booksNote":
     "Entries from an unticked book drop out of the buy lists. Gear and qualities you already own are kept. Unticking every book means no restriction.",
-  "prio.methodPriorityHint": "The standard build: one of A-E to each of the five rows (SR5 p.65)",
-  "prio.methodSumHint":
-    "Same table, but pick freely so A=4/B=3/C=2/D=1/E=0 sums to 10. Repeats allowed",
-  "prio.methodKarmaHint": "Skip the table and buy everything out of 800 karma (SR5 p.94)",
   "prio.karmaSliderLabel": "Karma converted to nuyen",
   "prio.karmaSlider": "Karma → nuyen ({k}K = {nuyen}¥)",
   "prio.karmaNote":

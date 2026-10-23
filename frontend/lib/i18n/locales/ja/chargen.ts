@@ -229,17 +229,14 @@ export const JA_CHARGEN = {
   "qual.removedPositive": "返金なし",
   "qual.grantedLevels": " / 無料で {count} レベル取得済み（上限に含む）",
   "qual.restore": "戻す",
-  "qual.restoreHint": "{name} を取り直して、キャリアで外す前に戻す",
+  "qual.restoreLabel": "戻す：{name}（キャリアで外す前に戻す）",
   "qual.innateRemove": "外す（{cost}カルマ）",
   "qual.innateRemoveRefund": "外す（{cost}カルマ戻る）",
-  "qual.innateRemoveHint": "{name} は生得の資質だが、作成中に限り外せる",
   "qual.innateRemoved": "外した生得資質",
   "qual.innateRemovedCost": "{metatype}の生得 / 外すのに {cost}カルマ",
   "qual.innateRemovedRefund": "{metatype}の生得 / 外して {cost}カルマ戻った",
-  "qual.innateRestoreHint": "{name} を生得の資質に戻す（外した分のカルマも戻る）",
+  "qual.innateRestoreLabel": "戻す：{name}（生得の資質に戻し、外した分のカルマも戻る）",
   "qual.rebaseline": "今の資質を作成時のものとして扱う",
-  "qual.rebaselineHint":
-    "作成時のミスをキャリアで直したときに。キャリアでの取得・買い戻しの請求をすべて取り消します",
   "qual.rebaselineConfirm":
     "今の資質を作成時のものとして扱い、キャリアでの取得・買い戻しのカルマを取り消しますか？",
   "qual.attached": "付帯",
@@ -347,9 +344,6 @@ export const JA_CHARGEN = {
   "prio.leftoverSlider": "残カルマ→新円（{k}K = {nuyen}¥）",
   "prio.karmaSlider": "カルマ→新円（{k}K = {nuyen}¥）",
   "prio.leftoverSliderLabel": "新円に回す残カルマ",
-  "prio.cellHint": "{cat} を優先度 {letter} にする",
-  "prio.cellSwapHint":
-    "{cat} を優先度 {letter} にする（今そこを使っている {other} と入れ替わります）",
   "settings.folder": "スタイル一式を読み込む",
   "settings.folderHint":
     "settings と customdata が入ったフォルダごと選びます。中のセッティングは全部プルダウンに入り、選んだものに合わせてカスタムデータが結合されます。ファイルはこのブラウザに残り、サーバーには結合結果だけが一時的に置かれます",
@@ -456,10 +450,6 @@ export const JA_CHARGEN = {
   "settings.booksHint": "購入できる項目をルールブックで絞り込みます",
   "settings.booksNote":
     "チェックを外したルールブックの項目は購入一覧に出なくなります。すでに所持している装備・資質は消えません。すべて外すと制限なしに戻ります。",
-  "prio.methodPriorityHint": "標準の作成法。A〜E を 5 項目に 1 つずつ割り当てます（SR5 p.65）",
-  "prio.methodSumHint":
-    "同じ表を使い、A=4／B=3／C=2／D=1／E=0 の合計が 10 になるように選びます。重複可",
-  "prio.methodKarmaHint": "優先度表を使わず、すべてを 800 カルマで購入します（SR5 p.94）",
   "prio.karmaSliderLabel": "新円に回すカルマ",
   "prio.karmaNote":
     "優先度表は使いません。メタ／能力値／技能／呪文などをカルマで購入します（開始 {pool}）。MAG／RES はタレント選択で解禁され、最低1から買い上げます。無料の呪文枠はありません。",

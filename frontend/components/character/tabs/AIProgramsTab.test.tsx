@@ -77,6 +77,8 @@ describe("<AIProgramsTab>", () => {
     expect((pickerRow("Authority").querySelector("button.btn") as HTMLButtonElement).disabled).toBe(
       true,
     );
+    // and says why, in words a phone shows too (a disabled button's title does not)
+    expect(pickerRow("Authority").textContent).toContain("前提のプログラムがまだありません");
     document.body.innerHTML = "";
     renderTab([owned("Exploit")]);
     expect((pickerRow("Authority").querySelector("button.btn") as HTMLButtonElement).disabled).toBe(

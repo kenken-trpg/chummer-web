@@ -414,4 +414,14 @@ export const JA_HELP = {
   "help.ware.essDiscountWhen": "設定ファイルが ESS 割引を許しているときだけ出る",
   "help.side.chummerAdjust": "Chummer のセーブの残高と、この app が構成と報酬から出す残りとの差",
   "help.side.chummerAdjustWhy": "払った家賃や、別の価格での購入などの分。残りに足している",
+  "help.prio.methodLabel": "作成法の違い",
+  "help.prio.methodPriority": "優先度：A〜E を 5 項目に 1 つずつ割り当てる標準の作成法（SR5 p.65）",
+  "help.prio.methodSum":
+    "合計 10：同じ表で A=4／B=3／C=2／D=1／E=0 の合計が 10 になるよう選ぶ。重複可",
+  "help.prio.methodKarma": "カルマ：優先度表を使わず、すべてを 800 カルマで買う（SR5 p.94）",
+  "help.prio.methodLife": "ライフモジュール：生まれから順に経歴を積み上げて作る",
+  "help.prio.swap": "ほかの項目が使っている文字を選ぶと、その項目と文字が入れ替わる",
+  "help.side.scBurn": "ストリートの評判を 2 点燃やして、悪名を 1 点下げる（SR5 p.373）",
+  "help.qual.rebaseline": "作成時のミスを、キャリアに入ってから直したときに使う",
+  "help.qual.rebaselineEffect": "キャリアでの資質の取得・買い戻しの請求を、すべて取り消す",
 } as const;

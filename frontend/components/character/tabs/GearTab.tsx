@@ -62,12 +62,16 @@ export function GearTab(props: TabPanelProps) {
             key={kind}
             className={`tab ${gearKind === kind ? "active" : ""}`}
             onClick={() => setGearKind(kind)}
-            title={ui(`${label}.hint` as MsgKey)}
           >
             {ui(label)}
           </button>
         ))}
       </div>
+      <p className="muted">
+        {ui(
+          `${KIND_TABS.find((t) => t.kind === gearKind)?.label ?? "gear.kind.misc"}.hint` as MsgKey,
+        )}
+      </p>
 
       {gearKind === "armor" && <ArmorGear {...props} />}
       {gearKind === "weapon" && <WeaponGear {...props} />}
