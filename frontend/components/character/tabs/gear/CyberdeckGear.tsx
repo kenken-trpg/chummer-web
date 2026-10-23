@@ -72,7 +72,7 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabP
               </div>
               {item.rating_max > 0 ? (
                 <div className="cyber-controls">
-                  <label title={ui("common.ratingHint")}>
+                  <label>
                     {ui("common.rating")}
                     <input
                       type="number"
@@ -168,7 +168,7 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                       {ui("common.remove")}
                     </button>
                     {prog.rating_max > 0 ? (
-                      <label title={ui("common.ratingHint")}>
+                      <label>
                         {ui("common.rating")}
                         <input
                           type="number"

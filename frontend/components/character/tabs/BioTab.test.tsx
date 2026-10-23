@@ -149,7 +149,14 @@ describe("<BioTab> a player-priced piece", () => {
         },
       } as never,
     });
-    const field = screen.getByLabelText(/Moderate Biosculpting Modification: /) as HTMLInputElement;
+    const field = screen.getByRole("spinbutton", {
+      name: "Moderate Biosculpting Modification: 価格",
+    }) as HTMLInputElement;
+    // The range it is held to is said on its "?", not in a hover-only title.
+    expect(
+      screen.getByRole("button", { name: "Moderate Biosculpting Modification: 価格 の説明" }),
+    ).toBeDefined();
+    expect(screen.getByText("この品目の価格は 500〜2,000¥ の範囲で決める")).toBeDefined();
     expect(field.value).toBe("1000");
     fireEvent.change(field, { target: { value: "5000" } });
     expect(patch).toHaveBeenLastCalledWith({

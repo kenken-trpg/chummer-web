@@ -57,7 +57,7 @@ export function GearChild({
         </>
       )}
       {child.rating_max > 0 && !child.included ? (
-        <label title={ui("common.ratingHint")}>
+        <label>
           {ui("common.rating")}
           <input
             type="number"

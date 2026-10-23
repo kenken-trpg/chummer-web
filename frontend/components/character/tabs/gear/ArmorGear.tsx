@@ -117,7 +117,7 @@ export function ArmorGear({ catalog, character: ch, d, tr, ui, patch }: TabPanel
                     {ui("common.equipped")}
                   </label>
                   {item.rating_max > 0 ? (
-                    <label title={ui("common.ratingHint")}>
+                    <label>
                       {ui("common.rating")}
                       <input
                         type="number"
@@ -133,7 +133,7 @@ export function ArmorGear({ catalog, character: ch, d, tr, ui, patch }: TabPanel
                     </label>
                   ) : null}
                   {item.has_wireless ? (
-                    <label title={ui("common.wirelessHint")}>
+                    <label>
                       <input
                         type="checkbox"
                         checked={item.wireless ?? true}

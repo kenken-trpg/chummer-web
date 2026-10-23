@@ -118,7 +118,7 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                 </div>
                 {fromWare || natural || fromArmor || included ? null : (
                   <div className="cyber-controls">
-                    <label title={ui("common.qtyHint")}>
+                    <label>
                       {ui("common.qty")}
                       <input
                         type="number"
@@ -245,7 +245,7 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                     >
                       {ui("common.remove")}
                     </button>
-                    <label title={ui("common.qtyHint")}>
+                    <label>
                       {ui("common.qty")}
                       <input
                         type="number"

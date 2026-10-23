@@ -327,6 +327,7 @@ describe("<MiscDrugsGear> the per-row addon picker", () => {
     );
 
     const select = screen.getByRole("combobox", { name: "Ammo: APDS: …に入れる" });
+    expect(screen.getByRole("button", { name: "Ammo: APDS: …に入れる の説明" })).toBeDefined();
     expect([...select.querySelectorAll("option")].map((o) => o.textContent)).toEqual([
       "…に入れる",
       "Spare Clip",

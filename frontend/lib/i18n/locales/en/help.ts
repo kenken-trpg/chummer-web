@@ -467,4 +467,15 @@ export const EN_HELP = {
   "help.construction.module": "Add Module: 2 packs (DT pp.64\u201366)",
   "help.construction.frozen":
     "Set by the device's own values before the work, and fixed when it is completed",
+  "help.gear.price": "This item's price is set within {lo}\u2013{hi}\u00a5",
+  "help.gear.stackWith":
+    "Worn with the armor it was tailored to, this piece adds its + value on top of that armor (RG p.59)",
+  "help.gear.inUse": "In use, its effects reach the attributes, initiative and skills",
+  "help.gear.putInto1": "Carry this inside another piece of gear",
+  "help.gear.putInto2":
+    "Several of the container means several of what is in it, as Chummer counts it",
+  "help.life.raiseLabel": "Raising points",
+  "help.life.raise": "Points raised above what this lifestyle starts with",
+  "help.life.raiseCost":
+    "Each costs 1 LP and 10% of the base cost, plus its own price where it has one (RF p.219)",
 } as const;

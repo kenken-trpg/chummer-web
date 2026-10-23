@@ -130,6 +130,7 @@ describe("<ArmorGear> mods on a piece", () => {
     );
 
     const picker = screen.getByRole("combobox", { name: "重ねる防具" });
+    expect(screen.getByRole("button", { name: "重ねる防具 の説明" })).toBeDefined();
     const options = within(picker)
       .getAllByRole("option")
       .map((o) => o.textContent);
