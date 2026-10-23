@@ -23,6 +23,7 @@ from ._career import (  # noqa: F401  (re-exported via app.engine)
     nuyen_spend_breakdown,
     snapshot_career_baseline,
 )
+from ._movement import resolve_movement  # noqa: F401  (re-exported via app.engine)
 from .assemble import assemble
 from .bootstrap import (
     bootstrap,
@@ -31,11 +32,7 @@ from .bootstrap import (
 from .context import Ctx
 from .economy import economy
 from .essence import essence
-from .finalize import (
-    finalize,
-    resolve_movement,  # noqa: F401  (re-exported via app.engine)
-    totals,
-)
+from .finalize import finalize, totals
 from .gear import (
     gear_phase,
     resolve_gear,  # noqa: F401  (re-exported via app.engine)

@@ -6,7 +6,7 @@ from app.engine import (
     default_attributes,
     find_metatype,
 )
-from app.engine.compute.finalize import resolve_movement
+from app.engine.compute._movement import resolve_movement
 from app.improvements import collect_effects
 from app.models import (
     CharacterState,

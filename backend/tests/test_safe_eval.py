@@ -58,7 +58,7 @@ def test_boolean_returns_a_bool_or_refuses(expression):
     try:
         assert isinstance(evaluate_boolean(expression), bool)
     except UnsafeExpression:
-        pass
+        pass  # refusing is the other allowed outcome; what must not happen is anything else
 
 
 @pytest.mark.parametrize("expression", ["2**3", "7//2", "1<<4"])
