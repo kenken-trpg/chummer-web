@@ -21,10 +21,21 @@ from typing import Any
 from .models import CharacterState
 from .notices import Notice, notice, ui
 
-#: Fields that say nothing about the character: identity, bookkeeping, and the
-#: computed block (checked separately, by the two totals a player reads).
+#: Fields that say nothing about the character: identity, bookkeeping, the
+#: table state, and the computed block (checked separately, by the two totals a player reads).
 _SKIP = frozenset(
-    {"id", "name", "derived", "portrait", "extra_portraits", "created_at", "updated_at", "career_baseline"}
+    {
+        "id",
+        "name",
+        "derived",
+        "portrait",
+        "extra_portraits",
+        "created_at",
+        "updated_at",
+        "career_baseline",
+        # the form a shapeshifter is in at the table, which Chummer does not save either
+        "shapeshifter_form",
+    }
 )
 
 #: Which UI label a field is reported under. Anything unlisted is "other".

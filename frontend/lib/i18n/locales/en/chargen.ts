@@ -497,6 +497,9 @@ export const EN_CHARGEN = {
   "attrs.karmaHint":
     "How many of this attribute's top levels were bought with karma. They use no attribute points and cost the new rating × 5 karma each.",
   "attrs.karmaSpent": "Attributes raised with karma: {karma} karma",
+  "attrs.activeForm": "Current form",
+  "attrs.activeFormHint":
+    "Dice pools, limits, condition monitors, initiative and movement are worked out from the chosen form's attributes. Both forms share the points spent.",
   "attrs.formValue": " / metahuman form {value}",
   "attrs.formNote":
     "Attributes are bought in the {animal} ranges. The metahuman form ({form}) has the same points in its own ranges, shown on each row.",

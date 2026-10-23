@@ -35,6 +35,7 @@ from ..magic import (
 )
 from ..qualities import bought_critter_powers, critter_power_sources, free_powers_from_grants
 from ..resonance import apply_granted_echoes, resolve_complex_forms, resolve_sprites
+from ._shapeshifter import into_metahuman_form
 from .context import Ctx
 
 
@@ -125,7 +126,9 @@ def awakened(ctx: Ctx) -> None:
     ctx.effects["enabled_tabs"] = set(ctx.effects["enabled_tabs"])
     for source, nodes in ctx.adept["bonus_sources"] + ctx.enhancements["bonus_sources"]:
         apply_bonus_nodes(nodes, ctx.effects, source)
-    ctx.attr_totals = {key: int(ctx.ratings.get(key) or 0) + ctx.attr_bonus(key) for key in ctx.ratings}
+    ctx.attr_totals = into_metahuman_form(
+        ctx, {key: int(ctx.ratings.get(key) or 0) + ctx.attr_bonus(key) for key in ctx.ratings}
+    )
 
 
 def spells(ctx: Ctx) -> None:

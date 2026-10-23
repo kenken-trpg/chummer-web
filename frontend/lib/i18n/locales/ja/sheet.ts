@@ -235,6 +235,8 @@ export const JA_SHEET = {
 
   "sheet.limbArmor": " / 装甲 {armor}",
   "sheet.col.device": "機器",
+  "sheet.form.active": "（今の姿）",
+  "sheet.form.animalMovement": "移動（動物の姿）",
   "sheet.form.animal": "動物の姿（{name}）",
   "sheet.form.metahuman": "人間形態（{name}）",
   "sheet.form.movement": "移動（人間形態）",

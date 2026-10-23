@@ -597,6 +597,48 @@ describe("a shapeshifter's two bodies on the sheets", () => {
   });
 });
 
+describe("a shapeshifter in its metahuman form on the sheets", () => {
+  const animalMove = { walk: "4", run: "12", sprint: "1", sprint_bonus: 0 };
+  const data = buildSheetData({
+    character: {
+      ...RICH_CHARACTER,
+      metatype: "Shapeshifter: Vulpine",
+      metavariant: "Human",
+      derived: {
+        ...RICH_CHARACTER.derived,
+        totals: { ...RICH_CHARACTER.derived!.totals, AGI: 3 },
+        metatype_info: {
+          ...RICH_CHARACTER.derived!.metatype_info,
+          parent: "Shapeshifter: Vulpine",
+          active_form: "metahuman",
+          animal_form: { name: "Shapeshifter: Vulpine", totals: { AGI: 9 }, movement: animalMove },
+          metahuman_form: {
+            name: "Human",
+            attributes: { AGI: { rating: 3, total: 3, min: 1, max: 6, aug: 10 } },
+            movement: { walk: "6", run: "12", sprint: "2", sprint_bonus: 0 },
+          },
+        },
+      },
+    } as never,
+    catalog: RICH_CATALOG,
+    tr: identityTr,
+    layout: "standard",
+  });
+
+  it("the core section keeps the animal's values in its block and marks the form it is in", () => {
+    const { container } = render(<CoreSection {...data} />);
+    expect(container.textContent).toContain("人間形態（Human）（今の姿）");
+    expect(container.textContent).not.toContain("動物の姿（Shapeshifter: Vulpine）（今の姿）");
+    const animal = container.querySelector(".sheet-attrs:not([data-form])")!;
+    expect(animal.textContent).toContain("9");
+    expect(container.textContent).toContain("移動（動物の姿）");
+  });
+
+  it("the text sheet says which form the pools are in", () => {
+    expect(textSheet(data)).toContain("人間形態（Human）（今の姿）");
+  });
+});
+
 describe("contact words on the sheets", () => {
   const tr = makeTr(
     {

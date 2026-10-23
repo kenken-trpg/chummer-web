@@ -71,12 +71,17 @@ export function textSheet(x: TextArgs): string {
   head("common.attribute");
   line(
     ATTRS.filter((k) => attrShown(k, enabled))
-      .map((k) => `${attrShort(k, t)} ${totals[k] ?? "-"}`)
+      .map(
+        (k) => `${attrShort(k, t)} ${d.metatype_info.animal_form?.totals[k] ?? totals[k] ?? "-"}`,
+      )
       .join("  "),
   );
   const form = d.metatype_info.metahuman_form;
   if (form) {
-    // the line above is the animal, which the character is built in
+    // the line above is the animal, which the character is built in; the
+    // pools and limits below are the form it is in
+    if (d.metatype_info.active_form === "metahuman")
+      line(`${ui("sheet.form.metahuman", { name: tr(form.name) })}${ui("sheet.form.active")}`);
     line(
       `${ui("sheet.form.metahuman", { name: tr(form.name) })} ` +
         ATTRS.filter((k) => form.attributes[k])
@@ -121,7 +126,12 @@ export function textSheet(x: TextArgs): string {
   );
   line(
     `${ui("common.armor")} ${d.armor}  ${ui("common.essence")} ${d.essence}  ` +
-      ui("txt.movement", { walk: d.movement.walk, run: d.movement.run, sprint: d.movement.sprint }),
+      // a shapeshifter's animal, as the attribute line; the other form's is above
+      ui("txt.movement", {
+        walk: (d.metatype_info.animal_form?.movement || d.movement).walk,
+        run: (d.metatype_info.animal_form?.movement || d.movement).run,
+        sprint: (d.metatype_info.animal_form?.movement || d.movement).sprint,
+      }),
   );
   for (const row of otherMovementRows(d.movement, ui)) line(`${row.label} ${row.value}`);
   line();

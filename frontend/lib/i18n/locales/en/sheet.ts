@@ -234,6 +234,8 @@ export const EN_SHEET = {
 
   "sheet.limbArmor": " / armor {armor}",
   "sheet.col.device": "Device",
+  "sheet.form.active": " (current)",
+  "sheet.form.animalMovement": "Movement (animal form)",
   "sheet.form.animal": "Animal form ({name})",
   "sheet.form.metahuman": "Metahuman form ({name})",
   "sheet.form.movement": "Movement (metahuman form)",

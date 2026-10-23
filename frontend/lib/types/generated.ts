@@ -622,6 +622,11 @@ export interface Character {
   priorities: Record<PriorityCategory, PriorityLetter>;
   metatype: string;
   metavariant?: string | null;
+  /** The form a shapeshifter is in, whose attributes the pools, limits and
+   *  movement are worked from (Chummer's `AttributeSection.AttributeCategory`,
+   *  which it does not save either). Built as the animal.
+   */
+  shapeshifter_form?: "animal" | "metahuman";
   life_modules?: string[];
   /** Modules read from a desktop save whose choices are gone. These are
    *  provenance only; grants have already been baked into the imported state.

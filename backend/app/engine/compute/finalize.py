@@ -154,6 +154,12 @@ def totals(ctx: Ctx) -> None:
     # ESS is fractional; the attribute-total consumers only ever read integer
     # attrs (STR / AGI / …), so the dict[str, int] inference stays useful.
     ctx.total["ESS"] = ctx.ess  # type: ignore[assignment]
+    from ._shapeshifter import in_metahuman_form, into_metahuman_form  # it reads `resolve_movement` here
+
+    metahuman = in_metahuman_form(ctx)
+    if metahuman:
+        ctx.animal_total = dict(ctx.total)
+        ctx.total = into_metahuman_form(ctx, ctx.total)
     # `<dontusecyberlimbcalculation>`: the body keeps its own STR / AGI
     ctx.limb_replace = (
         None
@@ -169,6 +175,8 @@ def totals(ctx: Ctx) -> None:
     if ctx.limb_replace:
         ctx.total["STR"] = int(ctx.limb_replace["str"])
         ctx.total["AGI"] = int(ctx.limb_replace["agi"])
+    if not metahuman:
+        ctx.animal_total = ctx.total
 
 
 def finalize(ctx: Ctx) -> None:
@@ -323,14 +331,19 @@ def _movement(ctx: Ctx) -> None:
     leg_agi = None
     if current_rules().cyberleg_movement:
         leg_agi = cyberleg_movement_agi(ctx.cyber_installed, dict(ctx.effects.get("extra_limbs") or {}))
-    ctx.movement = resolve_movement(
+    # the animal's, which a shapeshifter in the metahuman form keeps beside
+    ctx.animal_movement = resolve_movement(
         ctx.meta,
         ctx.effects,
         move_agi,
-        swim_agi=int(ctx.total["AGI"]),
-        swim_str=int(ctx.total["STR"]),
+        swim_agi=int(ctx.animal_total["AGI"]),
+        swim_str=int(ctx.animal_total["STR"]),
         ground_agi=leg_agi,
     )
+    from ._shapeshifter import in_metahuman_form, metahuman_form
+
+    form = metahuman_form(ctx) if in_metahuman_form(ctx) else None
+    ctx.movement = (form or {}).get("movement") or ctx.animal_movement
 
 
 def _check_chargen_points(ctx: Ctx) -> None:

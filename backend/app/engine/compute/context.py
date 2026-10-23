@@ -145,6 +145,9 @@ class Ctx:
 
     # --- totals ------------------------------------------------------------
     total: dict[str, int] = field(default_factory=dict)
+    #: a shapeshifter's animal-form totals, kept while `total` is the other form's
+    animal_total: dict[str, int] = field(default_factory=dict)
+    animal_movement: MovementBundle | None = None
     limb_replace: dict[str, Any] | None = None
     power_pool: float = 0.0
     power_spent: float = 0.0
