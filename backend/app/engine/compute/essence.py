@@ -14,13 +14,26 @@ from ..special_attributes import is_ai
 from .context import Ctx
 
 
-def _after_loss(bought: int, cap: int, penalty: int, maximum_only: bool) -> int:
-    """MAG / RES / DEP once essence loss has taken `penalty` off it. By the book
-    the rating falls with the maximum; under `<esslossreducesmaximumonly>`
-    only the maximum falls, and the rating just cannot sit above it."""
-    if maximum_only:
-        return max(0, min(bought, cap - penalty))
-    return max(0, bought - penalty)
+def _min_drop(floor: int, cap: int, penalty: int, maximum_only: bool) -> int:
+    """How far essence loss lowers the minimum of MAG / RES / DEP.
+
+    By the book the minimum falls with the maximum; under
+    `<esslossreducesmaximumonly>` only by what the maximum falling would eat
+    into it. Never below zero (Chummer's `RawMinimum`).
+    """
+    drop = max(0, penalty + floor - cap) if maximum_only else penalty
+    return min(drop, floor)
+
+
+def _after_loss(bought: int, floor: int, cap: int, penalty: int, maximum_only: bool) -> int:
+    """MAG / RES / DEP once essence loss has taken `penalty` off it.
+
+    Chummer lowers the minimum (`_min_drop`) and the maximum, and stacks
+    the points and karma bought on the lowered minimum: a loss deeper than
+    the minimum takes the minimum to zero and leaves what was bought above
+    it standing, up to the lowered maximum.
+    """
+    return max(0, min(bought - _min_drop(floor, cap, penalty, maximum_only), cap - penalty))
 
 
 def _special_penalty(ess_start: float, loss: float) -> int:
@@ -69,12 +82,13 @@ def essence(ctx: Ctx) -> None:
         dep_spec = ctx.attrs_spec["DEP"]
         dep_cap = int(dep_spec["max"]) + int(ctx.attr_max_bonus.get("DEP") or 0)
         dep = max(ctx.special_floors["DEP"], min(dep_cap, int(ctx.state.attributes.get("DEP", 0))))
-        dep = _after_loss(dep, dep_cap, dep_penalty, rules.ess_loss_reduces_maximum_only)
+        dep = _after_loss(dep, ctx.special_floors["DEP"], dep_cap, dep_penalty, rules.ess_loss_reduces_maximum_only)
         dep_total = dep + int(ctx.effects["attribute_bonus"].get("DEP") or 0)
         edg_max = int(ctx.attrs_spec["EDG"]["max"])
         ctx.attr_max_bonus["EDG"] = int(ctx.attr_max_bonus.get("EDG") or 0) + dep_total - edg_max
     ctx.ratings = {}
     ctx.bought_ratings = {}
+    ctx.special_min_drop = {}
     for key, spec in ctx.attrs_spec.items():
         racial_min = int(spec["min"])
         racial_max = int(spec["max"]) + int(ctx.attr_max_bonus.get(key) or 0)
@@ -85,7 +99,8 @@ def essence(ctx: Ctx) -> None:
                 mag_cap = racial_max + initiate_grade
                 raw = max(floor, min(mag_cap, raw))
                 ctx.bought_ratings[key] = raw
-                raw = _after_loss(raw, mag_cap, mag_penalty, rules.ess_loss_reduces_maximum_only)
+                ctx.special_min_drop[key] = _min_drop(floor, mag_cap, mag_penalty, rules.ess_loss_reduces_maximum_only)
+                raw = _after_loss(raw, floor, mag_cap, mag_penalty, rules.ess_loss_reduces_maximum_only)
             else:
                 raw = 0
         elif key == "RES":
@@ -95,14 +110,19 @@ def essence(ctx: Ctx) -> None:
                 raw = max(floor, min(res_cap, raw))
                 ctx.bought_ratings[key] = raw
                 res_penalty = max(0, mag_penalty - cyberadept_res_reduction)
-                raw = _after_loss(raw, res_cap, res_penalty, rules.ess_loss_reduces_maximum_only)
+                ctx.special_min_drop[key] = _min_drop(floor, res_cap, res_penalty, rules.ess_loss_reduces_maximum_only)
+                raw = _after_loss(raw, floor, res_cap, res_penalty, rules.ess_loss_reduces_maximum_only)
             else:
                 raw = 0
         elif key == "DEP":
             if key in ctx.special_floors:
-                raw = max(ctx.special_floors[key], min(racial_max, raw))
+                floor = ctx.special_floors[key]
+                raw = max(floor, min(racial_max, raw))
                 ctx.bought_ratings[key] = raw
-                raw = _after_loss(raw, racial_max, dep_penalty, rules.ess_loss_reduces_maximum_only)
+                ctx.special_min_drop[key] = _min_drop(
+                    floor, racial_max, dep_penalty, rules.ess_loss_reduces_maximum_only
+                )
+                raw = _after_loss(raw, floor, racial_max, dep_penalty, rules.ess_loss_reduces_maximum_only)
             else:
                 raw = 0
         elif key == "ESS":

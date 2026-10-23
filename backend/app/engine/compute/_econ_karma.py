@@ -73,11 +73,11 @@ def _karma_totals(ctx: Ctx) -> None:
     ctx.career_adv_lines = []
     if ctx.is_karma:
         ctx.attr_karma = attribute_karma_cost(
-            ctx.bought_ratings,
+            _priced_ratings(ctx),
             ctx.attrs_spec,
             ctx.special_key,
             rules=ctx.effects.get("attribute_karma_cost"),
-            special_floors=ctx.special_floors,
+            special_floors={key: floor - ctx.special_min_drop.get(key, 0) for key, floor in ctx.special_floors.items()},
         )
         ctx.skill_buy_karma = skill_karma_cost(
             ctx.state.skill_groups, ctx.skill_totals, ctx.data["skills"], group_cap=ctx.skill_group_cap
@@ -117,7 +117,7 @@ def _karma_totals(ctx: Ctx) -> None:
         )
     else:
         ctx.attr_karma = attribute_levels_karma_cost(
-            ctx.bought_ratings,
+            _priced_ratings(ctx),
             ctx.attr_karma_levels,
             rules=ctx.effects.get("attribute_karma_cost"),
             minimums=_attribute_minimums(ctx),
@@ -191,6 +191,14 @@ def _karma_totals(ctx: Ctx) -> None:
                 minimums=_attribute_minimums(ctx),
             )
             ctx.karma_spent += ctx.career_adv_karma
+
+
+def _priced_ratings(ctx: Ctx) -> dict[str, int]:
+    """The bought ratings at the height karma prices them: MAG / RES / DEP
+    stand on the minimum essence loss lowered (Chummer's `TotalKarmaCost`
+    counts from `TotalBase`), so a cyber-laden adept's karma levels are the
+    cheap ones."""
+    return {key: rating - ctx.special_min_drop.get(key, 0) for key, rating in ctx.bought_ratings.items()}
 
 
 def _attribute_minimums(ctx: Ctx) -> dict[str, int]:

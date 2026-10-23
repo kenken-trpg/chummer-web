@@ -125,6 +125,10 @@ class Ctx:
     #: `ratings` before essence loss takes MAG / RES down: what was bought,
     #: and so what is saved back and what points and karma are counted from.
     bought_ratings: dict[str, int] = field(default_factory=dict)
+    #: How far essence loss lowered the minimum of MAG / RES / DEP. Chummer
+    #: stacks the bought levels on that lowered minimum, so karma levels are
+    #: priced from there rather than from the talent's own floor.
+    special_min_drop: dict[str, int] = field(default_factory=dict)
 
     # --- magic (initiation / submersion / foci / adept) --------------------
     initiation: InitiationBundle = field(default_factory=empty_initiation)
