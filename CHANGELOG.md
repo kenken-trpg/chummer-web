@@ -3,6 +3,143 @@
 Notable changes. Format follows [Keep a Changelog](https://keepachangelog.com/);
 self-hosters can pin to a tag instead of tracking `main`.
 
+## [0.5.14] — 2026-10-24
+
+### Added
+
+- **The attributes tab shows what essence loss left of Magic and Resonance.**
+  With cyberware, the MAG / RES row now gives the lowered minimum and
+  maximum beside the total (for example "/3, essence loss: min 0, max 3"),
+  and its help explains why. The slider stays on what was bought.
+
+- **Three more "?" tips.** A critter power's stats line (which value is which,
+  and why some are blank), an A.I. program's row (what the category prices,
+  what "requires" asks, the autosoft target, why a program a quality gave
+  cannot be removed) and the mentor spirit picker (what is computed, and that
+  the disadvantage is not).
+
+- **"?" tips for electronic parts and two checkboxes.** The parts panel says
+  how parts are counted (quarter-packs, remaining, reserved), what each source
+  gives and what the history keeps; each electronic modification explains its
+  status and how many packs it needs. The Home Node and black-market boxes
+  now explain themselves with a "?" instead of a hover-only `title`.
+
+- **The sheet tab and two quality pickers explain themselves with "?".**
+  Initiative, condition and limits on the sheet open the same breakdown the
+  sidebar gives. A quality's expertise says that the specialization is free,
+  counts +3, needs the skill at 1 or more and replaces the one already there;
+  a Matrix-action pick says where its bonus goes and that an unlisted action
+  can be typed.
+
+- **Two life modules can each name their own megacorp for Records on File.**
+  Corp Teen and Mr. Johnson, say, now give two takes of the quality, each
+  with the target its module chose, instead of a conflict error. The takes
+  sit as separate rows on the qualities tab and survive a `.chum5` round
+  trip.
+
+- **Buy more levels of a quality a Life Module gave.** A module's free
+  High Pain Tolerance 2 used to make buying a third level an error. Now the
+  bought level stacks on the granted ones, as in Chummer: only it costs
+  karma, and the quality's limit counts both. The picker leaves only the rest
+  of the cap to buy and says how many free levels are held.
+
+- **The manual explains career mode and a table's own settings.** Career mode
+  gets a screenshot of the reward log and the spend breakdown, how raises,
+  qualities, MAG / RES and Street Cred are paid for in play, and what going
+  back to creation does to the starting point. A new section shows how to load
+  a Chummer settings file or a whole settings-and-customdata folder. Every
+  screenshot was retaken so the "?" tips added since v0.5.13 show.
+
+- **The manual now covers the tabs only some characters see.** Spells, adept
+  powers, spirits, foci, complex forms, sprites, an A.I.'s programs and critter
+  powers each get a screenshot and a short guide, with a table of which talent
+  opens which tab. The other screenshots were retaken on v0.5.13.
+
+- **Each take of a quality keeps its own text.** Records on File taken
+  against two megacorps used to share one name between the takes. Now each
+  take has its own box and its own row, as in Chummer: Records on File,
+  Pilot Origins, Close Combat Mage, Illusionist and Busted Cyberware. Deleting
+  one take keeps the others' texts, and a `.chum5` writes and reads each
+  take's `<extra>`.
+
+- **Innate qualities that can go, go.** During creation the qualities tab can
+  take off a metatype's removable quality (a shapeshifter's Uneducated, a
+  Wakyambi's Celerity) for its value the other way round, as Chummer does:
+  Uneducated costs 8 karma to lose, Celerity gives 6 back. The `.chum5` keeps
+  it as Chummer's own "removed at chargen" row, and "Restore" brings it back.
+
+- **Switch a shapeshifter between its two forms.** The attributes tab has a
+  "Current form" choice. In the metahuman form, dice pools, limits,
+  condition monitors, initiative and movement are worked out from that
+  form's attributes; the animal's own values stay beside them on the tab and
+  the sheet. Points and karma are unchanged, since both forms share them.
+
+### Changed
+
+- **Attribute and skill rows say everything on their "?".** The hover-only
+  hints on the sliders repeated what the row's "?" already said and are gone.
+  What "of which karma" means, a specialization bought with karma and a
+  knowledge or exotic skill's creation cap are now lines on that "?". A
+  skill group's karma field no longer shows the single-skill price.
+
+- **The gear tab's hover-only hints are "?" tips now.** A player-set price,
+  stacking armor, a drug's "in use" box, putting gear into a container and
+  raising a lifestyle's points explain themselves with a "?" that opens on
+  tap and is read out. The generic rating, quantity and wireless hints are
+  dropped rather than given a "?" on every row.
+
+- **Magic, ware, priority and sidebar hints are "?" tips.** A ware's essence
+  discount and grade, the karma-to-nuyen slider and the sidebar's "Chummer
+  difference" explain themselves with a "?". Hover-only hints that repeated
+  a tip already on screen (initiation / submersion grade and discounts, an
+  adept's bought points) or only said what Force and Level are, are gone.
+
+- **Each tab says what it is for, in a line at its top.** The tab bar and the
+  gear kinds used to explain themselves only on hover; the open one's line is
+  now visible text. Five of those lines were also corrected (Rigger, essence,
+  Force, binding, vehicle skills).
+- **Buttons in the tabs explain themselves where it matters.** The four build
+  methods share one "?", and the priority table's "?" says picking a taken
+  letter swaps it. Burning Street Cred and rebaselining qualities have a
+  "?"; an A.I. program says in words why it cannot be added yet. A quality's
+  remove / restore buttons are named after the quality for screen readers.
+  Hover hints that only repeated the button are gone.
+
+- **The toolbar, the settings and the export menu explain themselves with
+  "?".** Import, share, career, print, the sheet-URL import, every export
+  format, loading a settings file or folder and the rulebook switches each
+  have a "?" that opens on tap and is read out. Opening one inside the export
+  menu keeps the menu open. Undo and redo announce their shortcuts. Hover
+  hints that only repeated a button (duplicate, delete, the footer links) are
+  gone. With this, hover-only `title=` explanations are gone from the app.
+
+### Fixed
+
+- **A career raise of Magic or Resonance is priced from the value after
+  essence loss.** An adept with cyberware at MAG 1 out of 3 bought paid for
+  the next level as if raising MAG 4 (20 karma); Chummer charges the next
+  value, MAG 2 (10 karma). The loss is the one on entering career, so
+  cyberware installed later gives no karma back for raises already paid.
+
+- **Each career raise of Magic or Resonance keeps the essence loss of its
+  own day.** Cyberware installed between two raises now makes only the later
+  raise cheaper, as in Chummer, instead of being ignored until the next
+  creation. Characters already in career keep the price they had for the
+  levels raised so far.
+
+- **Essence loss lowers the minimum of Magic and Resonance, as in Chummer.**
+  An adept or technomancer with cyberware paid for karma levels of MAG or RES
+  as if they sat on the talent's full minimum. Chummer stacks them on the
+  minimum that essence loss lowered, so they cost less: one level above a
+  minimum of 2 with 2 points of loss is 5 karma, not 15. And a loss deeper
+  than the minimum no longer takes the bought levels with it. Three of
+  Chummer's test characters (Gangerbean, SCSi, Bastion) now agree on their
+  karma and their Magic or Resonance.
+
+- **A shapeshifter's bite says whose it is.** Bite (Vulpine Form) on a
+  Vulpine in Human form was listed as coming from Human. It now names the
+  animal, Shapeshifter: Vulpine.
+
 ## [0.5.13] — 2026-10-23
 
 ### Security
