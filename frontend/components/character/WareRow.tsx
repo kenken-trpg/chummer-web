@@ -7,6 +7,7 @@ import { sideLabel } from "@/lib/character/constants";
 import { availBit, sourceBit } from "@/lib/character/format";
 import { wareBounds } from "@/lib/character/ware";
 import { SkillPickSelects } from "@/components/character/SkillPickSelects";
+import { BlackMarketTip } from "@/components/character/DiscountToggle";
 import { HelpTip } from "@/components/help/HelpTip";
 import { PriceField } from "@/components/character/tabs/gear/PriceField";
 import { useUiText } from "@/lib/i18n";
@@ -175,14 +176,16 @@ export function WareRow(props: {
             />
           ) : null}
           {discounted !== null && discounted !== undefined && !locked ? (
-            <label title={ui("gear.blackMarketHint")}>
-              <input
-                type="checkbox"
-                checked={discounted}
-                onChange={(e) => onPatchRow(item.id, { discounted: e.target.checked })}
-              />
-              {ui("gear.blackMarket")}
-            </label>
+            <BlackMarketTip ui={ui}>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={discounted}
+                  onChange={(e) => onPatchRow(item.id, { discounted: e.target.checked })}
+                />
+                {ui("gear.blackMarket")}
+              </label>
+            </BlackMarketTip>
           ) : null}
           {essDiscountAllowed && !locked ? (
             <label title={ui("ware.essDiscountHint")}>

@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import type { TabPanelProps } from "@/components/character/types";
+import { HelpTip } from "@/components/help/HelpTip";
 import type {
   ElectronicModificationRecord,
   ElectronicPartsAllocation,
@@ -74,25 +75,58 @@ export function ConstructionRecordEditor({
   const pending = mod.modification_status === "pending";
   const completed =
     mod.modification_status === "completed" || mod.modification_status === "historical";
+  const status = ui(
+    pending
+      ? "gear.constructionPending"
+      : completed
+        ? "gear.constructionCompleted"
+        : "gear.constructionUnverified",
+  );
   return (
     <div>
       <p>
-        {ui(
-          pending
-            ? "gear.constructionPending"
-            : completed
-              ? "gear.constructionCompleted"
-              : "gear.constructionUnverified",
-        )}
+        <HelpTip
+          label={ui("help.open", { label: `${tr(mod.name)}: ${status}` })}
+          lines={[
+            {
+              label: ui(
+                pending
+                  ? "help.construction.pending"
+                  : completed
+                    ? "help.construction.completed"
+                    : "help.construction.unverified",
+              ),
+            },
+            ...(completed ? [] : [{ label: ui("help.construction.complete") }]),
+            { label: ui("help.construction.success") },
+          ]}
+        >
+          {status}
+        </HelpTip>
       </p>
       <p>
-        {mod.material_required_units == null
-          ? ui("gear.materialsUnsupported")
-          : ui("gear.materialsCount", {
+        {mod.material_required_units == null ? (
+          ui("gear.materialsUnsupported")
+        ) : (
+          <HelpTip
+            label={ui("help.open", {
+              label: `${tr(mod.name)}: ${ui("help.construction.requiredLabel")}`,
+            })}
+            lines={[
+              { label: ui("help.construction.increase") },
+              { label: ui("help.construction.modify") },
+              { label: ui("help.construction.add") },
+              { label: ui("help.construction.module") },
+              { label: ui("help.construction.frozen") },
+            ]}
+          >
+            {ui("gear.materialsCount", {
               required: mod.material_required_units / 4,
               allocated: allocated / 4,
               available: (mod.material_available_units || 0) / 4,
             })}
+          </HelpTip>
+        )}
       </p>
       {mod.modification_reason ? (
         <p>

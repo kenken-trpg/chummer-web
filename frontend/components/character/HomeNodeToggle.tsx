@@ -1,5 +1,6 @@
 "use client";
 import type { TabPanelProps } from "@/components/character/types";
+import { HelpTip } from "@/components/help/HelpTip";
 import type { Character } from "@/lib/types";
 
 /**
@@ -22,13 +23,22 @@ export function HomeNodeToggle({
 }) {
   if (!d.condition_monitor?.core) return null;
   return (
-    <label title={ui("gear.homeNodeHint")}>
-      <input
-        type="checkbox"
-        checked={ch.home_node === id}
-        onChange={(e) => patch({ home_node: e.target.checked ? id : "" })}
-      />
-      {ui("gear.homeNode")}
-    </label>
+    <HelpTip
+      label={ui("help.open", { label: ui("gear.homeNode") })}
+      lines={[
+        { label: ui("help.gear.homeNode1") },
+        { label: ui("help.gear.homeNode2") },
+        { label: ui("help.gear.homeNode3") },
+      ]}
+    >
+      <label>
+        <input
+          type="checkbox"
+          checked={ch.home_node === id}
+          onChange={(e) => patch({ home_node: e.target.checked ? id : "" })}
+        />
+        {ui("gear.homeNode")}
+      </label>
+    </HelpTip>
   );
 }

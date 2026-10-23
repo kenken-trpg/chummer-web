@@ -58,6 +58,15 @@ it("names its two note fields apart", () => {
   expect(supplyNote()).not.toBe(historyNote());
 });
 
+it("explains how parts are counted, where they come from, and the history", () => {
+  panel({ derived: { gear: [] } });
+  expect(screen.getByRole("button", { name: "部品の数え方 の説明" })).toBeDefined();
+  expect(screen.getByText(/予約は準備中の施工に配分した量/)).toBeDefined();
+  expect(screen.getByRole("button", { name: "調達方法の違い の説明" })).toBeDefined();
+  expect(screen.getByText(/Tool Shop（Hardware）は 1 台につき 2 パック/)).toBeDefined();
+  expect(screen.getByRole("button", { name: "施工・消費履歴 の説明" })).toBeDefined();
+});
+
 it("counts a purchased row in packs, not in the quarters it is stored as", () => {
   const row = {
     id: "p1",

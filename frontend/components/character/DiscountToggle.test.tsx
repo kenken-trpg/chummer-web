@@ -42,5 +42,7 @@ describe("<DiscountToggle>", () => {
     expect(patch.mock.calls[0][0]).toEqual({
       weapons: [{ id: "w1", weapon_id: "c-w1", discounted: true }],
     });
+    expect(screen.getByRole("button", { name: "闇市 の説明" })).toBeDefined();
+    expect(screen.getByText(/資質で選んだ分類の品目だけ/)).toBeDefined();
   });
 });

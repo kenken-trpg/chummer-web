@@ -80,6 +80,11 @@ it("a pending modification requires an exact allocation before confirming constr
   // One editor per modification: its note field carries the modification's
   // name, so two of them on one tab are not announced identically.
   expect(screen.getByRole("textbox", { name: "Modify: 施工・支払確認の説明" })).toBeDefined();
+  // What the status and the parts count mean, on this modification's own "?".
+  expect(screen.getByRole("button", { name: "Modify: 準備中（効果なし） の説明" })).toBeDefined();
+  expect(screen.getByText(/配分を保存すると部品を予約する/)).toBeDefined();
+  expect(screen.getByRole("button", { name: "Modify: 必要部品 の説明" })).toBeDefined();
+  expect(screen.getByText(/Modify Matrix Attribute：4 パック/)).toBeDefined();
   fireEvent.click(confirm);
   expect(patch.mock.calls[0][0].electronic_modification_records).toEqual([
     { ...record, status: "completed", allocations: [{ source_id: "parts", units: 16 }], note: "" },

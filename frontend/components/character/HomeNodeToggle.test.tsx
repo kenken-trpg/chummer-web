@@ -28,4 +28,10 @@ describe("<HomeNodeToggle>", () => {
     fireEvent.click(screen.getByLabelText("Home Node"));
     expect(again).toHaveBeenCalledWith({ home_node: "" });
   });
+
+  it("explains what the home node does beside the box", () => {
+    renderToggle(true);
+    expect(screen.getByRole("button", { name: "Home Node の説明" })).toBeDefined();
+    expect(screen.getByText(/精神ダメージトラックの代わりになる/)).toBeDefined();
+  });
 });
