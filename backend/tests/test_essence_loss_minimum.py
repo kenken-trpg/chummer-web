@@ -110,3 +110,39 @@ def test_cyberware_after_a_raise_gives_no_karma_back() -> None:
     out = compute(raised)
     assert out.derived["totals"]["MAG"] == 3
     assert out.derived["career_advancement_karma"] == 20
+
+
+def test_each_career_raise_keeps_the_loss_of_its_own_day() -> None:
+    state = compute(_career_adept([]))
+    state.attributes = {**state.attributes, "MAG": 4}
+    state = compute(state)
+    # a Datajack between the two raises: only the second is cheaper
+    state.cyberware = [CyberwareInstall(ware_id=DATAJACK)]
+    state.attributes = {**state.attributes, "MAG": 5}
+    out = compute(state)
+    assert out.career_baseline is not None
+    assert out.career_baseline.raise_drops == {"MAG": [0, 1]}
+    # MAG 4 at 4 x 5, then MAG 4 -> 5 standing at 3 -> 4: 4 x 5
+    assert out.derived["career_advancement_karma"] == 20 + 20
+
+
+def test_lowering_a_raise_drops_its_record() -> None:
+    state = compute(_career_adept([]))
+    state.attributes = {**state.attributes, "MAG": 5}
+    state = compute(state)
+    state.attributes = {**state.attributes, "MAG": 4}
+    out = compute(state)
+    assert out.career_baseline is not None
+    assert out.career_baseline.raise_drops == {"MAG": [0]}
+    assert out.derived["career_advancement_karma"] == 20
+
+
+def test_a_baseline_without_the_record_keeps_the_entry_drop() -> None:
+    state = compute(_career_adept([CyberwareInstall(ware_id=WIRED, rating=2)]))
+    state.attributes = {**state.attributes, "MAG": 4}
+    assert state.career_baseline is not None
+    state.career_baseline.raise_drops = None
+    out = compute(state)
+    assert out.career_baseline is not None
+    assert out.career_baseline.raise_drops == {"MAG": [2]}
+    assert out.derived["career_advancement_karma"] == 10

@@ -136,14 +136,15 @@ def career_raise_karma(
     effects: EffectsDict | None = None,
     ratings: dict[str, int] | None = None,
     minimums: dict[str, int] | None = None,
-    value_drop: dict[str, int] | None = None,
+    level_drops: dict[str, list[int]] | None = None,
 ) -> tuple[int, list[dict[str, Any]]]:
     """Karma to raise Priority/SumToTen characters from chargen snapshot to current ratings.
 
     ``ratings`` are the attribute ratings compute settled on (``state.attributes``
-    otherwise), the same ones the baseline is taken from. ``value_drop`` is
-    how far essence loss holds MAG / RES / DEP below that rating: Chummer's
-    `UpgradeKarmaCost` prices a raise from the value after the loss."""
+    otherwise), the same ones the baseline is taken from. ``level_drops`` is,
+    for each MAG / RES / DEP level raised, how far essence loss held it below
+    its rating when it was bought: Chummer's `UpgradeKarmaCost` prices a
+    raise from the value after the loss."""
     total = 0
     lines: list[dict[str, Any]] = []
     eff = effects or empty_effects()
@@ -155,13 +156,26 @@ def career_raise_karma(
         from_r = int(base_attrs.get(key, rating))
         to_r = int(rating or 0)
         shift = alternate_attribute_shift(key, int((minimums or {}).get(key) or 1))
-        shift += int((value_drop or {}).get(key) or 0)
-        cost = _karma_cost_with_category_mods(
-            from_r - shift,
-            to_r - shift,
-            current_rules().karma_attribute,
-            flat_rules=_matching_karma_rules(attr_flat, key),
-        )
+        flat_rules = _matching_karma_rules(attr_flat, key)
+        drops = (level_drops or {}).get(key)
+        if drops:
+            # one level at a time, each from the value of its own day
+            cost = sum(
+                _karma_cost_with_category_mods(
+                    from_r + i - shift - drop,
+                    from_r + i + 1 - shift - drop,
+                    current_rules().karma_attribute,
+                    flat_rules=flat_rules,
+                )
+                for i, drop in enumerate(drops)
+            )
+        else:
+            cost = _karma_cost_with_category_mods(
+                from_r - shift,
+                to_r - shift,
+                current_rules().karma_attribute,
+                flat_rules=flat_rules,
+            )
         if cost:
             lines.append(
                 {
