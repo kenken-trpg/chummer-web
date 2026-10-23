@@ -21,7 +21,6 @@ export function RangeInput({
   onDraft,
   onCommit,
   label,
-  title,
   disabled,
   /** Marked on the scale as a floor the value can never go under — the
    *  metatype's racial minimum on the attribute sliders. */
@@ -35,7 +34,6 @@ export function RangeInput({
   /** Pointer released / focus left. Commit here. */
   onCommit: (value: number) => void;
   label?: string;
-  title?: string;
   disabled?: boolean;
   floor?: number;
 }) {
@@ -70,7 +68,6 @@ export function RangeInput({
         value={shown}
         disabled={disabled}
         aria-label={label}
-        title={title}
         onChange={(e) => {
           pending.current = true;
           onDraft(Number(e.target.value));

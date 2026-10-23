@@ -478,4 +478,12 @@ export const EN_HELP = {
   "help.life.raise": "Points raised above what this lifestyle starts with",
   "help.life.raiseCost":
     "Each costs 1 LP and 10% of the base cost, plus its own price where it has one (RF p.219)",
+  "help.prio.nuyenRate": "1 karma = {rate}\u00a5",
+  "help.prio.nuyenOneWay": "Only while creating, and nuyen cannot be turned back into karma",
+  "help.ware.essDiscount": "An essence discount the GM allowed; negative costs more",
+  "help.ware.essDiscountWhen": "Only offered when the settings file allows essence discounts",
+  "help.side.chummerAdjust":
+    "What a Chummer save\u2019s balance leaves apart from the build and the rewards",
+  "help.side.chummerAdjustWhy":
+    "Rent paid, purchases at their own prices \u2014 added to what is left",
 } as const;

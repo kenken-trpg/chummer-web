@@ -88,25 +88,34 @@ export function PriorityTab({
           )}
         </div>
         {!["Karma", "LifeModule"].includes(ch.build_method || "Priority") ? (
-          <label style={{ display: "block", marginBottom: 12 }}>
-            {ui("prio.leftoverSlider", {
-              k: ch.karma_nuyen || 0,
-              nuyen: (
-                (ch.karma_nuyen || 0) * (d.karma_chargen?.nuyen_per_karma || 2000)
-              ).toLocaleString(),
-            })}
-            <RangeInput
-              min={0}
-              max={d.karma_chargen?.nuyen_karma_max ?? d.nuyen_karma_max ?? 10}
-              value={ch.karma_nuyen || 0}
-              label={ui("prio.leftoverSliderLabel")}
-              title={ui("prio.nuyenSliderHint", {
-                rate: (d.karma_chargen?.nuyen_per_karma || 2000).toLocaleString(),
+          <HelpTip
+            label={ui("help.open", { label: ui("prio.leftoverSliderLabel") })}
+            lines={[
+              {
+                label: ui("help.prio.nuyenRate", {
+                  rate: (d.karma_chargen?.nuyen_per_karma || 2000).toLocaleString(),
+                }),
+              },
+              { label: ui("help.prio.nuyenOneWay") },
+            ]}
+          >
+            <label style={{ display: "block", marginBottom: 12 }}>
+              {ui("prio.leftoverSlider", {
+                k: ch.karma_nuyen || 0,
+                nuyen: (
+                  (ch.karma_nuyen || 0) * (d.karma_chargen?.nuyen_per_karma || 2000)
+                ).toLocaleString(),
               })}
-              onDraft={(value) => setCharacter({ ...ch, karma_nuyen: value })}
-              onCommit={(value) => patch({ karma_nuyen: value })}
-            />
-          </label>
+              <RangeInput
+                min={0}
+                max={d.karma_chargen?.nuyen_karma_max ?? d.nuyen_karma_max ?? 10}
+                value={ch.karma_nuyen || 0}
+                label={ui("prio.leftoverSliderLabel")}
+                onDraft={(value) => setCharacter({ ...ch, karma_nuyen: value })}
+                onCommit={(value) => patch({ karma_nuyen: value })}
+              />
+            </label>
+          </HelpTip>
         ) : null}
         {["Karma", "LifeModule"].includes(ch.build_method || "Priority") ? (
           <div style={{ display: "grid", gap: 12 }}>
@@ -125,25 +134,34 @@ export function PriorityTab({
                 )}
               </select>
             </label>
-            <label>
-              {ui("prio.karmaSlider", {
-                k: ch.karma_nuyen || 0,
-                nuyen: (
-                  (ch.karma_nuyen || 0) * (d.karma_chargen?.nuyen_per_karma || 2000)
-                ).toLocaleString(),
-              })}
-              <RangeInput
-                min={0}
-                max={d.karma_chargen?.nuyen_karma_max ?? 235}
-                value={ch.karma_nuyen || 0}
-                label={ui("prio.karmaSliderLabel")}
-                title={ui("prio.nuyenSliderHint", {
-                  rate: (d.karma_chargen?.nuyen_per_karma || 2000).toLocaleString(),
+            <HelpTip
+              label={ui("help.open", { label: ui("prio.karmaSliderLabel") })}
+              lines={[
+                {
+                  label: ui("help.prio.nuyenRate", {
+                    rate: (d.karma_chargen?.nuyen_per_karma || 2000).toLocaleString(),
+                  }),
+                },
+                { label: ui("help.prio.nuyenOneWay") },
+              ]}
+            >
+              <label>
+                {ui("prio.karmaSlider", {
+                  k: ch.karma_nuyen || 0,
+                  nuyen: (
+                    (ch.karma_nuyen || 0) * (d.karma_chargen?.nuyen_per_karma || 2000)
+                  ).toLocaleString(),
                 })}
-                onDraft={(value) => setCharacter({ ...ch, karma_nuyen: value })}
-                onCommit={(value) => patch({ karma_nuyen: value })}
-              />
-            </label>
+                <RangeInput
+                  min={0}
+                  max={d.karma_chargen?.nuyen_karma_max ?? 235}
+                  value={ch.karma_nuyen || 0}
+                  label={ui("prio.karmaSliderLabel")}
+                  onDraft={(value) => setCharacter({ ...ch, karma_nuyen: value })}
+                  onCommit={(value) => patch({ karma_nuyen: value })}
+                />
+              </label>
+            </HelpTip>
             {d.karma_chargen ? (
               <div className="muted" style={{ display: "grid", gap: 4 }}>
                 <div>

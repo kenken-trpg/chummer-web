@@ -108,8 +108,6 @@ export const JA_SIDEBAR = {
   "side.chummerSpend": "Chummer での支出",
   "side.expense": "支出",
   "side.chummerAdjust": "Chummer との差",
-  "side.chummerAdjustHint":
-    "Chummer のセーブの残高と、この app が構成と報酬から出す残りとの差（払った家賃や、別の価格での購入など）。残りに足しています",
   "side.deleteReward": "削除",
   "side.rewardLabel": "ラベル",
   "side.rewardLabelHint": "Run 名など",

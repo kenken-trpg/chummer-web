@@ -33,7 +33,7 @@ export function QiFociSection({
               {item.nuyen.toLocaleString()}¥{ui("adept.qiBinding", { karma: item.karma })}
             </div>
             <div className="cyber-controls">
-              <label title={ui("common.forceHint")}>
+              <label>
                 {ui("common.force")}
                 <input
                   type="number"

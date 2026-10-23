@@ -80,7 +80,7 @@ export function AdeptPowerRow({
             />
           ) : null}
           {item.spell ? (
-            <label title={ui("common.forceHint")}>
+            <label>
               {ui("common.force")}
               <input
                 type="number"

@@ -109,8 +109,6 @@ export const EN_SIDEBAR = {
   "side.chummerSpend": "Spent in Chummer",
   "side.expense": "Spending",
   "side.chummerAdjust": "Chummer balance",
-  "side.chummerAdjustHint":
-    "What a Chummer save’s balance leaves apart from the build and the rewards — rent paid, purchases at their own prices — added to what is left",
   "side.deleteReward": "Delete",
   "side.rewardLabel": "Label",
   "side.rewardLabelHint": "run name, etc.",

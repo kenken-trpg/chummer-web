@@ -69,7 +69,7 @@ export function SpritesTab({ catalog, character: ch, d, tr, ui, patch }: TabPane
               </div>
             ) : null}
             <div className="cyber-controls">
-              <label title={ui("common.levelHint")}>
+              <label>
                 {ui("common.level")}
                 <input
                   type="number"

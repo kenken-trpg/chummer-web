@@ -427,6 +427,9 @@ describe("<CyberTab> black market discount", () => {
     renderTab({ character: character({ allow_ess_discounts: true }) as never, patch });
     fireEvent.change(screen.getByLabelText("ESS 割引 %"), { target: { value: "150" } });
     expect((patch.mock.calls[0][0] as Character).cyberware![0].ess_discount).toBe(100);
+    // what the box is for is on its "?", and so is the grade's
+    expect(screen.getByText(/GM が認めたエッセンスの割引/)).toBeDefined();
+    expect(screen.getAllByRole("button", { name: /: 等級 の説明$/ }).length).toBeGreaterThan(0);
   });
 });
 
