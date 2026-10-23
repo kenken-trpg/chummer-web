@@ -15,6 +15,7 @@ from ..contacts import apply_excon_ware_ban
 from ..critter_powers import bought_power_sources
 from ..gear import bind_weapon_category_dv, bind_weapon_skill_accuracy
 from ..karma import _skill_groups_for_category
+from ..lookups import find_metatype
 from ..magic import (
     apply_granted_spells,
     bind_spell_category_drain_damage,
@@ -118,7 +119,7 @@ def gather(ctx: Ctx) -> None:
             talent=term(str(ctx.talent.get("label") or ctx.talent["name"])),
             metatype=term(ctx.state.metatype),
         )
-    ctx.sources = [(ctx.meta["name"], ctx.meta.get("bonus") or [])]
+    ctx.sources = [(_bonus_source_name(ctx), ctx.meta.get("bonus") or [])]
     innate_grants = _without_removed(ctx)
     quality_grants = [*innate_grants, *(ctx.life.get("qualities") or [])]
     power_grants = ctx.meta.get("power_grants") or []
@@ -243,3 +244,13 @@ def effects_and_binders(ctx: Ctx) -> None:
     ctx.special_floors = special_attribute_floors(ctx.meta, ctx.talent, is_karma=ctx.is_karma)
     ctx.enabled = set(ctx.effects["enabled_tabs"])
     ctx.enabled.update(ctx.special_floors)
+
+
+def _bonus_source_name(ctx: Ctx) -> str:
+    """Whom the metatype's own bonus is credited to. A shapeshifter's sits on
+    the metahuman form (Human, Elf), but the bite and the rest are the
+    animal's: "Human" beside Bite (Fox Form) read as a plain human's."""
+    parent = ctx.meta.get("parent")
+    if parent and parent == ctx.state.metatype and find_metatype(parent, None).get("category") == "Shapeshifter":
+        return str(parent)
+    return str(ctx.meta["name"])
