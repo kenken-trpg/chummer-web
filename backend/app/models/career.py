@@ -26,6 +26,11 @@ class CareerBaseline(BaseModel):
     # A mystic adept's power points bought at chargen, so a career purchase
     # can be told apart (`<mysaddppcareer>`). None for an older baseline.
     mystic_pp: int | None = None
+    # How far MAG / RES / DEP stood below their bought rating from essence
+    # loss on entering career. Chummer prices a career raise from the value
+    # after the loss; this keeps loss taken later from refunding raises
+    # already paid. None until the first career compute records it.
+    special_drop: dict[str, int] | None = None
 
 
 class RewardEntry(BaseModel):

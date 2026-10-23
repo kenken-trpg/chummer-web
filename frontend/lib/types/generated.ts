@@ -606,6 +606,12 @@ export interface CareerBaseline {
    *  can be told apart (`<mysaddppcareer>`). None for an older baseline.
    */
   mystic_pp?: number | null;
+  /** How far MAG / RES / DEP stood below their bought rating from essence
+   *  loss on entering career. Chummer prices a career raise from the value
+   *  after the loss; this keeps loss taken later from refunding raises
+   *  already paid. None until the first career compute records it.
+   */
+  special_drop?: Record<string, number> | null;
 }
 
 export interface RewardEntry {
