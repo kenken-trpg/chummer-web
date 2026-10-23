@@ -31,6 +31,12 @@ class CareerBaseline(BaseModel):
     # after the loss; this keeps loss taken later from refunding raises
     # already paid. None until the first career compute records it.
     special_drop: dict[str, int] | None = None
+    # The same drop for each level of MAG / RES / DEP raised in career, as it
+    # stood when that level was bought: a raise is priced from the value of
+    # its day, so ware installed between two raises makes only the later one
+    # cheaper. None for a baseline from before it was kept, whose existing
+    # levels take `special_drop` (capped by today's).
+    raise_drops: dict[str, list[int]] | None = None
 
 
 class RewardEntry(BaseModel):

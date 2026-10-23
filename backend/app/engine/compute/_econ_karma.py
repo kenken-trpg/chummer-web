@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from ...models import CareerBaseline
 from ...notices import notice
 from ...rules import current_rules
 from ..karma import (
@@ -183,7 +184,6 @@ def _karma_totals(ctx: Ctx) -> None:
                 ctx.state.career_baseline = baseline
             if baseline.special_drop is None:
                 baseline.special_drop = _special_drop_now(ctx)
-            now = _special_drop_now(ctx)
             ctx.career_adv_karma, ctx.career_adv_lines = career_raise_karma(
                 ctx.state,
                 baseline,
@@ -192,8 +192,7 @@ def _karma_totals(ctx: Ctx) -> None:
                 effects=ctx.effects,
                 ratings=ctx.bought_ratings,
                 minimums=_attribute_minimums(ctx),
-                # never more than now: cyberware taken out gives nothing back
-                value_drop={key: min(drop, now.get(key, 0)) for key, drop in baseline.special_drop.items()},
+                level_drops=_raise_drops(ctx, baseline),
             )
             ctx.karma_spent += ctx.career_adv_karma
 
@@ -210,6 +209,31 @@ def _special_drop_now(ctx: Ctx) -> dict[str, int]:
     """How far essence loss holds MAG / RES / DEP below what was bought."""
     drops = {key: ctx.bought_ratings[key] - ctx.ratings.get(key, 0) for key in ctx.special_floors}
     return {key: drop for key, drop in drops.items() if drop > 0 and key in ctx.bought_ratings}
+
+
+def _raise_drops(ctx: Ctx, baseline: CareerBaseline) -> dict[str, list[int]]:
+    """`baseline.raise_drops`, brought up to the ratings this pass settled on.
+
+    A level lowered away takes its entry with it; a new level records the
+    drop of today, which is the day it was bought. Levels a baseline from
+    before this record holds take the drop on entering career instead, never
+    more than today's (ware taken out gives nothing back).
+    """
+    now = _special_drop_now(ctx)
+    legacy = baseline.raise_drops is None
+    recorded = baseline.raise_drops or {}
+    entry = baseline.special_drop or {}
+    out: dict[str, list[int]] = {}
+    for key in ctx.special_floors:
+        rating = int(ctx.bought_ratings.get(key) or 0)
+        raised = max(0, rating - int(baseline.attributes.get(key, rating)))
+        levels = list(recorded.get(key) or [])[:raised]
+        fill = min(entry.get(key, 0), now.get(key, 0)) if legacy else now.get(key, 0)
+        levels += [fill] * (raised - len(levels))
+        if levels:
+            out[key] = levels
+    baseline.raise_drops = out
+    return out
 
 
 def _attribute_minimums(ctx: Ctx) -> dict[str, int]:
