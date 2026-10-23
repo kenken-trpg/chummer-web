@@ -142,6 +142,30 @@ describe("<AttrsTab>", () => {
     expect(patch).toHaveBeenCalledWith({ attribute_karma: { MAG: 1 } });
   });
 
+  it("shows the range essence loss left beside MAG, keeping the slider on what was bought", () => {
+    renderTab({
+      character: {
+        attributes: { MAG: 3 },
+        derived: {
+          enabled_tabs: ["MAG"],
+          totals: { MAG: 1 },
+          metatype_info: {
+            attributes: { MAG: { min: 2, max: 6, aug: 6, ess_min: 0, ess_max: 3 } },
+          },
+        } as never,
+      },
+    });
+    const slider = screen.getByRole("slider", { name: /^MAG / }) as HTMLInputElement;
+    expect([slider.min, slider.max, slider.value]).toEqual(["2", "6", "3"]);
+    expect(screen.getByText("/3")).toBeDefined();
+    expect(screen.getByText(/エッセンスで下限 0・上限 3/)).toBeDefined();
+  });
+
+  it("adds nothing when essence loss leaves the range alone", () => {
+    renderTab({ character: { derived: { enabled_tabs: ["MAG"], totals: { MAG: 4 } as never } } });
+    expect(screen.queryByText(/エッセンスで下限/)).toBeNull();
+  });
+
   it("drags STR: onChange previews via setCharacter, onMouseUp commits via patch", () => {
     const patch = vi.fn();
     // AttrsTab is a controlled slider — the preview only sticks if setCharacter

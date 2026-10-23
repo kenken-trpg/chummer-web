@@ -39,6 +39,20 @@ def test_a_loss_past_the_minimum_keeps_the_level_bought() -> None:
     assert _attr_karma(out) == 5
 
 
+def test_the_range_the_loss_left_is_shown_beside_the_bought_one() -> None:
+    # Wired Reflexes 2: ESS 3, three points off a range of 2-6
+    out = _bought_one_level(CyberwareInstall(ware_id=WIRED, rating=2))
+    mag = out["metatype_info"]["attributes"]["MAG"]
+    assert (mag["min"], mag["max"]) == (2, 6)
+    assert (mag["ess_min"], mag["ess_max"]) == (0, 3)
+    assert "ess_max" not in out["metatype_info"]["attributes"]["BOD"]
+
+
+def test_no_loss_adds_no_range() -> None:
+    state = _adept("ess-none", "D")
+    assert "ess_max" not in compute(state).derived["metatype_info"]["attributes"]["MAG"]
+
+
 def test_a_shallow_loss_lowers_the_price_and_the_rating_alike() -> None:
     # a Datajack's 0.1 costs one point: the minimum falls from 2 to 1
     out = _bought_one_level(CyberwareInstall(ware_id=DATAJACK))

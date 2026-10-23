@@ -488,6 +488,9 @@ export const JA_CHARGEN = {
   "life.freeGrids": " / 付属グリッド {count}",
   "attrs.wareBonus": " ウェア+{bonus}",
   "attrs.meat": " 肉{value}",
+  "attrs.essenceRange": " ／ エッセンスで下限 {min}・上限 {max}",
+  "attrs.essenceRangeHint":
+    "エッセンスが減ると、その分だけ下限と上限が下がります（下限は 0 まで）。スライダーは買った値のままで、能力値点とカルマで買った分は下がった下限の上に積まれます。",
   "attrs.points": "能力値点 {used}/{max} ・ 特殊点 {specialUsed}/{specialMax}",
   "attrs.rowHint": "メタの下限 {min}／作成上限 {max}／増強込みの上限 {aug}",
   "attrs.karmaLevels": "うちカルマ",

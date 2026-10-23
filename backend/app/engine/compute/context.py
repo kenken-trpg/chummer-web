@@ -129,6 +129,8 @@ class Ctx:
     #: stacks the bought levels on that lowered minimum, so karma levels are
     #: priced from there rather than from the talent's own floor.
     special_min_drop: dict[str, int] = field(default_factory=dict)
+    #: How far essence loss lowered their maximum.
+    special_max_drop: dict[str, int] = field(default_factory=dict)
 
     # --- magic (initiation / submersion / foci / adept) --------------------
     initiation: InitiationBundle = field(default_factory=empty_initiation)
