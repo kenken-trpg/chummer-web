@@ -236,7 +236,8 @@ test("Centaur career keeps purchased MAG as its baseline across growth, undo and
   const path = test.info().outputPath("centaur-career.json");
   await download.saveAs(path);
   const saved = JSON.parse(readFileSync(path, "utf8")) as Character;
-  expect(saved.career_baseline).toEqual(baseline);
+  // The MAG raise records how far essence loss held it down that day (none here).
+  expect(saved.career_baseline).toEqual({ ...baseline, raise_drops: { MAG: [0] } });
   expect(saved.derived.career_advancement_karma).toBe(40);
   await page.getByLabel("読込 (JSON/.chum5/.xlsx)").setInputFiles(path);
   await expect.poll(async () => (await currentCharacter(page)).id).not.toBe(sourceId);
