@@ -121,17 +121,17 @@ def has_extra_per_take(spec: dict[str, Any]) -> bool:
     )
 
 
-def take_extra_keys(qualities: list[dict[str, Any]], is_free: Any) -> list[str]:
+def take_extra_keys(qualities: list[dict[str, Any]]) -> list[str]:
     """The `quality_extras` key each row of `qualities` reads its pick from.
 
-    The takes the player bought are numbered in order; a free one (a Life
-    Module's, a metatype's) and every quality without a pick per take reads
-    the id, as before."""
+    The takes are numbered in order, bought or granted alike (two Life
+    Modules each naming a megacorp for Records on File); every quality
+    without a pick per take reads the id, as before."""
     taken: dict[str, int] = {}
     keys: list[str] = []
     for spec in qualities:
         qid = str(spec["id"])
-        if not has_extra_per_take(spec) or is_free(spec):
+        if not has_extra_per_take(spec):
             keys.append(qid)
             continue
         take = taken.get(qid, 0)

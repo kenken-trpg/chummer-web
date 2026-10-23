@@ -319,6 +319,38 @@ def test_quality_extra_conflicts_do_not_overwrite_purchased_extras():
     assert next(q for q in state.derived["qualities"] if q["id"] == grant["quality_id"])["extra"] == "Original"
 
 
+def _records_on_file(first: str, second: str):
+    picks = {"0:q0": first, "1:q0": second}
+    modules = [module("Corp Teen")["id"], module("Mr. Johnson")["id"]]
+    return apply_patch(runner(), CharacterPatch(life_modules=modules, life_module_choices=picks))
+
+
+def _records(state) -> list[tuple[str, str | None]]:
+    return [(q["extra"], q.get("extra_key")) for q in state.derived["qualities"] if q["name"] == "Records on File"]
+
+
+def test_two_modules_name_their_own_megacorp_for_records_on_file():
+    state = _records_on_file("Ares", "Renraku")
+    assert not has(state.derived["errors"], "engine.life.qualityChoiceConflict")
+    qid = module("Corp Teen")["quality_choice_grants"][0]["quality_id"]
+    assert _records(state) == [("Ares", qid), ("Renraku", f"{qid}:take:1")]
+    # what the modules answer stays in the working copy, never a purchase
+    assert state.quality_extras == {} and state.quality_ids == []
+
+
+def test_two_modules_may_name_the_same_megacorp():
+    state = _records_on_file("Ares", "Ares")
+    assert not has(state.derived["errors"], "engine.life.qualityChoiceConflict")
+    assert [extra for extra, _ in _records(state)] == ["Ares", "Ares"]
+
+
+def test_each_module_take_survives_a_chum5_round_trip():
+    state = _records_on_file("Ares", "Renraku")
+    back, _ = chum5_to_state(state_to_chum5(state))
+    again = import_character(back)
+    assert [extra for extra, _ in _records(again)] == ["Ares", "Renraku"]
+
+
 def test_mr_johnson_contacts_are_free_distinct_and_not_persisted_as_purchases():
     spec = module("Mr. Johnson")
     state = apply_patch(runner(), CharacterPatch(life_modules=[spec["id"]], life_module_choices={"0:q0": "Ares"}))

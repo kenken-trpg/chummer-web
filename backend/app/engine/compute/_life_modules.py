@@ -14,8 +14,10 @@ from uuid import NAMESPACE_URL, uuid5
 from ...models import CharacterState, ContactInstall
 from ...notices import term
 from ...rules import current_rules
+from ..constants import quality_take_extra_key
 from ..karma import attribute_levels_karma_cost, knowledge_excess_karma, skill_levels_karma_cost
 from ..priority import resolve_talent_for_method
+from ..qualities import has_extra_per_take
 from .context import Ctx
 
 STAGES = ("Nationality", "Formative Years", "Teen Years", "Further Education", "Real Life")
@@ -68,6 +70,9 @@ class _Grants:
     bonuses: dict[str, dict[str, int]] = field(default_factory=lambda: {key: {} for key in FIELDS[:4]})
     qualities: list[dict[str, Any]] = field(default_factory=list)
     specializations: set[tuple[str, str]] = field(default_factory=set)
+    #: how many takes of each quality the modules have answered so far, for
+    #: a quality whose every take names its own target (Records on File)
+    extra_takes: dict[str, int] = field(default_factory=dict)
 
 
 def _chosen_modules(ctx: Ctx) -> list[dict[str, Any]]:
@@ -235,13 +240,14 @@ def _grant_quality(ctx: Ctx, row: dict[str, Any], grant: dict[str, Any], name: s
     grants.qualities.append(quality)
 
 
-def _set_quality_extra(ctx: Ctx, quality: dict[str, Any], extra: str) -> bool:
+def _set_quality_extra(ctx: Ctx, quality: dict[str, Any], extra: str, key: str | None = None) -> bool:
     """Record the quality's answer unless the player already gave it a different one."""
-    taken = (ctx.state.quality_extras.get(quality["id"]) or "").strip()
+    key = key or quality["id"]
+    taken = (ctx.state.quality_extras.get(key) or "").strip()
     if taken and taken != extra:
         ctx.err("engine.life.qualityChoiceConflict", name=term(quality["name"]))
         return False
-    ctx.state.quality_extras[quality["id"]] = extra
+    ctx.state.quality_extras[key] = extra
     return True
 
 
@@ -260,7 +266,14 @@ def _apply_quality_choice(ctx: Ctx, row: dict[str, Any], grant: dict[str, Any], 
     if not picked or (options and picked not in options):
         ctx.err("engine.life.choice", name=term(row["name"]), slot=key)
         return
-    if _set_quality_extra(ctx, quality, picked):
+    key = quality["id"]
+    if has_extra_per_take(quality):
+        # Two modules with Records on File each name their own megacorp:
+        # the takes are numbered in module order, as the rows will be
+        take = grants.extra_takes.get(key, 0)
+        grants.extra_takes[key] = take + 1
+        key = quality_take_extra_key(key, take)
+    if _set_quality_extra(ctx, quality, picked, key):
         grants.qualities.append(quality)
 
 
