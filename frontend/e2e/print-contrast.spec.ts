@@ -54,6 +54,9 @@ async function openSheet(page: Page) {
     .setInputFiles(await chummerFixture());
   await expect(page.getByRole("textbox", { name: "キャラクター名" })).toHaveValue("Ghile Mear");
   await page.getByRole("button", { name: "シート", exact: true }).click();
+  // the sheet loads after the tab switches; sweeping before it is there finds
+  // nothing and passes, which is how a dark "?" got past this test locally
+  await expect(page.locator("article.character-sheet .sheet-section").first()).toBeVisible();
 }
 
 test("the 卓用 A4 layout paints nothing dark, on screen or on paper", async ({ page }) => {
