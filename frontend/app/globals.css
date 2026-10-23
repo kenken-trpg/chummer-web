@@ -1027,6 +1027,10 @@ input[type="search"] {
 .sheet-derived-grid span {
   color: var(--muted);
 }
+/* the rule above dims every span, and a "?" box is built of them */
+.sheet-derived-grid .help-tip-body span {
+  color: var(--text);
+}
 .sheet-header-stats b,
 .sheet-derived-grid b {
   color: var(--accent);
