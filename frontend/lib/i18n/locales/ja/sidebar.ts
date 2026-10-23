@@ -94,7 +94,6 @@ export const JA_SIDEBAR = {
   "side.unimplementedLabel": "未実装",
   "side.scEdit": "SC 補正",
   "side.scBurn": "SC を 2 燃やす（悪名 −1）",
-  "side.scBurnHint": "ストリートの評判を 2 点燃やして悪名を 1 点下げる（SR5 p.373）",
   "side.scBurnt": "燃やした SC {burnt}",
   "side.scUnburn": "燃やしを戻す",
   "side.scFormula": "SC = 得たカルマ {karma} ÷ {divisor} → {earned} ＋ 補正 {extra} ＝ {total}",

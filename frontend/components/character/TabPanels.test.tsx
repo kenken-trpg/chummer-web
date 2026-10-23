@@ -59,8 +59,15 @@ describe("<TabPanels>", () => {
     expect(screen.queryByRole("button", { name: "優先度" })).toBeNull();
   });
 
-  it("renders nothing for a tab the character has not enabled", () => {
+  it("renders no panel for a tab the character has not enabled, only its line", () => {
     const { container } = renderAt("sprites");
-    expect(container.textContent).toBe("");
+    expect(container.textContent).toBe("登録したスプライト。テクノマンサーのみ");
+  });
+
+  it("says what the open section is for", () => {
+    renderAt("meta");
+    expect(
+      screen.getByText("メタタイプと種族。能力値の下限・上限がここで決まります"),
+    ).toBeDefined();
   });
 });

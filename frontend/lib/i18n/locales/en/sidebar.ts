@@ -94,7 +94,6 @@ export const EN_SIDEBAR = {
   "side.unimplementedLabel": "Unimplemented",
   "side.scEdit": "Street cred adjustment",
   "side.scBurn": "Burn 2 street cred (−1 notoriety)",
-  "side.scBurnHint": "Burn two points of Street Cred to take a point of Notoriety off (SR5 p.373)",
   "side.scBurnt": "{burnt} street cred burned",
   "side.scUnburn": "Undo a burn",
   "side.scFormula":

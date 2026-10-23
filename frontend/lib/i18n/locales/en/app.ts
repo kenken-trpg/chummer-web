@@ -152,9 +152,7 @@ export const EN_APP = {
   "picker.more": "{count} more. Narrow the search.",
   "picker.booksHidden": "{count} entries are outside the enabled rulebooks and are not listed",
   "picker.buyLabel": "{action} {name}",
-  "picker.catAllHint": "Show every category",
 
-  "picker.catHint": "Show only {category}",
   "toolbar.roster": "Saved characters",
   "toolbar.unnamed": "Unnamed",
   "toolbar.unsaved": " (unsaved)",
@@ -400,7 +398,6 @@ export const EN_APP = {
   "app.gearReview.title":
     "{count} rows on the equipment sheet could not be matched to an item. Pick the closest, or skip it.",
   "app.gearReview.row": "×{qty}, rating {rating}",
-  "app.gearReview.addHint": 'Add as "{name}" ({list})',
   "app.gearReview.noneLikeIt": "Nothing in the book looks like it",
   "app.gearReview.skip": "Skip",
   "app.gearReview.dismiss": "Close the rest",

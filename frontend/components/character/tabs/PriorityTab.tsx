@@ -37,21 +37,18 @@ export function PriorityTab({
         >
           <button
             className={`choice ${(ch.build_method || "Priority") === "Priority" ? "selected" : ""}`}
-            title={ui("prio.methodPriorityHint")}
             onClick={() => patch(buildMethodPatch("Priority", ch))}
           >
             {buildMethodLabel("Priority", ui)}
           </button>
           <button
             className={`choice ${(ch.build_method || "Priority") === "SumToTen" ? "selected" : ""}`}
-            title={ui("prio.methodSumHint")}
             onClick={() => patch(buildMethodPatch("SumToTen", ch))}
           >
             {buildMethodLabel("SumToTen", ui)}
           </button>
           <button
             className={`choice ${(ch.build_method || "Priority") === "Karma" ? "selected" : ""}`}
-            title={ui("prio.methodKarmaHint")}
             onClick={() => patch(buildMethodPatch("Karma", ch))}
           >
             {buildMethodLabel("Karma", ui)}
@@ -62,6 +59,17 @@ export function PriorityTab({
           >
             {ui("life.method")}
           </button>
+          <HelpTip
+            label={ui("help.open", { label: ui("help.prio.methodLabel") })}
+            lines={[
+              { label: ui("help.prio.methodPriority") },
+              { label: ui("help.prio.methodSum") },
+              { label: ui("help.prio.methodKarma") },
+              { label: ui("help.prio.methodLife") },
+            ]}
+          >
+            {""}
+          </HelpTip>
           {(ch.build_method || "Priority") === "SumToTen" ? (
             <span className="muted">
               {ui("prio.sumTotal", {
@@ -217,18 +225,6 @@ export function PriorityTab({
                           <td key={letter}>
                             <button
                               className={`choice ${ch.priorities[cat.key] === letter ? "selected" : ""}`}
-                              // the cell shows only the tier's name ("24"、"Human")
-                              // — say which row it belongs to and, in Priority
-                              // mode, which category it would displace
-                              title={
-                                takenBy
-                                  ? ui("prio.cellSwapHint", {
-                                      cat: ui(cat.label),
-                                      letter,
-                                      other: ui(takenBy.label),
-                                    })
-                                  : ui("prio.cellHint", { cat: ui(cat.label), letter })
-                              }
                               onClick={() => {
                                 const next = { ...ch.priorities };
                                 if (!sumMode && takenBy) next[takenBy.key] = next[cat.key];
@@ -269,6 +265,9 @@ export function PriorityTab({
                   { label: ui("help.prio.special") },
                   { label: ui("help.prio.skillCell") },
                   { label: ui("help.prio.magicCell") },
+                  ...((ch.build_method || "Priority") === "Priority"
+                    ? [{ label: ui("help.prio.swap") }]
+                    : []),
                 ]}
               >
                 {ui("help.prio.statsLabel")}

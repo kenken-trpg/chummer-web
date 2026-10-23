@@ -166,11 +166,11 @@ export function AIProgramsTab({ catalog, character: ch, d, tr, ui, patch }: TabP
                     {" / "}
                     {sourceBit(item, ui)}
                   </div>
+                  {missing ? <div className="muted">{ui("aiprog.missingBase")}</div> : null}
                 </div>
                 <button
                   className="btn primary"
                   disabled={missing}
-                  title={missing ? ui("aiprog.missingBase") : undefined}
                   onClick={() =>
                     patch({ ai_programs: [...(ch.ai_programs || []), { program_id: item.id }] })
                   }

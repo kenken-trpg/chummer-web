@@ -295,6 +295,7 @@ describe("<CharacterSidebar>", () => {
       />,
     );
     expect(screen.getByText("燃やした SC 2")).toBeDefined();
+    expect(screen.getByRole("button", { name: "SC を 2 燃やす（悪名 −1） の説明" })).toBeDefined();
     fireEvent.click(screen.getByRole("button", { name: "SC を 2 燃やす（悪名 −1）" }));
     expect(patch).toHaveBeenCalledWith({ burnt_street_cred: 4 });
     fireEvent.click(screen.getByRole("button", { name: "燃やしを戻す" }));

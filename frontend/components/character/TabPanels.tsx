@@ -12,7 +12,7 @@ import { PriorityTab } from "@/components/character/tabs/PriorityTab";
 import { QualitiesTab } from "@/components/character/tabs/QualitiesTab";
 import { SkillsTab } from "@/components/character/tabs/SkillsTab";
 import type { Tab } from "@/lib/character/constants";
-import { useUiText } from "@/lib/i18n";
+import { useUiText, type MsgKey } from "@/lib/i18n";
 import { scopeTr, type TranslationKind } from "@/lib/ui-strings";
 
 /**
@@ -123,9 +123,13 @@ export function TabPanels({
   onPortraitFile: (file: File) => void | Promise<void>;
   setTab: (t: Tab) => void;
 }) {
-  const { catalog, character: ch, d, tr, patch } = panel;
+  const { catalog, character: ch, d, tr, ui, patch } = panel;
   return (
     <>
+      {/* What the section is for, in a line: the tab labels are short enough to
+          be guessable but not to be obvious ("メタ", "資質"), and a hover-only
+          title on the tab never reached a phone or a screen reader. */}
+      <p className="muted tab-hint">{ui(`tab.${tab}.hint` as MsgKey)}</p>
       {tab === "check" && <ChecklistPanel panel={panel} setTab={setTab} />}
       {tab === "sheet" && <SheetDescEditor ch={ch} patch={patch} onPortraitFile={onPortraitFile} />}
       {tab === "sheet" && (

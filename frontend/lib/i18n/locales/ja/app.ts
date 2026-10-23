@@ -49,7 +49,7 @@ export const JA_APP = {
   "tab.skills.hint": "技能・技能グループ・知識技能のレーティング。テストのダイス数になります",
   "tab.qualities.hint": "ポジティブ／ネガティブ資質。長所はカルマを払い、短所はカルマを戻します",
   "tab.cyber.hint": "サイバーウェア。エッセンスを削って身体能力を上げます",
-  "tab.bio.hint": "バイオウェア。サイバーウェアより essence 効率が良い代わりに高価です",
+  "tab.bio.hint": "バイオウェア。サイバーウェアよりエッセンスの消費が少ない代わりに高価です",
   "tab.gear.hint": "武器・防具・電子機器・ライフスタイルなど、新円で買うものすべて",
   "tab.contacts.hint": "コンタクト（人脈）。コネ値と忠実値にカルマを払います",
   "tab.martial.hint": "格闘技スタイルと技法。近接戦闘の選択肢を増やします",
@@ -57,8 +57,8 @@ export const JA_APP = {
   "tab.submersion.hint": "サブマージョン。等級ごとにエコーを 1 つ習得します",
   "tab.adept.hint": "アデプトパワー。パワーポイントで購入します",
   "tab.spells.hint": "呪文と儀式。マジシャン系のみ",
-  "tab.spirits.hint": "束縛した精霊。〈フォース〉と助力の回数を決めます",
-  "tab.foci.hint": "収束具。カルマで〈固着〉させて使います",
+  "tab.spirits.hint": "束縛した精霊。フォースと助力の回数を決めます",
+  "tab.foci.hint": "収束具。カルマで結合させて使います",
   "tab.complexforms.hint": "複合体。テクノマンサーのみ",
   "tab.aiprograms.hint": "A.I. のプログラム。A.I. のみ",
   "tab.critterpowers.hint":
@@ -159,9 +159,7 @@ export const JA_APP = {
   "picker.more": "他 {count} 件。検索で絞り込んでください",
   "picker.booksHidden": "ルールブック設定で {count} 件は一覧に出ません",
   "picker.buyLabel": "{name} を{action}",
-  "picker.catAllHint": "すべてのカテゴリーを表示",
 
-  "picker.catHint": "{category} だけに絞り込む",
   "toolbar.roster": "保存済みキャラクター",
   "toolbar.unnamed": "無名",
   "toolbar.unsaved": "（未保存）",
@@ -410,7 +408,6 @@ export const JA_APP = {
   "app.gearReview.title":
     "装備シートの {count} 行は品目を特定できませんでした。近いものを選ぶか、飛ばしてください",
   "app.gearReview.row": "{qty} 個・レーティング {rating}",
-  "app.gearReview.addHint": "{name}（{list}）として追加します",
   "app.gearReview.noneLikeIt": "近いものが見つかりませんでした",
   "app.gearReview.skip": "飛ばす",
   "app.gearReview.dismiss": "残りをまとめて閉じる",

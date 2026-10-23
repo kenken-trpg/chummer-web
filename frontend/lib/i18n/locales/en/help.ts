@@ -486,4 +486,15 @@ export const EN_HELP = {
     "What a Chummer save\u2019s balance leaves apart from the build and the rewards",
   "help.side.chummerAdjustWhy":
     "Rent paid, purchases at their own prices \u2014 added to what is left",
+  "help.prio.methodLabel": "The build methods",
+  "help.prio.methodPriority":
+    "Priority: one of A\u2013E to each of the five categories, the standard method (SR5 p.65)",
+  "help.prio.methodSum":
+    "Sum to Ten: the same table, picked so that A=4 / B=3 / C=2 / D=1 / E=0 add up to 10; letters may repeat",
+  "help.prio.methodKarma": "Karma: no priority table, everything bought from 800 karma (SR5 p.94)",
+  "help.prio.methodLife": "Life Module: built up from birth, one stage of a life at a time",
+  "help.prio.swap": "Picking a letter another category holds swaps the two",
+  "help.side.scBurn": "Burn two points of Street Cred to take one off Notoriety (SR5 p.373)",
+  "help.qual.rebaseline": "For a creation mistake put right after entering career",
+  "help.qual.rebaselineEffect": "Cancels every career charge for taking or buying off a quality",
 } as const;

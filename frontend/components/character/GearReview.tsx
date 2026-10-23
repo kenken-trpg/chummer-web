@@ -72,10 +72,6 @@ export function GearReview({ ed }: { ed: CharacterEditor }) {
                   className="btn primary"
                   disabled={busy === row.name}
                   onClick={() => void add(row, pick)}
-                  title={ui("app.gearReview.addHint", {
-                    name: tr(pick.name),
-                    list: ui(LIST_LABELS[pick.key] ?? "gear.kind.misc"),
-                  })}
                 >
                   {tr(pick.name)}
                   <span className="muted"> {ui(LIST_LABELS[pick.key] ?? "gear.kind.misc")}</span>

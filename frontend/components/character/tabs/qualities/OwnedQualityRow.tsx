@@ -296,7 +296,11 @@ function RemoveInnateButton({
   return (
     <button
       className="btn"
-      title={ui("qual.innateRemoveHint", { name: tr(q.name) })}
+      aria-label={`${tr(q.name)}: ${
+        cost < 0
+          ? ui("qual.innateRemoveRefund", { cost: -cost })
+          : ui("qual.innateRemove", { cost })
+      }`}
       onClick={() =>
         patch({ removed_innate_qualities: [...(ch.removed_innate_qualities || []), q.id] })
       }
