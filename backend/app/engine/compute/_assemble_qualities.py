@@ -67,9 +67,7 @@ def _effective_attr_spec(
 
 def quality_rows(ctx: Ctx) -> list[dict[str, Any]]:
     """``derived["qualities"]``: one row per taken quality, in order."""
-    extra_keys = take_extra_keys(
-        ctx.qualities, lambda q: bool(q.get("onlyprioritygiven") or is_free_take(q, ctx.free_quality_ids))
-    )
+    extra_keys = take_extra_keys(ctx.qualities)
     return [
         {
             "id": q["id"],

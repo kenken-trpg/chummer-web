@@ -65,9 +65,7 @@ def apply_quality_rules(
     restriction: dict[str, list[str]] | None = None,
 ) -> int:
     free_ids = set(free_quality_ids)
-    extra_keys = take_extra_keys(
-        qualities, lambda spec: bool(spec.get("onlyprioritygiven") or is_free_take(spec, free_ids))
-    )
+    extra_keys = take_extra_keys(qualities)
     # a later take's key only while that take is there
     owned = {item["id"] for item in qualities} | set(extra_keys)
     extras = {
