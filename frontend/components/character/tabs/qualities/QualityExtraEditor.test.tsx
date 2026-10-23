@@ -317,6 +317,26 @@ describe("<QualityExtraEditor> what each control writes", () => {
     expect(patch).toHaveBeenCalledWith({ quality_extras: { q1: "Swords" } });
   });
 
+  it("says on the expertise's '?' what the free specialization does", () => {
+    editorFor({ name: "Aptitude", extra_kind: "expertise", expertise_skill: "Blades" });
+    const tip = screen.getByRole("button", { name: "専門+3（無料） の説明" });
+    const body = document.getElementById(tip.getAttribute("aria-describedby") || "");
+    expect(body?.textContent).toContain("+3");
+    expect(body?.textContent).toContain("置き換わる");
+  });
+
+  it("says on the matrix action's '?' where the bonus goes", () => {
+    editorFor({
+      name: "Codeslinger",
+      extra_kind: "matrix_action",
+      select_options: ["Hack on the Fly"],
+    });
+    const tip = screen.getByRole("button", { name: "マトリックスアクションを選択 の説明" });
+    const body = document.getElementById(tip.getAttribute("aria-describedby") || "");
+    expect(body?.textContent).toContain("ダイスプール");
+    expect(body?.textContent).toContain("手入力");
+  });
+
   it("names an expertise picker that has no skill to name", () => {
     editorFor({ name: "Aptitude", extra_kind: "expertise" });
     expect(screen.getByRole("combobox", { name: "Aptitude: Expertise を選択" })).toBeDefined();

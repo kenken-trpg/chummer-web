@@ -7,6 +7,7 @@ import { ATTRS } from "@/lib/character/constants";
 import { attrLabel } from "@/lib/ui-strings";
 import { qualityExtras } from "@/lib/character/quality-extras";
 import { qualityPlaceholder } from "@/lib/character/quality-placeholder";
+import { HelpTip } from "@/components/help/HelpTip";
 import { AddSpiritSlots } from "@/components/character/tabs/qualities/extras/AddSpiritSlots";
 import { AttributeChoiceSlots } from "@/components/character/tabs/qualities/extras/AttributeChoiceSlots";
 import { BlackMarketPipeline } from "@/components/character/tabs/qualities/extras/BlackMarketPipeline";
@@ -155,6 +156,17 @@ export function QualityExtraEditor({
           placeholder={ui("quality.orType")}
           name={named(ui("quality.matrixActionFree"))}
         />
+        {/* a bare "?" at the end of the row: wrapping the select would stop
+            it shrinking on a narrow screen (see the settings picker) */}
+        <HelpTip
+          label={ui("help.open", { label: ui("quality.matrixAction") })}
+          lines={[
+            { label: ui("help.quality.matrixAction") },
+            { label: ui("help.quality.matrixActionFree") },
+          ]}
+        >
+          {null}
+        </HelpTip>
       </ExtraRow>
     );
   }
@@ -183,7 +195,17 @@ export function QualityExtraEditor({
           placeholder={ui("quality.orType")}
           name={named(ui("quality.expertiseFree"))}
         />
-        <span className="muted">{ui("quality.expertiseNote")}</span>
+        <HelpTip
+          label={ui("help.open", { label: ui("quality.expertiseNote") })}
+          lines={[
+            { label: ui("help.quality.expertiseFree") },
+            { label: ui("help.quality.expertiseBonus") },
+            { label: ui("help.quality.expertiseNeeds") },
+            { label: ui("help.quality.expertiseReplace") },
+          ]}
+        >
+          <span className="muted">{ui("quality.expertiseNote")}</span>
+        </HelpTip>
       </ExtraRow>
     );
   }

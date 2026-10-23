@@ -110,6 +110,15 @@ export const EN_HELP = {
     "It differs from the table because a condition in the data (metatype, another quality…) moves the price",
   "help.qualityRow.free":
     "Attached: it comes with the metatype or another item, costs no karma and cannot be removed here",
+  "help.quality.expertiseFree": "The chosen specialization comes free: no skill points, no karma",
+  "help.quality.expertiseBonus": "Tests it applies to get +3 instead of the usual +2",
+  "help.quality.expertiseNeeds":
+    "It only works while the skill is rated 1 or more (a skillsoft counts)",
+  "help.quality.expertiseReplace": "It replaces any specialization the skill already had",
+  "help.quality.matrixAction":
+    "The quality's bonus goes to the dice pool of the Matrix action picked here",
+  "help.quality.matrixActionFree":
+    "An action not on the list can be typed into the box beside it; the bonus goes to the action of that name",
   "help.vehicle.statsLabel": "Stats",
   "help.vehicle.stats":
     "HND handling / SPD speed / ACC acceleration / BOD body / ARM armor / PLT pilot / SNR sensor",
