@@ -243,8 +243,6 @@ export const JA_GEAR = {
   "ware.limbArmor": " / 装甲 {armor}",
   "ware.side": "左右",
   "ware.essDiscount": "ESS 割引 %",
-  "ware.essDiscountHint":
-    "GM が認めたエッセンスの割引（マイナスは割増）。設定ファイルが ESS 割引を許しているときだけ出る",
 
   "ware.modularMount": "モジュラー接続先",
   "ware.modularMountFor": "{name}: モジュラー接続先",

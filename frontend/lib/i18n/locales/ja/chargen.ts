@@ -307,7 +307,6 @@ export const JA_CHARGEN = {
   "grade.named": " ・ {name}",
   "grade.discount": "（{list} 割引）",
 
-  "grade.discountHint": "各 −10%（累積で減算）",
   "contact.free": "無料枠 CHA×{mult} = {used}/{free}",
   "contact.over": " ・ 超過 {paid}点（{karma}カルマ）",
   "contact.minimum": "。コネ値と忠実値は最低1",
@@ -462,7 +461,6 @@ export const JA_CHARGEN = {
     "同じ表を使い、A=4／B=3／C=2／D=1／E=0 の合計が 10 になるように選びます。重複可",
   "prio.methodKarmaHint": "優先度表を使わず、すべてを 800 カルマで購入します（SR5 p.94）",
   "prio.karmaSliderLabel": "新円に回すカルマ",
-  "prio.nuyenSliderHint": "カルマ 1 点＝{rate}¥。作成中のみ交換でき、逆方向には戻せません",
   "prio.karmaNote":
     "優先度表は使いません。メタ／能力値／技能／呪文などをカルマで購入します（開始 {pool}）。MAG／RES はタレント選択で解禁され、最低1から買い上げます。無料の呪文枠はありません。",
   "prio.talent": "タレント",

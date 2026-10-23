@@ -185,7 +185,7 @@ describe("<BioTab> a player-priced piece", () => {
         },
       } as never,
     });
-    expect(screen.queryByLabelText(/Muscle Augmentation: /)).toBeNull();
+    expect(screen.queryByRole("spinbutton", { name: /Muscle Augmentation: 価格/ })).toBeNull();
   });
 });
 

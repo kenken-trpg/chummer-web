@@ -64,7 +64,7 @@ export function FociTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
             ) : null}
             {item.test ? <div className="muted">{testLine(item.test, ui)}</div> : null}
             <div className="cyber-controls">
-              <label title={ui("common.forceHint")}>
+              <label>
                 {ui("common.force")}
                 <input
                   type="number"

@@ -77,10 +77,18 @@ export function SidebarCareerRewards({ career, ch, d, patch, tr, ui }: SidebarBl
           ))}
           {d.karma_adjust || d.nuyen_adjust ? (
             <div className="stat">
-              <span className="muted" title={ui("side.chummerAdjustHint")}>
-                {ui("side.chummerAdjust")} · {d.karma_adjust || 0}K /{" "}
-                {(d.nuyen_adjust || 0).toLocaleString()}¥
-              </span>
+              <HelpTip
+                label={ui("help.open", { label: ui("side.chummerAdjust") })}
+                lines={[
+                  { label: ui("help.side.chummerAdjust") },
+                  { label: ui("help.side.chummerAdjustWhy") },
+                ]}
+              >
+                <span className="muted">
+                  {ui("side.chummerAdjust")} · {d.karma_adjust || 0}K /{" "}
+                  {(d.nuyen_adjust || 0).toLocaleString()}¥
+                </span>
+              </HelpTip>
               <button
                 type="button"
                 className="btn danger"

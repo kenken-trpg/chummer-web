@@ -126,6 +126,7 @@ describe("<SidebarCareerRewards>", () => {
     renderBlock({ patch, derived: { karma_adjust: 7, nuyen_adjust: 2500 } });
 
     expect(screen.getByText(/Chummer との差 · 7K \/ 2,500¥/)).toBeDefined();
+    expect(screen.getByRole("button", { name: "Chummer との差 の説明" })).toBeDefined();
     fireEvent.click(screen.getByRole("button", { name: "Chummer との差: 削除" }));
     expect(patch).toHaveBeenCalledWith({ karma_adjust: 0, nuyen_adjust: 0 });
   });

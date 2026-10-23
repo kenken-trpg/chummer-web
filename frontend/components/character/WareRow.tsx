@@ -188,23 +188,31 @@ export function WareRow(props: {
             </BlackMarketTip>
           ) : null}
           {essDiscountAllowed && !locked ? (
-            <label title={ui("ware.essDiscountHint")}>
-              {ui("ware.essDiscount")}
-              <input
-                type="number"
-                min={-100}
-                max={100}
-                value={item.ess_discount ?? 0}
-                onChange={(e) =>
-                  onPatchRow(item.id, {
-                    ess_discount: Math.max(
-                      -100,
-                      Math.min(100, Math.trunc(Number(e.target.value) || 0)),
-                    ),
-                  })
-                }
-              />
-            </label>
+            <HelpTip
+              label={ui("help.open", { label: `${tr(item.name)}: ${ui("ware.essDiscount")}` })}
+              lines={[
+                { label: ui("help.ware.essDiscount") },
+                { label: ui("help.ware.essDiscountWhen") },
+              ]}
+            >
+              <label>
+                {ui("ware.essDiscount")}
+                <input
+                  type="number"
+                  min={-100}
+                  max={100}
+                  value={item.ess_discount ?? 0}
+                  onChange={(e) =>
+                    onPatchRow(item.id, {
+                      ess_discount: Math.max(
+                        -100,
+                        Math.min(100, Math.trunc(Number(e.target.value) || 0)),
+                      ),
+                    })
+                  }
+                />
+              </label>
+            </HelpTip>
           ) : null}
           {spec?.selectside && !item.parent_id && !locked ? (
             <label>
@@ -251,19 +259,24 @@ export function WareRow(props: {
             </label>
           ) : null}
           {!locked && !spec?.forcegrade ? (
-            <label title={ui("help.gradeHint")}>
-              {ui("common.grade")}
-              <select
-                value={item.grade}
-                onChange={(e) => onPatchRow(item.id, { grade: e.target.value })}
-              >
-                {rowGrades.map((g) => (
-                  <option key={g.name} value={g.name}>
-                    {g.name} (ESS×{g.ess} / ¥×{g.cost})
-                  </option>
-                ))}
-              </select>
-            </label>
+            <HelpTip
+              label={ui("help.open", { label: `${tr(item.name)}: ${ui("common.grade")}` })}
+              lines={[{ label: ui("help.gradeHint") }]}
+            >
+              <label>
+                {ui("common.grade")}
+                <select
+                  value={item.grade}
+                  onChange={(e) => onPatchRow(item.id, { grade: e.target.value })}
+                >
+                  {rowGrades.map((g) => (
+                    <option key={g.name} value={g.name}>
+                      {g.name} (ESS×{g.ess} / ¥×{g.cost})
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </HelpTip>
           ) : null}
           {spec?.has_wireless ? (
             <label>

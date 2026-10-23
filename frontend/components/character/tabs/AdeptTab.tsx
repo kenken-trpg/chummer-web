@@ -70,7 +70,6 @@ export function AdeptTab({
             max={d.totals.MAG || 0}
             value={ch.mystic_pp || 0}
             label={ui("adept.boughtPoints")}
-            title={ui("adept.boughtPointsHint")}
             onDraft={(value) => setCharacter({ ...ch, mystic_pp: value })}
             onCommit={(value) => patch({ mystic_pp: value })}
           />

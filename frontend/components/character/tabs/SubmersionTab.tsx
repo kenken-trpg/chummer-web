@@ -51,7 +51,6 @@ export function SubmersionTab({
           max={Math.max(6, Number(d.totals.RES || 0))}
           value={ch.submersion_grade || 0}
           label={ui("sub.grade")}
-          title={ui("sub.gradeHint")}
           onDraft={(grade) =>
             setCharacter({ ...ch, submersion_grade: grade, submersions: gradeRows(grade) })
           }
@@ -92,7 +91,7 @@ export function SubmersionTab({
                       ["schooling", "init.schooling"],
                     ] as const
                   ).map(([key, label]) => (
-                    <label key={key} title={ui("grade.discountHint")}>
+                    <label key={key}>
                       <input
                         type="checkbox"
                         checked={Boolean(local?.[key] ?? choice[key])}

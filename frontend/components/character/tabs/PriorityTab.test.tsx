@@ -57,6 +57,12 @@ describe("<PriorityTab>", () => {
     expect(screen.getByText(/A〜E は各1回/)).toBeDefined();
   });
 
+  it('explains the karma-to-nuyen slider on its "?"', () => {
+    renderTab();
+    expect(screen.getByRole("button", { name: "新円に回す残カルマ の説明" })).toBeDefined();
+    expect(screen.getByText("カルマ 1 点＝2,000¥")).toBeDefined();
+  });
+
   it("switches build method via the header buttons", () => {
     const patch = vi.fn();
     renderTab({ patch });

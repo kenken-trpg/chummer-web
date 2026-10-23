@@ -307,7 +307,6 @@ export const EN_CHARGEN = {
   "grade.named": " · {name}",
   "grade.discount": " ({list} discount)",
 
-  "grade.discountHint": "−10% each, applied cumulatively",
   "contact.free": "Free CHA×{mult} = {used}/{free}",
   "contact.over": " · {paid} over ({karma} karma)",
   "contact.minimum": ". Connection and Loyalty are at least 1",
@@ -464,7 +463,6 @@ export const EN_CHARGEN = {
     "Same table, but pick freely so A=4/B=3/C=2/D=1/E=0 sums to 10. Repeats allowed",
   "prio.methodKarmaHint": "Skip the table and buy everything out of 800 karma (SR5 p.94)",
   "prio.karmaSliderLabel": "Karma converted to nuyen",
-  "prio.nuyenSliderHint": "1 karma = {rate}¥. Chargen only, and it does not convert back",
   "prio.karmaSlider": "Karma → nuyen ({k}K = {nuyen}¥)",
   "prio.karmaNote":
     "No priority table here — metatype, attributes, skills and spells are all bought with karma (starting from {pool}). MAG / RES unlock with the talent you pick and are bought up from 1. There are no free spell slots.",

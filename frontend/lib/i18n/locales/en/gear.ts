@@ -241,8 +241,6 @@ export const EN_GEAR = {
   "ware.limbArmor": " / armor {armor}",
   "ware.side": "Side",
   "ware.essDiscount": "ESS discount %",
-  "ware.essDiscountHint":
-    "An essence discount the GM allowed (negative costs more). Only offered when the settings file allows essence discounts",
 
   "ware.modularMount": "Modular mount",
   "ware.modularMountFor": "{name}: Modular mount",

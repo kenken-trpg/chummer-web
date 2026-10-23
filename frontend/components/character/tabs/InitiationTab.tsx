@@ -94,7 +94,6 @@ export function InitiationTab({
           max={Math.max(6, Number(d.totals.MAG || 0))}
           value={ch.initiate_grade || 0}
           label={ui("init.grade")}
-          title={ui("init.gradeHint")}
           onDraft={(grade) =>
             setCharacter({ ...ch, initiate_grade: grade, initiations: gradeRows(grade) })
           }
@@ -146,7 +145,7 @@ export function InitiationTab({
                       ["schooling", "init.schooling"],
                     ] as const
                   ).map(([key, label]) => (
-                    <label key={key} title={ui("grade.discountHint")}>
+                    <label key={key}>
                       <input
                         type="checkbox"
                         checked={Boolean(local?.[key] ?? choice[key])}
