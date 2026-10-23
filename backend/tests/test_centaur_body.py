@@ -5,7 +5,7 @@ import pytest
 from app.characters import apply_patch
 from app.data_loader import catalog
 from app.engine import compute
-from app.engine.compute.finalize import resolve_movement
+from app.engine.compute._movement import resolve_movement
 from app.engine.ware.limbs import body_limb_slots, limb_attribute_replace
 from app.improvements import collect_effects
 from app.models import CharacterPatch, CharacterState, CyberwareInstall, LifestyleInstall, SettingsState

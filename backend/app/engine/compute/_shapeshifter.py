@@ -20,8 +20,8 @@ from __future__ import annotations
 from typing import Any
 
 from ..lookups import find_metatype
+from ._movement import resolve_movement
 from .context import Ctx
-from .finalize import resolve_movement
 
 #: The attributes whose range the forms can differ in. MAG, RES and ESS are
 #: the same in every form in the data, and a form's essence is the body's.

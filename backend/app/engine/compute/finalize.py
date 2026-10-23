@@ -12,13 +12,11 @@ device-rating limits).
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any
 
 from ...data_loader import PHYSICAL_ATTRS
-from ...improvements import EffectsDict, resolve_precedence
+from ...improvements import resolve_precedence
 from ...notices import term
 from ...rules import current_rules
-from ..bundle_types import MovementBundle, MovementModeBundle
 from ..formulas import _ceil_div
 from ..gear.weapons.bonuses import resolve_attr_formulas, resolve_limit_accuracy
 from ..home_node import resolve_home_node
@@ -34,22 +32,10 @@ from ..qualities import apply_quality_rules
 from ..resonance import attach_complex_form_tests, attach_sprite_tests
 from ..special_attributes import is_ai
 from ..ware import cyberleg_movement_agi, limb_attribute_replace
+from ._movement import resolve_movement
 from ._quality_ctx import quality_req_ctx
+from ._shapeshifter import in_metahuman_form, into_metahuman_form, metahuman_form
 from .context import Ctx
-
-
-def _movement_rate(rates: str, index: int) -> float:
-    """One component of the metatype's Ground/Swim/Fly rate string."""
-    parts = str(rates or "").split("/")
-    try:
-        return float(parts[index].strip())
-    except (ValueError, IndexError):
-        return 0.0
-
-
-def _metres(value: float) -> str:
-    """Chummer's `#,0.##`: at most two decimals, no trailing zeros."""
-    return f"{round(value, 2):.2f}".rstrip("0").rstrip(".") or "0"
 
 
 def _inherent_limits(total: Mapping[str, int | float], essence: float) -> tuple[int, int, int]:
@@ -69,75 +55,6 @@ def _inherent_limits(total: Mapping[str, int | float], essence: float) -> tuple[
     )
 
 
-def _resolve_movement_mode(
-    meta: dict[str, Any], effects: EffectsDict, category: str, index: int, attribute: float
-) -> MovementModeBundle:
-    """Chummer's CalculatedMovement rates and category-specific bonuses:
-    (rate + multiplier) × (1 + percent) × AGI for walking and running, and
-    rate + bonus / 100, scaled by its percent, for sprinting."""
-    replace = effects.get("movement_replace") or {}
-
-    def rate(kind: str, default: str) -> float:
-        if (category, kind) in replace:
-            return float(replace[(category, kind)])
-        return _movement_rate(str(meta.get(kind) or default), index)
-
-    rates = {kind: rate(kind, default) for kind, default in (("walk", "2/1/0"), ("run", "4/0/0"), ("sprint", "2/1/0"))}
-
-    def pct(key: str) -> float:
-        return 1.0 + int((effects.get(key) or {}).get(category) or 0) / 100.0  # type: ignore[attr-defined]
-
-    walk = (rates["walk"] + int((effects.get("walk_multiplier") or {}).get(category) or 0)) * pct(
-        "walk_multiplier_percent"
-    )
-    run = (rates["run"] + int((effects.get("run_multiplier") or {}).get(category) or 0)) * pct("run_multiplier_percent")
-    sprint_bonus = int((effects.get("sprint_bonus") or {}).get(category) or 0)
-    sprint = (rates["sprint"] + sprint_bonus / 100.0) * pct("sprint_bonus_percent")
-    return {
-        "rates": rates,
-        "available": any(value != 0 for value in (walk, run, sprint)),
-        "walk": _metres(walk * attribute),
-        "run": _metres(run * attribute),
-        "sprint": _metres(sprint),
-        "sprint_bonus": sprint_bonus,
-    }
-
-
-def resolve_movement(
-    meta: dict[str, Any],
-    effects: EffectsDict,
-    agi: int,
-    *,
-    swim_agi: int | None = None,
-    swim_str: int | None = None,
-    ground_agi: int | None = None,
-) -> MovementBundle:
-    """Ground/Fly use meat AGI, Swim uses the limb-inclusive (AGI+STR)/2.
-
-    Only Ground can opt into cyberleg AGI. The old top-level fields remain
-    a projection of Ground for saved clients and existing export consumers.
-    """
-    meat_agi = max(0, int(agi))
-    swim_attribute = (
-        max(0, swim_agi if swim_agi is not None else agi) + max(0, swim_str if swim_str is not None else agi)
-    ) / 2
-    modes = {
-        "Ground": _resolve_movement_mode(
-            meta, effects, "Ground", 0, max(0, ground_agi) if ground_agi is not None else meat_agi
-        ),
-        "Swim": _resolve_movement_mode(meta, effects, "Swim", 1, swim_attribute),
-        "Fly": _resolve_movement_mode(meta, effects, "Fly", 2, meat_agi),
-    }
-    ground = modes["Ground"]
-    return {
-        "walk": ground["walk"],
-        "run": ground["run"],
-        "sprint": ground["sprint"],
-        "sprint_bonus": ground["sprint_bonus"],
-        "modes": modes,
-    }
-
-
 def totals(ctx: Ctx) -> None:
     resolve_precedence(ctx.effects)  # powers and drugs arrived after the first pass
     if ctx.talent["name"] == "Adept":
@@ -154,8 +71,6 @@ def totals(ctx: Ctx) -> None:
     # ESS is fractional; the attribute-total consumers only ever read integer
     # attrs (STR / AGI / …), so the dict[str, int] inference stays useful.
     ctx.total["ESS"] = ctx.ess  # type: ignore[assignment]
-    from ._shapeshifter import in_metahuman_form, into_metahuman_form  # it reads `resolve_movement` here
-
     metahuman = in_metahuman_form(ctx)
     if metahuman:
         ctx.animal_total = dict(ctx.total)
@@ -340,8 +255,6 @@ def _movement(ctx: Ctx) -> None:
         swim_str=int(ctx.animal_total["STR"]),
         ground_agi=leg_agi,
     )
-    from ._shapeshifter import in_metahuman_form, metahuman_form
-
     form = metahuman_form(ctx) if in_metahuman_form(ctx) else None
     ctx.movement = (form or {}).get("movement") or ctx.animal_movement
 
