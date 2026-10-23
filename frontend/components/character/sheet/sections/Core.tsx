@@ -11,6 +11,11 @@ export function CoreSection(s: SheetData) {
   const { tr, t, d, totals, enabled, specialArmor } = s;
   const { ui } = useUiText();
   const form = d.metatype_info.metahuman_form;
+  const animal = d.metatype_info.animal_form;
+  // `totals` / `movement` are the form the character is in; the animal's own
+  // stay in its block
+  const active = (which: "animal" | "metahuman") =>
+    (d.metatype_info.active_form || "animal") === which ? ui("sheet.form.active") : "";
   return (
     <Section title="sheet.core">
       <div className="sheet-core">
@@ -19,6 +24,7 @@ export function CoreSection(s: SheetData) {
           {form ? (
             <p className="sheet-note">
               {ui("sheet.form.animal", { name: tr(d.metatype_info.parent || "") })}
+              {active("animal")}
             </p>
           ) : null}
           <div className="sheet-attrs">
@@ -28,7 +34,7 @@ export function CoreSection(s: SheetData) {
               return (
                 <div className="sheet-attr" key={key}>
                   <span>{attrShort(key, t)}</span>
-                  <b>{totals[key] ?? "-"}</b>
+                  <b>{animal?.totals[key] ?? totals[key] ?? "-"}</b>
                   {ware ? <em>+{ware}</em> : null}
                 </div>
               );
@@ -36,7 +42,10 @@ export function CoreSection(s: SheetData) {
           </div>
           {form ? (
             <>
-              <p className="sheet-note">{ui("sheet.form.metahuman", { name: tr(form.name) })}</p>
+              <p className="sheet-note">
+                {ui("sheet.form.metahuman", { name: tr(form.name) })}
+                {active("metahuman")}
+              </p>
               <div className="sheet-attrs" data-form="metahuman">
                 {ATTRS.filter((key) => form.attributes[key]).map((key) => (
                   <div className="sheet-attr" key={key}>
@@ -77,12 +86,12 @@ export function CoreSection(s: SheetData) {
             </b>
           </div>
           <div>
-            <span>{ui("sheet.movement")}</span>
+            <span>{ui(form ? "sheet.form.animalMovement" : "sheet.movement")}</span>
             <b>
               {ui("sheet.movementValue", {
-                walk: d.movement.walk,
-                run: d.movement.run,
-                sprint: d.movement.sprint,
+                walk: (animal?.movement || d.movement).walk,
+                run: (animal?.movement || d.movement).run,
+                sprint: (animal?.movement || d.movement).sprint,
               })}
             </b>
           </div>

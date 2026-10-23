@@ -12,9 +12,32 @@ export function AttrsTab({ character: ch, d, t, tr, ui, patch, setCharacter }: T
   const splitKarma = !ch.career && !d.karma_chargen?.enabled;
   const karmaSplit = d.attribute_karma;
   const form = d.metatype_info.metahuman_form;
+  // the sliders are the animal's, so the number beside them is too, whichever
+  // form `totals` is in
+  const animalTotals = d.metatype_info.animal_form?.totals;
 
   return (
     <div className="card">
+      {form ? (
+        <label className="option-row">
+          <HelpTip
+            label={ui("help.open", { label: ui("attrs.activeForm") })}
+            lines={[{ label: ui("attrs.activeFormHint") }]}
+          >
+            {ui("attrs.activeForm")}
+          </HelpTip>{" "}
+          <select
+            aria-label={ui("attrs.activeForm")}
+            value={d.metatype_info.active_form || "animal"}
+            onChange={(e) => patch({ shapeshifter_form: e.target.value })}
+          >
+            <option value="animal">
+              {ui("sheet.form.animal", { name: tr(d.metatype_info.parent || "") })}
+            </option>
+            <option value="metahuman">{ui("sheet.form.metahuman", { name: tr(form.name) })}</option>
+          </select>
+        </label>
+      ) : null}
       {ATTRS.map((key) => {
         if (!attrShown(key, d.enabled_tabs)) return null;
         const range = spec[key] || { min: 1, max: 6, aug: 6 };
@@ -75,7 +98,7 @@ export function AttrsTab({ character: ch, d, t, tr, ui, patch, setCharacter }: T
               </label>
             ) : null}
             <b>
-              {d.totals[key]} <span className="muted">/{range.max}</span>
+              {animalTotals?.[key] ?? d.totals[key]} <span className="muted">/{range.max}</span>
               {(d.ware_attr_bonus?.[key] || 0) !== 0 ? (
                 <span className="muted">
                   {ui("attrs.wareBonus", { bonus: d.ware_attr_bonus![key] })}

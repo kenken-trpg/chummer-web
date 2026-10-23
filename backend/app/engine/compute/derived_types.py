@@ -215,6 +215,9 @@ class _MetatypeInfo(TypedDict):
     powers: NotRequired[list[Row]]
     #: a shapeshifter's other body (engine/compute/_shapeshifter.py)
     metahuman_form: NotRequired[dict[str, Any]]
+    #: the animal's totals and movement, and which form the character is in
+    animal_form: NotRequired[dict[str, Any]]
+    active_form: NotRequired[str]
 
 
 class _BudgetsPart(TypedDict):

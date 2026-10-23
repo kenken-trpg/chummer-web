@@ -8,6 +8,11 @@ rating in the metahuman form is therefore the animal rating moved by the
 difference of the two minimums, held inside the form's own range.
 
 Movement in that form is the metavariant's `alt` rates, with the form's AGI.
+
+At the table the character is in one form or the other
+(`state.shapeshifter_form`). In the metahuman form `ctx.attr_totals` and
+`ctx.total` are moved into it, so everything worked from them — pools,
+limits, condition monitors, initiative, weapon damage — follows the body.
 """
 
 from __future__ import annotations
@@ -31,6 +36,31 @@ def _metahuman_ranges(ctx: Ctx) -> tuple[dict[str, Any], dict[str, Any]] | None:
     return (animal, form) if form else None
 
 
+def in_metahuman_form(ctx: Ctx) -> bool:
+    return ctx.state.shapeshifter_form == "metahuman" and _metahuman_ranges(ctx) is not None
+
+
+def _form_total(ctx: Ctx, form: dict[str, Any], key: str, total: int) -> int:
+    own = form["attributes"][key]
+    shift = int(own["min"]) - int(ctx.attrs_spec[key]["min"])
+    bonus = int(ctx.attr_max_bonus.get(key) or 0)
+    return min(max(total + shift, int(own["min"])), int(own["aug"]) + bonus)
+
+
+def into_metahuman_form(ctx: Ctx, totals: dict[str, int]) -> dict[str, int]:
+    """`totals` (the animal's) as the metahuman form has them, when the
+    character is in that form; otherwise unchanged."""
+    found = _metahuman_ranges(ctx) if in_metahuman_form(ctx) else None
+    if found is None:
+        return totals
+    _animal, form = found
+    out = dict(totals)
+    for key in FORM_ATTRIBUTES:
+        if key in out and form["attributes"].get(key) and ctx.attrs_spec.get(key):
+            out[key] = _form_total(ctx, form, key, int(out[key]))
+    return out
+
+
 def metahuman_form(ctx: Ctx) -> dict[str, Any] | None:
     """``derived["metatype_info"]["metahuman_form"]``, or None for anyone
     who is not a shapeshifter."""
@@ -48,7 +78,7 @@ def metahuman_form(ctx: Ctx) -> dict[str, Any] | None:
         bonus = int(ctx.attr_max_bonus.get(key) or 0)
         low, high, aug = int(own["min"]), int(own["max"]) + bonus, int(own["aug"]) + bonus
         rating = min(max(int(ctx.ratings.get(key) or 0) + shift, low), high)
-        total = min(max(int(ctx.total.get(key) or 0) + shift, low), aug)
+        total = _form_total(ctx, form, key, int(ctx.animal_total.get(key) or 0))
         attributes[key] = {"rating": rating, "total": total, "min": low, "max": high, "aug": aug}
     rates = {kind: form.get(f"{kind}_alt") or "" for kind in ("walk", "run", "sprint")}
     movement = None
@@ -63,3 +93,14 @@ def metahuman_form(ctx: Ctx) -> dict[str, Any] | None:
             swim_str=attributes.get("STR", {}).get("total", 0),
         )
     return {"name": form["name"], "attributes": attributes, "movement": movement}
+
+
+def animal_form(ctx: Ctx, animal_movement: Any) -> dict[str, Any] | None:
+    """``derived["metatype_info"]["animal_form"]``: the animal's totals and
+    movement, which ``totals`` / ``movement`` stop being in the other form."""
+    found = _metahuman_ranges(ctx)
+    if found is None:
+        return None
+    animal, _form = found
+    totals = {key: int(ctx.animal_total[key]) for key in FORM_ATTRIBUTES if key in ctx.animal_total}
+    return {"name": animal["name"], "totals": totals, "movement": animal_movement}

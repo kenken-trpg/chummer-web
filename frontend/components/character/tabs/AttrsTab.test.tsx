@@ -268,8 +268,41 @@ describe("<AttrsTab>", () => {
     expect(screen.getByText(/Shapeshifter: Vulpine の範囲で能力値を振ります/)).toBeDefined();
   });
 
+  it("switches the form the shapeshifter is in, keeping the animal's totals by its sliders", () => {
+    const base = makeCharacter();
+    const patch = vi.fn();
+    const { container } = renderTab({
+      patch,
+      character: {
+        metatype: "Shapeshifter: Vulpine",
+        metavariant: "Human",
+        derived: {
+          // in the metahuman form `totals` is that body's; the animal's is apart
+          totals: { ...base.derived.totals, AGI: 3 },
+          metatype_info: {
+            ...base.derived.metatype_info,
+            parent: "Shapeshifter: Vulpine",
+            active_form: "metahuman",
+            animal_form: { name: "Shapeshifter: Vulpine", totals: { AGI: 4 }, movement: null },
+            metahuman_form: {
+              name: "Human",
+              attributes: { AGI: { rating: 3, total: 3, min: 1, max: 6, aug: 10 } },
+              movement: null,
+            },
+          },
+        },
+      },
+    });
+    const select = screen.getByRole("combobox", { name: "今の姿" }) as HTMLSelectElement;
+    expect(select.value).toBe("metahuman");
+    expect(container.textContent).toContain("4 /");
+    fireEvent.change(select, { target: { value: "animal" } });
+    expect(patch).toHaveBeenCalledWith({ shapeshifter_form: "animal" });
+  });
+
   it("says nothing of forms for anyone else", () => {
     renderTab();
     expect(screen.queryByText(/人間形態/)).toBeNull();
+    expect(screen.queryByRole("combobox", { name: "今の姿" })).toBeNull();
   });
 });

@@ -187,3 +187,49 @@ def test_no_one_else_has_a_metahuman_form(metatype: str, variant: str | None) ->
         attributes=default_attributes(find_metatype(metatype, variant)),
     )
     assert "metahuman_form" not in compute(state).derived["metatype_info"]
+
+
+def _in_form(form: str) -> dict:
+    state = _vulpine(shapeshifter_form=form)
+    state.attributes = {**state.attributes, "AGI": 4, "EDG": 3, "BOD": 4}
+    return compute(state).derived
+
+
+def test_in_the_metahuman_form_the_pools_follow_that_body() -> None:
+    animal, metahuman = _in_form("animal"), _in_form("metahuman")
+    form = metahuman["metatype_info"]["metahuman_form"]
+    assert metahuman["metatype_info"]["active_form"] == "metahuman"
+    # every total the pools are worked from is the form's
+    assert {key: metahuman["totals"][key] for key in form["attributes"]} == {
+        key: row["total"] for key, row in form["attributes"].items()
+    }
+    assert (animal["totals"]["AGI"], metahuman["totals"]["AGI"]) == (4, 3)
+    totals = metahuman["totals"]
+    assert metahuman["initiative"]["value"] == totals["REA"] + totals["INT"]
+    assert metahuman["spell_defense_pools"]["indirect_dodge"] == totals["REA"] + totals["INT"]
+    assert metahuman["movement"] == form["movement"]
+
+
+def test_the_animal_keeps_its_own_values_beside_the_other_form() -> None:
+    animal, metahuman = _in_form("animal"), _in_form("metahuman")
+    kept = metahuman["metatype_info"]["animal_form"]
+    assert kept["name"] == VULPINE
+    assert kept["totals"] == {key: animal["totals"][key] for key in kept["totals"]}
+    assert kept["movement"] == animal["movement"]
+    # the animal is still what the character is built in: same points, same costs
+    assert metahuman["points"] == animal["points"]
+    assert metahuman["metatype_info"]["metahuman_form"] == animal["metatype_info"]["metahuman_form"]
+
+
+def test_the_form_is_not_a_choice_for_anyone_else() -> None:
+    state = CharacterState(
+        id="x",
+        name="x",
+        metatype="Human",
+        shapeshifter_form="metahuman",
+        priorities=Priorities(Heritage="E"),
+        attributes=default_attributes(find_metatype("Human", None)),
+    )
+    out = compute(state).derived
+    assert "active_form" not in out["metatype_info"]
+    assert out["totals"]["AGI"] == 1

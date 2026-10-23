@@ -67,6 +67,7 @@ class CharacterPatch(BaseModel):
     priorities: Priorities | None = None
     metatype: str | None = None
     metavariant: str | None = None
+    shapeshifter_form: Literal["animal", "metahuman"] | None = None
     talent: str | None = None
     attributes: dict[str, int] | None = None
     attribute_karma: dict[str, int] | None = None
@@ -226,6 +227,10 @@ class CharacterState(BaseModel):
     priorities: Priorities
     metatype: str
     metavariant: str | None = None
+    #: The form a shapeshifter is in, whose attributes the pools, limits and
+    #: movement are worked from (Chummer's `AttributeSection.AttributeCategory`,
+    #: which it does not save either). Built as the animal.
+    shapeshifter_form: Literal["animal", "metahuman"] = "animal"
     life_modules: list[str] = Field(default_factory=list)
     #: Modules read from a desktop save whose choices are gone. These are
     #: provenance only; grants have already been baked into the imported state.

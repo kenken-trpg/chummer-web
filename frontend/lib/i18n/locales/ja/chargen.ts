@@ -494,6 +494,9 @@ export const JA_CHARGEN = {
   "attrs.karmaHint":
     "この能力値の上から何レベルをカルマで買ったか。その分は能力値点を使わず、上げた後の値×5 カルマかかります。",
   "attrs.karmaSpent": "カルマで上げた能力値：{karma} カルマ",
+  "attrs.activeForm": "今の姿",
+  "attrs.activeFormHint":
+    "ダイスプール・リミット・コンディション・モニター・イニシアティブ・移動を、選んだ姿の能力値で計算します。振ったポイントは両方の姿で共通です。",
   "attrs.formValue": " ／ 人間形態 {value}",
   "attrs.formNote":
     "{animal} の範囲で能力値を振ります。人間形態（{form}）の値は、同じポイントを人間形態の範囲に当てたものです（各行の「人間形態」）。",

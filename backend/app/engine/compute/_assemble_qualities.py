@@ -13,7 +13,7 @@ from ..constants import (
 )
 from ..lookups import critter_power_label, critter_power_rows
 from ..qualities import _quality_has_selectside, has_extra_per_take, is_free_take, quality_needs_extra, take_extra_keys
-from ._shapeshifter import metahuman_form
+from ._shapeshifter import animal_form, metahuman_form
 from .context import Ctx
 from .derived_types import _MetatypeInfo
 
@@ -159,6 +159,8 @@ def metatype_info(ctx: Ctx, clamped: set[str]) -> _MetatypeInfo:
     form = metahuman_form(ctx)
     if form is not None:
         info["metahuman_form"] = form
+        info["animal_form"] = animal_form(ctx, ctx.animal_movement) or {}
+        info["active_form"] = ctx.state.shapeshifter_form
     if ctx.meta.get("power_grants"):
         info["powers"] = [
             {

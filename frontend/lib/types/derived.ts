@@ -644,6 +644,15 @@ export interface Derived {
       >;
       movement: Derived["movement"] | null;
     };
+    /** The animal's totals and movement. `totals` / `movement` are the form
+     *  the character is in (`active_form`), so in the metahuman form they
+     *  stop being the animal's. */
+    animal_form?: {
+      name: string;
+      totals: Record<string, number>;
+      movement: Derived["movement"] | null;
+    };
+    active_form?: "animal" | "metahuman";
   };
   talent?: {
     name: string;
