@@ -103,6 +103,14 @@ export const JA_HELP = {
   "help.qualityRow.base":
     "表の値と違うのは、データにある条件（種族や他の資質など）を満たして価格が変わったため",
   "help.qualityRow.free": "付帯：種族や他の品に付いてくるので、カルマはかからず、ここでは外せない",
+  "help.quality.expertiseFree": "選んだ専門化は、技能点もカルマも使わずに付く",
+  "help.quality.expertiseBonus": "その専門化が当たるテストは、ふつうの +2 ではなく +3 になる",
+  "help.quality.expertiseNeeds": "技能のレーティングが 1 以上のときだけ効く（技能ソフトでもよい）",
+  "help.quality.expertiseReplace": "この技能に入れていた専門化は、選んだものに置き換わる",
+  "help.quality.matrixAction":
+    "ここで選んだマトリックスアクションのダイスプールに、この資質のボーナスが付く",
+  "help.quality.matrixActionFree":
+    "一覧に無いアクションは隣の欄に手入力する。入れた名前のアクションにボーナスが付く",
   "help.vehicle.statsLabel": "ステータス",
   "help.vehicle.stats":
     "HND 操縦値／SPD 最高速度／ACC 加速値／BOD 強靱力／ARM 装甲値／PLT パイロット／SNR センサー",

@@ -250,6 +250,16 @@ describe("sheet sections — smoke render", () => {
     expect(container.textContent).not.toContain("social");
   });
 
+  it("the core section explains initiative, condition and limits on their '?'", () => {
+    const { getByRole } = render(<CoreSection {...s} />);
+    for (const label of ["イニシアティブ", "コンディション", "リミット"]) {
+      const tip = getByRole("button", { name: `${label} の説明` });
+      const body = document.getElementById(tip.getAttribute("aria-describedby") || "");
+      // the same breakdown the sidebar gives, not an empty box
+      expect(body?.textContent).toBeTruthy();
+    }
+  });
+
   it("the core section prints movement in metres with the sprint rate", () => {
     const { container } = render(<CoreSection {...s} />);
     expect(container.textContent).toContain("歩6m / 走12m / 全力疾走 +2m/ヒット");

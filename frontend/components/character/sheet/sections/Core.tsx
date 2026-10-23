@@ -6,6 +6,8 @@ import { cmSummary, cmThresholdNote, lifeIncrement, limitLabel } from "@/lib/cha
 import { useUiText } from "@/lib/i18n";
 import { renderNotice } from "@/lib/engine-notices";
 import { otherMovementRows } from "@/lib/character/movement";
+import { conditionHelp, initiativeHelp, limitHelp } from "@/lib/character/help-breakdown";
+import { HelpTip } from "@/components/help/HelpTip";
 
 export function CoreSection(s: SheetData) {
   const { tr, t, d, totals, enabled, specialArmor } = s;
@@ -59,7 +61,14 @@ export function CoreSection(s: SheetData) {
         </div>
         <div className="sheet-derived-grid">
           <div>
-            <span>{ui("common.initiative")}</span>
+            <span>
+              <HelpTip
+                label={ui("help.open", { label: ui("common.initiative") })}
+                lines={initiativeHelp(d, ui, tr)}
+              >
+                {ui("common.initiative")}
+              </HelpTip>
+            </span>
             <b>
               {d.initiative.value}+{d.initiative.dice}d6
             </b>
@@ -73,14 +82,28 @@ export function CoreSection(s: SheetData) {
             </div>
           ) : null}
           <div>
-            <span>{ui("common.condition")}</span>
+            <span>
+              <HelpTip
+                label={ui("help.open", { label: ui("common.condition") })}
+                lines={conditionHelp(d, ui, tr)}
+              >
+                {ui("common.condition")}
+              </HelpTip>
+            </span>
             <b>{cmSummary(d.condition_monitor, ui)}</b>
             {cmThresholdNote(d.condition_monitor, ui) ? (
               <span className="sheet-dim">{cmThresholdNote(d.condition_monitor, ui)}</span>
             ) : null}
           </div>
           <div>
-            <span>{ui("sheet.limits")}</span>
+            <span>
+              <HelpTip
+                label={ui("help.open", { label: ui("sheet.limits") })}
+                lines={limitHelp(d, ui, tr)}
+              >
+                {ui("sheet.limits")}
+              </HelpTip>
+            </span>
             <b>
               {d.limits.physical} / {d.limits.mental} / {d.limits.social}
             </b>
