@@ -89,6 +89,7 @@ def essence(ctx: Ctx) -> None:
     ctx.ratings = {}
     ctx.bought_ratings = {}
     ctx.special_min_drop = {}
+    ctx.special_max_drop = {}
     for key, spec in ctx.attrs_spec.items():
         racial_min = int(spec["min"])
         racial_max = int(spec["max"]) + int(ctx.attr_max_bonus.get(key) or 0)
@@ -100,6 +101,7 @@ def essence(ctx: Ctx) -> None:
                 raw = max(floor, min(mag_cap, raw))
                 ctx.bought_ratings[key] = raw
                 ctx.special_min_drop[key] = _min_drop(floor, mag_cap, mag_penalty, rules.ess_loss_reduces_maximum_only)
+                ctx.special_max_drop[key] = mag_penalty
                 raw = _after_loss(raw, floor, mag_cap, mag_penalty, rules.ess_loss_reduces_maximum_only)
             else:
                 raw = 0
@@ -111,6 +113,7 @@ def essence(ctx: Ctx) -> None:
                 ctx.bought_ratings[key] = raw
                 res_penalty = max(0, mag_penalty - cyberadept_res_reduction)
                 ctx.special_min_drop[key] = _min_drop(floor, res_cap, res_penalty, rules.ess_loss_reduces_maximum_only)
+                ctx.special_max_drop[key] = res_penalty
                 raw = _after_loss(raw, floor, res_cap, res_penalty, rules.ess_loss_reduces_maximum_only)
             else:
                 raw = 0
@@ -122,6 +125,7 @@ def essence(ctx: Ctx) -> None:
                 ctx.special_min_drop[key] = _min_drop(
                     floor, racial_max, dep_penalty, rules.ess_loss_reduces_maximum_only
                 )
+                ctx.special_max_drop[key] = dep_penalty
                 raw = _after_loss(raw, floor, racial_max, dep_penalty, rules.ess_loss_reduces_maximum_only)
             else:
                 raw = 0

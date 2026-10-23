@@ -621,7 +621,12 @@ export interface Derived {
     /** the base metatype, for a metavariant */
     parent: string | null;
     source: string | null;
-    attributes: Record<string, { min: number; max: number; aug: number }>;
+    /** `ess_min` / `ess_max`: MAG / RES / DEP's range once essence loss
+     * lowered it, present only when it did. */
+    attributes: Record<
+      string,
+      { min: number; max: number; aug: number; ess_min?: number; ess_max?: number }
+    >;
     /** `<replaceattributes>`: the qualities these ranges come from instead of
      *  the metatype (the Infected qualities, Quadriplegic). */
     attributes_replaced_by?: string[];

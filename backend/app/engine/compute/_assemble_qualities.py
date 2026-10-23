@@ -154,6 +154,13 @@ def metatype_info(ctx: Ctx, clamped: set[str]) -> _MetatypeInfo:
         # the metatype's own (Infected, Quadriplegic).
         "attributes_replaced_by": list(ctx.attr_replaced_by),
     }
+    for key, drop in ctx.special_max_drop.items():
+        row = info["attributes"].get(key)
+        if drop > 0 and row is not None:
+            # where essence loss leaves the range; the slider stays on what
+            # was bought, so these sit beside it rather than replacing it
+            row["ess_min"] = max(0, int(row["min"]) - ctx.special_min_drop.get(key, 0))
+            row["ess_max"] = max(0, int(row["max"]) - drop)
     form = metahuman_form(ctx)
     if form is not None:
         info["metahuman_form"] = form

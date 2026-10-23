@@ -40,7 +40,7 @@ export function AttrsTab({ character: ch, d, t, tr, ui, patch, setCharacter }: T
       ) : null}
       {ATTRS.map((key) => {
         if (!attrShown(key, d.enabled_tabs)) return null;
-        const range = spec[key] || { min: 1, max: 6, aug: 6 };
+        const range: (typeof spec)[string] = spec[key] || { min: 1, max: 6, aug: 6 };
         // An A.I. has no body: its BOD to STR are 0 and nothing raises them.
         if (range.max === 0) return null;
         // A rating below the metatype's racial minimum is not a cheaper
@@ -48,6 +48,9 @@ export function AttrsTab({ character: ch, d, t, tr, ui, patch, setCharacter }: T
         // on the next compute anyway. Show it already there, so the slider and
         // the number beside it never disagree.
         const rating = Math.max(range.min, ch.attributes[key] ?? range.min);
+        // MAG / RES / DEP under essence loss: the slider stays on what was
+        // bought, and the range the loss left is shown beside the total
+        const essMax = range.ess_max;
         const showKarma = splitKarma && !!karmaSplit && key in karmaSplit.floors;
         const commit = (value: number) => patch({ attributes: { ...ch.attributes, [key]: value } });
         return (
@@ -60,6 +63,7 @@ export function AttrsTab({ character: ch, d, t, tr, ui, patch, setCharacter }: T
                   {
                     label: ui("attrs.rowHint", { min: range.min, max: range.max, aug: range.aug }),
                   },
+                  ...(essMax !== undefined ? [{ label: ui("attrs.essenceRangeHint") }] : []),
                 ]}
               >
                 {attrLabel(key, t)}
@@ -98,7 +102,16 @@ export function AttrsTab({ character: ch, d, t, tr, ui, patch, setCharacter }: T
               </label>
             ) : null}
             <b>
-              {animalTotals?.[key] ?? d.totals[key]} <span className="muted">/{range.max}</span>
+              {animalTotals?.[key] ?? d.totals[key]}{" "}
+              <span className="muted">/{essMax ?? range.max}</span>
+              {essMax !== undefined ? (
+                <span className="muted">
+                  {ui("attrs.essenceRange", {
+                    min: range.ess_min ?? 0,
+                    max: essMax,
+                  })}
+                </span>
+              ) : null}
               {(d.ware_attr_bonus?.[key] || 0) !== 0 ? (
                 <span className="muted">
                   {ui("attrs.wareBonus", { bonus: d.ware_attr_bonus![key] })}

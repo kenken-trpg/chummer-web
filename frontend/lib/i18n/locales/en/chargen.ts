@@ -491,6 +491,9 @@ export const EN_CHARGEN = {
   "life.freeGrids": " / {count} free grids",
   "attrs.wareBonus": " ware +{bonus}",
   "attrs.meat": " meat {value}",
+  "attrs.essenceRange": " / essence loss: min {min}, max {max}",
+  "attrs.essenceRangeHint":
+    "Essence loss lowers the minimum and the maximum by the same amount (the minimum stops at 0). The slider stays on what was bought; the points and karma spent stack on the lowered minimum.",
   "attrs.points": "Attribute points {used}/{max} · special {specialUsed}/{specialMax}",
   "attrs.rowHint": "Metatype minimum {min} / chargen max {max} / augmented max {aug}",
   "attrs.karmaLevels": "by karma",
