@@ -1,6 +1,9 @@
 // Run from the repository root: node scripts/capture-manual.mjs
 // Requires the backend, the frontend, and Playwright Chromium to be running/installed.
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const require = createRequire(
@@ -178,6 +181,34 @@ try {
   await shot("ui-export-menu");
   await page.keyboard.press("Escape");
 
+  // Career mode: one reward, one raise, and the breakdown that prices it. The
+  // sample still has creation errors, so the switch asks first.
+  page.once("dialog", (dialog) => void dialog.accept());
+  await page
+    .getByRole("button", { name: "作成完了（キャリア）", exact: true })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "キャリア中", exact: true }),
+  ).toBeVisible();
+  // the sheet tab is full width; the sidebar comes back on any other tab
+  await tab("能力値");
+  await page.getByPlaceholder("Run 名など").fill("港の倉庫");
+  await page.getByRole("spinbutton", { name: "カルマ" }).fill("12");
+  await page.getByRole("spinbutton", { name: "新円" }).fill("6000");
+  await page.getByRole("button", { name: "報酬を追加" }).click();
+  await expect(page.getByText("港の倉庫 · 12K")).toBeVisible();
+  const agi = page.getByRole("slider").nth(1);
+  await agi.focus();
+  await page.keyboard.press("ArrowRight");
+  await page.getByRole("button", { name: "成長／買い物の内訳" }).click();
+  await expect(page.locator(".career-breakdown .stat").first()).toContainText(
+    "AGI",
+  );
+  await shot(
+    "ui-career-sidebar",
+    page.locator(".career-panel").filter({ hasText: "報酬合計" }),
+  );
+
   // The tabs a mundane orc never shows: one sample per kind of character that
   // opens them. Each is a starting point for the screenshot, not a finished
   // build, so a leftover point or a warning in the sidebar is fine.
@@ -275,6 +306,47 @@ try {
       await shot(`tab-${key}`);
     }
   }
+
+  // A table's own ruleset folder, laid out the way Chummer keeps one:
+  // `settings/` beside `customdata/`, with one house quality in it.
+  const table = mkdtempSync(join(tmpdir(), "manual-table-"));
+  const guid = "manual-table";
+  for (const [path, text] of Object.entries({
+    "settings/table.xml": `<?xml version="1.0" encoding="utf-8"?>
+<settings>
+  <name>卓のハウスルール</name>
+  <books><book>SR5</book><book>RG</book></books>
+  <customdatadirectorynames>
+    <customdatadirectoryname>
+      <directoryname>${guid}&gt;1</directoryname>
+      <enabled>True</enabled>
+    </customdatadirectoryname>
+  </customdatadirectorynames>
+</settings>`,
+    "customdata/table/manifest.xml": `<manifest><guid>${guid}</guid><version>1</version></manifest>`,
+    "customdata/table/custom_qualities.xml":
+      `<chummer><qualities><quality><id>${guid}-q</id><name>Table Favor</name>` +
+      `<karma>5</karma><category>Positive</category><source>SR5</source><page>1</page>` +
+      `</quality></qualities></chummer>`,
+  })) {
+    mkdirSync(dirname(join(table, path)), { recursive: true });
+    writeFileSync(join(table, path), text);
+  }
+  await open(character);
+  await tab("優先度");
+  await page
+    .getByLabel("スタイル一式を読み込む", { exact: true })
+    .setInputFiles(table);
+  await expect(
+    page.getByText("カスタムデータを 1 件適用しました"),
+  ).toBeVisible();
+  // the report shows before the picker has switched to the loaded file
+  await expect(page.locator(".settings-picker select")).toHaveValue(
+    "卓のハウスルール",
+  );
+  await page.getByRole("button", { name: "内訳を見る" }).click();
+  await shot("ui-settings-folder", page.locator(".settings-picker"));
+  rmSync(table, { recursive: true, force: true });
 } finally {
   await browser.close();
 }
