@@ -427,4 +427,44 @@ export const EN_HELP = {
     "Each grade costs 10 + grade \u00d7 3 karma (13 for the first, 16 for the second\u2026)",
   "help.sub.discount": "Network, task and schooling each take 10% off, and they stack",
   "help.sub.echo": "Every grade picks one echo, and raises the cap on Resonance by one",
+  "help.gear.homeNode1":
+    "The device the A.I. lives in. Only one: marking another device moves the mark",
+  "help.gear.homeNode2":
+    "Its Data Processing goes to the Matrix initiative and the mental and social limits",
+  "help.gear.homeNode3": "Its Matrix condition monitor stands in for the Stun track",
+  "help.gear.blackMarket1": "Takes 10% off this item, through the Black Market Pipeline",
+  "help.gear.blackMarket2": "Only items in the category picked on the quality, one item at a time",
+  "help.parts.stockLabel": "Counting parts",
+  "help.parts.quarter": "A pack is counted in quarters, 0.25 at a time",
+  "help.parts.remaining": "Remaining = bought and supplied \u2212 used by completed work",
+  "help.parts.reserved":
+    "Reserved is what pending work has been allotted: still in the remainder, but no other work can take it",
+  "help.parts.qty":
+    "Using parts leaves the bought row's quantity alone; the sheet and exports show the remainder",
+  "help.parts.kindLabel": "The sources",
+  "help.parts.salvaged": "Salvaged: parts come by without buying. Enter the amount and a note",
+  "help.parts.equipment":
+    "Comes with a facility: a Tool Shop (Hardware) gives 2 packs each, a Tool Facility (Hardware) 10",
+  "help.parts.equipmentOnce":
+    "Each facility can be entered once, and owning one does not refill the stock",
+  "help.parts.gm": "GM-given: parts the GM handed over. Enter the amount and a note",
+  "help.parts.correct":
+    "Correct a mistake by withdrawing the record with a reason: the effect goes and the allotment is freed, the purchase stays",
+  "help.parts.noRefund":
+    "Removing a modification or deleting a device does not give its parts back",
+  "help.construction.pending": "Pending: no effect yet. Saving the allotment reserves the parts",
+  "help.construction.completed":
+    "Completed: the parts are used and the modification has its effect",
+  "help.construction.unverified":
+    "No parts record: read from old JSON or a .chum5, and working as before. Allot parts, or confirm with a note that they were paid for",
+  "help.construction.complete": "It can be completed once exactly the parts it needs are allotted",
+  "help.construction.success":
+    "Enter work that succeeded: lost parts from a failed test or a glitch are not counted",
+  "help.construction.requiredLabel": "Parts needed",
+  "help.construction.increase": "Increase Matrix Attribute: the new value \u00d7 2 packs",
+  "help.construction.modify": "Modify Matrix Attribute: 4 packs",
+  "help.construction.add": "Add Attack / Sleaze: DR \u00d7 2 packs",
+  "help.construction.module": "Add Module: 2 packs (DT pp.64\u201366)",
+  "help.construction.frozen":
+    "Set by the device's own values before the work, and fixed when it is completed",
 } as const;

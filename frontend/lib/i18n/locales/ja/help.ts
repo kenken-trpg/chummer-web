@@ -363,4 +363,38 @@ export const JA_HELP = {
   "help.sub.karma": "1 等級あたり 10 ＋ 等級×3 カルマ（等級 1 は 13、2 は 16…）",
   "help.sub.discount": "ネットワーク・タスク・師事のそれぞれで 10% 引き（重ねられる）",
   "help.sub.echo": "1 等級につきエコーを 1 つ選べる。共振力の上限も等級のぶんだけ伸びる",
+  "help.gear.homeNode1": "A.I. が住む機器。1 台だけで、別の機器に付けると印が移る",
+  "help.gear.homeNode2":
+    "この機器のデータ処理が、マトリックス・イニシアティブと精神・社交リミットに使われる",
+  "help.gear.homeNode3":
+    "この機器のマトリックス・コンディション・モニターが、精神ダメージトラックの代わりになる",
+  "help.gear.blackMarket1": "Black Market Pipeline で、この品目だけ 10% 引きにする",
+  "help.gear.blackMarket2": "割り引けるのは資質で選んだ分類の品目だけ。1 つずつ選ぶ",
+  "help.parts.stockLabel": "部品の数え方",
+  "help.parts.quarter": "1 パックを 4 つに分け、0.25 パック刻みで数える",
+  "help.parts.remaining": "残量 = 購入・調達した量 − 施工済みで使った量",
+  "help.parts.reserved": "予約は準備中の施工に配分した量。残量には入るが、他の施工には配分できない",
+  "help.parts.qty": "使っても購入した行の数量は変わらない。シートと書き出しには残量が出る",
+  "help.parts.kindLabel": "調達方法の違い",
+  "help.parts.salvaged": "回収：買わずに手に入れた部品。量と説明を自分で入れる",
+  "help.parts.equipment":
+    "設備付属：Tool Shop（Hardware）は 1 台につき 2 パック、Tool Facility（Hardware）は 10 パック",
+  "help.parts.equipmentOnce": "同じ設備は 1 度だけ登録できる。持っているだけでは補充されない",
+  "help.parts.gm": "GM指定：GM が渡した部品。量と説明を自分で入れる",
+  "help.parts.correct":
+    "誤入力は理由を書いて履歴取消にする。改造の効果は消え配分は戻るが、購入の記録は残る",
+  "help.parts.noRefund": "改造を取り外しても、機器を削除しても、使った部品は戻らない",
+  "help.construction.pending": "準備中：効果はまだ無い。配分を保存すると部品を予約する",
+  "help.construction.completed": "施工済み：部品を消費し、改造の効果が出ている",
+  "help.construction.unverified":
+    "材料履歴未確認：旧 JSON や .chum5 から読んだ改造。効果は今までどおり。部品を配分するか、説明を書いて支払い済みと登録する",
+  "help.construction.complete": "必要数ちょうどを配分すると施工済みにできる",
+  "help.construction.success":
+    "登録するのは成功した施工。テストの失敗やグリッチで失った部品は計算しない",
+  "help.construction.requiredLabel": "必要部品",
+  "help.construction.increase": "Increase Matrix Attribute：上昇後の値×2 パック",
+  "help.construction.modify": "Modify Matrix Attribute：4 パック",
+  "help.construction.add": "Add Attack / Sleaze：DR×2 パック",
+  "help.construction.module": "Add Module：2 パック（DT pp.64–66）",
+  "help.construction.frozen": "施工前の機器本体の値で決まり、施工済みにした時点で固定される",
 } as const;

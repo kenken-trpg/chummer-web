@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import type { TabPanelProps } from "@/components/character/types";
+import { HelpTip } from "@/components/help/HelpTip";
 import type { ElectronicPartsSupply } from "@/lib/types/generated";
 
 const PARTS = ["f56affe6-0159-4f7a-ba4d-b5283bd25c44", "ec53ae4e-086f-4817-8cc2-ec574aa7cd51"];
@@ -34,6 +35,30 @@ export function ElectronicPartsPanel({
     <details>
       <summary>{ui("gear.partsSupplies")}</summary>
       <p className="muted">{ui("gear.partsExportLimit")}</p>
+      <p className="muted">
+        <HelpTip
+          label={ui("help.open", { label: ui("help.parts.stockLabel") })}
+          lines={[
+            { label: ui("help.parts.quarter") },
+            { label: ui("help.parts.remaining") },
+            { label: ui("help.parts.reserved") },
+            { label: ui("help.parts.qty") },
+          ]}
+        >
+          {ui("help.parts.stockLabel")}
+        </HelpTip>{" "}
+        <HelpTip
+          label={ui("help.open", { label: ui("help.parts.kindLabel") })}
+          lines={[
+            { label: ui("help.parts.salvaged") },
+            { label: ui("help.parts.equipment") },
+            { label: ui("help.parts.equipmentOnce") },
+            { label: ui("help.parts.gm") },
+          ]}
+        >
+          {ui("help.parts.kindLabel")}
+        </HelpTip>
+      </p>
       {(d.gear || [])
         .filter((r) => r.parts_purchased_units != null && !r.parts_supply)
         .map((r) => (
@@ -188,7 +213,12 @@ export function ElectronicPartsPanel({
           </button>
         </div>
       ) : null}
-      <b>{ui("gear.partsHistory")}</b>
+      <HelpTip
+        label={ui("help.open", { label: ui("gear.partsHistory") })}
+        lines={[{ label: ui("help.parts.correct") }, { label: ui("help.parts.noRefund") }]}
+      >
+        <b>{ui("gear.partsHistory")}</b>
+      </HelpTip>
       <label>
         {ui("gear.correctionNote")}
         <input

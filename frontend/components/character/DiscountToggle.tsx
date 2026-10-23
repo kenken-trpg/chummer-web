@@ -1,5 +1,7 @@
 "use client";
+import type { ReactNode } from "react";
 import type { TabPanelProps } from "@/components/character/types";
+import { HelpTip } from "@/components/help/HelpTip";
 import type { Character } from "@/lib/types";
 
 /** Which lists the Black Market Pipeline's category covers — the front end's
@@ -43,19 +45,33 @@ export function DiscountToggle({
   const row = rows.find((item) => item.id === id);
   if (!row) return null;
   return (
-    <label title={ui("gear.blackMarketHint")}>
-      <input
-        type="checkbox"
-        checked={!!row.discounted}
-        onChange={(e) =>
-          patch({
-            [list]: rows.map((item) =>
-              item.id === id ? { ...item, discounted: e.target.checked } : item,
-            ),
-          })
-        }
-      />
-      {ui("gear.blackMarket")}
-    </label>
+    <BlackMarketTip ui={ui}>
+      <label>
+        <input
+          type="checkbox"
+          checked={!!row.discounted}
+          onChange={(e) =>
+            patch({
+              [list]: rows.map((item) =>
+                item.id === id ? { ...item, discounted: e.target.checked } : item,
+              ),
+            })
+          }
+        />
+        {ui("gear.blackMarket")}
+      </label>
+    </BlackMarketTip>
+  );
+}
+
+/** The "?" beside a black-market checkbox — this one and `WareRow`'s. */
+export function BlackMarketTip({ ui, children }: { ui: TabPanelProps["ui"]; children: ReactNode }) {
+  return (
+    <HelpTip
+      label={ui("help.open", { label: ui("gear.blackMarket") })}
+      lines={[{ label: ui("help.gear.blackMarket1") }, { label: ui("help.gear.blackMarket2") }]}
+    >
+      {children}
+    </HelpTip>
   );
 }
