@@ -40,6 +40,10 @@ def _karma_totals(ctx: Ctx) -> None:
     free_positive = int(ctx.life.get("free_positive_qualities") or 0)
     free_negative = int(ctx.life.get("free_negative_qualities") or 0)
     ctx.karma_from_q = max(0, positive_quality_karma - free_positive) - max(0, negative_quality_karma - free_negative)
+    # Taking an innate quality off costs its value the other way round:
+    # Uneducated (-8) is bought off for 8, Celerity (6) gives 6 back. Outside
+    # both quality limits, as Chummer's replacement row is.
+    ctx.karma_from_q += sum(-int(grant.get("karma") or 0) for grant in ctx.removed_innate)
     rules = current_rules()
     if rules.quality_exceed_negative_no_bonus:
         # Chummer's `NegativeQualityKarma`: past the limit, a negative

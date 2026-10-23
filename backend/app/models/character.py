@@ -84,6 +84,7 @@ class CharacterPatch(BaseModel):
     knowledge_categories: dict[str, str] | None = None
     quality_ids: list[str] | None = None
     quality_extras: dict[str, str] | None = None
+    removed_innate_qualities: list[str] | None = None
     cyberware: list[CyberwareInstall] | None = None
     bioware: list[CyberwareInstall] | None = None
     skill_picks: dict[str, str] | None = None
@@ -266,6 +267,10 @@ class CharacterState(BaseModel):
     knowledge_categories: dict[str, str] = Field(default_factory=dict)
     quality_ids: list[str] = Field(default_factory=list)
     quality_extras: dict[str, str] = Field(default_factory=dict)
+    #: The metatype's `removable="True"` qualities the player took off at
+    #: chargen (a Shapeshifter's Uneducated), paying their karma back the
+    #: other way. Chummer's `MetatypeRemovedAtChargen`.
+    removed_innate_qualities: list[str] = Field(default_factory=list)
     cyberware: list[CyberwareInstall] = Field(default_factory=list)
     bioware: list[CyberwareInstall] = Field(default_factory=list)
     skill_picks: dict[str, str] = Field(default_factory=dict)

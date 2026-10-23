@@ -577,6 +577,14 @@ export interface Derived {
     optional_powers?: string[];
     optional_power?: string;
   }[];
+  /** the metatype's removable qualities taken off at chargen: what that cost (negative: given back) */
+  removed_innate_qualities?: {
+    id: string;
+    name: string;
+    category: string;
+    karma: number;
+    origin_name: string;
+  }[];
   /** held at chargen, gone in career: the buy-off cost (0 for a positive one) */
   qualities_removed?: { id: string; name: string; category: string; karma: number }[];
   /** career with a recorded chargen quality list, so the career prices apply */

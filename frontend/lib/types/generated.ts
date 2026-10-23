@@ -668,6 +668,11 @@ export interface Character {
   knowledge_categories?: Record<string, string>;
   quality_ids: string[];
   quality_extras?: Record<string, string>;
+  /** The metatype's `removable="True"` qualities the player took off at
+   *  chargen (a Shapeshifter's Uneducated), paying their karma back the
+   *  other way. Chummer's `MetatypeRemovedAtChargen`.
+   */
+  removed_innate_qualities?: string[];
   cyberware?: WareInstall[];
   bioware?: WareInstall[];
   skill_picks?: Record<string, string>;

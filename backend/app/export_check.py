@@ -47,6 +47,7 @@ _KIND = {
     "electronic_modification_records": "gear",
     "quality_ids": "quality",
     "quality_extras": "quality",
+    "removed_innate_qualities": "quality",
     "cyberware": "cyberware",
     "bioware": "bioware",
     "adept_powers": "adeptPower",

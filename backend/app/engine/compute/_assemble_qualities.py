@@ -109,6 +109,21 @@ def quality_rows(ctx: Ctx) -> list[dict[str, Any]]:
     ]
 
 
+def removed_innate_rows(ctx: Ctx) -> list[dict[str, Any]]:
+    """``derived["removed_innate_qualities"]``: the innate qualities taken
+    off at chargen, each with what taking it off cost (negative: given back)."""
+    return [
+        {
+            "id": grant["id"],
+            "name": grant["name"],
+            "category": grant["category"],
+            "karma": -int(grant.get("karma") or 0),
+            "origin_name": grant["origin_name"],
+        }
+        for grant in ctx.removed_innate
+    ]
+
+
 def metatype_info(ctx: Ctx, clamped: set[str]) -> _MetatypeInfo:
     """``derived["metatype_info"]``: the metatype's attribute ranges after
     talent, initiation / submersion and `<attributemaxclamp>`."""

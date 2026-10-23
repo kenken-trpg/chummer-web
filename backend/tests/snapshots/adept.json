@@ -467,6 +467,7 @@
     "str": 1,
     "str_rc": 1
   },
+  "removed_innate_qualities": [],
   "reward_log": [],
   "sensors": [],
   "skill_attribute_swaps": [],

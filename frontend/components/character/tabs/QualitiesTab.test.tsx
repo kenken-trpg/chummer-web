@@ -69,6 +69,70 @@ describe("<QualitiesTab>", () => {
     expect(within(row).queryByRole("button", { name: "削除" })).toBeNull();
   });
 
+  const uneducated = {
+    id: "uneducated",
+    name: "Uneducated",
+    category: "Negative",
+    source: "SR5",
+    karma: 0,
+    free: true,
+    origin: "Metatype" as const,
+    origin_id: "vulpine-human",
+    origin_name: "Human",
+    removable: true,
+  };
+  const innateCatalog = makeCatalog({
+    qualities: [{ ...uneducated, karma: -8 }] as never,
+  });
+
+  it("lets a removable innate quality go at creation, priced from the catalog", () => {
+    const patch = vi.fn();
+    renderTab({
+      catalog: innateCatalog,
+      patch,
+      character: { removed_innate_qualities: [], derived: { qualities: [uneducated] } },
+    });
+    const row = document.querySelector<HTMLElement>(".card > .quality-item")!;
+    expect(within(row).queryByText("生得付与・削除不可")).toBeNull();
+    fireEvent.click(within(row).getByRole("button", { name: "外す（8カルマ）" }));
+    expect(patch).toHaveBeenCalledWith({ removed_innate_qualities: ["uneducated"] });
+  });
+
+  it("keeps a removable innate quality in career", () => {
+    renderTab({
+      catalog: innateCatalog,
+      character: { career: true, derived: { qualities: [uneducated] } },
+    });
+    expect(screen.queryByRole("button", { name: /外す/ })).toBeNull();
+    expect(screen.getByText("生得付与・削除不可")).toBeDefined();
+  });
+
+  it("lists a removed innate quality with its price and a way back", () => {
+    const patch = vi.fn();
+    renderTab({
+      patch,
+      character: {
+        removed_innate_qualities: ["uneducated"],
+        derived: {
+          qualities: [],
+          removed_innate_qualities: [
+            {
+              id: "uneducated",
+              name: "Uneducated",
+              category: "Negative",
+              karma: 8,
+              origin_name: "Human",
+            },
+          ],
+        },
+      },
+    });
+    expect(screen.getByRole("heading", { name: "外した生得資質" })).toBeDefined();
+    expect(screen.getByText(/Humanの生得 \/ 外すのに 8カルマ/)).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "戻す" }));
+    expect(patch).toHaveBeenCalledWith({ removed_innate_qualities: [] });
+  });
+
   it("puts each skill choice in its owned quality row and preserves other choices on save", () => {
     const patch = vi.fn();
     const qualities = [

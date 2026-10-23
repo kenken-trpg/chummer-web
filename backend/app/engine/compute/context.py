@@ -83,6 +83,8 @@ class Ctx:
     # --- qualities / mentor -------------------------------------------------
     qualities: list[dict[str, Any]] = field(default_factory=list)
     free_quality_ids: list[str] = field(default_factory=list)
+    #: The metatype grants taken off at chargen, as their grant rows.
+    removed_innate: list[dict[str, Any]] = field(default_factory=list)
     quality_names: set[str] = field(default_factory=set)
     needs_mentor: bool = False
     needs_paragon: bool = False

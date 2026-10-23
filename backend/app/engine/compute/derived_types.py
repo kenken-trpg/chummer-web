@@ -469,6 +469,8 @@ class _IdentityPart(TypedDict):
     enabled_tabs: list[str]
     unimplemented_bonuses: list[UnimplementedRow]
     qualities: list[Row]
+    # the metatype's removable grants taken off at chargen, with the karma it cost
+    removed_innate_qualities: list[Row]
     # held at chargen, gone in career: the buy-off / the karma that stays spent
     qualities_removed: list[Row]
     # career with a recorded chargen quality list: SR5 p.107 prices apply
