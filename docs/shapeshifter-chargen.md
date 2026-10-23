@@ -83,5 +83,9 @@
    Chummerの`CharacterCreate`と同じく、値を逆向きに払う（Uneducatedは8カルマで外し、
    WakyambiのCelerityは外すと6カルマ戻る）。資質の上限には数えない。`.chum5`には
    `MetatypeRemovedAtChargen`の行として書き、読み込みでも戻す。キャリアでは外せない。
-6. **`.chum5`の`walkalt`/`runalt`/`sprintalt`**。書き出していない。`Mittens Chargen`は動物と同じ値
-   （1/1/0）を書いており、`alt`属性の値ではない。fidelityの検査は通る。
+6. ~~**`.chum5`の`walkalt`/`runalt`/`sprintalt`**~~ → 書き出さないことにした。
+   固定版の`Character.Save`は`walk`/`run`/`sprint`と同じ値をそのまま写して書き
+   （`Mittens Chargen`の1/1/0もこれ）、`Load`はこの3つを読まない（人間形態の移動は
+   データの`walk/@alt`から取り直す）。誰も読まない数字は書かないという方針
+   （`scripts/reconcile/fidelity.py`の`_ACCEPTED_DROPS`）どおり、fidelityでは
+   「output only」として扱う。
