@@ -60,14 +60,6 @@ export function ActiveSkills(props: TabPanelProps) {
       }));
   }, [catalog]);
 
-  /** The one-line "what am I about to drag" for an active-skill row: the
-   *  linked attribute and category, plus whatever the engine says is already
-   *  modifying it. A `<swapskillattribute>` replaces the printed attribute
-   *  outright; the spec-limited variant only earns a trailing note. */
-  function skillHint(name: string, attribute: string, category: string): string {
-    return skillHintLines(name, attribute, category).join(" / ");
-  }
-
   /** The row's own facts, one per line: the linked attribute and category, the
    *  creation cap, and whatever the engine says already modifies it. A
    *  `<swapskillattribute>` replaces the printed attribute outright; the
@@ -107,6 +99,7 @@ export function ActiveSkills(props: TabPanelProps) {
       ...(expertiseBySkill.has(name) ? [{ label: ui("help.skill.expertise") }] : []),
       { label: ui("help.skill.default") },
       { label: ui("help.skill.cap") },
+      ...(splitKarma ? [{ label: ui("skills.karmaHint") }] : []),
     ];
   }
 
@@ -131,7 +124,12 @@ export function ActiveSkills(props: TabPanelProps) {
                 <span>
                   <HelpTip
                     label={ui("help.open", { label: tr(s.name) })}
-                    lines={skillHelpLines(s.name, s.attribute, s.category)}
+                    lines={[
+                      ...skillHelpLines(s.name, s.attribute, s.category),
+                      ...(splitKarma && specValue && !expertise
+                        ? [{ label: ui("skills.specKarmaHint") }]
+                        : []),
+                    ]}
                   >
                     {tr(s.name)}
                   </HelpTip>
@@ -165,7 +163,6 @@ export function ActiveSkills(props: TabPanelProps) {
                       : (ch.skills[s.name] ?? d.skill_totals[s.name] ?? 0)
                   }
                   label={tr(s.name)}
-                  title={skillHint(s.name, s.attribute, s.category)}
                   onDraft={(value) =>
                     setCharacter({ ...ch, skills: { ...ch.skills, [s.name]: value } })
                   }

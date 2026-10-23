@@ -64,6 +64,7 @@ export function AttrsTab({ character: ch, d, t, tr, ui, patch, setCharacter }: T
                     label: ui("attrs.rowHint", { min: range.min, max: range.max, aug: range.aug }),
                   },
                   ...(essMax !== undefined ? [{ label: ui("attrs.essenceRangeHint") }] : []),
+                  ...(showKarma ? [{ label: ui("attrs.karmaHint") }] : []),
                 ]}
               >
                 {attrLabel(key, t)}
@@ -75,14 +76,13 @@ export function AttrsTab({ character: ch, d, t, tr, ui, patch, setCharacter }: T
               value={rating}
               floor={range.min}
               label={attrLabel(key, t)}
-              title={ui("attrs.rowHint", { min: range.min, max: range.max, aug: range.aug })}
               onDraft={(value) =>
                 setCharacter({ ...ch, attributes: { ...ch.attributes, [key]: value } })
               }
               onCommit={commit}
             />
             {showKarma && karmaSplit ? (
-              <label className="attr-karma" title={ui("attrs.karmaHint")}>
+              <label className="attr-karma">
                 {ui("attrs.karmaLevels")}
                 <input
                   type="number"

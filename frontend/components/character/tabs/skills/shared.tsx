@@ -39,7 +39,7 @@ export function KarmaLevels({
   if (!skillLimits(props).splitKarma) return null;
   if (rating <= 0) return <span />;
   return (
-    <label className="attr-karma" title={ui("skills.karmaHint")}>
+    <label className="attr-karma">
       {ui("attrs.karmaLevels")}
       <input
         type="number"
@@ -172,7 +172,7 @@ export function SpecKarma({
   const picked = ch.skill_specs_karma || [];
   const on = picked.includes(name);
   return (
-    <label className="spec-karma" title={ui("skills.specKarmaHint")}>
+    <label className="spec-karma">
       <input
         type="checkbox"
         aria-label={`${tr(name)} ${ui("skills.specKarma")}`}

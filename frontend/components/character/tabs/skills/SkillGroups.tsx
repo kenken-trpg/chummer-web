@@ -63,7 +63,6 @@ export function SkillGroups(props: TabPanelProps) {
               disabled={unequal || d.life_module_skills?.frozen}
               value={ch.skill_groups[g] || 0}
               label={trGroup(g)}
-              title={ui("skills.groupHint", { group: trGroup(g), max: groupMax })}
               onDraft={(value) =>
                 setCharacter({ ...ch, skill_groups: { ...ch.skill_groups, [g]: value } })
               }

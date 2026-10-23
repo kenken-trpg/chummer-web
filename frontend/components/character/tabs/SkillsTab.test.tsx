@@ -155,6 +155,12 @@ describe("<SkillsTab>", () => {
     expect(blades.value).toBe("1");
     expect(blades.max).toBe("4");
     expect(screen.getByText("カルマで上げた技能：8 カルマ（知識技能 0 カルマ）")).toBeDefined();
+    // the split field is explained on the rows' "?", the knowledge row's cap too
+    expect(screen.getAllByText(/上げた後の値×2（知識技能は×1）/).length).toBeGreaterThan(0);
+    const know = screen.getByRole("button", { name: "Magic Theory の説明" });
+    expect(document.getElementById(know.getAttribute("aria-describedby")!)?.textContent).toContain(
+      "レーティング（作成上限",
+    );
     fireEvent.change(screen.getByRole("spinbutton", { name: /Magic Theory.*うちカルマ/ }), {
       target: { value: "1" },
     });
