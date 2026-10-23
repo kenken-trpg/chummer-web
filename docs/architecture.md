@@ -276,18 +276,30 @@ Welcome as PRs. Keep every commit individually green (`make check`).
      (quality gather + effects + binders + `resolve_attribute_selects`),
      `ware.py`, `essence.py` (essence penalty + the ratings loop), `magic.py`
      (initiation / submersion / foci / adept + spells / spirits / resonance),
-     `gear.py` (carries `resolve_gear` in with it + post-gear application),
+     `gear.py` (carries `resolve_gear` in with it + post-gear application;
+     the worn-armour / weapon / commlink rows are built in `gear_rows.py`, the
+     Black Market Pipeline discount in `gear_market.py`),
      `economy.py` (the entry point; one module per pass —
      `_econ_priority.py` / `_econ_skills.py` / `_econ_karma.py` /
      `_econ_social.py`) with the
      career-layer helpers in `_career.py` (`snapshot_career_baseline` /
-     `career_raise_karma` / `nuyen_spend_breakdown`), `finalize.py` (totals
-     check + limits / CM / initiative + quality rules + chargen validation,
-     carries `resolve_movement`), `assemble.py` (the ~175-key `state.derived`
+     `career_raise_karma` / `nuyen_spend_breakdown`) and `_career_qualities.py`
+     (quality karma after chargen, SR5 p.107), `finalize.py` (totals
+     check + limits / CM / initiative + quality rules + chargen validation),
+     `assemble.py` (the ~175-key `state.derived`
      literal — typed `DerivedDict` (`derived_types.py`), key-parity with the
      frontend's `Character["derived"]` pinned by
-     `tests/test_derived_contract.py` — carries `_effective_attr_spec`). `compute/__init__.py` is
-     ~60 lines: build one `Ctx`, run the phases, return `ctx.state`. No
+     `tests/test_derived_contract.py`; the quality rows, metatype info and
+     `_effective_attr_spec` live in `_assemble_qualities.py`, the
+     out-of-book warning in `_assemble_books.py`). Helpers several phases
+     share: `_quality_ctx.py` (the context a quality's `<required>` tree is
+     read against, built for both `economy` and `finalize`),
+     `_movement.py` (`resolve_movement`, used by `finalize` and
+     `_shapeshifter`), `_shapeshifter.py` (the metahuman form beside the
+     animal one), and `_life_modules.py` / `_life_module_skills.py` (the
+     free ratings life modules grant, kept apart from what the player
+     bought, and their bridge into the skill passes). `compute/__init__.py` is
+     ~100 lines: build one `Ctx`, run the phases, return `ctx.state`. No
      behaviour change — `tests/test_snapshot.py` guards byte-identical output
      and `tests/test_compute_phases.py` pins the *seams*: it drives the same
      phase sequence by hand, asserts the `ctx` slice each phase owns after it
