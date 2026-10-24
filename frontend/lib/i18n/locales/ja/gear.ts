@@ -98,7 +98,7 @@ export const JA_GEAR = {
   "customDrug.addiction": "依存症 R{rating}/目標値{threshold}",
   "customDrug.avail": "入手値 {avail}",
   "customDrug.crash": "クラッシュ {damage}S",
-  "customDrug.duration": "持続 {seconds} 秒",
+  "customDrug.duration": "効果時間 {seconds} 秒",
   "customDrug.grade": "等級",
   "customDrug.help":
     "基剤（Foundation）1つに、ブロックと強化剤を重ねます。価格・入手値・依存症・発現は組んだ内容から計算します（CF p.190）。",
