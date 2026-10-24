@@ -48,7 +48,7 @@ FLOORS = {
     "Quality": 323,
     "Cyberware": 51,
     "Bioware": 112,
-    "Gear": 180,
+    "Gear": 181,
     "Armor": 61,
     "Power": 62,
     "MentorSpirit": 37,

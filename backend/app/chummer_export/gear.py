@@ -16,7 +16,7 @@ from ..engine.gear.ammo import ammo_fits_weapon
 from ..engine.gear.weapons.hosts import ware_weapon_specs
 from ..models import CharacterState, GearInstall
 from ._common import _Ctx, _Names, _sub
-from .improvements import _bonus_improvements, _with_rows, _write_improvements
+from .improvements import _bonus_improvements, _Imp, _text, _with_rows, _write_improvements
 from .metatype import export_metatype_weapons
 
 
@@ -241,6 +241,8 @@ def _export_weapons(root: ET.Element, state: CharacterState, names: _Names, ctx:
 
     for w in state.weapons:
         el = _sub(weapons, "weapon")
+        # the guid a Weapon Focus's improvement names it by
+        _sub(el, "guid", w.id)
         _sub(el, "sourceid", w.weapon_id)
         _sub(el, "name", names["weapon"].get(w.weapon_id, ""))
         _sub(el, "qty", w.qty)
@@ -440,6 +442,13 @@ def _emit_focus_gear(gears: ET.Element, state: CharacterState, names: _Names) ->
         _sub(el, "extra", names["power"].get(qrow.power_id, ""))
 
 
+def _focus_guid(gear_id: str) -> str:
+    """The `<focus>` pointer's own guid: Chummer's `Focus` is a row apart from
+    the gear it points at, and a shared guid would make the gear's
+    improvements name the pointer instead."""
+    return str(uuid.uuid5(uuid.NAMESPACE_URL, f"{gear_id}:focus"))
+
+
 def _export_foci(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
     """Write `<foci>`, the bonded-focus pointers into `<gears>`.
 
@@ -452,7 +461,7 @@ def _export_foci(root: ET.Element, state: CharacterState, names: _Names, ctx: _C
     weapon_names = {w.id: names["weapon"].get(w.weapon_id, "") for w in state.weapons}
     for frow in state.foci:
         el = _sub(foci, "focus")
-        _sub(el, "guid", frow.id)
+        _sub(el, "guid", _focus_guid(frow.id))
         _sub(el, "gearid", frow.id)
         _sub(el, "crafted", "True" if frow.crafted else "False")
         _sub(el, "formulabought", "True" if frow.formula_bought else "False")
@@ -466,11 +475,50 @@ def _export_foci(root: ET.Element, state: CharacterState, names: _Names, ctx: _C
             _sub(el, "weaponname", weapon_names.get(frow.extra, ""))
     for qrow in state.qi_foci:
         el = _sub(foci, "focus")
-        _sub(el, "guid", qrow.id)
+        _sub(el, "guid", _focus_guid(qrow.id))
         _sub(el, "gearid", qrow.id)
         _sub(el, "powerrating", qrow.power_rating)
         if qrow.extra:
             _sub(el, "powerextra", qrow.extra)
+    _export_focus_improvements(root, state, names, "adept" in set(ctx["derived"].get("enabled_tabs") or []))
+
+
+def _export_focus_improvements(root: ET.Element, state: CharacterState, names: _Names, adept: bool) -> None:
+    """What bonding a focus leaves in `<improvements>`: its `<bonus>` run at
+    its force, under its gear's guid — a Weapon Focus's dice name the weapon
+    it is bound to. A Qi focus's power gets its free points (an adept's only,
+    as `selectpowers` checks), and a `<power>` row at rating 0 when none was
+    bought, the one `selectpowers` adds for them to land on."""
+    definitions = {node.findtext("id") or "": node for node in parse_data("gear.xml").findall("./gears/gear")}
+    for frow in state.foci:
+        definition = definitions.get(frow.gear_id)
+        bonus = definition.find("bonus") if definition is not None else None
+        if definition is None or bonus is None:
+            continue
+        rows = _bonus_improvements(bonus, int(frow.force or 1), frow.extra)
+        _write_improvements(root, _with_rows(root, rows, frow.id, definition.findtext("name") or ""), frow.id, "Gear")
+    qi = definitions.get(names["qifocus"].get("id", ""))
+    choices = qi.findall("./bonus/selectpowers/selectpower") if qi is not None and adept else []
+    powers = root.find("powers")
+    for qrow in state.qi_foci:
+        power = names["power"].get(qrow.power_id, "")
+        rows = []
+        for choice in choices:
+            levels = _text(choice, "val").replace("Rating", str(qrow.rating))
+            kind = "AdeptPowerFreePoints" if _text(choice, "pointsperlevel") else "AdeptPowerFreeLevels"
+            rows.append(_Imp(kind, power, unique=qrow.extra or "", rating=int(levels) if levels.isdigit() else 0))
+        _write_improvements(root, rows, qrow.id, "Gear")
+        bought = any(p.power_id == qrow.power_id and (p.extra or "") == (qrow.extra or "") for p in state.adept_powers)
+        if rows and powers is not None and not bought:
+            el = _sub(powers, "power")
+            for key, value in (
+                ("sourceid", qrow.power_id),
+                ("name", power),
+                ("guid", str(uuid.uuid5(uuid.NAMESPACE_URL, f"{qrow.id}:qipower"))),
+                ("rating", 0),
+                ("extra", qrow.extra or ""),
+            ):
+                _sub(el, key, value)
 
 
 def _export_vehicles(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
