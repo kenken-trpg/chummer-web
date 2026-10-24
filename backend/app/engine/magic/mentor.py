@@ -115,19 +115,14 @@ def resolve_mentor(
 
 
 def _choice_groups(allowed: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
-    """The choices one pick is made from: a numbered set, every unrestricted
-    choice together, or an audience-restricted choice on its own."""
+    """The choices one pick is made from, as Chummer's `SelectMentorSpirit`
+    lists them: those of `set="2"` in the second box, every other one the
+    character may take in the first — an "Adept:" or "Magician:" choice is
+    one more option there, not a pick of its own (Berserker's adept takes
+    one of its three)."""
     groups: dict[str, list[dict[str, Any]]] = {}
     for choice in allowed:
-        audience = choice.get("audience") or "all"
-        raw_set = str(choice.get("set") or "")
-        if raw_set:
-            key = f"set:{raw_set}"
-        elif audience == "all":
-            key = "all"
-        else:
-            key = f"solo:{choice['name']}"
-        groups.setdefault(key, []).append(choice)
+        groups.setdefault(f"set:{choice.get('set') or '1'}", []).append(choice)
     return groups
 
 
