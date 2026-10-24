@@ -46,8 +46,8 @@ GROUPS = {
 #: went missing.
 FLOORS = {
     "Quality": 323,
-    "Cyberware": 0,
-    "Bioware": 0,
+    "Cyberware": 51,
+    "Bioware": 112,
     "Gear": 0,
     "Armor": 0,
     "Power": 0,

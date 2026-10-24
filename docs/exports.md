@@ -64,14 +64,15 @@
 - このアプリ側の往復（書き出し → このアプリで読み直し）で何が変わるかは確認で
   分かりますが、**Chummer.exe 自身がどう読むかは別**です。そちらは
   `scripts/chum5_reconcile.py --fidelity` が見ています（開発者向け）。
-- **ウェア・装備の効果は、Chummer では効かない状態で開かれます。** Chummer は
-  開くときに効果を計算し直さず、ファイルに保存された改善効果だけを使いますが、このアプリが書くのはその一部です。資質については、
-  素質（Magician・Adept など）が開くタブと技能、資質に書いた文字（Wanted の
-  内容など）、導師精霊、技能の値段（College Education など）、移動力やモニター
-  など数で表せる効果、資質が付ける資質、資質が付けるクリッター・パワーの効果
-  （Hardened Armor のアーマーなど）、Technomancer の Living Persona、
-  限界値の修正（Impassive など）、能力値の上限の変更（Exceptional Attribute
-  など）を書きます。
+- **装備・アーマー・パワーの効果は、Chummer では効かない状態で開かれます。**
+  Chummer は開くときに効果を計算し直さず、ファイルに保存された改善効果だけを
+  使いますが、このアプリが書くのはその一部です。資質については、素質
+  （Magician・Adept など）が開くタブと技能、資質に書いた文字（Wanted の内容
+  など）、導師精霊、技能の値段（College Education など）、移動力やモニターなど
+  数で表せる効果、資質が付ける資質、資質が付けるクリッター・パワーの効果
+  （Hardened Armor のアーマーなど）、Technomancer の Living Persona、限界値の
+  修正（Impassive など）、能力値の上限の変更（Exceptional Attribute など）を
+  書きます。サイバーウェア・バイオウェアの効果も、レーティングに合わせて書きます。
   Chummer の *Special > Re-apply Improvements*（特殊 → Improvements の再適用）で
   資質の効果は付きますが、クリッター・パワーの効果が 2 重になります
   （[確認の記録](fixtures/critter-powers/README.md)）。

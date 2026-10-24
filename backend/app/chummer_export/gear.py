@@ -11,10 +11,12 @@ import xml.etree.ElementTree as ET
 from typing import Any
 
 from ..data_loader import catalog, catalog_list
+from ..data_loader._xml import parse_data
 from ..engine.gear.ammo import ammo_fits_weapon
 from ..engine.gear.weapons.hosts import ware_weapon_specs
 from ..models import CharacterState, GearInstall
 from ._common import _Ctx, _Names, _sub
+from .improvements import _bonus_improvements, _with_rows, _write_improvements
 from .metatype import export_metatype_weapons
 
 
@@ -109,6 +111,39 @@ def _export_ware(root: ET.Element, state: CharacterState, names: _Names, ctx: _C
     top = by_parent.get(None, [])
     emit(_sub(root, "cyberwares"), [r for r in top if r.id in cyber_ids], "cyberware")
     emit(_sub(root, "biowares"), [r for r in top if r.id in bio_ids], "bioware")
+    _export_ware_improvements(root, state, by_parent, top, cyber_ids)
+
+
+def _export_ware_improvements(
+    root: ET.Element,
+    state: CharacterState,
+    by_parent: dict[str | None, list[Any]],
+    top: list[Any],
+    cyber_ids: set[str],
+) -> None:
+    """What `Cyberware.Create` leaves in `<improvements>` when it runs an
+    implant's `<bonus>` at its rating, under the implant's guid — Chummer
+    never runs it again on load. Only the implants written above: one in a
+    vehicle mod works on the vehicle, not the character."""
+    definitions = {
+        node.findtext("id") or "": node
+        for name, path in (("cyberware.xml", "./cyberwares/cyberware"), ("bioware.xml", "./biowares/bioware"))
+        for node in parse_data(name).findall(path)
+    }
+    stack = list(top)
+    while stack:
+        row = stack.pop()
+        stack.extend(by_parent.get(row.id) or [])
+        definition = definitions.get(row.ware_id)
+        bonus = definition.find("bonus") if definition is not None else None
+        if definition is None or bonus is None:
+            continue
+        source = "Cyberware" if row.id in cyber_ids else "Bioware"
+        owner = definition.findtext("name") or ""
+        prefix = f"ware:{row.id}:"
+        skills = {key[len(prefix) :]: value for key, value in state.skill_picks.items() if key.startswith(prefix)}
+        rows = _bonus_improvements(bonus, int(row.rating or 1), row.extra or "", skills=skills)
+        _write_improvements(root, _with_rows(root, rows, row.id, owner), row.id, source)
 
 
 def _export_armor(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
