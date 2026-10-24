@@ -11,6 +11,7 @@ from app.data_loader import catalog
 from app.engine.constants import MENTOR_SPIRIT_ID, PARAGON_ID, quality_take_extra_key
 from app.engine.priority import heritage_cost
 from app.models import (
+    AdeptPowerInstall,
     ArmorInstall,
     ArmorModInstall,
     CharacterState,
@@ -501,6 +502,41 @@ def test_an_implant_leaves_what_its_bonus_made_at_its_rating() -> None:
         ("rr", "Bioware", "Skill", "Automatics", "", "0", "1"),
         ("wr", "Cyberware", "Attribute", "REA", "precedence0", "2", "0"),
         ("wr", "Cyberware", "InitiativeDice", "", "precedence0", "0", "2"),
+    ]
+
+
+def test_a_power_and_a_mentor_leave_what_their_bonus_made() -> None:
+    """An adept power's improvements sit under its guid at its rating; the
+    mentor's own bonus and each picked choice's sit under the mentor's guid,
+    and a choice's free power levels count for an adept."""
+    reflexes = next(p["id"] for p in catalog()["powers"] if p["name"] == "Improved Reflexes")
+    cat = next(m["id"] for m in catalog()["mentors"] if m["name"] == "Cat")
+    state = CharacterState(
+        id="p",
+        name="Adept",
+        priorities=Priorities(Heritage="D", Attributes="A", Talent="B", Skills="C", Resources="E"),
+        metatype="Human",
+        attributes={},
+        talent="Adept",
+        adept_powers=[AdeptPowerInstall(id="ir", power_id=reflexes, rating=2)],
+        mentor_id=cat,
+        mentor_choices=["+2 dice on Gymnastics Tests", "Adept: 2 free levels of Light Body"],
+    )
+    root = ET.fromstring(state_to_chum5(state))
+    assert root.findtext("./powers/power/guid") == "ir"
+    rows = sorted(
+        tuple(
+            imp.findtext(f) or ""
+            for f in ("improvementsource", "improvementttype", "improvedname", "aug", "val", "rating")
+        )
+        for imp in root.findall("./improvements/improvement")
+        if imp.findtext("improvementsource") in ("Power", "MentorSpirit")
+    )
+    assert rows == [
+        ("MentorSpirit", "AdeptPowerFreeLevels", "Light Body", "0", "0", "2"),
+        ("MentorSpirit", "Skill", "Gymnastics", "0", "2", "1"),
+        ("Power", "Attribute", "REA", "2", "0", "1"),
+        ("Power", "InitiativeDice", "", "0", "2", "1"),
     ]
 
 
