@@ -12,6 +12,7 @@ SR5: dict[str, str] = {
     "Animal Control (Insect Type)": "動物制御(Insect Type)",
     "Combat Skill": "戦闘系能動技能",
     "Enhanced Senses (Ultrasound)": "強化感覚(生体ソナー)",
+    "Manifest": "顕現",
     "Physical Skill": "身体系能動技能",
     "Psychokinesis (Infected)": "念動(Infected)",
     "Social Skill": "社交系能動技能",
