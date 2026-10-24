@@ -29,7 +29,7 @@ from pathlib import Path
 
 #: Reproduced improvements over Chummer's 34 test saves at the pinned ref.
 #: Raise it when the export writes more; a drop means an improvement went missing.
-FLOOR = 276
+FLOOR = 281
 
 Key = tuple[str, ...]
 

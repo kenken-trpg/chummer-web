@@ -38,6 +38,8 @@ def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ct
     granted: list[tuple[str, str]] = []  # (granting quality id, granted quality's guid)
     bonuses = {node.findtext("id") or "": node for node in parse_data("qualities.xml").findall("./qualities/quality")}
     effects: list[tuple[str, list[_Imp]]] = []  # (quality guid, its improvements)
+    # the contact a quality added (Made Man), which its `<addcontact>` names
+    contacts = {c.source_quality_id: c.id for c in reversed(state.contacts) if c.source_quality_id}
     takes: dict[str, int] = {}
     for qid in state.quality_ids:
         q = _sub(quals, "quality")
@@ -69,7 +71,7 @@ def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ct
         for tag in ("bonus", "firstlevelbonus") if not take else ("bonus",):
             node = definition.find(tag) if definition is not None else None
             if node is not None:
-                rows += _bonus_improvements(node, 0, extra, state.mentor_id or "")
+                rows += _bonus_improvements(node, 0, extra, state.mentor_id or "", contacts.get(qid, ""))
         if rows:
             if q.find("guid") is None:
                 # a second take needs a guid of its own to own its improvements
@@ -116,7 +118,6 @@ def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ct
     # `<limitspellcategory />` made, tied to the quality by its guid
     links = [(category, qid, "LimitSpellCategory") for qid, category in spell_limits]
     links += [(child_guid, qid, "SpecificQuality") for qid, child_guid in granted]
-    links += [(c.id, c.source_quality_id, "AddContact") for c in state.contacts if c.source_quality_id]
     links += [(power_guid, qid, "CritterPower") for power_guid, qid in power_links]
     if links:
         imps = improvements_of(root)
@@ -286,13 +287,15 @@ def _export_power_improvements(root: ET.Element, bonus: ET.Element, guid: str, r
     _write_improvements(root, _bonus_improvements(bonus, rating, pick or None), guid, "CritterPower")
 
 
-def _bonus_improvements(bonus: ET.Element, rating: int, pick: str | None, mentor: str = "") -> list[_Imp]:
+def _bonus_improvements(
+    bonus: ET.Element, rating: int, pick: str | None, mentor: str = "", contact: str = ""
+) -> list[_Imp]:
     """The improvements the tags of `bonus` make whose improvement needs
     nothing but the bonus, its rating and its pick — as
     `AddImprovementCollection` makes them. `pick` None: nothing was picked,
     so `<selecttext>` makes nothing. `mentor`: the mentor spirit or paragon
     picked, whose `<mentorspirit>` row `_export_mentor_block` writes with the
-    id as its guid."""
+    id as its guid. `contact`: the id of the contact the quality added."""
     rows: list[_Imp] = []
     for node in bonus:
         if node.tag == "selecttext":
@@ -300,6 +303,8 @@ def _bonus_improvements(bonus: ET.Element, rating: int, pick: str | None, mentor
         elif node.tag in ("selectmentorspirit", "selectparagon"):
             kind = "MentorSpirit" if node.tag == "selectmentorspirit" else "Paragon"
             rows += [_Imp(kind, mentor, unique=mentor)] if mentor else []
+        elif node.tag == "addcontact":
+            rows += _addcontact(node, contact) if contact else []
         elif node.tag in _COSTS:
             rows += _cost(node)
         elif node.tag in _NUMBERS:
@@ -361,8 +366,8 @@ def _specificskill(node: ET.Element, rating: int) -> list[_Imp]:
 
 
 def _flag(node: ET.Element, rating: int) -> list[_Imp]:
-    """`ambidextrous`, `fame`: an improvement with no value."""
-    return [_Imp(node.tag.capitalize())]
+    """`ambidextrous`, `fame`, `mademan`: an improvement with no value."""
+    return [_Imp({"ambidextrous": "Ambidextrous", "fame": "Fame", "mademan": "MadeMan"}[node.tag])]
 
 
 def _sociallimit(node: ET.Element, rating: int) -> list[_Imp]:
@@ -459,6 +464,19 @@ def _conditionmonitor(node: ET.Element, rating: int) -> list[_Imp]:
     ]
 
 
+def _addcontact(node: ET.Element, contact: str) -> list[_Imp]:
+    """AddContact names the contact, which is its unique too; the forced
+    loyalty, free and forced group flags each name it again."""
+    rows = [_Imp("AddContact", contact, unique=contact)]
+    if _is_int(_text(node, "forcedloyalty")):
+        rows.append(_Imp("ContactForcedLoyalty", contact, val=int(_text(node, "forcedloyalty"))))
+    if node.find("free") is not None:
+        rows.append(_Imp("ContactMakeFree", contact))
+    if node.find("forcegroup") is not None:
+        rows.append(_Imp("ContactForceGroup", contact))
+    return rows
+
+
 def _prototypetranshuman(node: ET.Element, rating: int) -> list[_Imp]:
     return [_Imp("PrototypeTranshuman", _text(node))] if _text(node) else []
 
@@ -551,6 +569,7 @@ _READERS: dict[str, Callable[[ET.Element, int], list[_Imp]]] = {
     "specificskill": _specificskill,
     "ambidextrous": _flag,
     "fame": _flag,
+    "mademan": _flag,
     "sociallimit": _sociallimit,
     "lifestylecost": _lifestylecost,
     "skillcategory": _skillcategory,
