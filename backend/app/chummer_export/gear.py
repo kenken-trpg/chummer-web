@@ -386,6 +386,28 @@ def _export_gear(root: ET.Element, state: CharacterState, names: _Names, ctx: _C
     by_parent_g, emit_gear = _gear_writer(state, names)
     emit_gear(gears, by_parent_g.get(None, []))
     _emit_focus_gear(gears, state, names)
+    _export_gear_improvements(root, state, by_parent_g)
+
+
+def _export_gear_improvements(root: ET.Element, state: CharacterState, by_parent: dict[str | None, list[Any]]) -> None:
+    """What `Gear.Create` leaves in `<improvements>` when it runs the item's
+    `<bonus>` at its rating, with its extra as the pick, under its guid: the
+    character's own gear and what their armor carries, which is off with
+    armor not worn. Not a focus, whose improvements wait for its bonding,
+    nor what sits in a vehicle or a weapon, which works on that."""
+    definitions = {node.findtext("id") or "": node for node in parse_data("gear.xml").findall("./gears/gear")}
+    stack = [(row, True) for row in by_parent.get(None, [])]
+    stack += [(row, a.equipped) for a in state.armor for row in by_parent.get(a.id, [])]
+    while stack:
+        row, enabled = stack.pop()
+        stack += [(child, enabled) for child in by_parent.get(row.id) or []]
+        definition = definitions.get(row.gear_id)
+        bonus = definition.find("bonus") if definition is not None else None
+        if definition is None or bonus is None or (definition.findtext("category") or "").endswith("Foci"):
+            continue
+        rows = _bonus_improvements(bonus, int(getattr(row, "rating", 1) or 1), getattr(row, "extra", None) or "")
+        owner = getattr(row, "name", None) or definition.findtext("name") or ""
+        _write_improvements(root, _with_rows(root, rows, row.id, owner), row.id, "Gear", enabled=enabled)
 
 
 def _emit_focus_gear(gears: ET.Element, state: CharacterState, names: _Names) -> None:
