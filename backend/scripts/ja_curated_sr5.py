@@ -8,6 +8,16 @@ docs/plans/translation-plan.md phase 5.
 from __future__ import annotations
 
 SR5: dict[str, str] = {
+    # --- spirits -----------------------------------------------------------
+    "Homunculus (Armored Material)": "ホムンクルス(装甲素材／強化建材)",
+    "Homunculus (Average Material)": "ホムンクルス(平均的な素材)",
+    "Homunculus (Cheap Material)": "ホムンクルス(安手の素材)",
+    "Homunculus (Fragile)": "ホムンクルス(壊れやすい素材)",
+    "Homunculus (Hardened Material)": "ホムンクルス(特殊硬化材)",
+    "Homunculus (Heavy Material)": "ホムンクルス(強固な素材)",
+    "Homunculus (Heavy Structural Material)": "ホムンクルス(強固な建材)",
+    "Homunculus (Reinforced Material)": "ホムンクルス(強化素材)",
+    "Homunculus (Structural Material)": "ホムンクルス(建材)",
     # --- weapon_mounts -----------------------------------------------------
     "Heavy [SR5]": "大型武器マウント",
     "Standard [SR5]": "武器マウント",
