@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import uuid
 import xml.etree.ElementTree as ET
+from collections.abc import Callable
 from copy import deepcopy
 from typing import Any, NamedTuple
 
@@ -33,7 +34,6 @@ def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ct
     """Write qualities, spells, adept powers and complex forms."""
     quals = _sub(root, "qualities")
     specs = {str(row["id"]): row for row in catalog()["qualities"]}
-    ids_by_name = {str(row["name"]): str(row["id"]) for row in catalog()["qualities"]}
     spell_limits: list[tuple[str, str]] = []
     granted: list[tuple[str, str]] = []  # (granting quality id, granted quality's guid)
     bonuses = {node.findtext("id") or "": node for node in parse_data("qualities.xml").findall("./qualities/quality")}
@@ -88,30 +88,12 @@ def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ct
                 pick = _sub(picks_el, "pick")
                 _sub(pick, "index", index)
                 _sub(pick, "skill", skill)
-        # `<selectquality>` (Prototype Transhuman): Chummer adds the pick as a
-        # quality of its own, sourced from this one, and ties the two with a
-        # SpecificQuality improvement so removing this one removes the pick.
-        picked = state.quality_extras.get(qid, "")
-        if str((specs.get(qid) or {}).get("extra_kind") or "") == "quality" and picked in ids_by_name:
-            if q.find("guid") is None:
-                _sub(q, "guid", qid)
-            child_guid = str(uuid.uuid5(uuid.NAMESPACE_URL, f"{qid}:selectquality"))
-            child_id = ids_by_name[picked]
-            child = _sub(quals, "quality")
-            _sub(child, "guid", child_guid)
-            _sub(child, "sourceid", child_id)
-            _sub(child, "name", picked)
-            _sub(child, "extra", state.quality_extras.get(child_id, ""))
-            _sub(child, "qualitysource", "Improvement")
-            _sub(child, "sourcename", names["quality"].get(qid, ""))
+        children = _export_granted_qualities(quals, qid, state, names, specs.get(qid) or {}, bonuses)
+        if children and q.find("guid") is None:
+            _sub(q, "guid", qid)
+        for child_guid, rows in children:
             granted.append((qid, child_guid))
-            # the pick's own bonus ran too: a Wanted it gave keeps its text
-            definition = bonuses.get(child_id)
-            child_bonus = definition.find("bonus") if definition is not None else None
-            if child_bonus is not None:
-                effects.append(
-                    (child_guid, _bonus_improvements(child_bonus, 0, state.quality_extras.get(child_id, "")))
-                )
+            effects.append((child_guid, rows))
         # a contact the quality added (Made Man): Chummer ties it to the
         # quality with an AddContact improvement, which the import follows back
         if any(c.source_quality_id == qid for c in state.contacts) and q.find("guid") is None:
@@ -146,6 +128,46 @@ def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ct
             _sub(imp, "improvementsource", "Quality")
     for guid, rows in effects:
         _write_improvements(root, rows, guid, "Quality")
+
+
+def _export_granted_qualities(
+    quals: ET.Element,
+    qid: str,
+    state: CharacterState,
+    names: _Names,
+    spec: dict[str, Any],
+    bonuses: dict[str, ET.Element],
+) -> list[tuple[str, list[_Imp]]]:
+    """`<selectquality>` (Prototype Transhuman) and `<addqualities>` (Pie Iesu
+    Domine's High Pain Tolerance): Chummer adds each as a quality of its own,
+    sourced from the granting one, which a SpecificQuality improvement ties
+    to it so removing that one removes the child. Returns each child's guid
+    and what its own bonus made — a Wanted it gave keeps its text."""
+    ids_by_name = {str(row["name"]): str(row["id"]) for row in catalog()["qualities"]}
+    picked = state.quality_extras.get(qid, "")
+    children = []
+    if str(spec.get("extra_kind") or "") == "quality" and picked in ids_by_name:
+        children.append((picked, f"{qid}:selectquality"))
+    definition = bonuses.get(qid)
+    for added in definition.findall("./bonus/addqualities/addquality") if definition is not None else []:
+        if _text(added) in ids_by_name:
+            children.append((_text(added), f"{qid}:addquality:{_text(added)}"))
+    out = []
+    for child_name, key in children:
+        child_guid = str(uuid.uuid5(uuid.NAMESPACE_URL, key))
+        child_id = ids_by_name[child_name]
+        extra = state.quality_extras.get(child_id, "")
+        child = _sub(quals, "quality")
+        _sub(child, "guid", child_guid)
+        _sub(child, "sourceid", child_id)
+        _sub(child, "name", child_name)
+        _sub(child, "extra", extra)
+        _sub(child, "qualitysource", "Improvement")
+        _sub(child, "sourcename", names["quality"].get(qid, ""))
+        child_definition = bonuses.get(child_id)
+        child_bonus = child_definition.find("bonus") if child_definition is not None else None
+        out.append((child_guid, _bonus_improvements(child_bonus, 0, extra) if child_bonus is not None else []))
+    return out
 
 
 def _export_talent_quality(
@@ -264,49 +286,199 @@ def _export_power_improvements(root: ET.Element, bonus: ET.Element, guid: str, r
 
 
 def _bonus_improvements(bonus: ET.Element, rating: int, pick: str | None, mentor: str = "") -> list[_Imp]:
-    """The improvements the tags of `bonus` make
-    whose improvement needs nothing but the bonus, its rating and its pick —
-    as `AddImprovementCollection` makes them. `pick` None: nothing was picked,
+    """The improvements the tags of `bonus` make whose improvement needs
+    nothing but the bonus, its rating and its pick — as
+    `AddImprovementCollection` makes them. `pick` None: nothing was picked,
     so `<selecttext>` makes nothing. `mentor`: the mentor spirit or paragon
     picked, whose `<mentorspirit>` row `_export_mentor_block` writes with the
     id as its guid."""
     rows: list[_Imp] = []
     for node in bonus:
-        text = (node.text or "").strip()
-        if node.tag == "selecttext" and pick is not None:
-            rows.append(_Imp("Text", pick))
-        elif node.tag in _COSTS:
-            kind, named = _COSTS[node.tag]
-            numbers = [(node.findtext(field) or "0").strip() for field in ("val", "min", "max")]
-            if all(number.lstrip("-").isdigit() for number in numbers):
-                val, low, high = (int(number) for number in numbers)
-                improved = (node.findtext("name") or "").strip() if named else ""
-                condition = (node.findtext("condition") or "").strip()
-                rows.append(_Imp(kind, improved, val=val, min=low, max=high, condition=condition))
-        elif node.tag in _NUMBERS and text.lstrip("-").isdigit():
-            rows.append(_Imp(_NUMBERS[node.tag], val=int(text)))
-        elif node.tag in ("selectmentorspirit", "selectparagon") and mentor:
+        if node.tag == "selecttext":
+            rows += [_Imp("Text", pick)] if pick is not None else []
+        elif node.tag in ("selectmentorspirit", "selectparagon"):
             kind = "MentorSpirit" if node.tag == "selectmentorspirit" else "Paragon"
-            rows.append(_Imp(kind, mentor, unique=mentor))
-        elif node.tag == "unlockskills" and text:
-            rows.append(_Imp("SpecialSkills", text, target=node.get("name") or ""))
-        elif node.tag == "enabletab":
-            for name in node.findall("name"):
-                tab = _TABS.get((name.text or "").strip().upper())
-                if tab:
-                    rows.append(_Imp("SpecialTab", tab, unique="enabletab"))
-        elif node.tag == "armor":
-            value = rating if text == "Rating" else int(text) if text.lstrip("-").isdigit() else None
-            if value is not None:
-                rows.append(_Imp("Armor", val=value))
-        elif node.tag in ("disablebiowaregrade", "disablecyberwaregrade"):
-            kind = "DisableBiowareGrade" if node.tag == "disablebiowaregrade" else "DisableCyberwareGrade"
-            rows.append(_Imp(kind, text, unique=node.tag))
-        elif node.tag == "specificskill":
-            amount = (node.findtext("bonus") or "").strip()
-            if amount.lstrip("-").isdigit():
-                rows.append(_Imp("Skill", node.findtext("name") or "", val=int(amount)))
+            rows += [_Imp(kind, mentor, unique=mentor)] if mentor else []
+        elif node.tag in _COSTS:
+            rows += _cost(node)
+        elif node.tag in _NUMBERS:
+            text = (node.text or "").strip()
+            rows += [_Imp(_NUMBERS[node.tag], val=int(text))] if _is_int(text) else []
+        elif node.tag in _READERS:
+            rows += _READERS[node.tag](node, rating)
     return rows
+
+
+def _text(node: ET.Element, field: str | None = None) -> str:
+    return ((node.text if field is None else node.findtext(field)) or "").strip()
+
+
+def _is_int(text: str | None) -> bool:
+    return (text or "").strip().lstrip("-").isdigit()
+
+
+def _precedence(node: ET.Element) -> str:
+    """`addlimb` / `conditionmonitor`: a `precedence` attribute is the unique."""
+    return f"precedence{node.get('precedence')}" if node.get("precedence") else ""
+
+
+def _cost(node: ET.Element) -> list[_Imp]:
+    kind, named = _COSTS[node.tag]
+    numbers = [_text(node, field) or "0" for field in ("val", "min", "max")]
+    if not all(_is_int(number) for number in numbers):
+        return []
+    val, low, high = (int(number) for number in numbers)
+    return [
+        _Imp(kind, _text(node, "name") if named else "", val=val, min=low, max=high, condition=_text(node, "condition"))
+    ]
+
+
+def _unlockskills(node: ET.Element, rating: int) -> list[_Imp]:
+    return [_Imp("SpecialSkills", _text(node), target=node.get("name") or "")] if _text(node) else []
+
+
+def _enabletab(node: ET.Element, rating: int) -> list[_Imp]:
+    tabs = (_TABS.get(_text(name).upper()) for name in node.findall("name"))
+    return [_Imp("SpecialTab", tab, unique="enabletab") for tab in tabs if tab]
+
+
+def _armor(node: ET.Element, rating: int) -> list[_Imp]:
+    text = _text(node)
+    if text == "Rating":
+        return [_Imp("Armor", val=rating)]
+    return [_Imp("Armor", val=int(text))] if _is_int(text) else []
+
+
+def _disablegrade(node: ET.Element, rating: int) -> list[_Imp]:
+    kind = "DisableBiowareGrade" if node.tag == "disablebiowaregrade" else "DisableCyberwareGrade"
+    return [_Imp(kind, _text(node), unique=node.tag)]
+
+
+def _specificskill(node: ET.Element, rating: int) -> list[_Imp]:
+    amount = _text(node, "bonus")
+    return [_Imp("Skill", _text(node, "name"), val=int(amount))] if _is_int(amount) else []
+
+
+def _flag(node: ET.Element, rating: int) -> list[_Imp]:
+    """`ambidextrous`, `fame`: an improvement with no value."""
+    return [_Imp(node.tag.capitalize())]
+
+
+def _sociallimit(node: ET.Element, rating: int) -> list[_Imp]:
+    return [_Imp("SocialLimit", "Social", val=int(_text(node)))] if _is_int(_text(node)) else []
+
+
+def _lifestylecost(node: ET.Element, rating: int) -> list[_Imp]:
+    if not _is_int(_text(node)):
+        return []
+    return [
+        _Imp("LifestyleCost", node.get("lifestyle") or "", val=int(_text(node)), condition=node.get("condition") or "")
+    ]
+
+
+def _skillcategory(node: ET.Element, rating: int) -> list[_Imp]:
+    """`skillcategory`, `skillgroup`: a bonus to every skill of the name."""
+    if not _text(node, "name") or not _is_int(_text(node, "bonus")):
+        return []
+    return [
+        _Imp(
+            "SkillCategory" if node.tag == "skillcategory" else "SkillGroup",
+            _text(node, "name"),
+            val=int(_text(node, "bonus")),
+            condition=_text(node, "condition"),
+            exclude=_text(node, "exclude"),
+            addtorating=_text(node, "applytorating").lower() == "true",
+        )
+    ]
+
+
+def _restrictedgear(node: ET.Element, rating: int) -> list[_Imp]:
+    """The availability is the value and the amount the rating; an old
+    `<restrictedgear>24</restrictedgear>` is one item."""
+    availability, amount = _text(node, "availability"), _text(node, "amount")
+    if not amount:
+        availability, amount = availability or _text(node), "1"
+    if not (_is_int(availability) and _is_int(amount)):
+        return []
+    return [_Imp("RestrictedGear", val=int(availability), rating=int(amount))]
+
+
+def _movementreplace(node: ET.Element, rating: int) -> list[_Imp]:
+    """A walk, run or sprint speed, for its category or for all three."""
+    if not _is_int(_text(node, "val")):
+        return []
+    kind = {"RUN": "RunSpeed", "SPRINT": "SprintSpeed"}.get(_text(node, "speed").upper(), "WalkSpeed")
+    categories = [_text(node, "category")] if _text(node, "category") else ["Ground", "Swim", "Fly"]
+    return [_Imp(kind, category, val=int(_text(node, "val"))) for category in categories]
+
+
+def _sprintbonus(node: ET.Element, rating: int) -> list[_Imp]:
+    category = _text(node, "category")
+    if not category:
+        return []
+    fields = (("val", "SprintBonus"), ("percent", "SprintBonusPercent"))
+    return [
+        _Imp(kind, category, val=int(_text(node, field)))
+        for field, kind in fields
+        if _is_int(_text(node, field)) and int(_text(node, field))
+    ]
+
+
+def _addlimb(node: ET.Element, rating: int) -> list[_Imp]:
+    if not _is_int(_text(node, "val")):
+        return []
+    return [_Imp("AddLimb", _text(node, "limbslot"), unique=_precedence(node), val=int(_text(node, "val")))]
+
+
+def _cyberseeker(node: ET.Element, rating: int) -> list[_Imp]:
+    return [_Imp("Seeker", _text(node))] if _text(node) in _SEEKER else []
+
+
+def _livingpersona(node: ET.Element, rating: int) -> list[_Imp]:
+    """Each attribute's bonus as the improved name, a positive number signed."""
+    rows = []
+    for child in node:
+        amount = _text(child).replace("Rating", str(rating))
+        if child.tag in _PERSONA and amount:
+            rows.append(_Imp(_PERSONA[child.tag], f"+{amount}" if _is_int(amount) and int(amount) > 0 else amount))
+    return rows
+
+
+def _conditionmonitor(node: ET.Element, rating: int) -> list[_Imp]:
+    kinds = {
+        "physical": "PhysicalCM",
+        "stun": "StunCM",
+        "threshold": "CMThreshold",
+        "thresholdoffset": "CMThresholdOffset",
+    }
+    return [
+        _Imp(kinds[child.tag], unique=_precedence(child), val=int(_text(child)))
+        for child in node
+        if child.tag in kinds and _is_int(_text(child))
+    ]
+
+
+_READERS: dict[str, Callable[[ET.Element, int], list[_Imp]]] = {
+    "unlockskills": _unlockskills,
+    "enabletab": _enabletab,
+    "armor": _armor,
+    "disablebiowaregrade": _disablegrade,
+    "disablecyberwaregrade": _disablegrade,
+    "specificskill": _specificskill,
+    "ambidextrous": _flag,
+    "fame": _flag,
+    "sociallimit": _sociallimit,
+    "lifestylecost": _lifestylecost,
+    "skillcategory": _skillcategory,
+    "skillgroup": _skillcategory,
+    "restrictedgear": _restrictedgear,
+    "movementreplace": _movementreplace,
+    "sprintbonus": _sprintbonus,
+    "addlimb": _addlimb,
+    "cyberseeker": _cyberseeker,
+    "livingpersona": _livingpersona,
+    "conditionmonitor": _conditionmonitor,
+}
 
 
 class _Imp(NamedTuple):
@@ -320,6 +492,9 @@ class _Imp(NamedTuple):
     min: int = 0
     max: int = 0
     condition: str = ""
+    rating: int = 1
+    exclude: str = ""
+    addtorating: bool = False
 
 
 #: The karma and point cost tags, (type, whether `<name>` is the improved
@@ -355,12 +530,111 @@ _COSTS = {
     "skillcategorypointcostmultiplier": ("SkillCategoryPointCostMultiplier", True),
 }
 
-#: tags whose improvement is their number and nothing else
+#: Tags whose improvement is their number and nothing else — every
+#: `AddImprovementCollection` method that is one `CreateImprovement` of the
+#: tag's text as the value.
 _NUMBERS = {
-    "notoriety": "Notoriety",
-    "cyberwareessmultiplier": "CyberwareEssCost",
+    "surprise": "Surprise",
+    "spellresistance": "SpellResistance",
+    "mentalmanipulationresist": "MentalManipulationResist",
+    "physicalmanipulationresist": "PhysicalManipulationResist",
+    "manaillusionresist": "ManaIllusionResist",
+    "physicalillusionresist": "PhysicalIllusionResist",
+    "detectionspellresist": "DetectionSpellResist",
+    "directmanaspellresist": "DirectManaSpellResist",
+    "directphysicalspellresist": "DirectPhysicalSpellResist",
+    "decreasebodresist": "DecreaseBODResist",
+    "decreaseagiresist": "DecreaseAGIResist",
+    "decreaserearesist": "DecreaseREAResist",
+    "decreasestrresist": "DecreaseSTRResist",
+    "decreasecharesist": "DecreaseCHAResist",
+    "decreaseintresist": "DecreaseINTResist",
+    "decreaselogresist": "DecreaseLOGResist",
+    "decreasewilresist": "DecreaseWILResist",
+    "nuyenmaxbp": "NuyenMaxBP",
+    "unarmeddv": "UnarmedDV",
+    "unarmedap": "UnarmedAP",
+    "unarmedreach": "UnarmedReach",
+    "initiative": "Initiative",
+    "initiativediceadd": "InitiativeDiceAdd",
+    "matrixinitiative": "MatrixInitiative",
     "biowareessmultiplier": "BiowareEssCost",
+    "biowaretotalessmultiplier": "BiowareTotalEssMultiplier",
+    "cyberwareessmultiplier": "CyberwareEssCost",
+    "cyberwaretotalessmultiplier": "CyberwareTotalEssMultiplier",
+    "biowareessmultipliernonretroactive": "BiowareEssCostNonRetroactive",
+    "biowaretotalessmultipliernonretroactive": "BiowareTotalEssMultiplierNonRetroactive",
+    "cyberwareessmultipliernonretroactive": "CyberwareEssCostNonRetroactive",
+    "cyberwaretotalessmultipliernonretroactive": "CyberwareTotalEssMultiplierNonRetroactive",
+    "nativelanguagelimit": "NativeLanguageLimit",
+    "freepositivequalities": "FreePositiveQualities",
+    "freenegativequalities": "FreeNegativeQualities",
+    "freespiritpowerpoints": "FreeSpiritPowerPoints",
+    "adeptpowerpoints": "AdeptPowerPoints",
+    "armorencumbrancepenalty": "ArmorEncumbrancePenalty",
+    "damageresistance": "DamageResistance",
+    "judgeintentions": "JudgeIntentions",
+    "judgeintentionsoffense": "JudgeIntentionsOffense",
+    "judgeintentionsdefense": "JudgeIntentionsDefense",
+    "composure": "Composure",
+    "liftandcarry": "LiftAndCarry",
+    "memory": "Memory",
+    "fatigueresist": "FatigueResist",
+    "radiationresist": "RadiationResist",
+    "sonicresist": "SonicResist",
+    "toxincontactresist": "ToxinContactResist",
+    "toxiningestionresist": "ToxinIngestionResist",
+    "toxininhalationresist": "ToxinInhalationResist",
+    "toxininjectionresist": "ToxinInjectionResist",
+    "pathogencontactresist": "PathogenContactResist",
+    "pathogeningestionresist": "PathogenIngestionResist",
+    "pathogeninhalationresist": "PathogenInhalationResist",
+    "pathogeninjectionresist": "PathogenInjectionResist",
+    "physiologicaladdictionfirsttime": "PhysiologicalAddictionFirstTime",
+    "psychologicaladdictionfirsttime": "PsychologicalAddictionFirstTime",
+    "physiologicaladdictionalreadyaddicted": "PhysiologicalAddictionAlreadyAddicted",
+    "psychologicaladdictionalreadyaddicted": "PsychologicalAddictionAlreadyAddicted",
+    "stuncmrecovery": "StunCMRecovery",
+    "physicalcmrecovery": "PhysicalCMRecovery",
+    "concealability": "Concealability",
+    "drainresist": "DrainResistance",
+    "fadingresist": "FadingResistance",
+    "notoriety": "Notoriety",
+    "streetcred": "StreetCred",
+    "streetcredmultiplier": "StreetCredMultiplier",
+    "complexformlimit": "ComplexFormLimit",
+    "spelllimit": "SpellLimit",
+    "throwrange": "ThrowRange",
+    "throwrangestr": "ThrowRangeSTR",
+    "throwstr": "ThrowSTR",
+    "essencepenalty": "EssencePenalty",
+    "essencepenaltyt100": "EssencePenaltyT100",
+    "essencepenaltymagonlyt100": "EssencePenaltyMAGOnlyT100",
+    "essencepenaltyresonlyt100": "EssencePenaltyRESOnlyT100",
+    "essencepenaltydeponlyt100": "EssencePenaltyDEPOnlyT100",
+    "specialattburnmultiplier": "SpecialAttBurn",
+    "specialatttotalburnmultiplier": "SpecialAttTotalBurnMultiplier",
+    "essencemax": "EssenceMax",
+    "publicawareness": "PublicAwareness",
+    "metageniclimit": "MetageneticLimit",
+    "specialmodificationlimit": "SpecialModificationLimit",
+    "contactkarma": "ContactKarmaDiscount",
+    "contactkarmaminimum": "ContactKarmaMinimum",
 }
+
+#: `livingpersona`'s children, as the types they make
+_PERSONA = {
+    "devicerating": "LivingPersonaDeviceRating",
+    "programlimit": "LivingPersonaProgramLimit",
+    "attack": "LivingPersonaAttack",
+    "sleaze": "LivingPersonaSleaze",
+    "dataprocessing": "LivingPersonaDataProcessing",
+    "firewall": "LivingPersonaFirewall",
+}
+
+#: `AttributeSection.AttributeStrings`, plus the `BOX` `cyberseeker` takes
+_SEEKER = {"BOD", "AGI", "REA", "STR", "CHA", "INT", "LOG", "WIL", "EDG", "MAG", "MAGAdept", "RES", "ESS", "DEP", "BOX"}
+
 
 #: `AddImprovementCollection.enabletab`: the tab names it knows, as it saves them
 _TABS = {
@@ -386,10 +660,13 @@ def _write_improvements(root: ET.Element, rows: list[_Imp], source_name: str, so
         _sub(imp, "min", row.min)
         _sub(imp, "max", row.max)
         _sub(imp, "val", row.val)
-        _sub(imp, "rating", 1)
+        _sub(imp, "rating", row.rating)
+        _sub(imp, "exclude", row.exclude)
         _sub(imp, "condition", row.condition)
         _sub(imp, "improvementttype", row.kind)
         _sub(imp, "improvementsource", source)
+        if row.addtorating:
+            _sub(imp, "addtorating", "True")
 
 
 def _export_bought_critter_powers(root: ET.Element, state: CharacterState) -> None:
