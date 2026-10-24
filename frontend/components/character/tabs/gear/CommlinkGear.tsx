@@ -1,5 +1,6 @@
 "use client";
 import { AppRows } from "@/components/character/tabs/gear/AppRows";
+import { LooseAppRows } from "@/components/character/tabs/gear/LooseAppRows";
 import { AddonSelect } from "@/components/character/AddonSelect";
 import { CatalogPicker } from "@/components/character/CatalogPicker";
 import { DiscountToggle } from "@/components/character/DiscountToggle";
@@ -14,6 +15,7 @@ import { editRow } from "@/lib/character/rows";
 export function CommlinkGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   return (
     <>
+      <LooseAppRows character={ch} d={d} tr={tr} ui={ui} patch={patch} />
       <>
         {(d.commlinks || []).map((item) => (
           <div className="cyber-item" key={item.id}>

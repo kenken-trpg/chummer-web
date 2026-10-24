@@ -1,7 +1,7 @@
-"""Apps — commlink software (the low-rent cousin of a cyberdeck program).
+"""Apps — software owned loose or installed on a matrix device.
 
-An app rides on a commlink rather than a deck; otherwise the pick / pricing
-handling mirrors :mod:`app.engine.gear.programs`.
+Chummer also saves purchased apps as top-level gear, with no device selected.
+The pick / pricing handling mirrors :mod:`app.engine.gear.programs`.
 """
 
 from __future__ import annotations
@@ -29,9 +29,10 @@ def _resolve_apps(
         if not spec:
             continue
         host = hosts.get(inst.parent_id or "")
-        if not inst.parent_id or not host:
+        if inst.parent_id and not host:
             warnings.append(notice("engine.gear.needsCommlink", name=term(str(spec["name"]))))
-            continue
+            inst.parent_id = None
+            inst.included = False
         extra_kind = str(spec.get("extra_kind") or "")
         extra = (inst.extra or "").strip()
         options = gear_extra_options(spec)

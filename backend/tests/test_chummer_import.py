@@ -632,6 +632,36 @@ def test_what_a_commlink_comes_with_is_not_bought_again() -> None:
     assert derived["nuyen_spent"] == 6000
 
 
+def test_serpent_top_level_mapsoft_survives_import_and_export() -> None:
+    # Serpent.chum5 saves this Mapsoft under <gears>, not under a commlink.
+    # Keep the relevant entry inline: Windows backend CI fetches catalog data
+    # but does not download the optional 34 Chummer test saves.
+    xml = b"""<character><metatype>Human</metatype><buildmethod>Priority</buildmethod>
+      <gears><gear>
+        <guid>6557cef3-a781-49b8-afed-cbb8fac60aef</guid>
+        <id>2f30c3cc-a62e-4ac1-8e1f-5fa217cadae4</id>
+        <name>Mapsoft</name><category>Software</category>
+        <rating>0</rating><qty>1</qty><extra>Seattle</extra>
+      </gear></gears>
+    </character>"""
+    state, _ = chum5_to_state(xml)
+    loose = [app for app in state["apps"] if app["gear_id"] == "2f30c3cc-a62e-4ac1-8e1f-5fa217cadae4"]
+    assert len(loose) == 1
+    assert loose[0].get("parent_id") is None
+
+    character = import_character(state)
+    mapsoft = [app for app in character.derived["apps"] if app["name"] == "Mapsoft"]
+    assert len(mapsoft) == 1
+    assert (mapsoft[0]["extra"], mapsoft[0]["parent_id"], mapsoft[0]["nuyen"]) == ("Seattle", None, 100)
+    assert any(app.gear_id == loose[0]["gear_id"] for app in character.apps)
+
+    exported = ET.fromstring(state_to_chum5(character))
+    assert any(
+        _text(gear.find("name")) == "Mapsoft" and _text(gear.find("extra")) == "Seattle"
+        for gear in exported.findall("./gears/gear")
+    )
+
+
 def test_the_black_market_discount_is_kept_per_item() -> None:
     """Chummer marks the one item the buyer took the Black Market Pipeline's
     10% off with `<discountedcost>`, rather than discounting everything of

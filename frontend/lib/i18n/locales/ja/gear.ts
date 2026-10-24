@@ -209,6 +209,7 @@ export const JA_GEAR = {
   "gear.programCount": " / プログラム {count}",
   "gear.addAutosoft": "オートソフトを追加",
   "gear.loosePrograms": "どこにも入っていないプログラム",
+  "gear.looseApps": "どこにも入っていないアプリ",
   "gear.loadInto": "入れる先",
   "gear.addApp": "アプリを追加",
   "gear.addProgram": "プログラムを追加",
