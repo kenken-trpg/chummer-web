@@ -296,7 +296,7 @@ describe("<MetaTab>", () => {
     const tip = screen.getByRole("tooltip", { hidden: true });
     expect(button.getAttribute("aria-describedby")).toBe(tip.id);
     expect(tip.textContent).toContain("特殊点はエッジ");
-    expect(tip.textContent).toContain("メタバリアント");
+    expect(tip.textContent).toContain("Metavariant");
   });
 
   describe("a shapeshifter", () => {
@@ -376,7 +376,7 @@ describe("<MetaTab>", () => {
         }),
         character: { metatype: "Elf" },
       });
-      const picker = screen.getByLabelText("メタバリアント") as HTMLSelectElement;
+      const picker = screen.getByLabelText("Metavariant") as HTMLSelectElement;
       expect(Array.from(picker.options).map((o) => o.value)).toEqual(["", "Nocturna"]);
       expect(picker.textContent).not.toContain("カルマ");
     });

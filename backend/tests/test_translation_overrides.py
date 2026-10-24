@@ -221,12 +221,12 @@ def test_committed_data_overlay_anchors() -> None:
         "Bolt Hole",
         "German Jujitsu",
         "Indomitable Will",
+        "Metavariant",
     ):
         assert not JP_RE.search(tr.get(name, "") or ""), name
     # a category name that is a core term stays, though only supplements use it
     assert tr["Acceleration"] == "加速値"
     assert tr["Services"] == "助力"
-    assert tr["Metavariant"] == "メタバリアント"  # the UI's label says so too
     # Data Trails has no Japanese edition, and the Codex does not reprint
     # Redundancy: the complex form, the A.I. quality and metatype stay English
     assert not JP_RE.search(tr.get("Redundancy", "") or "")

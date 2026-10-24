@@ -62,9 +62,10 @@ data_loader applies the overlay; store.public_catalog() emits `translations`
   fallback. The hand translations made before the policy settled (spells,
   mentors, lifestyles, martial arts, adept powers, echoes, complex forms) went
   back to English on 2026-10-24 wherever they reached only a supplement; a
-  category name that is a core term (加速値, 強靱力, 助力, メタバリアント)
-  stays. The exception is a supplement we hold a published Japanese edition
-  of and can check term by term: **Run & Gun** (`scripts/ja_curated_rg.py`,
+  category name that is a core term (加速値, 強靱力, 助力) stays. Run Faster's
+  Metavariant went back too, the UI's label with it. The exception is a
+  supplement we hold a published Japanese edition of and can check term by
+  term: **Run & Gun** (`scripts/ja_curated_rg.py`,
   phase 5 of `docs/plans/translation-plan.md`). Names only, never rules text.
   Run Faster, Street Grimoire and Data Trails are reachable the same way
   without a Japanese edition each, because the Japanese **Shadowrun Codex**

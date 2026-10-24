@@ -147,7 +147,7 @@ frontend 各タブ:  データ名は tr() 経由、UI ラベルは日本語ハ�
   - スキルグループ 10 種 (`Acting`→演技, `Close Combat`→近接戦闘, `Conjuring`→召喚, `Sorcery`→魔術,
     `Enchanting`→付術, `Tasking`→タスキング 等)。`Biotech` はギアカテゴリと名前衝突するため
     スキルグループの語義 (`医療`) を優先。
-  - 残りのプレイアブル・メタバリアント 3 種 (`Hobgoblin`/`Ogre`/`Fomorian`)。
+  - 残りのプレイアブル・Metavariant 3 種 (`Hobgoblin`/`Ogre`/`Fomorian`)。
   - `Acceleration`→加速値、カテゴリ `Services`→助力 (Phase 1 Section C)。
 - Phase 1 mismatch レポートの **A / B は Phase 3 送り**。理由: `String_Attribute*` は frontend が
   `ATTR_JA` 定数 (constants.ts) を使っており lang XML を見ていない。`ui.json` を今埋めても無効。
@@ -546,7 +546,7 @@ verbatim 取り込みは避ける」) は経緯として残す。
 - 2026-08-30: フェーズ 0 完了。オーバーレイ機構 (`backend/data/ja_overrides/`, `data_loader.py`) ＋テスト 8 件。
 - 2026-08-30: フェーズ 1 完了。`build_ja_glossary.py` ＋ `translation-glossary.md` / `translation-glossary-mismatches.md`。
 - 2026-08-30: フェーズ 2a 完了。`import_ja_from_refs.py` で curated＋chumJA SR4 を 200 件 `data.json` へ。
-- 2026-08-30: フェーズ 2b 一次分。スキルグループ 10・メタバリアント 3・その他 3 を追加 (計 215 件)。
+- 2026-08-30: フェーズ 2b 一次分。スキルグループ 10・Metavariant 3・その他 3 を追加 (計 215 件)。
 - 2026-08-30: フェーズ 2b バッチ 2。メンター/精霊/伝統/魔法アート/スプライト 48 件を追加 (計 263 件)。
 - 2026-08-30: フェーズ 2b バッチ 3。未訳呪文のうち確度の高い 100 件を訳出 (計 363 件)。
   サプリメント造語 70 件は英語フォールバックへ差し戻し。
@@ -584,7 +584,7 @@ verbatim 取り込みは避ける」) は経緯として残す。
   日本語版のページ番号が英語版と一致することを確認し、台帳の前提注記を削除。
   保留していた `Silencer (PSK-3 …)` を承認のうえ収録し `DECIDED_FLOOR` 35、
   未訳 13 件 (実項目 4・category 9)。
-- 2026-09-06: メタバリアント 17 件（`Nartaki` `Gnome` `Hanuman` `Koborokuru` `Menehune`
+- 2026-09-06: Metavariant 17 件（`Nartaki` `Gnome` `Hanuman` `Koborokuru` `Menehune`
   `Hobgoblin` `Ogre` `Oni` `Satyr` `Nocturna` `Dryad` `Wakyambi` `Xapiri Thëpë`
   `Cyclops` `Fomorian` `Giant` `Minotaur`）を英語フォールバックに戻した。全件が
   『Run Faster』出典で、収録していたカタカナは音写であり典拠のある定訳ではないため。
