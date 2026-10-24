@@ -52,5 +52,7 @@ test("a commlink goes into the headware Commlink and back out", async ({ page, r
   await expect.poll(() => commlinks(page)).toEqual([[IKON, null]]);
   await page.getByRole("button", { name: "装備", exact: true }).click();
   await page.getByRole("button", { name: "コムリンク", exact: true }).click();
+  // the commlink row first, so "not implanted" is read off a drawn list
+  await expect(page.getByText(/Hermes Ikon/).first()).toBeVisible();
   await expect(page.getByText(/に埋め込み/)).toHaveCount(0);
 });

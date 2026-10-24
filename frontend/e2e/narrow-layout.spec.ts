@@ -58,8 +58,18 @@ for (const width of WIDTHS) {
       const tab = tabs.nth(i);
       const name = (await tab.textContent())!.trim();
       await tab.click();
-      // the heavy tabs render their rows in an effect after the click resolves
-      await expect.poll(() => overflowing(page), { timeout: 5_000 }).toEqual([]);
+      // the heavy tabs render their rows in an effect after the click resolves,
+      // and the lazy ones show a loading line first: an empty sweep of that
+      // line would pass without the tab ever being measured
+      await expect
+        .poll(
+          async () =>
+            (await page.getByText("読み込み中…", { exact: true }).count())
+              ? ["(still loading)"]
+              : overflowing(page),
+          { timeout: 5_000 },
+        )
+        .toEqual([]);
       expect(
         await page.evaluate(() => document.documentElement.scrollWidth),
         `${name} widens the document at ${width}px`,

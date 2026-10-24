@@ -2463,7 +2463,17 @@ First tagged release.
 - One-container Docker image (Caddy + uvicorn + Next standalone) published to
   GHCR; `make up` / `compose.yaml` for local self-hosting.
 
-[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.4...HEAD
+[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.14...HEAD
+[0.5.14]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.13...v0.5.14
+[0.5.13]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.12...v0.5.13
+[0.5.12]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.11...v0.5.12
+[0.5.11]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.10...v0.5.11
+[0.5.10]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.9...v0.5.10
+[0.5.9]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.8...v0.5.9
+[0.5.8]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.7...v0.5.8
+[0.5.7]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.6...v0.5.7
+[0.5.6]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.5...v0.5.6
+[0.5.5]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.4...v0.5.5
 [0.5.4]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.3...v0.5.4
 [0.5.3]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.2...v0.5.3
 [0.5.2]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.1...v0.5.2

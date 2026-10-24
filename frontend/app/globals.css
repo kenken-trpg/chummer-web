@@ -884,6 +884,10 @@ input[type="search"] {
 .option-row .tab {
   border-color: var(--line);
   background: var(--panel-2);
+  /* a long category name (高級ファッション志向のアーマー・クロージング) is
+     wider than a 320px phone; let it wrap inside the chip rather than run off */
+  max-width: 100%;
+  text-align: left;
 }
 .option-row .tab.active {
   border-color: var(--accent);

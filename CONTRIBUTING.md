@@ -314,10 +314,13 @@ checking that guess costs more than going down the list.
 1. `make changelog` to fold `changelog.d/` into `[Unreleased]`, then write the
    section in `CHANGELOG.md` (rename `[Unreleased]` to the version). The next
    `make changelog` puts an empty `[Unreleased]` back on its own.
+   Then `python3 scripts/release_notes.py 0.2.0 --write-links` to bring the
+   compare links at the foot of the file up to the new version.
 2. Bump the version in `backend/pyproject.toml` and `backend/app/main.py` —
    the latter is what the API reports at `/docs`.
 3. `make release-check VERSION=0.2.0` — fails if either of the above is
-   missing, or if a fragment is still in `changelog.d/`.
+   missing, if a fragment is still in `changelog.d/`, or if the compare links
+   lag the version headings.
 4. `git tag -a v0.2.0 -m v0.2.0 && git push origin v0.2.0`.
 
 CI then builds and pushes `ghcr.io/…/chummer-web:0.2.0`, `:0.2` and `:latest`,
