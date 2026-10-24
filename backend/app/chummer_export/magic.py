@@ -6,6 +6,7 @@ The mirror of :mod:`app.chummer_import.magic`.
 
 from __future__ import annotations
 
+import uuid
 import xml.etree.ElementTree as ET
 from typing import Any
 
@@ -260,14 +261,30 @@ def _export_mentor_improvements(root: ET.Element, state: CharacterState, adept: 
     )
     if definition is None:
         return
-    bonuses = [definition.find("bonus")]
+    bonuses = [("", definition.find("bonus"))]
     bonuses += [
-        choice.find("bonus")
+        (choice.findtext("name") or "", choice.find("bonus"))
         for choice in definition.findall("./choices/choice")
         if choice.findtext("name") in state.mentor_choices
     ]
-    rows = [row for bonus in bonuses if bonus is not None for row in _bonus_improvements(bonus, 1, None)]
-    rows = [row for row in rows if adept or not row.kind.startswith("AdeptPowerFree")]
+    extras = state.mentor_extras or {}
+    # a power whose bonus asks for a pick (a skill, an attribute, a limit)
+    picks = {
+        node.findtext("name") or ""
+        for node in parse_data("powers.xml").findall("./powers/power")
+        if any(el.tag.startswith("select") for el in node.iterfind(".//bonus//"))
+    }
+    rows = []
+    for choice, bonus in bonuses:
+        for row in _bonus_improvements(bonus, 1, None) if bonus is not None else []:
+            if row.kind.startswith("AdeptPowerFree"):
+                if not adept:
+                    continue
+                # the power's own pick (Dragonslayer's Enhanced Accuracy skill)
+                # is its extra, which Chummer saves as the unique name
+                if row.improved in picks:
+                    row = row._replace(unique=extras.get(f"{choice} / {row.improved}") or extras.get(choice, ""))
+            rows.append(row)
     owner, guid = definition.findtext("name") or "", state.mentor_id or ""
     _write_improvements(root, _with_rows(root, rows, guid, owner), guid, "MentorSpirit")
 
@@ -348,3 +365,33 @@ def _export_initiation(root: ET.Element, state: CharacterState, names: _Names, c
             _sub(el, "sourceid", aid)
             _sub(el, "name", names["art"].get(aid, ""))
             _sub(el, "grade", ic.grade)
+
+
+def _export_free_power_rows(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
+    """A `<power>` row at rating 0 for each power free levels or points were
+    written for and none was bought — the row `specificpower` and
+    `selectpowers` add for them to land on, as a mentor's (Eagle's Combat
+    Sense), a quality's or a Qi focus's. Chummer counts free levels on the
+    power of that name and extra; with no row they count nowhere. The import
+    reads a rating 0 row as nothing bought."""
+    powers = root.find("powers")
+    if powers is None:
+        return
+    have = {(p.findtext("name") or "", p.findtext("extra") or "") for p in powers.findall("power")}
+    ids = {name: pid for pid, name in names["power"].items()}
+    for imp in root.findall("./improvements/improvement"):
+        if not (imp.findtext("improvementttype") or "").startswith("AdeptPowerFree"):
+            continue
+        key = (imp.findtext("improvedname") or "", imp.findtext("unique") or "")
+        if key in have or key[0] not in ids:
+            continue
+        have.add(key)
+        el = _sub(powers, "power")
+        for field, value in (
+            ("sourceid", ids[key[0]]),
+            ("name", key[0]),
+            ("guid", str(uuid.uuid5(uuid.NAMESPACE_URL, f"{state.id}:freepower:{key[0]}:{key[1]}"))),
+            ("rating", 0),
+            ("extra", key[1]),
+        ):
+            _sub(el, field, value)

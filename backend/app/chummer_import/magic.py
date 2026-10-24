@@ -47,6 +47,27 @@ def _mentor_choices_from_improvements(root: ET.Element, mentor: dict[str, Any]) 
     return picks
 
 
+def _mentor_power_picks(root: ET.Element, mentor: dict[str, Any], choices: list[str]) -> dict[str, str]:
+    """A file Chummer wrote keeps a free power's own pick (Dragonslayer's
+    Enhanced Accuracy skill) only as the unique name of its
+    `AdeptPowerFreeLevels`; it is the picked choice's extra here."""
+    picked = {
+        _text(imp.find("improvedname")): _text(imp.find("unique"))
+        for imp in root.findall("./improvements/improvement")
+        if _text(imp.find("improvementsource")) == "MentorSpirit"
+        and _text(imp.find("improvementttype")).startswith("AdeptPowerFree")
+        and _text(imp.find("unique"))
+    }
+    out: dict[str, str] = {}
+    for choice in mentor.get("choices") or []:
+        if choice["name"] not in choices:
+            continue
+        for power in choice.get("powers") or []:
+            if picked.get(power.get("name") or ""):
+                out[str(choice["name"])] = picked[power["name"]]
+    return out
+
+
 def _bought_critter_powers(root: ET.Element, cat: CatalogDict) -> list[dict[str, Any]]:
     """Powers bought on the Critter Powers tab, out of `<critterpowers>`.
 
@@ -195,6 +216,9 @@ def _import_magic(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: 
             row = next((m for m in mentors if m["id"] == mid), None)
             choices = _mentor_choices_from_improvements(root, row) if row else []
         st["mentor_choices"] = choices
+        if mid and not extras:
+            row = next((m for m in mentors if m["id"] == mid), None)
+            extras = _mentor_power_picks(root, row, choices) if row else {}
         st["mentor_extras"] = extras
 
 

@@ -26,6 +26,7 @@ from .life_modules import _export_life_module_choices
 from .lifestyles import _export_custom_drugs, _export_lifestyles
 from .magic import (
     _export_enhancements,
+    _export_free_power_rows,
     _export_initiation,
     _export_magic_tradition,
     _export_spell_lists,
@@ -141,7 +142,8 @@ def _write(state: CharacterState) -> bytes:
 
 #: Written in this order, which is the order Chummer's own files use. Nothing
 #: here reads what an earlier section wrote — the order is for the reader (and
-#: for a diff against a real .chum5), not for correctness.
+#: for a diff against a real .chum5), not for correctness — but the last: the
+#: power rows free levels land on, which every section's improvements name.
 _SECTIONS = (
     _export_identity,
     _export_priorities,
@@ -167,4 +169,5 @@ _SECTIONS = (
     _export_enhancements,
     _export_initiation,
     _export_life_module_choices,
+    _export_free_power_rows,
 )

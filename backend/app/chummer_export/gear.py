@@ -487,8 +487,7 @@ def _export_focus_improvements(root: ET.Element, state: CharacterState, names: _
     """What bonding a focus leaves in `<improvements>`: its `<bonus>` run at
     its force, under its gear's guid — a Weapon Focus's dice name the weapon
     it is bound to. A Qi focus's power gets its free points (an adept's only,
-    as `selectpowers` checks), and a `<power>` row at rating 0 when none was
-    bought, the one `selectpowers` adds for them to land on."""
+    as `selectpowers` checks); `_export_free_power_rows` gives them a row."""
     definitions = {node.findtext("id") or "": node for node in parse_data("gear.xml").findall("./gears/gear")}
     for frow in state.foci:
         definition = definitions.get(frow.gear_id)
@@ -499,7 +498,6 @@ def _export_focus_improvements(root: ET.Element, state: CharacterState, names: _
         _write_improvements(root, _with_rows(root, rows, frow.id, definition.findtext("name") or ""), frow.id, "Gear")
     qi = definitions.get(names["qifocus"].get("id", ""))
     choices = qi.findall("./bonus/selectpowers/selectpower") if qi is not None and adept else []
-    powers = root.find("powers")
     for qrow in state.qi_foci:
         power = names["power"].get(qrow.power_id, "")
         rows = []
@@ -508,17 +506,6 @@ def _export_focus_improvements(root: ET.Element, state: CharacterState, names: _
             kind = "AdeptPowerFreePoints" if _text(choice, "pointsperlevel") else "AdeptPowerFreeLevels"
             rows.append(_Imp(kind, power, unique=qrow.extra or "", rating=int(levels) if levels.isdigit() else 0))
         _write_improvements(root, rows, qrow.id, "Gear")
-        bought = any(p.power_id == qrow.power_id and (p.extra or "") == (qrow.extra or "") for p in state.adept_powers)
-        if rows and powers is not None and not bought:
-            el = _sub(powers, "power")
-            for key, value in (
-                ("sourceid", qrow.power_id),
-                ("name", power),
-                ("guid", str(uuid.uuid5(uuid.NAMESPACE_URL, f"{qrow.id}:qipower"))),
-                ("rating", 0),
-                ("extra", qrow.extra or ""),
-            ):
-                _sub(el, key, value)
 
 
 def _export_vehicles(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
