@@ -317,7 +317,10 @@ def _gear_writer(state: CharacterState, names: _Names) -> tuple[dict[str | None,
 
 def _export_gear(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
     """Write gear from every bucket, flattened back into one <gears>."""
-    gears = _sub(root, "gears")
+    # a quality's own gear (a Technomancer's Living Persona) may be there already
+    gears = root.find("gears")
+    if gears is None:
+        gears = _sub(root, "gears")
     by_parent_g, emit_gear = _gear_writer(state, names)
     emit_gear(gears, by_parent_g.get(None, []))
     _emit_focus_gear(gears, state, names)

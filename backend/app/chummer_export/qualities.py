@@ -11,7 +11,7 @@ from collections.abc import Callable
 from copy import deepcopy
 from typing import Any, NamedTuple
 
-from ..data_loader import catalog
+from ..data_loader import catalog, catalog_list
 from ..data_loader._xml import parse_data
 from ..engine.constants import (
     QUALITY_ADDSPIRIT_EXTRA_MARKER,
@@ -126,8 +126,9 @@ def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ct
             _sub(imp, "sourcename", qid)
             _sub(imp, "improvementttype", kind)
             _sub(imp, "improvementsource", "Quality")
+    owners = {q.findtext("guid") or "": q.findtext("name") or "" for q in quals.findall("quality")}
     for guid, rows in effects:
-        _write_improvements(root, rows, guid, "Quality")
+        _write_improvements(root, _with_rows(root, rows, guid, owners.get(guid, "")), guid, "Quality")
 
 
 def _export_granted_qualities(
@@ -458,7 +459,90 @@ def _conditionmonitor(node: ET.Element, rating: int) -> list[_Imp]:
     ]
 
 
+def _prototypetranshuman(node: ET.Element, rating: int) -> list[_Imp]:
+    return [_Imp("PrototypeTranshuman", _text(node))] if _text(node) else []
+
+
+def _limitmodifier(node: ET.Element, rating: int) -> list[_Imp]:
+    """A limit modifier row to write; `_with_rows` makes it and names it."""
+    if not _is_int(_text(node, "value")):
+        return []
+    return [
+        _Imp(
+            "LimitModifier",
+            target=_text(node, "limit"),
+            val=int(_text(node, "value")),
+            condition=_text(node, "condition"),
+        )
+    ]
+
+
+def _addgear(node: ET.Element, rating: int) -> list[_Imp]:
+    """A gear row to write; `_with_rows` makes it. Only gear with no children
+    and none of this app's own (a Technomancer's Living Persona): a Dead SIN's
+    Fake SIN would read back as bought gear."""
+    if node.find("children") is not None:
+        return []
+    return [_Imp("Gear", _text(node, "name"), target=_text(node, "category"), rating=int(_text(node, "rating") or 0))]
+
+
+def _own_gear_ids() -> set[str]:
+    buckets = ("gear", "commlinks", "cyberdecks", "rccs", "sensors", "optics", "programs", "apps")
+    return {str(row["id"]) for bucket in buckets for row in catalog_list(bucket)}
+
+
+def _with_rows(root: ET.Element, rows: list[_Imp], guid: str, owner: str) -> list[_Imp]:
+    """The rows a LimitModifier or Gear improvement names, written, and the
+    improvements pointing at them by guid — `limitmodifier` and `addgear` make
+    the row and the improvement together. The import reads neither back."""
+    out = []
+    for index, row in enumerate(rows):
+        if row.kind == "LimitModifier":
+            row_guid = str(uuid.uuid5(uuid.NAMESPACE_URL, f"{guid}:limitmodifier:{index}"))
+            parent = root.find("limitmodifiers")
+            el = _sub(parent if parent is not None else _sub(root, "limitmodifiers"), "limitmodifier")
+            for key, value in (
+                ("guid", row_guid),
+                ("name", owner),
+                ("limit", row.target),
+                ("condition", row.condition),
+            ):
+                _sub(el, key, value)
+            _sub(el, "bonus", row.val)
+            out.append(_Imp("LimitModifier", row_guid, val=row.val, condition=row.condition))
+        elif row.kind == "Gear":
+            definition = next(
+                (
+                    gear
+                    for gear in parse_data("gear.xml").findall("./gears/gear")
+                    if gear.findtext("name") == row.improved and gear.findtext("category") == row.target
+                ),
+                None,
+            )
+            if definition is None or str(definition.findtext("id")) in _own_gear_ids():
+                continue
+            row_guid = str(uuid.uuid5(uuid.NAMESPACE_URL, f"{guid}:addgear:{index}"))
+            parent = root.find("gears")
+            el = _sub(parent if parent is not None else _sub(root, "gears"), "gear")
+            _sub(el, "guid", row_guid)
+            _sub(el, "sourceid", definition.findtext("id") or "")
+            for field in definition:
+                if field.tag not in ("id", "hide", "rating", "cost"):
+                    el.append(deepcopy(field))
+            _sub(el, "rating", row.rating)
+            _sub(el, "qty", 1)
+            _sub(el, "cost", 0)
+            _sub(el, "parentid", guid)
+            out.append(_Imp("Gear", row_guid))
+        else:
+            out.append(row)
+    return out
+
+
 _READERS: dict[str, Callable[[ET.Element, int], list[_Imp]]] = {
+    "prototypetranshuman": _prototypetranshuman,
+    "limitmodifier": _limitmodifier,
+    "addgear": _addgear,
     "unlockskills": _unlockskills,
     "enabletab": _enabletab,
     "armor": _armor,
