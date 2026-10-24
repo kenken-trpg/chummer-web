@@ -8,6 +8,16 @@ docs/plans/translation-plan.md phase 5.
 from __future__ import annotations
 
 SR5: dict[str, str] = {
+    # --- critter_powers ----------------------------------------------------
+    "Animal Control (Insect Type)": "動物制御(Insect Type)",
+    "Combat Skill": "戦闘系能動技能",
+    "Enhanced Senses (Ultrasound)": "強化感覚(生体ソナー)",
+    "Manifest": "顕現",
+    "Physical Skill": "身体系能動技能",
+    "Psychokinesis (Infected)": "念動(Infected)",
+    "Social Skill": "社交系能動技能",
+    "Technical Skill": "技術系能動技能",
+    "Vehicle Skill": "ヴィークル系能動技能",
     # --- spirits -----------------------------------------------------------
     "Homunculus (Armored Material)": "ホムンクルス(装甲素材／強化建材)",
     "Homunculus (Average Material)": "ホムンクルス(平均的な素材)",
@@ -28,5 +38,7 @@ SR5_UNVERIFIED: tuple[str, ...] = (
     "AK-97",
     "FN HAR",
     "HK 227",
+    "Infected Advanced Optional Power: Mimicry",
+    "Infected Advanced Optional Power: Psychokinesis",
     "RPK HMG",
 )
