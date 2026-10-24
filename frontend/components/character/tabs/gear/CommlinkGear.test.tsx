@@ -1,4 +1,5 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { vi } from "vitest";
 import { CommlinkGear } from "@/components/character/tabs/gear/CommlinkGear";
 import { makeCharacter, panelProps } from "@/tests/fixtures";
 
@@ -31,5 +32,29 @@ describe("<CommlinkGear>", () => {
     } as never);
     render(<CommlinkGear {...panelProps(ch)} />);
     expect(screen.queryByText(/に埋め込み/)).toBeNull();
+  });
+
+  it("shows a loose Mapsoft and lets the player load it into a commlink", () => {
+    const app = {
+      id: "mapsoft",
+      gear_id: "mapsoft-id",
+      name: "Mapsoft",
+      label: "Mapsoft (Seattle)",
+      parent_id: null,
+      nuyen: 100,
+    };
+    const ch = makeCharacter({
+      commlinks: [{ id: "link", gear_id: "ikon" }],
+      apps: [app],
+      derived: { commlinks: [row], apps: [app] },
+    } as never);
+    const patch = vi.fn();
+    render(<CommlinkGear {...panelProps(ch, { patch })} />);
+
+    expect(screen.getByText(/Mapsoft \(Seattle\) \/ 100¥/)).toBeTruthy();
+    fireEvent.change(screen.getByRole("combobox", { name: "入れる先" }), {
+      target: { value: "link" },
+    });
+    expect(patch).toHaveBeenCalledWith({ apps: [{ ...app, parent_id: "link" }] });
   });
 });

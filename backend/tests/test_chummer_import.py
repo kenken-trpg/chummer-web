@@ -5,6 +5,7 @@ from __future__ import annotations
 import lzma
 import re
 import xml.etree.ElementTree as ET
+from pathlib import Path
 
 import pytest
 
@@ -630,6 +631,29 @@ def test_what_a_commlink_comes_with_is_not_bought_again() -> None:
     derived = import_character(st).derived
     assert derived["apps"][0]["nuyen"] == 0
     assert derived["nuyen_spent"] == 6000
+
+
+def test_serpent_top_level_mapsoft_survives_import_and_export() -> None:
+    save = (
+        Path(__file__).resolve().parents[1]
+        / "vendor/chummer-tests/d7e94f6a090f267362757675d05bbe4d7543c217/Serpent.chum5"
+    )
+    state, _ = chum5_to_state(save.read_bytes())
+    loose = [app for app in state["apps"] if app["gear_id"] == "2f30c3cc-a62e-4ac1-8e1f-5fa217cadae4"]
+    assert len(loose) == 1
+    assert loose[0].get("parent_id") is None
+
+    character = import_character(state)
+    mapsoft = [app for app in character.derived["apps"] if app["name"] == "Mapsoft"]
+    assert len(mapsoft) == 1
+    assert (mapsoft[0]["extra"], mapsoft[0]["parent_id"], mapsoft[0]["nuyen"]) == ("Seattle", None, 100)
+    assert any(app.gear_id == loose[0]["gear_id"] for app in character.apps)
+
+    exported = ET.fromstring(state_to_chum5(character))
+    assert any(
+        _text(gear.find("name")) == "Mapsoft" and _text(gear.find("extra")) == "Seattle"
+        for gear in exported.findall("./gears/gear")
+    )
 
 
 def test_the_black_market_discount_is_kept_per_item() -> None:

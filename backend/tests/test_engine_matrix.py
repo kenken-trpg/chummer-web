@@ -536,9 +536,22 @@ def test_agent_rating_cost() -> None:
     assert out.derived["nuyen_spent"] == 8100
 
 
-def test_app_without_commlink_is_dropped() -> None:
+def test_app_without_commlink_is_kept_as_purchased_software() -> None:
     out = compute(_mundane("loose-app", apps=[GearInstall(gear_id=DATASOFT, extra="Maps")]))
-    assert out.derived["apps"] == []
+    assert [(row["name"], row["extra"], row["parent_id"], row["nuyen"]) for row in out.derived["apps"]] == [
+        ("Datasoft", "Maps", None, 120)
+    ]
+    assert out.apps[0].parent_id is None
+    assert out.derived["nuyen_spent"] == 120
+    assert not has(out.derived["warnings"], "engine.gear.needsCommlink")
+
+
+def test_app_with_missing_commlink_is_kept_as_a_paid_loose_copy() -> None:
+    out = compute(_mundane("lost-host", apps=[GearInstall(gear_id=DATASOFT, parent_id="gone", included=True)]))
+    assert len(out.derived["apps"]) == 1
+    assert out.derived["apps"][0]["parent_id"] is None
+    assert out.derived["apps"][0]["nuyen"] == 120
+    assert out.apps[0].included is False
     assert has(out.derived["warnings"], "engine.gear.needsCommlink")
 
 
