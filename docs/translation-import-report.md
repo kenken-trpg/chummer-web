@@ -6,7 +6,7 @@
 （`app/data_loader/codex.py`）。ここに載るのは `data.json` の全エントリで、出どころの表ごとに分けてある。
 訳の表は英語名だけで引くので、「品目」の列には、その名前を持つ品目の種類と本をすべて並べる。
 
-- オーバーレイ合計: **554 件**
+- オーバーレイ合計: **563 件**
 - 日本語版のある本: RG, SR5, SRCX（コデックスが再録した品目も日本語版ありと数える）
 
 ## 日本語版の無い品目にだけ当たる自前の訳 (245)
@@ -315,11 +315,20 @@ chumJA（SR4 の訳）は別に数える。
 | Vindicator 200-Round Belt | ヴィンディケーター 200(ベルト) | weapon_accessories: RG |
 | YNT Softweave Armor | YNT ソフトウィーブ・アーマー | armor_mods: RG |
 
-## ja_curated_sr5.SR5 (2)
+## ja_curated_sr5.SR5 (11)
 
 | English | 日本語 | 品目 |
 |---|---|---|
 | Heavy [SR5] | 大型武器マウント | weapon_mounts: SR5 |
+| Homunculus (Armored Material) | ホムンクルス(装甲素材／強化建材) | spirits: SR5 |
+| Homunculus (Average Material) | ホムンクルス(平均的な素材) | spirits: SR5 |
+| Homunculus (Cheap Material) | ホムンクルス(安手の素材) | spirits: SR5 |
+| Homunculus (Fragile) | ホムンクルス(壊れやすい素材) | spirits: SR5 |
+| Homunculus (Hardened Material) | ホムンクルス(特殊硬化材) | spirits: SR5 |
+| Homunculus (Heavy Material) | ホムンクルス(強固な素材) | spirits: SR5 |
+| Homunculus (Heavy Structural Material) | ホムンクルス(強固な建材) | spirits: SR5 |
+| Homunculus (Reinforced Material) | ホムンクルス(強化素材) | spirits: SR5 |
+| Homunculus (Structural Material) | ホムンクルス(建材) | spirits: SR5 |
 | Standard [SR5] | 武器マウント | weapon_mounts: SR5 |
 
 ## ja_curated_entities.ENTITIES (133)
@@ -666,7 +675,7 @@ chumJA（SR4 の訳）は別に数える。
 | Wild Hunt | ワイルドハント | mentors: SAG |
 | Zoroastrianism | ゾロアスター教 | traditions: SG |
 
-## chumJA(SR4) category (48)
+## chumJA(SR4) category (49)
 
 | English | 日本語 | 品目 |
 |---|---|---|
@@ -695,6 +704,7 @@ chumJA（SR4 の訳）は別に数える。
 | Exotic Ranged Weapons | 特殊射撃武器 | category: CA, HT, LCD, RG, SL, SLG2, SOTG, SR5 |
 | Explosives | 爆発物 | category: 2050, RG, SR5 |
 | Eyeware | アイウェア | category: 2050, CF, SR5 |
+| Free Spirit | 自由精霊 | — |
 | Headware | ヘッドウェア | category: 2050, CF, KC, NF, SR5 |
 | Heavy Machine Guns | ヘビーマシンガン | category: KK, RG, SL, SOTG, SR5 |
 | Hovercraft | ホバークラフト | category: SAG |
@@ -719,7 +729,7 @@ chumJA（SR4 の訳）は別に数える。
 | Unarmed | 素手 | category: HT, SL, SR5 |
 | Weakness | 弱点 | — |
 
-## chumJA(SR4) name (132)
+## chumJA(SR4) name (131)
 
 | English | 日本語 | 品目 |
 |---|---|---|
@@ -770,7 +780,6 @@ chumJA（SR4 の訳）は別に数える。
 | Feedback Clothing | フィードバック・クロージング | armor_mods: SR5 |
 | Foot Anchor | 脚底アンカー | cyberware: CF |
 | Fox | キツネ | mentors: SAG |
-| Free Spirit | 自由精霊 | — |
 | Geomancy | 地霊術 | magic_arts: SG |
 | Gills | 鰓 | bioware: CF |
 | Giraffe | キリン | mentors: HS |
@@ -862,7 +871,7 @@ chumJA（SR4 の訳）は別に数える。
 
 | 本 | 書名 | 日本語版 | 上流 | data.json | コデックス | 英語のまま |
 |---|---|---|---|---|---|---|
-| SR5 | Shadowrun 5th Edition | あり | 931 | 96 | 0 | 62 |
+| SR5 | Shadowrun 5th Edition | あり | 931 | 105 | 0 | 53 |
 | RF | Run Faster |  | 17 | 18 | 6 | 720 |
 | CF | Chrome Flesh |  | 5 | 29 | 15 | 495 |
 | RG | Run and Gun | あり | 427 | 34 | 0 | 14 |
