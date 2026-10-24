@@ -550,6 +550,54 @@ def test_armor_and_its_mods_leave_what_their_bonus_made() -> None:
     )
 
 
+def test_gear_leaves_what_its_bonus_made() -> None:
+    """Gear improvements sit under the item's guid at its rating, with its
+    extra as the pick — a Fake License's license, inside its Fake SIN. What
+    armor carries is off while the armor is not worn."""
+
+    def gid(bucket: str, name: str) -> str:
+        return next(r["id"] for r in catalog()[bucket] if r.get("name") == name)
+
+    state = CharacterState(
+        id="g",
+        name="Gear",
+        priorities=Priorities(),
+        metatype="Human",
+        attributes={},
+        armor=[ArmorInstall(id="coat", armor_id=gid("armor", "Armor Jacket"), equipped=False)],
+        gear=[
+            GearInstall(id="kit", gear_id=gid("gear", "Medkit"), rating=4),
+            GearInstall(id="sin", gear_id=gid("gear", "Fake SIN"), rating=3),
+            GearInstall(
+                id="lic", gear_id=gid("gear", "Fake License"), rating=3, parent_id="sin", extra="Firearms License"
+            ),
+            GearInstall(id="mask", gear_id=gid("gear", "Gas Mask"), parent_id="coat"),
+        ],
+    )
+    root = ET.fromstring(state_to_chum5(state))
+    rows = sorted(
+        tuple(
+            imp.findtext(field) or ""
+            for field in ("sourcename", "improvementsource", "improvementttype", "improvedname", "val", "enabled")
+        )
+        for imp in root.findall("./improvements/improvement")
+        if imp.findtext("improvementsource") == "Gear"
+    )
+    (modifier,) = root.findall("./limitmodifiers/limitmodifier")
+    assert rows == [
+        ("kit", "Gear", "LimitModifier", modifier.findtext("guid") or "", "4", ""),
+        ("lic", "Gear", "Restricted", "Firearms License", "0", ""),
+        ("mask", "Gear", "PathogenInhalationImmune", "", "0", "0"),
+        ("mask", "Gear", "ToxinInhalationImmune", "", "0", "0"),
+        ("sin", "Gear", "Text", "", "0", ""),
+    ]
+    assert (modifier.findtext("name"), modifier.findtext("limit"), modifier.findtext("bonus")) == (
+        "Medkit",
+        "Mental",
+        "4",
+    )
+
+
 def test_a_power_and_a_mentor_leave_what_their_bonus_made() -> None:
     """An adept power's improvements sit under its guid at its rating; the
     mentor's own bonus and each picked choice's sit under the mentor's guid,

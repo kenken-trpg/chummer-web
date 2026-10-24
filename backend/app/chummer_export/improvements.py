@@ -61,8 +61,10 @@ def _bonus_improvements(
             value = _text(node, "value")
             rows += [_Imp("WeaponSkillAccuracy", name, val=int(value))] if name and _is_int(value) else []
             continue
-        if node.tag == "selecttext":
+        if node.tag in ("selecttext", "selectweapon"):
             rows += [_Imp("Text", pick)] if pick is not None else []
+        elif node.tag in _PICKS:
+            rows += [_Imp(_PICKS[node.tag], pick)] if pick else []
         elif node.tag in ("selectmentorspirit", "selectparagon"):
             kind = "MentorSpirit" if node.tag == "selectmentorspirit" else "Paragon"
             rows += [_Imp(kind, mentor, unique=mentor)] if mentor else []
@@ -212,6 +214,11 @@ def _selectskill(node: ET.Element, name: str) -> list[_Imp]:
     if _is_int(_text(node, "max")):
         rows.append(_Imp("Skill", name, max=int(_text(node, "max")), addtorating=addtorating))
     return rows
+
+
+#: Tags whose improvement names the owner's pick, as the types they make:
+#: a Fake License's license, the tradition of a magical supply
+_PICKS = {"selectrestricted": "Restricted", "selecttradition": "Tradition"}
 
 
 #: Tags whose improvement carries no value, as the types they make
