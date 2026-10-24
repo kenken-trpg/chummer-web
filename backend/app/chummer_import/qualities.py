@@ -221,6 +221,8 @@ def _attribute_picks(root: ET.Element, qid: str, guid: str, extra: str, slots: l
             if _text(imp.find("sourcename")) == guid
             and _text(imp.find("improvementsource")).lower() == "quality"
             and _text(imp.find("improvementttype")) == "Attribute"
+            # MAG opened by `enableattribute` (a vampire's) is not a pick
+            and _text(imp.find("unique")) != "enableattribute"
         ]
     if not pool:
         for attr, count in re.findall(r"([A-Za-z]+)(?:\s*\((\d+)\))?", extra):

@@ -17,7 +17,7 @@ makes a lifestyle's free grid again (over a hundred "Public Grid"s naming
 no row at all), and a lifestyle quality's improvements are the lifestyles'
 to write, not the qualities'. The figure is a
 reading to work up, pinned by `FLOOR` so it cannot slide back: the export
-reproduces four in five, and which types to write next is chosen
+reproduces nearly all, and which types to write next is chosen
 from the per-type table this prints.
 """
 
@@ -29,7 +29,7 @@ from pathlib import Path
 
 #: Reproduced improvements over Chummer's 34 test saves at the pinned ref.
 #: Raise it when the export writes more; a drop means an improvement went missing.
-FLOOR = 281
+FLOOR = 323
 
 Key = tuple[str, ...]
 

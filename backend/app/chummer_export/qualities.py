@@ -71,7 +71,9 @@ def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ct
         for tag in ("bonus", "firstlevelbonus") if not take else ("bonus",):
             node = definition.find(tag) if definition is not None else None
             if node is not None:
-                rows += _bonus_improvements(node, 0, extra, state.mentor_id or "", contacts.get(qid, ""))
+                rows += _bonus_improvements(
+                    node, 0, extra, state.mentor_id or "", contacts.get(qid, ""), _attribute_picks(qid, state)
+                )
         if rows:
             if q.find("guid") is None:
                 # a second take needs a guid of its own to own its improvements
@@ -288,14 +290,20 @@ def _export_power_improvements(root: ET.Element, bonus: ET.Element, guid: str, r
 
 
 def _bonus_improvements(
-    bonus: ET.Element, rating: int, pick: str | None, mentor: str = "", contact: str = ""
+    bonus: ET.Element,
+    rating: int,
+    pick: str | None,
+    mentor: str = "",
+    contact: str = "",
+    attributes: list[str] | None = None,
 ) -> list[_Imp]:
     """The improvements the tags of `bonus` make whose improvement needs
     nothing but the bonus, its rating and its pick — as
     `AddImprovementCollection` makes them. `pick` None: nothing was picked,
     so `<selecttext>` makes nothing. `mentor`: the mentor spirit or paragon
     picked, whose `<mentorspirit>` row `_export_mentor_block` writes with the
-    id as its guid. `contact`: the id of the contact the quality added."""
+    id as its guid. `contact`: the id of the contact the quality added.
+    `attributes`: the attribute picked for each `<selectattribute>`, in order."""
     rows: list[_Imp] = []
     for node in bonus:
         if node.tag == "selecttext":
@@ -303,6 +311,8 @@ def _bonus_improvements(
         elif node.tag in ("selectmentorspirit", "selectparagon"):
             kind = "MentorSpirit" if node.tag == "selectmentorspirit" else "Paragon"
             rows += [_Imp(kind, mentor, unique=mentor)] if mentor else []
+        elif node.tag == "selectattributes":
+            rows += _selectattributes(node, attributes or [])
         elif node.tag == "addcontact":
             rows += _addcontact(node, contact) if contact else []
         elif node.tag in _COSTS:
@@ -464,6 +474,57 @@ def _conditionmonitor(node: ET.Element, rating: int) -> list[_Imp]:
     ]
 
 
+def _attribute(node: ET.Element, name: str, unique: str = "") -> list[_Imp]:
+    """An Attribute improvement from `<min>`, `<val>` (the aug), `<max>` and
+    `<aug>` (the aug max), as `specificattribute` and `selectattributes`
+    read them; `affectbase` aims it at the base. A `-natural` maximum
+    depends on the metatype, so it is left out."""
+    numbers = {field: _text(node, field) or "0" for field in ("min", "val", "max", "aug")}
+    if not name or not all(_is_int(number) for number in numbers.values()):
+        return []
+    return [
+        _Imp(
+            "Attribute",
+            name + ("Base" if node.find("affectbase") is not None else ""),
+            unique=unique,
+            min=int(numbers["min"]),
+            max=int(numbers["max"]),
+            aug=int(numbers["val"]),
+            augmax=int(numbers["aug"]),
+            condition=_text(node, "condition"),
+        )
+    ]
+
+
+def _specificattribute(node: ET.Element, rating: int) -> list[_Imp]:
+    named = node.find("name")
+    precedence = node.get("precedence") or (named.get("precedence") if named is not None else None)
+    return _attribute(node, _text(node, "name"), f"precedence{precedence}" if precedence else "")
+
+
+def _selectattributes(node: ET.Element, attributes: list[str]) -> list[_Imp]:
+    """One Attribute improvement per `<selectattribute>`, of the attribute
+    picked for it (Exceptional Attribute's one, an Infected's four)."""
+    rows = []
+    for choice, picked in zip(node.findall("selectattribute"), attributes, strict=False):
+        if picked in _SEEKER - {"BOX", "ESS"}:
+            rows += _attribute(choice, picked)
+    return rows
+
+
+def _attribute_picks(qid: str, state: CharacterState) -> list[str]:
+    """The attribute picked for each of a quality's `<selectattribute>`s,
+    the first under the quality's id as every other pick."""
+    spec = next((row for row in catalog()["qualities"] if row["id"] == qid), None) or {}
+    slots = [slot for node in spec.get("bonus") or [] for slot in node.get("attribute_choices") or []]
+    return [state.quality_extras.get(quality_attribute_extra_key(qid, index), "") for index in range(len(slots))]
+
+
+def _enableattribute(node: ET.Element, rating: int) -> list[_Imp]:
+    name = _text(node, "name").upper()
+    return [_Imp("Attribute", name, unique="enableattribute")] if name in ("MAG", "RES", "DEP") else []
+
+
 def _addcontact(node: ET.Element, contact: str) -> list[_Imp]:
     """AddContact names the contact, which is its unique too; the forced
     loyalty, free and forced group flags each name it again."""
@@ -570,6 +631,8 @@ _READERS: dict[str, Callable[[ET.Element, int], list[_Imp]]] = {
     "ambidextrous": _flag,
     "fame": _flag,
     "mademan": _flag,
+    "specificattribute": _specificattribute,
+    "enableattribute": _enableattribute,
     "sociallimit": _sociallimit,
     "lifestylecost": _lifestylecost,
     "skillcategory": _skillcategory,
@@ -598,6 +661,8 @@ class _Imp(NamedTuple):
     rating: int = 1
     exclude: str = ""
     addtorating: bool = False
+    aug: int = 0
+    augmax: int = 0
 
 
 #: The karma and point cost tags, (type, whether `<name>` is the improved
@@ -762,6 +827,8 @@ def _write_improvements(root: ET.Element, rows: list[_Imp], source_name: str, so
         _sub(imp, "sourcename", source_name)
         _sub(imp, "min", row.min)
         _sub(imp, "max", row.max)
+        _sub(imp, "aug", row.aug)
+        _sub(imp, "augmax", row.augmax)
         _sub(imp, "val", row.val)
         _sub(imp, "rating", row.rating)
         _sub(imp, "exclude", row.exclude)
