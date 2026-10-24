@@ -8,7 +8,7 @@ from __future__ import annotations
 import uuid
 import xml.etree.ElementTree as ET
 from copy import deepcopy
-from typing import Any
+from typing import Any, NamedTuple
 
 from ..data_loader import catalog
 from ..data_loader._xml import parse_data
@@ -37,7 +37,7 @@ def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ct
     spell_limits: list[tuple[str, str]] = []
     granted: list[tuple[str, str]] = []  # (granting quality id, granted quality's guid)
     bonuses = {node.findtext("id") or "": node for node in parse_data("qualities.xml").findall("./qualities/quality")}
-    effects: list[tuple[str, list[tuple[str, str, str, str, int]]]] = []  # (quality guid, its improvements)
+    effects: list[tuple[str, list[_Imp]]] = []  # (quality guid, its improvements)
     takes: dict[str, int] = {}
     for qid in state.quality_ids:
         q = _sub(quals, "quality")
@@ -152,7 +152,7 @@ def _export_talent_quality(
     quals: ET.Element,
     state: CharacterState,
     bonuses: dict[str, ET.Element],
-    effects: list[tuple[str, list[tuple[str, str, str, str, int]]]],
+    effects: list[tuple[str, list[_Imp]]],
 ) -> None:
     """The quality the talent priority gives (Magician, Adept, Technomancer),
     as Chummer's priority form adds it: `qualitysource` Metatype, outside the
@@ -263,45 +263,97 @@ def _export_power_improvements(root: ET.Element, bonus: ET.Element, guid: str, r
     _write_improvements(root, _bonus_improvements(bonus, rating, pick or None), guid, "CritterPower")
 
 
-def _bonus_improvements(
-    bonus: ET.Element, rating: int, pick: str | None, mentor: str = ""
-) -> list[tuple[str, str, str, str, int]]:
-    """(type, improved name, target, unique, val) for the tags of `bonus`
+def _bonus_improvements(bonus: ET.Element, rating: int, pick: str | None, mentor: str = "") -> list[_Imp]:
+    """The improvements the tags of `bonus` make
     whose improvement needs nothing but the bonus, its rating and its pick —
     as `AddImprovementCollection` makes them. `pick` None: nothing was picked,
     so `<selecttext>` makes nothing. `mentor`: the mentor spirit or paragon
     picked, whose `<mentorspirit>` row `_export_mentor_block` writes with the
     id as its guid."""
-    rows: list[tuple[str, str, str, str, int]] = []
+    rows: list[_Imp] = []
     for node in bonus:
         text = (node.text or "").strip()
         if node.tag == "selecttext" and pick is not None:
-            rows.append(("Text", pick, "", "", 0))
+            rows.append(_Imp("Text", pick))
+        elif node.tag in _COSTS:
+            kind, named = _COSTS[node.tag]
+            numbers = [(node.findtext(field) or "0").strip() for field in ("val", "min", "max")]
+            if all(number.lstrip("-").isdigit() for number in numbers):
+                val, low, high = (int(number) for number in numbers)
+                improved = (node.findtext("name") or "").strip() if named else ""
+                condition = (node.findtext("condition") or "").strip()
+                rows.append(_Imp(kind, improved, val=val, min=low, max=high, condition=condition))
         elif node.tag in _NUMBERS and text.lstrip("-").isdigit():
-            rows.append((_NUMBERS[node.tag], "", "", "", int(text)))
+            rows.append(_Imp(_NUMBERS[node.tag], val=int(text)))
         elif node.tag in ("selectmentorspirit", "selectparagon") and mentor:
             kind = "MentorSpirit" if node.tag == "selectmentorspirit" else "Paragon"
-            rows.append((kind, mentor, "", mentor, 0))
+            rows.append(_Imp(kind, mentor, unique=mentor))
         elif node.tag == "unlockskills" and text:
-            rows.append(("SpecialSkills", text, node.get("name") or "", "", 0))
+            rows.append(_Imp("SpecialSkills", text, target=node.get("name") or ""))
         elif node.tag == "enabletab":
             for name in node.findall("name"):
                 tab = _TABS.get((name.text or "").strip().upper())
                 if tab:
-                    rows.append(("SpecialTab", tab, "", "enabletab", 0))
+                    rows.append(_Imp("SpecialTab", tab, unique="enabletab"))
         elif node.tag == "armor":
             value = rating if text == "Rating" else int(text) if text.lstrip("-").isdigit() else None
             if value is not None:
-                rows.append(("Armor", "", "", "", value))
+                rows.append(_Imp("Armor", val=value))
         elif node.tag in ("disablebiowaregrade", "disablecyberwaregrade"):
             kind = "DisableBiowareGrade" if node.tag == "disablebiowaregrade" else "DisableCyberwareGrade"
-            rows.append((kind, text, "", node.tag, 0))
+            rows.append(_Imp(kind, text, unique=node.tag))
         elif node.tag == "specificskill":
             amount = (node.findtext("bonus") or "").strip()
             if amount.lstrip("-").isdigit():
-                rows.append(("Skill", node.findtext("name") or "", "", "", int(amount)))
+                rows.append(_Imp("Skill", node.findtext("name") or "", val=int(amount)))
     return rows
 
+
+class _Imp(NamedTuple):
+    """One improvement, in the fields `Improvement.Save` writes that a bonus sets."""
+
+    kind: str
+    improved: str = ""
+    target: str = ""
+    unique: str = ""
+    val: int = 0
+    min: int = 0
+    max: int = 0
+    condition: str = ""
+
+
+#: The karma and point cost tags, (type, whether `<name>` is the improved
+#: name): every one of them is a single `CreateImprovement` of its `<name>`,
+#: `<val>`, `<min>`, `<max>` and `<condition>`.
+_COSTS = {
+    "attributekarmacost": ("AttributeKarmaCost", True),
+    "activeskillkarmacost": ("ActiveSkillKarmaCost", True),
+    "skillgroupkarmacost": ("SkillGroupKarmaCost", True),
+    "knowledgeskillkarmacost": ("KnowledgeSkillKarmaCost", True),
+    "knowledgeskillkarmacostmin": ("KnowledgeSkillKarmaCostMinimum", False),
+    "skillgroupcategorykarmacost": ("SkillGroupCategoryKarmaCost", True),
+    "skillcategorykarmacost": ("SkillCategoryKarmaCost", True),
+    "skillcategoryspecializationkarmacost": ("SkillCategorySpecializationKarmaCost", True),
+    "attributepointcost": ("AttributePointCost", True),
+    "activeskillpointcost": ("ActiveSkillPointCost", True),
+    "skillgrouppointcost": ("SkillGroupPointCost", True),
+    "knowledgeskillpointcost": ("KnowledgeSkillPointCost", True),
+    "skillgroupcategorypointcost": ("SkillGroupCategoryPointCost", True),
+    "skillcategorypointcost": ("SkillCategoryPointCost", True),
+    "attributekarmacostmultiplier": ("AttributeKarmaCostMultiplier", True),
+    "activeskillkarmacostmultiplier": ("ActiveSkillKarmaCostMultiplier", True),
+    "skillgroupkarmacostmultiplier": ("SkillGroupKarmaCostMultiplier", True),
+    "knowledgeskillkarmacostmultiplier": ("KnowledgeSkillKarmaCostMultiplier", True),
+    "skillgroupcategorykarmacostmultiplier": ("SkillGroupCategoryKarmaCostMultiplier", True),
+    "skillcategorykarmacostmultiplier": ("SkillCategoryKarmaCostMultiplier", True),
+    "skillcategoryspecializationkarmacostmultiplier": ("SkillCategorySpecializationKarmaCostMultiplier", True),
+    "attributepointcostmultiplier": ("AttributePointCostMultiplier", True),
+    "activeskillpointcostmultiplier": ("ActiveSkillPointCostMultiplier", True),
+    "skillgrouppointcostmultiplier": ("SkillGroupPointCostMultiplier", True),
+    "knowledgeskillpointcostmultiplier": ("KnowledgeSkillPointCostMultiplier", True),
+    "skillgroupcategorypointcostmultiplier": ("SkillGroupCategoryPointCostMultiplier", True),
+    "skillcategorypointcostmultiplier": ("SkillCategoryPointCostMultiplier", True),
+}
 
 #: tags whose improvement is their number and nothing else
 _NUMBERS = {
@@ -320,22 +372,23 @@ _TABS = {
 }
 
 
-def _write_improvements(
-    root: ET.Element, rows: list[tuple[str, str, str, str, int]], source_name: str, source: str
-) -> None:
+def _write_improvements(root: ET.Element, rows: list[_Imp], source_name: str, source: str) -> None:
     if not rows:
         return
     imps = improvements_of(root)
-    for kind, improved, target, unique, val in rows:
+    for row in rows:
         imp = _sub(imps, "improvement")
-        if unique:
-            _sub(imp, "unique", unique)
-        _sub(imp, "target", target)
-        _sub(imp, "improvedname", improved)
+        if row.unique:
+            _sub(imp, "unique", row.unique)
+        _sub(imp, "target", row.target)
+        _sub(imp, "improvedname", row.improved)
         _sub(imp, "sourcename", source_name)
-        _sub(imp, "val", val)
+        _sub(imp, "min", row.min)
+        _sub(imp, "max", row.max)
+        _sub(imp, "val", row.val)
         _sub(imp, "rating", 1)
-        _sub(imp, "improvementttype", kind)
+        _sub(imp, "condition", row.condition)
+        _sub(imp, "improvementttype", row.kind)
         _sub(imp, "improvementsource", source)
 
 
