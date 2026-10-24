@@ -439,6 +439,39 @@ def test_a_quality_writes_the_rows_its_improvements_name() -> None:
     assert not back.get("gear") and not back.get("commlinks")
 
 
+def test_a_quality_leaves_its_attribute_bounds() -> None:
+    """`specificattribute` and a picked `selectattributes` are Attribute
+    improvements of min / max / aug; `enableattribute` opens MAG. Exceptional
+    Attribute's pick is the quality's extra."""
+
+    def qid(name: str) -> str:
+        return next(q["id"] for q in catalog()["qualities"] if q["name"] == name)
+
+    exceptional = qid("Exceptional Attribute")
+    state = CharacterState(
+        id="a",
+        name="Bounds",
+        priorities=Priorities(),
+        metatype="Human",
+        attributes={},
+        talent="Adept",
+        quality_ids=[exceptional, qid("Metagenic Improvement (Agility)"), qid("Impaired Attribute (Body)")],
+        quality_extras={exceptional: "INT"},
+    )
+    root = ET.fromstring(state_to_chum5(state))
+    rows = sorted(
+        tuple(imp.findtext(field) or "" for field in ("improvedname", "unique", "min", "max", "aug"))
+        for imp in root.findall("./improvements/improvement")
+        if imp.findtext("improvementttype") == "Attribute"
+    )
+    assert rows == [
+        ("AGI", "", "1", "1", "0"),
+        ("BOD", "", "0", "-2", "0"),
+        ("INT", "", "0", "1", "0"),
+        ("MAG", "enableattribute", "0", "0", "0"),
+    ]
+
+
 def test_the_talent_quality_opens_its_tab_and_skills() -> None:
     """The talent priority's quality, as Chummer's priority form adds it:
     `qualitysource` Metatype, with the SpecialTab and SpecialSkills
@@ -453,6 +486,7 @@ def test_the_talent_quality_opens_its_tab_and_skills() -> None:
     assert quality is not None
     assert (quality.findtext("name"), quality.findtext("qualitysource")) == ("Mystic Adept", "Metatype")
     assert _quality_improvements(root) == [
+        ("Mystic Adept", "Attribute", "MAG", "enableattribute"),
         ("Mystic Adept", "SpecialSkills", "Magician", ""),
         ("Mystic Adept", "SpecialTab", "Adept", "enabletab"),
         ("Mystic Adept", "SpecialTab", "Magician", "enabletab"),
