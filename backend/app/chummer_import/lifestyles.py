@@ -60,11 +60,12 @@ def _import_lifestyles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], w
     st["lifestyles"] = lifestyles
 
     # a contact a quality added: Chummer's AddContact improvement names the
-    # contact's guid and the quality's `<id>` (this app writes its `<guid>`)
+    # contact's guid and the quality's `<guid>`. The quality's data id is its
+    # `<id>` in Chummer's save and its `<sourceid>` (or `<guid>`) in this app's.
     catalog_qualities = {str(row["id"]) for row in cat["qualities"]}
     quality_of: dict[str, str] = {}
     for q in root.findall("./qualities/quality"):
-        qid = next((ref for tag in ("sourceid", "guid") if (ref := _text(q.find(tag))) in catalog_qualities), "")
+        qid = next((ref for tag in ("sourceid", "id", "guid") if (ref := _text(q.find(tag))) in catalog_qualities), "")
         for tag in ("id", "guid"):
             if qid and _text(q.find(tag)):
                 quality_of[_text(q.find(tag))] = qid
