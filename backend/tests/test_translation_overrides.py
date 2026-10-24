@@ -202,12 +202,6 @@ def test_committed_data_overlay_anchors() -> None:
     # Phase 2b hand translations
     assert tr["Close Combat"] == "近接戦闘"  # skill group
     assert tr["Biotech"] == "医療"  # group sense wins over the gear-category collision
-    assert tr["Fire Elemental"] == "火のエレメンタル"  # spirit
-    assert tr["Necromancy"] == "死霊術"  # magic art
-    assert tr["Buddhism"] == "仏教"  # tradition
-    # spells — 漢語/カタカナ dual format (batch 3, confident subset only)
-    assert tr["Ice Spear"] == "氷槍/アイス・スピア"
-    assert tr["Mindnet Extended"] == "広域精神網/エクステンデッド・マインドネット"
     # obscure supplement coinages were rolled back to English fallback
     assert not JP_RE.search(tr.get("Krigama Carpet", "") or "")
     assert not JP_RE.search(tr.get("Pyrohemetics", "") or "")
@@ -215,10 +209,24 @@ def test_committed_data_overlay_anchors() -> None:
     # katakana forms were transliterations rather than an established reading
     for name in ("Hobgoblin", "Ogre", "Koborokuru", "Nartaki", "Xapiri Thëpë"):
         assert not JP_RE.search(tr.get(name, "") or ""), name
-    # small-bucket batch (mentors / lifestyles / martial arts / powers / echoes / CF)
-    assert tr["Bolt Hole"] == "隠れ家"
-    assert tr["German Jujitsu"] == "ジャーマン柔術"
-    assert tr["Indomitable Will"] == "不屈の意志"
+    # and, on 2026-10-24, every hand translation that reached only a book with
+    # no Japanese edition: spirits, magic arts, traditions, spells, mentors,
+    # lifestyles, martial arts, adept powers, echoes, complex forms
+    for name in (
+        "Fire Elemental",
+        "Necromancy",
+        "Buddhism",
+        "Ice Spear",
+        "Mindnet Extended",
+        "Bolt Hole",
+        "German Jujitsu",
+        "Indomitable Will",
+    ):
+        assert not JP_RE.search(tr.get(name, "") or ""), name
+    # a category name that is a core term stays, though only supplements use it
+    assert tr["Acceleration"] == "加速値"
+    assert tr["Services"] == "助力"
+    assert tr["Metavariant"] == "メタバリアント"  # the UI's label says so too
     # Data Trails has no Japanese edition, and the Codex does not reprint
     # Redundancy: the complex form, the A.I. quality and metatype stay English
     assert not JP_RE.search(tr.get("Redundancy", "") or "")
