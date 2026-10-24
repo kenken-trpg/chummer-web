@@ -420,8 +420,10 @@ test("disabling RF retains Centaur, warns about its source and survives reload a
   await expectRF(false);
   await expect(page.getByRole("checkbox", { name: /\(RF\)/ })).not.toBeChecked();
   await page.getByRole("button", { name: "メタタイプ", exact: true }).click();
-  await expect(page.getByRole("button", { name: /Centaur/ })).toHaveCount(0);
+  // the status line first: it shows the tab is drawn, so the absence below is
+  // a real one and not a tab that has not rendered yet
   await expect(page.getByRole("status").filter({ hasText: "現在の種族" })).toContainText("RF");
+  await expect(page.getByRole("button", { name: /Centaur/ })).toHaveCount(0);
   await page.reload();
   await waitForEditor(page);
   await expectRF(false);
@@ -439,6 +441,7 @@ test("disabling RF retains Centaur, warns about its source and survives reload a
   await page.getByRole("button", { name: /やり直し/ }).click();
   await expectRF(true);
   await page.getByRole("button", { name: "メタタイプ", exact: true }).click();
-  await expect(page.getByRole("status").filter({ hasText: "現在の種族" })).toHaveCount(0);
+  // the button first, for the same reason as above
   await expect(page.getByRole("button", { name: /Centaur/ })).toHaveCount(1);
+  await expect(page.getByRole("status").filter({ hasText: "現在の種族" })).toHaveCount(0);
 });
