@@ -11,7 +11,7 @@ data_loader/codex.py):
 
 The table is keyed by English name alone, so a translation made for one book's
 item also lands on any other book's item of the same name — the complex form
-Redundancy's 冗長化 is also what Data Trails' A.I. quality of that name reads.
+Redundancy's 冗長化 was also what Data Trails' A.I. quality of that name read.
 So the report pairs every overlay entry with the kinds and books that carry
 its name, and lists separately the ones no Japanese-printed row carries: by
 the project's policy (supplement terms stay English) those are the ones to

@@ -592,7 +592,7 @@ verbatim 取り込みは避ける」) は経緯として残す。
   同じ理由で、タレント欄の `Apprentice` `Aware` `Enchanter` `Explorer`（いずれも RF）も
   英語のまま、レーティング部分（`魔力6/術式10` 等）のみ日本語にしている。
   優先度表の文言も更新: `Any metatype`→全てのメタタイプ、`Human or Elf`→エルフ or ヒューマン、
-  Magician 行の「またはミスティックアデプト」を削除（`魔法使い or テクノマンサー`）。
+  Magician 行の「`またはミスティックアデプト`」を削除（`魔法使い or テクノマンサー`）。
 - 2026-09-19: フェーズ 5 の仕組みを書籍非依存に一般化。`ja_books.py` (登録表) ＋
   `make_ja_worksheet.py` / `import_ja_worksheet.py` (`--book`) ＋ 書籍ごとの
   `DECIDED_FLOOR` を持つ `test_book_coverage.py`。RF / SG / DT を『シャドウラン・

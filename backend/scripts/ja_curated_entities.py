@@ -107,7 +107,6 @@ ENTITIES: dict[str, str] = {
     # --- complex forms (katakana / meaning, cf. パルス・ストーム) --------------
     "Derezz": "デレズ",
     "IC Tray": "ICトレイ",
-    "Redundancy": "冗長化",
     "Misread Marks": "マーク誤読",
     "Coriolis": "コリオリ",
     "Overdrive": "オーバードライブ",

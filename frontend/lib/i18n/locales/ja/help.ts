@@ -250,7 +250,7 @@ export const JA_HELP = {
   "help.adept.statsLabel": "パワーポイント",
   "help.adept.pp": "アデプトのパワーポイントは魔力と同数。パワーを取った分だけ減る",
   "help.adept.mystic":
-    "ミスティックアデプトは 1 点 5 カルマで買う。買わなかった分の魔力は呪文用に残る",
+    "ミスティック・アデプトは 1 点 5 カルマで買う。買わなかった分の魔力は呪文用に残る",
   "help.adept.way": "Way（流儀）の資質は対象のパワーを安くする。割引の総量は魔力 ÷ 4（切り上げ）",
   "help.martial.statsLabel": "格闘技スタイルと技法",
   "help.martial.style": "格闘技スタイルは 7 カルマ（品目ごとに別のカルマのことがある）",
