@@ -358,6 +358,28 @@ def test_a_quality_leaves_its_numbers_and_its_mentor() -> None:
     assert root.findtext("./mentorspirits/mentorspirit/guid") == mentor
 
 
+def test_a_quality_leaves_its_skill_costs_with_their_bounds() -> None:
+    """A karma or point cost tag is one improvement of its name, val, min,
+    max and condition: Run Faster's College Education makes Academic skills
+    cheaper from rating 3 once the character is created."""
+    college = next(q["id"] for q in catalog()["qualities"] if q["name"] == "College Education" and q["source"] == "RF")
+    state, _ = _with_quality("Uneducated", {})
+    state.quality_ids = [college]
+    root = ET.fromstring(state_to_chum5(state))
+    rows = {
+        imp.findtext("improvementttype"): tuple(
+            imp.findtext(field) for field in ("improvedname", "val", "min", "max", "condition")
+        )
+        for imp in root.findall("./improvements/improvement")
+    }
+    assert rows == {
+        "SkillCategoryKarmaCost": ("Academic", "-1", "3", "0", "/character/created"),
+        "SkillCategoryKarmaCostMultiplier": ("Academic", "50", "0", "0", "/character/created = false"),
+        "SkillCategoryPointCostMultiplier": ("Academic", "50", "0", "0", ""),
+        "SkillCategorySpecializationKarmaCostMultiplier": ("Academic", "50", "0", "0", "/character/created = false"),
+    }
+
+
 def test_the_talent_quality_opens_its_tab_and_skills() -> None:
     """The talent priority's quality, as Chummer's priority form adds it:
     `qualitysource` Metatype, with the SpecialTab and SpecialSkills
