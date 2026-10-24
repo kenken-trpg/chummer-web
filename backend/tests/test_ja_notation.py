@@ -15,7 +15,7 @@ counting rather than deciding:
     space      only before a numeric rating suffix, mirroring the English
                name's own " (6)" — the 18 `Liner - …` entries
 
-The five surviving full-width bracket entries are pinned in
+The surviving full-width bracket entries are pinned in
 `FULLWIDTH_BRACKETS_KEPT` rather than rewritten. They were checked against the
 Japanese core rulebook, and quietly restyling a term somebody verified is the
 same class of move as guessing at one — see the same reasoning behind
@@ -37,10 +37,8 @@ OVERLAY = Path(__file__).resolve().parents[1] / "data" / "ja_overrides"
 # them one at a time; do not add rows here to silence a new import.
 FULLWIDTH_BRACKETS_KEPT = {
     "(Synth)Leather",
-    "Power Swimming (Elf or Troll)",
     "Silencer (Ares Light Fire 70)",
     "Silencer (Ares Light Fire 75)",
-    "Way of Unified Mana (Hapsum-Do)",
 }
 
 RULES: tuple[tuple[str, re.Pattern[str], str], ...] = (
