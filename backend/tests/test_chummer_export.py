@@ -380,6 +380,26 @@ def test_a_quality_leaves_its_skill_costs_with_their_bounds() -> None:
     }
 
 
+def test_a_quality_grants_its_added_quality_and_leaves_its_movement() -> None:
+    """`<addqualities>`: Pie Iesu Domine's High Pain Tolerance is a quality of
+    its own, tied back by a SpecificQuality, with its own threshold offset;
+    Celerity's `movementreplace` and `sprintbonus` name the Ground category."""
+    celerity = next(q["id"] for q in catalog()["qualities"] if q["name"] == "Celerity")
+    state, qid = _with_quality("Pie Iesu Domine. Dona Eis Requiem.", {})
+    state.quality_ids.append(celerity)
+    xml = state_to_chum5(state)
+    root = ET.fromstring(xml)
+    child = root.findall("./qualities/quality")[1]
+    assert (child.findtext("name"), child.findtext("qualitysource")) == ("High Pain Tolerance", "Improvement")
+    assert _quality_improvements(root) == [
+        ("Celerity", "RunSpeed", "Ground", ""),
+        ("Celerity", "SprintBonus", "Ground", ""),
+        ("Celerity", "WalkSpeed", "Ground", ""),
+        ("High Pain Tolerance", "CMThresholdOffset", "", ""),
+    ]
+    assert chum5_to_state(xml)[0]["quality_ids"] == [qid, celerity]  # the child is granted, not bought
+
+
 def test_the_talent_quality_opens_its_tab_and_skills() -> None:
     """The talent priority's quality, as Chummer's priority form adds it:
     `qualitysource` Metatype, with the SpecialTab and SpecialSkills
