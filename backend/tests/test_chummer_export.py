@@ -336,6 +336,28 @@ def test_a_quality_leaves_what_its_bonus_made() -> None:
     ]
 
 
+def test_a_quality_leaves_its_numbers_and_its_mentor() -> None:
+    """Notoriety and an essence multiplier are the number in the bonus; a
+    Gremlins' notoriety is its `<firstlevelbonus>`, the first take's only; and
+    Mentor Spirit's names the `<mentorspirit>` row, whose guid is the mentor's
+    id, with the id again as its unique."""
+
+    def qid(name: str) -> str:
+        return next(q["id"] for q in catalog()["qualities"] if q["name"] == name)
+
+    mentor = next(m["id"] for m in catalog()["mentors"] if m["name"] == "Bear")
+    state, _ = _with_quality("Mentor Spirit", {})
+    state.quality_ids += [qid("Gremlins"), qid("Gremlins"), qid("Biocompatibility (Cyberware)")]
+    state.mentor_id = mentor
+    root = ET.fromstring(state_to_chum5(state))
+    assert _quality_improvements(root) == [
+        ("Biocompatibility (Cyberware)", "CyberwareEssCost", "", ""),
+        ("Gremlins", "Notoriety", "", ""),
+        ("Mentor Spirit", "MentorSpirit", mentor, mentor),
+    ]
+    assert root.findtext("./mentorspirits/mentorspirit/guid") == mentor
+
+
 def test_the_talent_quality_opens_its_tab_and_skills() -> None:
     """The talent priority's quality, as Chummer's priority form adds it:
     `qualitysource` Metatype, with the SpecialTab and SpecialSkills
