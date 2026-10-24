@@ -80,7 +80,10 @@ def _bonus_improvements(
             rows += [_Imp(_NUMBERS[node.tag], val=int(text))] if _is_int(text) else []
         elif node.tag in _READERS:
             rows += _READERS[node.tag](node, rating)
-    return rows
+    # `<bonus unique="…">` is the unique name of every improvement the tags
+    # make that does not name its own: Chemical Protection twice counts once
+    unique = bonus.get("unique") or ""
+    return [row._replace(unique=row.unique or unique) for row in rows]
 
 
 def _rated(bonus: ET.Element, rating: int) -> ET.Element:
@@ -164,11 +167,27 @@ def _enabletab(node: ET.Element, rating: int) -> list[_Imp]:
     return [_Imp("SpecialTab", tab, unique="enabletab") for tab in tabs if tab]
 
 
+#: `armor` and the elemental armor tags, as the types they make
+_ARMORS = {
+    "armor": "Armor",
+    "firearmor": "FireArmor",
+    "coldarmor": "ColdArmor",
+    "electricityarmor": "ElectricityArmor",
+    "acidarmor": "AcidArmor",
+}
+
+
 def _armor(node: ET.Element, rating: int) -> list[_Imp]:
+    """A `precedence` or `group` attribute is the unique name, as
+    `AddImprovementCollection.armor` makes it."""
     text = _text(node)
     if text == "Rating":
-        return [_Imp("Armor", val=rating)]
-    return [_Imp("Armor", val=int(text))] if _is_int(text) else []
+        text = str(rating)
+    if not _is_int(text):
+        return []
+    precedence, group = node.get("precedence"), node.get("group")
+    unique = f"precedence{precedence}" if precedence else f"group{group}" if group else ""
+    return [_Imp(_ARMORS[node.tag], val=int(text), unique=unique)]
 
 
 def _disablegrade(node: ET.Element, rating: int) -> list[_Imp]:
@@ -202,6 +221,11 @@ _FLAGS = {
     "mademan": ("MadeMan", ""),
     "unarmeddvphysical": ("UnarmedDVPhysical", ""),
     "adapsin": ("Adapsin", "adapsin"),
+    **{
+        f"{kind}{vector}immune": (f"{kind.title()}{vector.title()}Immune", "")
+        for kind in ("toxin", "pathogen")
+        for vector in ("contact", "ingestion", "inhalation", "injection")
+    },
 }
 
 
@@ -493,15 +517,11 @@ _READERS: dict[str, Callable[[ET.Element, int], list[_Imp]]] = {
     "addgear": _addgear,
     "unlockskills": _unlockskills,
     "enabletab": _enabletab,
-    "armor": _armor,
+    **dict.fromkeys(_ARMORS, _armor),
     "disablebiowaregrade": _disablegrade,
     "disablecyberwaregrade": _disablegrade,
     "specificskill": _specificskill,
-    "ambidextrous": _flag,
-    "fame": _flag,
-    "mademan": _flag,
-    "unarmeddvphysical": _flag,
-    "adapsin": _flag,
+    **dict.fromkeys(_FLAGS, _flag),
     "physicallimit": _limit,
     "mentallimit": _limit,
     "smartlink": _smartlink,
@@ -691,7 +711,11 @@ _TABS = {
 }
 
 
-def _write_improvements(root: ET.Element, rows: list[_Imp], source_name: str, source: str) -> None:
+def _write_improvements(
+    root: ET.Element, rows: list[_Imp], source_name: str, source: str, enabled: bool = True
+) -> None:
+    """`enabled` False: the owner is off (armor not worn), whose improvements
+    Chummer keeps but disables."""
     if not rows:
         return
     imps = improvements_of(root)
@@ -714,3 +738,5 @@ def _write_improvements(root: ET.Element, rows: list[_Imp], source_name: str, so
         _sub(imp, "improvementsource", source)
         if row.addtorating:
             _sub(imp, "addtorating", "True")
+        if not enabled:
+            _sub(imp, "enabled", 0)

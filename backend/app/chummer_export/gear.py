@@ -155,6 +155,7 @@ def _export_armor(root: ET.Element, state: CharacterState, names: _Names, ctx: _
     gear_by_parent, emit_gear = _gear_writer(state, names)
     for a in state.armor:
         el = _sub(armors, "armor")
+        _sub(el, "guid", a.id)
         _sub(el, "sourceid", a.armor_id)
         _sub(el, "name", names["armor"].get(a.armor_id, ""))
         if a.cost is not None:
@@ -165,6 +166,7 @@ def _export_armor(root: ET.Element, state: CharacterState, names: _Names, ctx: _
         mods = _sub(el, "armormods")
         for mrow in amods_by_parent.get(a.id, []):
             mm = _sub(mods, "armormod")
+            _sub(mm, "guid", mrow.id)
             _sub(mm, "sourceid", mrow.mod_id)
             _sub(mm, "name", names["armormod"].get(mrow.mod_id, ""))
             _sub(mm, "rating", mrow.rating)
@@ -175,6 +177,31 @@ def _export_armor(root: ET.Element, state: CharacterState, names: _Names, ctx: _
         carried = gear_by_parent.get(a.id)
         if carried:
             emit_gear(_sub(el, "gears"), carried)
+    _export_armor_improvements(root, state, amods_by_parent)
+
+
+def _export_armor_improvements(
+    root: ET.Element, state: CharacterState, amods_by_parent: dict[str | None, list[Any]]
+) -> None:
+    """What `Armor.Create` and `ArmorMod.Create` leave in `<improvements>`
+    when they run the `<bonus>` at the piece's rating, under its guid. Armor
+    not worn keeps them disabled, its mods' with it."""
+    armor = parse_data("armor.xml")
+    definitions = {
+        node.findtext("id") or "": node for node in [*armor.findall("./armors/armor"), *armor.findall("./mods/mod")]
+    }
+    for a in state.armor:
+        for row, ref, source in [
+            (a, a.armor_id, "Armor"),
+            *((m, m.mod_id, "ArmorMod") for m in amods_by_parent.get(a.id, [])),
+        ]:
+            definition = definitions.get(ref)
+            bonus = definition.find("bonus") if definition is not None else None
+            if definition is None or bonus is None:
+                continue
+            rows = _bonus_improvements(bonus, int(row.rating or 1), None)
+            owner = definition.findtext("name") or ""
+            _write_improvements(root, _with_rows(root, rows, row.id, owner), row.id, source, enabled=a.equipped)
 
 
 def _ware_weapon_guid(install_id: str) -> str:

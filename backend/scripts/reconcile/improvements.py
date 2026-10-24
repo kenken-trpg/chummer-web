@@ -49,7 +49,7 @@ FLOORS = {
     "Cyberware": 51,
     "Bioware": 112,
     "Gear": 0,
-    "Armor": 0,
+    "Armor": 61,
     "Power": 62,
     "MentorSpirit": 37,
 }

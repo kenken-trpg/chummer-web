@@ -505,6 +505,51 @@ def test_an_implant_leaves_what_its_bonus_made_at_its_rating() -> None:
     ]
 
 
+def test_armor_and_its_mods_leave_what_their_bonus_made() -> None:
+    """Armor improvements sit under the piece's guid at its rating, with the
+    bonus's unique name; a limit modifier gets its row. Armor not worn keeps
+    them disabled, its mods' with it."""
+
+    def gid(bucket: str, name: str) -> str:
+        return next(r["id"] for r in catalog()[bucket] if r.get("name") == name)
+
+    state = CharacterState(
+        id="a",
+        name="Armor",
+        priorities=Priorities(),
+        metatype="Human",
+        attributes={},
+        armor=[
+            ArmorInstall(id="mask", armor_id=gid("armor", "Ballistic Mask")),
+            ArmorInstall(id="coat", armor_id=gid("armor", "Armor Jacket"), equipped=False),
+        ],
+        armor_mods=[
+            ArmorModInstall(id="fire", mod_id=gid("armor_mods", "Fire Resistance"), parent_id="mask", rating=3),
+            ArmorModInstall(id="chem", mod_id=gid("armor_mods", "Chemical Protection"), parent_id="coat", rating=2),
+        ],
+    )
+    root = ET.fromstring(state_to_chum5(state))
+    rows = sorted(
+        tuple(
+            imp.findtext(field) or ""
+            for field in ("sourcename", "improvementsource", "improvementttype", "unique", "val", "enabled")
+        )
+        for imp in root.findall("./improvements/improvement")
+    )
+    assert rows == [
+        ("chem", "ArmorMod", "PathogenContactResist", "chemicalprotection", "2", "0"),
+        ("chem", "ArmorMod", "ToxinContactResist", "chemicalprotection", "2", "0"),
+        ("fire", "ArmorMod", "FireArmor", "fireresistance", "3", ""),
+        ("mask", "Armor", "LimitModifier", "", "1", ""),
+    ]
+    (modifier,) = root.findall("./limitmodifiers/limitmodifier")
+    assert (modifier.findtext("name"), modifier.findtext("limit"), modifier.findtext("bonus")) == (
+        "Ballistic Mask",
+        "Social",
+        "1",
+    )
+
+
 def test_a_power_and_a_mentor_leave_what_their_bonus_made() -> None:
     """An adept power's improvements sit under its guid at its rating; the
     mentor's own bonus and each picked choice's sit under the mentor's guid,
