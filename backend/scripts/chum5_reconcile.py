@@ -93,7 +93,7 @@ same chummer5a ref as the game data::
     python scripts/chum5_reconcile.py --roundtrip # + export / re-import check
     python scripts/chum5_reconcile.py --items Mittens   # one save, item by item
     python scripts/chum5_reconcile.py --fidelity  # export vs. the save Chummer wrote
-    python scripts/chum5_reconcile.py --improvements  # the qualities' improvements the export keeps
+    python scripts/chum5_reconcile.py --improvements  # the improvements the export keeps, by source
 
 `--roundtrip` writes each save back out and reads it again: what it holds
 (gear by bucket, ware, vehicle mods — with whether each sits in a parent) and
@@ -120,12 +120,13 @@ counted against the export. Nothing else is: a field this app has not thought
 about fails the run, which is what makes this a gate (CI's `fidelity` job)
 rather than a reading to work down.
 
-`--improvements` counts the improvements each save's qualities made and how
-many of them the export of the same character writes back. Chummer never
-runs a `<bonus>` on load, so one the export leaves out does nothing there.
-It prints the count by type and fails when the total moves off `FLOOR` in
-`scripts/reconcile/improvements.py` — down means one went missing, up means
-the floor wants raising.
+`--improvements` counts the improvements each save's qualities, implants,
+gear, armor, adept powers and mentor spirit made, and how many of them the
+export of the same character writes back. Chummer never runs a `<bonus>` on
+load, so one the export leaves out does nothing there. It prints the count
+by source and type and fails when a source's total moves off its entry in
+`FLOORS` in `scripts/reconcile/improvements.py` — down means one went
+missing, up means the floor wants raising.
 
 `--items` lists what this app charges for each piece of one save (the first
 file whose name contains the text), to set beside the save's own `<cost>`

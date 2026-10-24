@@ -202,3 +202,31 @@ def test_a_quality_improvement_is_matched_by_names_not_guids() -> None:
         "Attribute",
         "SpecificQuality",
     ]  # not the power's armor, not the orphan
+
+
+def test_an_implants_improvement_is_counted_under_its_source() -> None:
+    """Every source is read by its owner row's name; an armor mod counts with
+    the armor, and an improvement whose owner is not in the save is skipped."""
+    from scripts.reconcile.improvements import improvements
+
+    root = _save("""
+        <armors><armor><guid>a1</guid><name>Armor Jacket</name>
+          <armormods><armormod><guid>m1</guid><name>Fire Resistance</name></armormod></armormods>
+        </armor></armors>
+        <cyberwares><cyberware><guid>c1</guid><name>Dermal Plating</name></cyberware></cyberwares>
+        <improvements>
+          <improvement><sourcename>c1</sourcename><val>2</val>
+            <improvementttype>Armor</improvementttype><improvementsource>Cyberware</improvementsource>
+          </improvement>
+          <improvement><sourcename>m1</sourcename><val>2</val>
+            <improvementttype>FireArmor</improvementttype><improvementsource>ArmorMod</improvementsource>
+          </improvement>
+          <improvement><sourcename>gone</sourcename><val>1</val>
+            <improvementttype>Armor</improvementttype><improvementsource>Cyberware</improvementsource>
+          </improvement>
+        </improvements>
+    """)
+    assert sorted(key[:3] for key in improvements(root)) == [
+        ("Armor", "fire resistance", "FireArmor"),
+        ("Cyberware", "dermal plating", "Armor"),
+    ]
