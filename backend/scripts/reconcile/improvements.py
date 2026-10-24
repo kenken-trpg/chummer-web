@@ -50,8 +50,8 @@ FLOORS = {
     "Bioware": 112,
     "Gear": 0,
     "Armor": 0,
-    "Power": 0,
-    "MentorSpirit": 0,
+    "Power": 62,
+    "MentorSpirit": 37,
 }
 
 Key = tuple[str, ...]

@@ -9,9 +9,11 @@ from __future__ import annotations
 import xml.etree.ElementTree as ET
 from typing import Any
 
+from ..data_loader._xml import parse_data
 from ..engine.lookups import _mentor_by_id, _paragon_by_id, _stream_by_id, _tradition_by_id
 from ..models import CharacterState
 from ._common import _Ctx, _Names, _sub
+from .improvements import _bonus_improvements, _with_rows, _write_improvements
 
 #: Chummer's `Tradition.CustomMagicalTraditionGuidString`, the row in
 #: `traditions.xml` that stands for "a tradition of the player's own". It
@@ -57,8 +59,10 @@ def _export_spell_lists(root: ET.Element, state: CharacterState, names: _Names, 
         state.adept_powers,
         "power_id",
         "power",
-        {"rating": lambda r: r.rating, "extra": lambda r: r.extra or ""},
+        # the guid the power's improvements name it by
+        {"guid": lambda r: r.id, "rating": lambda r: r.rating, "extra": lambda r: r.extra or ""},
     )
+    _export_power_improvements(root, state)
     _named_list(
         "complexforms",
         "complexform",
@@ -67,6 +71,21 @@ def _export_spell_lists(root: ET.Element, state: CharacterState, names: _Names, 
         "complexform",
         {"rating": lambda r: r.level or 1, "extra": lambda r: r.extra or ""},
     )
+
+
+def _export_power_improvements(root: ET.Element, state: CharacterState) -> None:
+    """What `Power.Create` leaves in `<improvements>` when it runs an adept
+    power's `<bonus>` at its rating, under the power's guid — Chummer never
+    runs it again on load. A power's pick (Improved Ability's skill,
+    Improved Physical Attribute's attribute) is its extra."""
+    definitions = {node.findtext("id") or "": node for node in parse_data("powers.xml").findall("./powers/power")}
+    for row in state.adept_powers:
+        definition = definitions.get(row.power_id)
+        bonus = definition.find("bonus") if definition is not None else None
+        if definition is None or bonus is None:
+            continue
+        rows = _bonus_improvements(bonus, int(row.rating or 1), row.extra or "")
+        _write_improvements(root, _with_rows(root, rows, row.id, definition.findtext("name") or ""), row.id, "Power")
 
 
 def _export_tradition_block(root: ET.Element, state: CharacterState, ctx: _Ctx) -> None:
@@ -223,6 +242,34 @@ def _export_magic_tradition(root: ET.Element, state: CharacterState, names: _Nam
     _export_tradition_block(root, state, ctx)
     if state.mentor_id:
         _export_mentor_block(root, state, names, state.mentor_id)
+        _export_mentor_improvements(root, state, "adept" in set(ctx["derived"].get("enabled_tabs") or []))
+
+
+def _export_mentor_improvements(root: ET.Element, state: CharacterState, adept: bool) -> None:
+    """What `MentorSpirit.Create` leaves in `<improvements>`: the mentor's own
+    `<bonus>` and each picked choice's, under the mentor's guid (its id, see
+    `_export_mentor_block`). Free power levels go to an adept only, as
+    `specificpower` checks. A paragon's are not written yet."""
+    definition = next(
+        (
+            node
+            for node in parse_data("mentors.xml").findall("./mentors/mentor")
+            if node.findtext("id") == state.mentor_id
+        ),
+        None,
+    )
+    if definition is None:
+        return
+    bonuses = [definition.find("bonus")]
+    bonuses += [
+        choice.find("bonus")
+        for choice in definition.findall("./choices/choice")
+        if choice.findtext("name") in state.mentor_choices
+    ]
+    rows = [row for bonus in bonuses if bonus is not None for row in _bonus_improvements(bonus, 1, None)]
+    rows = [row for row in rows if adept or not row.kind.startswith("AdeptPowerFree")]
+    owner, guid = definition.findtext("name") or "", state.mentor_id or ""
+    _write_improvements(root, _with_rows(root, rows, guid, owner), guid, "MentorSpirit")
 
 
 def _export_spirits(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:

@@ -66,6 +66,9 @@ def _bonus_improvements(
         elif node.tag in ("selectmentorspirit", "selectparagon"):
             kind = "MentorSpirit" if node.tag == "selectmentorspirit" else "Paragon"
             rows += [_Imp(kind, mentor, unique=mentor)] if mentor else []
+        elif node.tag == "selectattribute":
+            options = {_text(option) for option in node.findall("attribute")} or _SEEKER - {"BOX", "ESS"}
+            rows += _attribute(node, pick) if pick and pick in options else []
         elif node.tag == "selectattributes":
             rows += _selectattributes(node, attributes or [])
         elif node.tag == "addcontact":
@@ -378,6 +381,28 @@ def _addcontact(node: ET.Element, contact: str) -> list[_Imp]:
     return rows
 
 
+def _spellcategory(node: ET.Element, rating: int) -> list[_Imp]:
+    """`spellcategory` / `spellcategorydicepool`: dice for a spell category."""
+    if not _is_int(_text(node, "val")):
+        return []
+    return [_Imp("SpellCategory", _text(node, "name"), val=int(_text(node, "val")), condition=_text(node, "condition"))]
+
+
+def _spelldicepool(node: ET.Element, rating: int) -> list[_Imp]:
+    if not _is_int(_text(node, "val")):
+        return []
+    return [_Imp("SpellDicePool", _text(node, "id") or _text(node, "name"), val=int(_text(node, "val")))]
+
+
+def _specificpower(node: ET.Element, rating: int) -> list[_Imp]:
+    """Free levels of an adept power, the levels as the rating — or points,
+    with `pointsperlevel`. Chummer makes it for an adept only, which the
+    caller checks."""
+    levels = int(_text(node, "val")) if _is_int(_text(node, "val")) else 0
+    kind = "AdeptPowerFreePoints" if _text(node, "pointsperlevel") else "AdeptPowerFreeLevels"
+    return [_Imp(kind, _text(node, "name"), rating=levels)] if _text(node, "name") else []
+
+
 def _prototypetranshuman(node: ET.Element, rating: int) -> list[_Imp]:
     return [_Imp("PrototypeTranshuman", _text(node))] if _text(node) else []
 
@@ -460,6 +485,10 @@ def _with_rows(root: ET.Element, rows: list[_Imp], guid: str, owner: str) -> lis
 
 _READERS: dict[str, Callable[[ET.Element, int], list[_Imp]]] = {
     "prototypetranshuman": _prototypetranshuman,
+    "spellcategory": _spellcategory,
+    "spellcategorydicepool": _spellcategory,
+    "spelldicepool": _spelldicepool,
+    "specificpower": _specificpower,
     "limitmodifier": _limitmodifier,
     "addgear": _addgear,
     "unlockskills": _unlockskills,
