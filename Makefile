@@ -119,7 +119,7 @@ check-i18n: ## Fail a Japanese UI string that uses a term the glossary rejects
 changelog: ## Fold changelog.d/ fragments into CHANGELOG.md [Unreleased]
 	$(PYTHON) scripts/changelog.py collect
 
-release-check: ## Dry-run the release gate for VERSION=x.y.z (CHANGELOG + version bumps)
+release-check: ## Dry-run the release gate for VERSION=x.y.z (CHANGELOG + links + version bumps)
 	@test -n "$(VERSION)" || { echo "usage: make release-check VERSION=0.2.0"; exit 2; }
 	$(PYTHON) scripts/changelog.py check-empty
 	$(PYTHON) scripts/release_notes.py $(VERSION) --check
