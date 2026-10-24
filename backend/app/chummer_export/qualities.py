@@ -160,15 +160,59 @@ def _export_quality_critter_powers(root: ET.Element, state: CharacterState) -> l
         _sub(el, "name", ref["name"])
         for key in ("category", "type", "action", "range", "duration", "source", "page"):
             _sub(el, key, row.get(key) or "")
-        _sub(el, "extra", ref.get("select") or "")
-        _sub(el, "rating", ref.get("rating") or 0)
+        rating = int(ref.get("rating") or 0)
+        # CritterPower.Create: the pick, else a non-zero rating, is the extra
+        _sub(el, "extra", ref.get("select") or (str(rating) if rating else ""))
+        _sub(el, "rating", rating)
         _sub(el, "grade", -1)
         definition = definitions.get(str(row.get("id") or ""))
         bonus = definition.find("bonus") if definition is not None else None
         if bonus is not None:
             el.append(deepcopy(bonus))
+            _export_power_improvements(root, bonus, guid, rating, str(ref.get("select") or ""))
         links.append((guid, qid))
     return links
+
+
+def _export_power_improvements(root: ET.Element, bonus: ET.Element, guid: str, rating: int, pick: str) -> None:
+    """What `CritterPower.Create` leaves in `<improvements>` when it runs a
+    power's `<bonus>` — Chummer keeps saved improvements as they are on load
+    and never runs a bonus again, so a power without them does nothing there
+    (a drake's Hardened Armor added no armor). Covers the tags the powers a
+    quality grants carry; Innate Spell's `enabletab` / `selectspell` waits on
+    a spell to pick, which the quality does not give."""
+    rows: list[tuple[str, str, str, str, int]] = []  # type, improved name, target, unique, val
+    for node in bonus:
+        text = (node.text or "").strip()
+        if node.tag == "selecttext" and pick:
+            rows.append(("Text", pick, "", "", 0))
+        elif node.tag == "unlockskills" and text:
+            rows.append(("SpecialSkills", text, node.get("name") or "", "", 0))
+        elif node.tag == "armor":
+            value = rating if text == "Rating" else int(text) if text.lstrip("-").isdigit() else None
+            if value is not None:
+                rows.append(("Armor", "", "", "", value))
+        elif node.tag in ("disablebiowaregrade", "disablecyberwaregrade"):
+            kind = "DisableBiowareGrade" if node.tag == "disablebiowaregrade" else "DisableCyberwareGrade"
+            rows.append((kind, text, "", node.tag, 0))
+        elif node.tag == "specificskill":
+            amount = (node.findtext("bonus") or "").strip()
+            if amount.lstrip("-").isdigit():
+                rows.append(("Skill", node.findtext("name") or "", "", "", int(amount)))
+    if not rows:
+        return
+    imps = improvements_of(root)
+    for kind, improved, target, unique, val in rows:
+        imp = _sub(imps, "improvement")
+        if unique:
+            _sub(imp, "unique", unique)
+        _sub(imp, "target", target)
+        _sub(imp, "improvedname", improved)
+        _sub(imp, "sourcename", guid)
+        _sub(imp, "val", val)
+        _sub(imp, "rating", 1)
+        _sub(imp, "improvementttype", kind)
+        _sub(imp, "improvementsource", "CritterPower")
 
 
 def _export_bought_critter_powers(root: ET.Element, state: CharacterState) -> None:
