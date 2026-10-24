@@ -70,8 +70,8 @@
   素質（Magician・Adept など）が開くタブと技能、資質に書いた文字（Wanted の
   内容など）、導師精霊、技能の値段（College Education など）、移動力やモニター
   など数で表せる効果、資質が付ける資質、資質が付けるクリッター・パワーの効果
-  （Hardened Armor のアーマーなど）を書きます。能力値の上昇・装備・限界値の
-  修正はまだ書きません。
+  （Hardened Armor のアーマーなど）、Technomancer の Living Persona、
+  限界値の修正（Impassive など）を書きます。能力値の上昇はまだ書きません。
   Chummer の *Special > Re-apply Improvements*（特殊 → Improvements の再適用）で
   資質の効果は付きますが、クリッター・パワーの効果が 2 重になります
   （[確認の記録](fixtures/critter-powers/README.md)）。

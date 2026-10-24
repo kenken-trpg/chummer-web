@@ -331,6 +331,7 @@ def test_a_quality_leaves_what_its_bonus_made() -> None:
     root = ET.fromstring(state_to_chum5(state))
     assert _quality_improvements(root) == [
         ("Allergy (Common, Mild)", "Text", "Soy", ""),
+        ("Prototype Transhuman", "PrototypeTranshuman", "1", ""),
         ("Records on File", "Text", "Ares", ""),
         ("Records on File", "Text", "EVO", ""),
     ]
@@ -398,6 +399,44 @@ def test_a_quality_grants_its_added_quality_and_leaves_its_movement() -> None:
         ("High Pain Tolerance", "CMThresholdOffset", "", ""),
     ]
     assert chum5_to_state(xml)[0]["quality_ids"] == [qid, celerity]  # the child is granted, not bought
+
+
+def test_a_quality_writes_the_rows_its_improvements_name() -> None:
+    """`addgear` and `limitmodifier` make a row and an improvement naming it:
+    a Technomancer's Living Persona (gear this app does not stock, owned by
+    the quality) and Impassive's limit modifier. Neither reads back."""
+    impassive = next(q["id"] for q in catalog()["qualities"] if q["name"] == "Impassive")
+    state = CharacterState(
+        id="t",
+        name="Rows",
+        priorities=Priorities(),
+        metatype="Human",
+        attributes={},
+        talent="Technomancer",
+        quality_ids=[impassive],
+    )
+    xml = state_to_chum5(state)
+    root = ET.fromstring(xml)
+    techno = next(q for q in root.findall("./qualities/quality") if q.findtext("name") == "Technomancer")
+    persona = root.find("./gears/gear")
+    assert persona is not None
+    assert (persona.findtext("name"), persona.findtext("parentid")) == ("Living Persona", techno.findtext("guid"))
+    modifier = root.find("./limitmodifiers/limitmodifier")
+    assert modifier is not None
+    assert (modifier.findtext("name"), modifier.findtext("limit"), modifier.findtext("bonus")) == (
+        "Impassive",
+        "Social",
+        "-1",
+    )
+    named = {
+        imp.findtext("improvementttype"): imp.findtext("improvedname")
+        for imp in root.findall("./improvements/improvement")
+    }
+    assert named["Gear"] == persona.findtext("guid")
+    assert named["LimitModifier"] == modifier.findtext("guid")
+    back = chum5_to_state(xml)[0]
+    assert back["quality_ids"] == [impassive]
+    assert not back.get("gear") and not back.get("commlinks")
 
 
 def test_the_talent_quality_opens_its_tab_and_skills() -> None:
