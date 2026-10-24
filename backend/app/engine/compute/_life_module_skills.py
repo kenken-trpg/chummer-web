@@ -55,6 +55,8 @@ def prepare(ctx: Ctx) -> None:
         ctx.state.life_module_transfers,
         policy=policy,
         unavailable_skill_ids=frozenset(unavailable),
+        known_knowledge_categories=ctx.life["original"]["knowledge_categories"],
+        known_native_languages=frozenset(ctx.life["original"]["native_languages"]),
     )
     ctx.errors.extend(errors)
     ctx.errors.extend(resolved.errors)

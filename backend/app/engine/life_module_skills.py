@@ -59,6 +59,7 @@ class LifeSkillPool:
     total: int
     grant_fingerprint: str
     candidates: list[LifeSkillCandidate]
+    kind: Literal["active", "knowledge"] = "active"
     allocated: int = 0
     remaining: int = 0
     unallocatable: int = 0
@@ -165,6 +166,21 @@ def _fingerprint(event: LifeSkillEvent, skill: dict[str, Any], amount: int, poli
     return hashlib.sha256(json.dumps(data, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
 
+def _knowledge_fingerprint(
+    event: LifeSkillEvent, name: str, category: str, amount: int, policy: LifeModuleSkillPolicy
+) -> str:
+    data = {
+        "module": event.module_id,
+        "stage": event.stage,
+        "knowledge": name,
+        "category": category,
+        "amount": amount,
+        "cap": policy.knowledge_cap,
+        "rule": "knowledge-free-distribution-v1",
+    }
+    return hashlib.sha256(json.dumps(data, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
+
 def _capacity(free: dict[str, int], skill: dict[str, Any], policy: LifeModuleSkillPolicy, specific: str = "") -> int:
     return max(0, policy.active_cap - free.get(life_skill_key(skill["id"], specific), 0))
 
@@ -176,6 +192,8 @@ def resolve_life_module_skills(
     *,
     policy: LifeModuleSkillPolicy | None = None,
     unavailable_skill_ids: frozenset[str] = frozenset(),
+    known_knowledge_categories: dict[str, str] | None = None,
+    known_native_languages: frozenset[str] = frozenset(),
 ) -> LifeSkillResolution:
     """Resolve life-stage events, module grants, then each module's transfers.
 
@@ -190,16 +208,26 @@ def resolve_life_module_skills(
         raise ValueError("duplicate life-module entry ID")
     result = LifeSkillResolution(policy=policy)
     skills = {str(s["id"]): s for s in skills_data["skills"]}
+    knowledge_categories = {
+        **{str(s["name"]): str(s["category"]) for s in skills_data.get("knowledge", [])},
+        **(known_knowledge_categories or {}),
+    }
+    native_names = set(known_native_languages) | {
+        grant.name
+        for event in events
+        for grant in event.grants
+        if grant.kind == "knowledge_skills" and grant.category == "Language" and grant.amount == 0
+    }
     by_name = {str(s["name"]): s for s in skills.values()}
     groups: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for skill in skills.values():
         if skill.get("skillgroup") and not skill.get("exotic"):
             groups[skill["skillgroup"]].append(skill)
-    picks: dict[tuple[str, str], list[LifeModuleTransfer]] = defaultdict(list)
+    picks: dict[tuple[str, str, str], list[LifeModuleTransfer]] = defaultdict(list)
     for transfer in transfers:
-        picks[(transfer.entry_id, transfer.source_skill_id)].append(transfer)
+        picks[(transfer.entry_id, transfer.source_kind, transfer.source_skill_id)].append(transfer)
     duplicate_ids = {key for key, count in Counter(t.id for t in transfers).items() if count > 1}
-    consumed: set[tuple[str, str]] = set()
+    consumed: set[tuple[str, str, str]] = set()
     # Physical acquisition order within each stage is significant. Neither
     # caller input nor stored positional choices are reordered in place.
     ordered = sorted(
@@ -211,16 +239,22 @@ def resolve_life_module_skills(
             continue
         amounts = _event_amounts(result, event, by_name, groups)
         # All direct grants are applied before any transfers from this event.
-        pools = _apply_direct(result, event, amounts, skills)
+        pools = _apply_direct(result, event, amounts, skills) + _apply_knowledge(result, event)
         for pool in pools:
             pool.provisional = bool(result.errors)
-            pool.candidates = _candidates(result, pool, skills, unavailable_skill_ids)
-            group_key = (event.entry_id, pool.source_skill_id)
+            if pool.kind == "active":
+                pool.candidates = _candidates(result, pool, skills, unavailable_skill_ids)
+            group_key = (event.entry_id, pool.kind, pool.source_skill_id)
             consumed.add(group_key)
-            _allocate(result, pool, picks.get(group_key, []), skills, unavailable_skill_ids, duplicate_ids)
+            if pool.kind == "knowledge":
+                _allocate_knowledge(
+                    result, pool, picks.get(group_key, []), duplicate_ids, knowledge_categories, native_names
+                )
+            else:
+                _allocate(result, pool, picks.get(group_key, []), skills, unavailable_skill_ids, duplicate_ids)
             result.pools.append(pool)
-    for group_key, rows in picks.items():
-        if group_key not in consumed:
+    for orphan_key, rows in picks.items():
+        if orphan_key not in consumed:
             result.errors.extend(notice("engine.life.transferOrphan", transfer=t.id) for t in rows)
     _summarize_groups(result, groups)
     return result
@@ -232,14 +266,13 @@ def _event_amounts(
     by_name: dict[str, dict[str, Any]],
     groups: dict[str, list[dict[str, Any]]],
 ) -> dict[str, int]:
-    """Free active levels per skill id from one module; knowledge grants are applied as they come."""
+    """Free active levels per skill id from one module."""
     amounts: dict[str, int] = defaultdict(int)
     for grant in event.grants:
         if type(grant.amount) is not int or not 0 <= grant.amount <= 1000:
             result.errors.append(notice("engine.life.skillGrantInvalid", name=term(grant.name)))
             continue
         if grant.kind == "knowledge_skills":
-            _knowledge(result, event, grant)
             continue
         if grant.kind == "skill_groups":
             if grant.name not in groups:
@@ -343,19 +376,118 @@ def _summarize_groups(result: LifeSkillResolution, groups: dict[str, list[dict[s
         )
 
 
-def _knowledge(result: LifeSkillResolution, event: LifeSkillEvent, grant: LifeSkillGrant) -> None:
-    if grant.category == "Language" and grant.amount == 0:
-        if grant.name not in result.native_languages:
-            result.native_languages.append(grant.name)
+def _apply_knowledge(result: LifeSkillResolution, event: LifeSkillEvent) -> list[LifeSkillPool]:
+    """Apply a module's knowledge grants together, before distributing excess."""
+    amounts: dict[str, int] = defaultdict(int)
+    categories: dict[str, str] = {}
+    for grant in event.grants:
+        if grant.kind != "knowledge_skills" or type(grant.amount) is not int or not 0 <= grant.amount <= 1000:
+            continue
+        if grant.category == "Language" and grant.amount == 0:
+            if grant.name not in result.native_languages:
+                result.native_languages.append(grant.name)
+            continue
+        amounts[grant.name] += grant.amount
+        if grant.name in categories and categories[grant.name] != grant.category:
+            result.errors.append(notice("engine.life.skillGrantInvalid", name=term(grant.name)))
+        categories[grant.name] = grant.category
+    pools: list[LifeSkillPool] = []
+    for name, amount in sorted(amounts.items()):
+        before = result.free_knowledge.get(name, 0)
+        kept = min(amount, max(0, result.policy.knowledge_cap - before))
+        result.requested_knowledge[name] = result.requested_knowledge.get(name, 0) + amount
+        result.free_knowledge[name] = before + kept
+        result.knowledge_categories[name] = categories[name]
+        excess = amount - kept
+        if excess:
+            pools.append(
+                LifeSkillPool(
+                    key=f"{event.entry_id}:knowledge:{name}",
+                    entry_id=event.entry_id,
+                    source_skill_id=name,
+                    source_name=name,
+                    stage=event.stage,
+                    before=before,
+                    grant=amount,
+                    kept=kept,
+                    total=excess,
+                    remaining=excess,
+                    grant_fingerprint=_knowledge_fingerprint(event, name, categories[name], amount, result.policy),
+                    candidates=[],
+                    kind="knowledge",
+                )
+            )
+    return pools
+
+
+def _allocate_knowledge(
+    result: LifeSkillResolution,
+    pool: LifeSkillPool,
+    rows: list[LifeModuleTransfer],
+    duplicate_ids: set[str],
+    known_categories: dict[str, str],
+    native_names: set[str],
+) -> None:
+    errors: list[Notice] = []
+    destinations: set[str] = set()
+    requested = sum(row.ranks for row in rows)
+    if requested > pool.total:
+        errors.append(
+            notice(
+                "engine.life.transferOverallocated", name=term(pool.source_name), total=pool.total, requested=requested
+            )
+        )
+    for row in rows:
+        name = row.destination_skill_id.strip()
+        category = row.destination_category
+        if row.grant_fingerprint != pool.grant_fingerprint:
+            errors.append(notice("engine.life.transferSourceChanged", name=term(pool.source_name)))
+        if (
+            not name
+            or name == pool.source_name
+            or name in result.native_languages
+            or name in native_names
+            or "[" in name
+            or "]" in name
+            or row.destination_specific
+            or category is None
+            or (name in result.knowledge_categories and result.knowledge_categories[name] != category)
+            or (name in known_categories and known_categories[name] != category)
+        ):
+            errors.append(notice("engine.life.transferInvalidTarget", transfer=row.id))
+            continue
+        if name in destinations or row.id in duplicate_ids:
+            errors.append(notice("engine.life.transferDuplicate", transfer=row.id))
+        destinations.add(name)
+        capacity = max(0, result.policy.knowledge_cap - result.free_knowledge.get(name, 0))
+        if row.ranks > capacity:
+            errors.append(
+                notice("engine.life.transferCapacity", name=term(name), requested=row.ranks, capacity=capacity)
+            )
+    pool.transfers = [
+        {
+            "id": row.id,
+            "requested": row.ranks,
+            "applied": 0 if errors else row.ranks,
+            "status": "invalid" if errors else "applied",
+            "error_key": errors[0]["key"] if errors else "",
+        }
+        for row in rows
+    ]
+    if errors:
+        pool.status = "invalid"
+        result.errors.extend(errors)
         return
-    before = result.requested_knowledge.get(grant.name, 0)
-    requested = before + grant.amount
-    result.requested_knowledge[grant.name] = requested
-    result.free_knowledge[grant.name] = min(requested, result.policy.knowledge_cap)
-    result.knowledge_categories[grant.name] = grant.category
-    if requested > result.policy.knowledge_cap:
+    for row in rows:
+        name = row.destination_skill_id.strip()
+        result.free_knowledge[name] = result.free_knowledge.get(name, 0) + row.ranks
+        result.knowledge_categories[name] = row.destination_category or "Professional"
+        pool.allocated += row.ranks
+    pool.remaining = pool.total - pool.allocated
+    pool.status = "complete" if pool.remaining == 0 else "pending"
+    if pool.remaining:
         result.errors.append(
-            notice("engine.life.ratingCap", name=term(grant.name), rating=requested, cap=result.policy.knowledge_cap)
+            notice("engine.life.transferPending", name=term(pool.source_name), remaining=pool.remaining)
         )
 
 
@@ -381,6 +513,8 @@ def _allocate(
     for row in rows:
         skill = skills.get(row.destination_skill_id)
         specific = row.destination_specific
+        if row.destination_category is not None:
+            errors.append(notice("engine.life.transferInvalidTarget", transfer=row.id))
         if row.grant_fingerprint != pool.grant_fingerprint:
             errors.append(notice("engine.life.transferSourceChanged", name=term(pool.source_name)))
         if not skill or row.destination_skill_id not in candidates or row.destination_skill_id in unavailable:

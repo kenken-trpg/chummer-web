@@ -47,10 +47,12 @@ export interface LifeModuleSkillPolicy {
 export interface LifeModuleTransfer {
   id: string;
   entry_id: string;
+  source_kind?: "active" | "knowledge";
   source_skill_id: string;
   grant_fingerprint: string;
   destination_skill_id: string;
   destination_specific?: string;
+  destination_category?: "Academic" | "Professional" | "Street" | "Interest" | "Language" | null;
   ranks: number;
 }
 

@@ -25,10 +25,12 @@ class LifeModuleTransfer(BaseModel):
 
     id: str
     entry_id: str
+    source_kind: Literal["active", "knowledge"] = "active"
     source_skill_id: Annotated[str, Field(min_length=1, max_length=200)]
     grant_fingerprint: Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
     destination_skill_id: Annotated[str, Field(min_length=1, max_length=200)]
     destination_specific: Annotated[str, Field(max_length=200)] = ""
+    destination_category: Literal["Academic", "Professional", "Street", "Interest", "Language"] | None = None
     ranks: Annotated[StrictInt, Field(ge=1, le=1000)]
 
     @field_validator("id", "entry_id")

@@ -250,6 +250,7 @@ export function LifeModulesPanel({
                     .map((pool) => (
                       <LifeModuleSkillOverflow
                         key={`${pool.key}:${pool.grant_fingerprint}`}
+                        catalog={catalog}
                         character={ch}
                         pool={pool}
                         ui={ui}

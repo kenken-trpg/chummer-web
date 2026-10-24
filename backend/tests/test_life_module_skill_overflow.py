@@ -329,8 +329,9 @@ def test_knowledge_nine_and_native_zero_have_separate_semantics(skills):
     assert result.native_languages == ["English"]
     assert "English" not in result.free_knowledge
     assert result.free_knowledge["History"] == 9
-    assert has(result.errors, "engine.life.ratingCap", name="History", rating=10, cap=9)
-    assert not result.pools
+    assert has(result.errors, "engine.life.transferPending", name="History", remaining=1)
+    assert len(result.pools) == 1 and result.pools[0].kind == "knowledge"
+    assert result.pools[0].source_skill_id == "History"
 
 
 def test_knowledge_overflow_preserves_the_total_requested_across_later_modules(skills):
@@ -342,7 +343,63 @@ def test_knowledge_overflow_preserves_the_total_requested_across_later_modules(s
     result = resolve_life_module_skills(events, skills, [])
     assert result.requested_knowledge["History"] == 11
     assert result.free_knowledge["History"] == 9
-    assert has(result.errors, "engine.life.ratingCap", rating=11, cap=9)
+    assert [pool.total for pool in result.pools] == [1, 1]
+    transfers = [
+        pick(result.pools[0], "Law", source_kind="knowledge", destination_category="Academic"),
+        pick(result.pools[1], "Medicine", source_kind="knowledge", destination_category="Professional"),
+    ]
+    resolved = resolve_life_module_skills(events, skills, transfers)
+    assert resolved.complete
+    assert resolved.free_knowledge == {"History": 9, "Law": 1, "Medicine": 1}
+    assert resolved.knowledge_categories["Law"] == "Academic"
+    assert (
+        resolved.public()
+        == resolve_life_module_skills(
+            events, skills, [LifeModuleTransfer.model_validate(row.model_dump()) for row in transfers]
+        ).public()
+    )
+
+
+def test_knowledge_transfer_rejects_invalid_rows_atomically(skills):
+    events = [event("Real Life", grant("History", 11, "knowledge_skills"))]
+    pool = resolve_life_module_skills(events, skills, []).pools[0]
+    valid = pick(pool, "Law", source_kind="knowledge", destination_category="Academic")
+    invalid = pick(pool, "History", source_kind="knowledge", destination_category="Academic")
+    result = resolve_life_module_skills(events, skills, [valid, invalid])
+    assert has(result.errors, "engine.life.transferInvalidTarget")
+    assert result.pools[0].allocated == 0
+    assert "Law" not in result.free_knowledge
+    over = resolve_life_module_skills(
+        events, skills, [pick(pool, "Law", ranks=10, source_kind="knowledge", destination_category="Academic")]
+    )
+    assert has(over.errors, "engine.life.transferOverallocated")
+    assert over.free_knowledge == {"History": 9}
+    wrong_kind = resolve_life_module_skills(events, skills, [pick(pool, "Law", destination_category="Academic")])
+    assert has(wrong_kind.errors, "engine.life.transferOrphan")
+
+
+def test_knowledge_transfer_checks_catalog_category_and_later_native_language(skills):
+    skills["knowledge"] = [{"name": "Medicine", "category": "Academic"}]
+    events = [
+        event("Teen Years", grant("History", 10, "knowledge_skills")),
+        event("Real Life", grant("English", 0, "knowledge_skills", "Language")),
+    ]
+    pool = resolve_life_module_skills(events, skills, []).pools[0]
+    wrong_category = resolve_life_module_skills(
+        events, skills, [pick(pool, "Medicine", source_kind="knowledge", destination_category="Professional")]
+    )
+    assert has(wrong_category.errors, "engine.life.transferInvalidTarget")
+    native = resolve_life_module_skills(
+        events, skills, [pick(pool, "English", source_kind="knowledge", destination_category="Language")]
+    )
+    assert has(native.errors, "engine.life.transferInvalidTarget")
+    manual_native = resolve_life_module_skills(
+        events,
+        skills,
+        [pick(pool, "Sperethiel", source_kind="knowledge", destination_category="Language")],
+        known_native_languages=frozenset({"Sperethiel"}),
+    )
+    assert has(manual_native.errors, "engine.life.transferInvalidTarget")
 
 
 def test_pools_share_capacity_in_stable_source_order(skills):
