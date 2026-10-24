@@ -204,6 +204,11 @@ jobs:
       - run: python scripts/chum5_reconcile.py --fidelity
         env:
           GITHUB_TOKEN: ${{ github.token }}
+      # What the qualities did in each save, against what the export writes
+      # back: Chummer never runs a bonus on load. Pinned so it cannot slide.
+      - run: python scripts/chum5_reconcile.py --improvements
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
 
   frontend:
     runs-on: ubuntu-latest

@@ -166,3 +166,33 @@ def test_the_fields_chummer_recomputes_are_named_with_their_reason() -> None:
         assert "legacy" in (_accepted_drop(tag) or "")
     # Initiative was an attribute of its own before it was derived
     assert _accepted_drop("INI/metatypemin") is not None
+
+
+def test_a_quality_improvement_is_matched_by_names_not_guids() -> None:
+    """Every file draws its guids afresh, so the quality an improvement came
+    from and the row it names are read by name, and `2` is `2.0`."""
+    from scripts.reconcile.improvements import quality_improvements
+
+    def save(quality_guid: str, granted_guid: str, val: str) -> ET.Element:
+        return _save(f"""
+            <qualities>
+              <quality><guid>{quality_guid}</guid><name>Pie Iesu Domine. Dona Eis Requiem.</name></quality>
+              <quality><guid>{granted_guid}</guid><name>High Pain Tolerance</name></quality>
+            </qualities>
+            <improvements>
+              <improvement><improvedname>{granted_guid}</improvedname><sourcename>{quality_guid}</sourcename>
+                <improvementttype>SpecificQuality</improvementttype><improvementsource>Quality</improvementsource>
+              </improvement>
+              <improvement><improvedname>BOD</improvedname><sourcename>{quality_guid}</sourcename><aug>{val}</aug>
+                <improvementttype>Attribute</improvementttype><improvementsource>Quality</improvementsource>
+              </improvement>
+              <improvement><improvedname /><sourcename>{quality_guid}</sourcename><val>2</val>
+                <improvementttype>Armor</improvementttype><improvementsource>CritterPower</improvementsource>
+              </improvement>
+            </improvements>
+        """)
+
+    chummer = quality_improvements(save("a1", "b1", "2"))
+    export = quality_improvements(save("a2", "b2", "2.0"))
+    assert chummer == export
+    assert sorted(kind for _, kind, *_ in chummer) == ["Attribute", "SpecificQuality"]  # not the power's armor
