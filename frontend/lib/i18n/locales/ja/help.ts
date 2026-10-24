@@ -359,7 +359,7 @@ export const JA_HELP = {
   "help.meta.special": "特殊点はエッジ・魔力・共振力にだけ使える。通常の能力値点とは別勘定",
   "help.meta.karma":
     "カルマ作成では、メタタイプそのものにカルマを払う（オーク 50、トロール 100 など）",
-  "help.meta.variant": "メタバリアントは同じメタタイプの亜種。能力値の上下限と資質が変わる",
+  "help.meta.variant": "Metavariant は同じメタタイプの亜種。能力値の上下限と資質が変わる",
   "help.meta.talent": "タレントは魔法・共振の素質。メタタイプを変えても選び直しは要らない",
   "help.foci.statsLabel": "収束具の上限",
   "help.foci.count": "同時に結合できる数は魔力まで（氣収束具もこの数に入る）",

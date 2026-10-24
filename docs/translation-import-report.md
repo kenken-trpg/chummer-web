@@ -6,10 +6,10 @@
 （`app/data_loader/codex.py`）。ここに載るのは `data.json` の全エントリで、出どころの表ごとに分けてある。
 訳の表は英語名だけで引くので、「品目」の列には、その名前を持つ品目の種類と本をすべて並べる。
 
-- オーバーレイ合計: **331 件**
+- オーバーレイ合計: **330 件**
 - 日本語版のある本: RG, SR5, SRCX（コデックスが再録した品目も日本語版ありと数える）
 
-## 日本語版の無い品目にだけ当たる自前の訳 (4)
+## 日本語版の無い品目にだけ当たる自前の訳 (3)
 
 サプリの用語は英語のままにする方針（本に無い片仮名を作らない）と食い違う候補。
 chumJA（SR4 の訳）は別に数える。
@@ -18,7 +18,6 @@ chumJA（SR4 の訳）は別に数える。
 |---|---|---|---|
 | Acceleration | 加速値 | import_ja_from_refs.CURATED | category: R5 |
 | Body | 強靱力 | import_ja_from_refs.CURATED | category: R5 |
-| Metavariant | メタバリアント | import_ja_from_refs.CURATED | category: DT, RF |
 | Services | 助力 | import_ja_from_refs.CURATED | category: RF |
 
 ## ja_curated_dt.DT (12)
@@ -145,7 +144,7 @@ chumJA（SR4 の訳）は別に数える。
 | Thermal Damping | 熱感知抑制 | armor_mods: SR5 |
 | Urban Explorer Jumpsuit: Helmet | アーバンエクスプローラー・ジャンプスーツ：ヘルメット | armor_mods: SR5 |
 
-## import_ja_from_refs.CURATED (47)
+## import_ja_from_refs.CURATED (46)
 
 | English | 日本語 | 品目 |
 |---|---|---|
@@ -176,7 +175,6 @@ chumJA（SR4 の訳）は別に数える。
 | Magical Active | 魔法系能動技能 | category: SR5 |
 | Manipulation | 操作 | category: BB, BTB, CA, FA, HT, SG, SR5, SS, SSP |
 | Metahuman | メタヒューマン | category: RF, SR5 |
-| Metavariant | メタバリアント | category: DT, RF |
 | Mundane | マンディン | category: SR5 |
 | Ork | オーク | metatypes: SR5 |
 | Outdoors | 野外 | — |
@@ -394,7 +392,7 @@ chumJA（SR4 の訳）は別に数える。
 | 本 | 書名 | 日本語版 | 上流 | data.json | コデックス | 英語のまま |
 |---|---|---|---|---|---|---|
 | SR5 | Shadowrun 5th Edition | あり | 931 | 105 | 0 | 53 |
-| RF | Run Faster |  | 17 | 13 | 6 | 725 |
+| RF | Run Faster |  | 17 | 12 | 6 | 726 |
 | CF | Chrome Flesh |  | 5 | 27 | 15 | 497 |
 | RG | Run and Gun | あり | 427 | 34 | 0 | 14 |
 | R5 | Rigger 5.0 |  | 7 | 17 | 0 | 362 |
@@ -403,7 +401,7 @@ chumJA（SR4 の訳）は別に数える。
 | FA | Forbidden Arcana |  | 4 | 9 | 0 | 262 |
 | KC | Kill Code |  | 1 | 8 | 3 | 199 |
 | HT | Hard Targets |  | 10 | 23 | 11 | 158 |
-| DT | Data Trails |  | 2 | 17 | 2 | 179 |
+| DT | Data Trails |  | 2 | 16 | 2 | 180 |
 | SL | Street Lethal |  | 16 | 12 | 0 | 137 |
 | SAG | State of the Art ADL (German-Only) |  | 8 | 14 | 0 | 142 |
 | CA | Cutting Aces |  | 7 | 12 | 0 | 111 |

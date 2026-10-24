@@ -85,7 +85,7 @@ for (const method of ["Priority", "SumToTen", "Karma"]) {
     await expect(talent).toHaveValue("A.I.");
     await expect(talent.locator("option")).toHaveCount(1);
 
-    await page.getByRole("combobox", { name: "メタバリアント" }).selectOption("E-Ghost");
+    await page.getByRole("combobox", { name: "Metavariant" }).selectOption("E-Ghost");
     await expect.poll(async () => (await currentCharacter(page)).metavariant).toBe("E-Ghost");
     const ghost = summary(await currentCharacter(page));
     expect(ghost.innate.filter((name) => name === "Hello World!")).toHaveLength(3);

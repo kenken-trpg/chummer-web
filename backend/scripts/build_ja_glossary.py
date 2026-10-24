@@ -173,6 +173,8 @@ RULEBOOK_ONLY = {
     # Data Trails has no Japanese edition and its Codex pass has not reached
     # the A.I.: a supplement's coinage stays English (docs/data-pipeline.md)
     "Home Node": "Home Node",
+    # Run Faster's word, with no Japanese edition either (decided 2026-10-24)
+    "Metavariant": "Metavariant",
 }
 
 # Core rules terms mapped explicitly to ja-jp.xml string keys for a precise diff.

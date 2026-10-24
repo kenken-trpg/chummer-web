@@ -83,7 +83,6 @@ CURATED: dict[str, str] = {
     "Resonance": "共振力",
     # metatype categories — chumJA's SR4 "ヒト" is wrong for SR5
     "Metahuman": "メタヒューマン",
-    "Metavariant": "メタバリアント",  # the UI's own word for it (meta.metavariant)
     # knowledge-skill categories — match frontend KNOW_CAT_JA (constants.ts)
     "Academic": "学術",
     "Interest": "趣味",

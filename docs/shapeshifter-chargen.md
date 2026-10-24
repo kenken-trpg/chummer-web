@@ -10,7 +10,7 @@
 
 ## データの形
 
-- メタタイプが**動物の姿**、メタバリアントが**人間形態**（Human・Elf・Dwarf・Ork・Troll ほか22種）。
+- メタタイプが**動物の姿**、Metavariantが**人間形態**（Human・Elf・Dwarf・Ork・Troll ほか22種）。
 - 人間形態の側に、Shift (Metahuman Form) パワー、生得資質（Uneducatedは`removable="True"`）、
   噛みつきの`<naturalweapon>`、`<enableattribute>MAG`、`<enabletab>critter`が付く。
   動物の姿の側にはパワー・資質がない。
@@ -24,11 +24,11 @@
 固定版の[Character.Create](https://github.com/chummer5a/chummer5a/blob/d7e94f6a090f267362757675d05bbe4d7543c217/Chummer/Backend/Characters/Character.cs)に合わせた。
 
 - Chummerは、能力値の範囲をメタタイプ（動物の姿）から、カルマ・資質・パワー・bonusを
-  メタバリアント（人間形態）から取る。`find_metatype`は、Shapeshifterのメタバリアントに
+  Metavariant（人間形態）から取る。`find_metatype`は、ShapeshifterのMetavariantに
   親の`attributes`を載せて返す。
 - 人間形態が未選択なら、Chummerと同じくHumanとして解決する（`bootstrap`）。
 - `.chum5`の書き出しで、`removable="True"`の付与を`MetatypeRemovable`として書く。
-- 明示的に送られた`metavariant: null`でメタバリアントをクリアする。
+- 明示的に送られた`metavariant: null`でMetavariantをクリアする。
   これまでは捨てられており、Vulpine/HumanからHumanに変えると「Human」が残っていた。
 - `Mittens Chargen`の能力値ポイント超過・自然上限の誤エラーが消えた。
   残る−49カルマは、Chummer側も予算超過（超過を0と保存）で、reconcileは一致扱い。
@@ -36,7 +36,7 @@
 ## 実装済み: 作成画面の候補（PR #594）
 
 - 作成候補（`catalog()["metatypes"]`）に11種を加えた。Heritage行の絞り込みもこの一覧から取る。
-- メタタイプ画面では、シェイプシフターのときメタバリアント欄を「人間形態」と表示し、
+- メタタイプ画面では、シェイプシフターのときMetavariant欄を「人間形態」と表示し、
   「なし」は出さない。形態ごとの値段を選択肢に添える。
 - 出典の本が無効なら候補に出さない。作成済みのキャラクターは保持し、既存の出典警告を出す。
 - e2e `shapeshifter-creation.spec.ts`で、Priority・SumToTen・Karmaの3方式について、

@@ -1,7 +1,7 @@
 # A.I. 作成対応の計画と開発状況
 
 開始日: 2026-10-17。対象は metatypes.xml の category が `Metasapient` の A.I. と、
-そのメタバリアント E-Ghost・Xenosapient・Protosapient（出典 DT p.135、E-Ghost は p.161）。
+そのMetavariant E-Ghost・Xenosapient・Protosapient（出典 DT p.135、E-Ghost は p.161）。
 基準データは同梱NOTICEのchummer5a固定コミット
 `d7e94f6a090f267362757675d05bbe4d7543c217`。
 照合先は同コミットのChummerのソース。Chummer.Tests/TestFilesの実セーブ34件にA.I.のPCは無い
@@ -11,10 +11,10 @@ DT本文は未照合。
 
 ## データの形
 
-- A.I.と3つのメタバリアントは、どれも`<karma>180</karma>`と`<halveattributepoints />`を持つ。
+- A.I.と3つのMetavariantは、どれも`<karma>180</karma>`と`<halveattributepoints />`を持つ。
   肉体能力値（BOD・AGI・REA・STR）は最小・最大とも0。DEPは1〜6。ESSは0〜6。
   メンタル能力値の範囲は種類ごとに違う（A.I.はLOG 2〜7・INT 1〜5、XenosapientはLOG 3〜8 ほか）。
-  シェイプシフターと違い、メタバリアントは自分の能力値の範囲を持つ。
+  シェイプシフターと違い、Metavariantは自分の能力値の範囲を持つ。
 - `<bonus>`は4つとも同じで、`enableattribute DEP`と`enabletab advanced programs`。
 - 生得資質は種類ごとに違う。
   - A.I.：Codeslinger・Photographic Memory・Speed Reading／Real World Naiveté
@@ -75,13 +75,13 @@ DT本文は未照合。
 
 ## 実装済み: 作成画面（段階2）
 
-- 作成候補とHeritage A〜Cに、A.I.と3つのメタバリアントを出す。DTが無効なら出さない。
+- 作成候補とHeritage A〜Cに、A.I.と3つのMetavariantを出す。DTが無効なら出さない。
 - Talentの選択肢を、選んだメタタイプが取れるものに絞る（`lib/character/metatype-limits.ts`）。
   Priority表でTalentの段を変えたときの既定値も同じ規則で選ぶ（A.I.ならEでもA.I.）。
 - 能力値タブ・サイドバー・シート・テキスト出力でDEPを出す。能力値タブでは、範囲0〜0の
   肉体能力値の行を出さない（シートにはChummerと同じく0として出る）。
 - 資質の選択肢を`qualityrestriction`で絞る。
-- 訳語：Depth・A.I.・3つのメタバリアントは、用語集の表2と補足ルールブックの方針に従い英語のまま。
+- 訳語：Depth・A.I.・3つのMetavariantは、用語集の表2と補足ルールブックの方針に従い英語のまま。
   Talentの表記は「A.I. - Depth 6」。
 - 検証：e2e `ai-creation.spec.ts`（Priority・SumToTen・Karma）、各タブの単体テスト。
 

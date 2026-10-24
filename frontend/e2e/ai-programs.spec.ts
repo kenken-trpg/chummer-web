@@ -51,7 +51,7 @@ test("a Protosapient picks its Inherent Program and buys on top of it", async ({
   await page.getByRole("button", { name: "メタタイプ", exact: true }).click();
   await page.getByRole("button", { name: /^A\.I\./ }).click();
   await expect.poll(async () => (await currentCharacter(page)).metatype).toBe("A.I.");
-  await page.getByRole("combobox", { name: "メタバリアント" }).selectOption("Protosapient");
+  await page.getByRole("combobox", { name: "Metavariant" }).selectOption("Protosapient");
   await expect.poll(async () => (await currentCharacter(page)).metavariant).toBe("Protosapient");
 
   await page.getByRole("button", { name: "資質", exact: true }).click();
