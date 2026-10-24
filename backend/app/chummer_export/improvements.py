@@ -63,6 +63,10 @@ def _bonus_improvements(
             continue
         if node.tag in ("selecttext", "selectweapon"):
             rows += [_Imp("Text", pick)] if pick is not None else []
+        elif node.tag == "weaponspecificdice":
+            # the weapon picked, by its guid
+            value = _text(node)
+            rows += [_Imp("WeaponSpecificDice", pick, val=int(value))] if pick and _is_int(value) else []
         elif node.tag in _PICKS:
             rows += [_Imp(_PICKS[node.tag], pick)] if pick else []
         elif node.tag in ("selectmentorspirit", "selectparagon"):
@@ -412,6 +416,25 @@ def _addcontact(node: ET.Element, contact: str) -> list[_Imp]:
     return rows
 
 
+def _skillattribute(node: ET.Element, rating: int) -> list[_Imp]:
+    """Dice for every skill of an attribute (a Power Focus's MAG)."""
+    if not _text(node, "name") or not _is_int(_text(node, "bonus")):
+        return []
+    named = node.find("name")
+    precedence = node.get("precedence") or (named.get("precedence") if named is not None else None)
+    return [
+        _Imp(
+            "SkillAttribute",
+            _text(node, "name"),
+            unique=f"precedence{precedence}" if precedence else "",
+            val=int(_text(node, "bonus")),
+            exclude=_text(node, "exclude"),
+            addtorating=_text(node, "applytorating").lower() == "true",
+            condition=_text(node, "condition"),
+        )
+    ]
+
+
 def _spellcategory(node: ET.Element, rating: int) -> list[_Imp]:
     """`spellcategory` / `spellcategorydicepool`: dice for a spell category."""
     if not _is_int(_text(node, "val")):
@@ -516,6 +539,7 @@ def _with_rows(root: ET.Element, rows: list[_Imp], guid: str, owner: str) -> lis
 
 _READERS: dict[str, Callable[[ET.Element, int], list[_Imp]]] = {
     "prototypetranshuman": _prototypetranshuman,
+    "skillattribute": _skillattribute,
     "spellcategory": _spellcategory,
     "spellcategorydicepool": _spellcategory,
     "spelldicepool": _spelldicepool,

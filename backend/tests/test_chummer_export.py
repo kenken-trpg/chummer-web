@@ -19,9 +19,11 @@ from app.models import (
     ComplexFormInstall,
     ContactInstall,
     CyberwareInstall,
+    FocusInstall,
     GearInstall,
     LifestyleInstall,
     Priorities,
+    QiFocusInstall,
     SpellInstall,
     WeaponAccessoryInstall,
     WeaponInstall,
@@ -596,6 +598,51 @@ def test_gear_leaves_what_its_bonus_made() -> None:
         "Mental",
         "4",
     )
+
+
+def test_a_bonded_focus_leaves_what_its_bonus_made() -> None:
+    """A focus's improvements sit under its gear's guid at its force — a
+    Weapon Focus's dice name its weapon's guid — and the `<focus>` pointer
+    has a guid of its own. A Qi focus gives its power free points, on a
+    rating 0 power row when the power was not bought."""
+
+    def gid(bucket: str, name: str) -> str:
+        return next(r["id"] for r in catalog()[bucket] if r.get("name") == name)
+
+    state = CharacterState(
+        id="f",
+        name="Foci",
+        priorities=Priorities(Heritage="D", Attributes="A", Talent="B", Skills="C", Resources="E"),
+        metatype="Human",
+        attributes={},
+        talent="Adept",
+        weapons=[WeaponInstall(id="kat", weapon_id=gid("weapons", "Katana"))],
+        foci=[
+            FocusInstall(id="wf", gear_id=gid("foci", "Weapon Focus"), force=3, extra="kat"),
+            FocusInstall(id="pf", gear_id=gid("foci", "Power Focus"), force=2),
+            FocusInstall(id="sf", gear_id=gid("foci", "Spellcasting Focus, Combat"), force=2),
+        ],
+        qi_foci=[QiFocusInstall(id="qi", rating=4, power_id=gid("powers", "Astral Perception"))],
+    )
+    root = ET.fromstring(state_to_chum5(state))
+    rows = sorted(
+        tuple(
+            imp.findtext(f) or "" for f in ("sourcename", "improvementttype", "improvedname", "unique", "val", "rating")
+        )
+        for imp in root.findall("./improvements/improvement")
+        if imp.findtext("improvementsource") == "Gear"
+    )
+    assert rows == [
+        ("pf", "SkillAttribute", "MAG", "precedence0", "2", "1"),
+        ("qi", "AdeptPowerFreePoints", "Astral Perception", "", "0", "4"),
+        ("sf", "SpellCategory", "Combat", "combatspellfocus", "2", "1"),
+        ("wf", "WeaponSpecificDice", "kat", "", "3", "1"),
+    ]
+    assert root.findtext("./weapons/weapon/guid") == "kat"
+    assert {f.findtext("gearid") for f in root.findall("./foci/focus")} == {"wf", "pf", "sf", "qi"}
+    assert not {f.findtext("guid") for f in root.findall("./foci/focus")} & {"wf", "pf", "sf", "qi"}
+    (power,) = root.findall("./powers/power")
+    assert (power.findtext("name"), power.findtext("rating")) == ("Astral Perception", "0")
 
 
 def test_a_power_and_a_mentor_leave_what_their_bonus_made() -> None:

@@ -76,8 +76,9 @@
   合わせて書き、導師精霊の効果（選んだ選択肢の分を含む）も書きます。アーマーと
   その改造の効果（耐火・耐電・化学防護、限界値の修正など）も書き、着ていない
   アーマーの分は Chummer と同じく無効にしておきます。装備の効果（Fake License の
-  免許、Gas Mask の免疫、Medkit の限界値の修正など）も書きます。フォーカスと
-  乗り物に積んだ装備の効果は、まだ書きません。
+  免許、Gas Mask の免疫、Medkit の限界値の修正など）と、結んだフォーカスの効果
+  （Weapon Focus の武器、Power Focus、Qi Focus のパワーなど）も書きます。乗り物に
+  積んだ装備の効果と、フォーカスの伝統は、まだ書きません。
   Chummer の *Special > Re-apply Improvements*（特殊 → Improvements の再適用）で
   資質の効果は付きますが、クリッター・パワーの効果が 2 重になります
   （[確認の記録](fixtures/critter-powers/README.md)）。
