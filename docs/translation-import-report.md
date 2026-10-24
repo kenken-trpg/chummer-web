@@ -6,7 +6,7 @@
 （`app/data_loader/codex.py`）。ここに載るのは `data.json` の全エントリで、出どころの表ごとに分けてある。
 訳の表は英語名だけで引くので、「品目」の列には、その名前を持つ品目の種類と本をすべて並べる。
 
-- オーバーレイ合計: **563 件**
+- オーバーレイ合計: **571 件**
 - 日本語版のある本: RG, SR5, SRCX（コデックスが再録した品目も日本語版ありと数える）
 
 ## 日本語版の無い品目にだけ当たる自前の訳 (245)
@@ -315,10 +315,13 @@ chumJA（SR4 の訳）は別に数える。
 | Vindicator 200-Round Belt | ヴィンディケーター 200(ベルト) | weapon_accessories: RG |
 | YNT Softweave Armor | YNT ソフトウィーブ・アーマー | armor_mods: RG |
 
-## ja_curated_sr5.SR5 (11)
+## ja_curated_sr5.SR5 (19)
 
 | English | 日本語 | 品目 |
 |---|---|---|
+| Animal Control (Insect Type) | 動物制御(Insect Type) | — |
+| Combat Skill | 戦闘系能動技能 | — |
+| Enhanced Senses (Ultrasound) | 強化感覚(生体ソナー) | — |
 | Heavy [SR5] | 大型武器マウント | weapon_mounts: SR5 |
 | Homunculus (Armored Material) | ホムンクルス(装甲素材／強化建材) | spirits: SR5 |
 | Homunculus (Average Material) | ホムンクルス(平均的な素材) | spirits: SR5 |
@@ -329,7 +332,12 @@ chumJA（SR4 の訳）は別に数える。
 | Homunculus (Heavy Structural Material) | ホムンクルス(強固な建材) | spirits: SR5 |
 | Homunculus (Reinforced Material) | ホムンクルス(強化素材) | spirits: SR5 |
 | Homunculus (Structural Material) | ホムンクルス(建材) | spirits: SR5 |
+| Physical Skill | 身体系能動技能 | — |
+| Psychokinesis (Infected) | 念動(Infected) | — |
+| Social Skill | 社交系能動技能 | — |
 | Standard [SR5] | 武器マウント | weapon_mounts: SR5 |
+| Technical Skill | 技術系能動技能 | — |
+| Vehicle Skill | ヴィークル系能動技能 | — |
 
 ## ja_curated_entities.ENTITIES (133)
 

@@ -26,7 +26,7 @@ from scripts.make_ja_worksheet import book_entries, decided, printed_latin
 # generator can never quietly undo work.
 # RG went from 35 to 34 once: "Social" was the Social limit an armor names,
 # counted as RG's while nested references inherited their referrer's book.
-DECIDED_FLOOR = {"SR5": 15, "RG": 34, "RF": 0, "SG": 0, "DT": 13}
+DECIDED_FLOOR = {"SR5": 25, "RG": 34, "RF": 0, "SG": 0, "DT": 13}
 
 BOOK_CODES = sorted(BOOKS)
 
