@@ -17,6 +17,7 @@ from typing import Any
 from ._saves import _ref, fetch
 from .balance import NUYEN_TOLERANCE, _number, reconcile
 from .fidelity import _accepted_drop, fidelity
+from .improvements import FLOOR, coverage
 from .prices import _gear_drift
 from .roundtrip import roundtrip
 
@@ -56,6 +57,30 @@ def report_fidelity(folder: Path) -> int:
     # writes for other readers, or an older spelling of one the export writes
     # the current way.
     return 1 if changed_counts or gaps else 0
+
+
+def report_improvements(folder: Path) -> int:
+    """What the qualities did in each save, and how much of it the export
+    reproduces, by improvement type — the list to pick the next types from."""
+    theirs: collections.Counter[str] = collections.Counter()
+    reproduced: collections.Counter[str] = collections.Counter()
+    for path in sorted(folder.glob("*.chum5")):
+        saved, matched = coverage(path)
+        for key, count in saved.items():
+            theirs[key[1]] += count
+        for key, count in matched.items():
+            reproduced[key[1]] += count
+    total, done = sum(theirs.values()), sum(reproduced.values())
+    print(f"quality improvements: the export reproduces {done} of the {total} Chummer saved (floor {FLOOR})")
+    for kind, count in theirs.most_common():
+        print(f"  {reproduced[kind]:>4} / {count:<4} {kind}")
+    if done < FLOOR:
+        print(f"\nbelow the floor of {FLOOR}: an improvement the export wrote has gone missing", file=sys.stderr)
+        return 1
+    if done > FLOOR:
+        print(f"\nabove the floor: raise FLOOR in scripts/reconcile/improvements.py to {done}", file=sys.stderr)
+        return 1
+    return 0
 
 
 def items(path: Path) -> None:
@@ -202,6 +227,11 @@ def main(manual: str | None = None) -> int:
         action="store_true",
         help="compare the export with the save Chummer wrote, field by field, and stop",
     )
+    ap.add_argument(
+        "--improvements",
+        action="store_true",
+        help="count the quality improvements Chummer saved that the export reproduces, and stop",
+    )
     ap.add_argument("--items", metavar="NAME", help="list one save's prices item by item, and stop")
     ap.add_argument("--locate", metavar="NAME", help="narrow one save's nuyen gap to the pieces that disagree")
     args = ap.parse_args()
@@ -209,6 +239,8 @@ def main(manual: str | None = None) -> int:
     folder = args.dir or fetch(args.ref)
     if args.fidelity:
         return report_fidelity(folder)
+    if args.improvements:
+        return report_improvements(folder)
     for flag, run in (("items", items), ("locate", locate)):
         wanted = getattr(args, flag)
         if not wanted:
