@@ -98,11 +98,10 @@ export function MentorPicker({
                 );
                 if (choice.selected) current.delete(choice.name);
                 else {
-                  if (choice.set) {
-                    mentor!.choices
-                      .filter((row) => row.set === choice.set)
-                      .forEach((row) => current.delete(row.name));
-                  }
+                  // one pick per box, as in Chummer: `set="2"` or the rest
+                  mentor!.choices
+                    .filter((row) => (row.set || "") === (choice.set || ""))
+                    .forEach((row) => current.delete(row.name));
                   current.add(choice.name);
                 }
                 onPatch({ mentor_choices: [...current] });

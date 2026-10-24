@@ -693,3 +693,24 @@ def test_an_open_power_slot_reads_the_pick_off_the_gear_row() -> None:
     warnings = []
     bind_select_powers(effects, [], state, warnings)
     assert (warnings, effects["grant_powers"]) == ([], [])
+
+
+def test_an_adept_takes_one_of_the_mentors_adept_choices() -> None:
+    """Chummer lists every choice the character may take but `set="2"` in
+    one box, so Berserker's adept takes one of its three "Adept:" choices,
+    not all three: the second one asked for, alone."""
+    from app.data_loader import catalog
+
+    berserker = next(m["id"] for m in catalog()["mentors"] if m["name"] == "Berserker")
+    out = compute(
+        _adept(
+            "berserker",
+            quality_ids=[MENTOR_SPIRIT],
+            mentor_id=berserker,
+            mentor_choices=["Adept: 2 free levels of Pain Resistance"],
+        )
+    )
+    chosen = [row["name"] for row in out.derived["mentor"]["choices"] if row["selected"]]
+    assert chosen == ["Adept: 2 free levels of Pain Resistance"]
+    free = {row["name"]: row["free_levels"] for row in out.derived["adept_powers"] if row.get("free_levels")}
+    assert free == {"Pain Resistance": 2}
