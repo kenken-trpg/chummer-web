@@ -52,6 +52,33 @@ def allocated():
     return apply_patch(state, CharacterPatch(life_module_transfers=[transfer]))
 
 
+def knowledge_allocated():
+    state = apply_patch(history(), CharacterPatch(settings={"chargen_knowledge_skill_max": 4}))
+    pools = state.derived["life_module_skills"]["pools"]
+    transfers = []
+    for pool in pools:
+        if pool["kind"] == "active":
+            target = next(c for c in pool["candidates"] if c["name"] == "Navigation")
+            destination, category, ranks = target["skill_id"], None, 2
+        else:
+            destination = "Law" if pool["source_name"] == "Government Procedures" else "Medicine"
+            category = next(row["category"] for row in catalog()["skills"]["knowledge"] if row["name"] == destination)
+            ranks = 1
+        transfers.append(
+            LifeModuleTransfer(
+                id=str(uuid4()),
+                entry_id=pool["entry_id"],
+                source_kind=pool["kind"],
+                source_skill_id=pool["source_skill_id"],
+                grant_fingerprint=pool["grant_fingerprint"],
+                destination_skill_id=destination,
+                destination_category=category,
+                ranks=ranks,
+            )
+        )
+    return apply_patch(state, CharacterPatch(life_module_transfers=transfers))
+
+
 def test_v2_state_uses_rf_caps_and_exposes_an_unallocated_pool():
     state = history()
     assert state.life_module_rules_version == 2
@@ -74,6 +101,24 @@ def test_allocation_persists_and_recomputes_without_becoming_a_purchase():
     assert restored.id != state.id
     assert restored.life_module_entry_ids == state.life_module_entry_ids
     assert restored.derived == state.derived
+
+
+def test_knowledge_overflow_is_free_and_survives_files_and_career():
+    state = knowledge_allocated()
+    assert not state.derived["errors"]
+    assert state.derived["life_module_skills"]["free_knowledge"]["Law"] == 1
+    assert state.derived["life_module_skills"]["free_knowledge"]["Medicine"] == 1
+    assert state.knowledge_skills == {}
+    assert compute(state).derived == state.derived
+    restored = import_character(state.model_dump())
+    assert restored.derived == state.derived
+    from_chum5, _ = chum5_to_state(state_to_chum5(state))
+    assert import_character(from_chum5).derived == state.derived
+    career = apply_patch(state, CharacterPatch(career=True))
+    assert not career.derived["errors"]
+    assert career.life_module_skill_snapshot is not None
+    assert career.life_module_skill_snapshot.free_knowledge["Law"] == 1
+    assert compute(career).derived == career.derived
 
 
 def test_manual_purchase_above_transfer_is_priced_from_the_resolved_free_floor():
@@ -146,6 +191,17 @@ def test_career_entry_freezes_transfers_and_never_resurrects_discarded_levels():
     assert career.derived["skill_totals"]["Navigation"] == 2
     assert career.derived["karma"]["spent"] == state.derived["karma"]["spent"]
     assert compute(career).model_dump() == career.model_dump()
+
+
+def test_career_snapshot_accepts_older_active_transfers_without_new_fields():
+    career = apply_patch(allocated(), CharacterPatch(career=True))
+    saved = career.model_dump()
+    for row in saved["life_module_transfers"]:
+        row.pop("source_kind")
+        row.pop("destination_category")
+    restored = import_character(saved)
+    assert not has(restored.derived["errors"], "engine.life.careerFrozen")
+    assert restored.life_module_skill_snapshot == career.life_module_skill_snapshot
 
 
 def test_final_allocation_and_career_entry_in_one_patch_uses_the_updated_candidate():

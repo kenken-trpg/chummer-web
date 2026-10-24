@@ -1,4 +1,5 @@
 export interface LifeModuleSkillPool {
+  kind?: "active" | "knowledge";
   key: string;
   entry_id: string;
   source_skill_id: string;
@@ -29,6 +30,7 @@ export interface LifeModuleSkillResult {
   policy: { version: string; active_cap: number; knowledge_cap: number };
   free_active: Record<string, number>;
   free_knowledge: Record<string, number>;
+  knowledge_categories?: Record<string, string>;
   native_languages: string[];
   groups: {
     name: string;

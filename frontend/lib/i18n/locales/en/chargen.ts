@@ -38,6 +38,8 @@ export const EN_CHARGEN = {
   "life.transfer.remove": "Remove transfer",
   "engine.life.policyInvalid": "Life-module creation skill caps must be integers from 1 to 1000.",
   "life.transfer.target": "Destination skill",
+  "life.transfer.knowledgeTarget": "Destination knowledge or language skill",
+  "life.transfer.knowledgeCategory": "Knowledge category",
   "life.transfer.specific": "Specific skill target",
   "life.transfer.ranks": "Levels to transfer",
   "life.transfer.add": "Add transfer",

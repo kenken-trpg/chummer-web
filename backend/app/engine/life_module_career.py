@@ -35,6 +35,14 @@ FROZEN_FIELDS = (
 def skill_input_signature(state: CharacterState) -> str:
     raw = state.model_dump(mode="json")
     data = {key: raw[key] for key in FROZEN_FIELDS}
+    # Active transfers predate knowledge distribution. Keep their old signature
+    # shape so a career snapshot created before these optional fields existed
+    # remains valid after an update.
+    for row in data["life_module_transfers"]:
+        if row.get("source_kind") == "active":
+            row.pop("source_kind", None)
+        if row.get("destination_category") is None:
+            row.pop("destination_category", None)
     data["caps"] = [state.settings.chargen_skill_max, state.settings.chargen_knowledge_skill_max]
     return hashlib.sha256(
         json.dumps(data, sort_keys=True, ensure_ascii=False, separators=(",", ":")).encode()

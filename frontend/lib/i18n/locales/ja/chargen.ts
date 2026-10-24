@@ -38,6 +38,8 @@ export const JA_CHARGEN = {
   "life.transfer.remove": "配分を削除",
   "engine.life.policyInvalid": "Life Module creation skill caps must be integers from 1 to 1000.",
   "life.transfer.target": "移し替え先の技能",
+  "life.transfer.knowledgeTarget": "移し替え先の知識・言語技能",
+  "life.transfer.knowledgeCategory": "知識技能の区分",
   "life.transfer.specific": "技能の具体的な対象",
   "life.transfer.ranks": "移すレベル数",
   "life.transfer.add": "この配分を追加",

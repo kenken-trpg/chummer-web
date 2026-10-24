@@ -169,6 +169,8 @@ export const EN_HELP = {
     "Skill levels from modules count only up to these ratings. Your own purchases are priced from the rating the grants leave",
   "help.lifeModule.overflow":
     "What a module grants an individual skill past the cap is overflow. Move it to another skill linked to the same attribute; levels with no room anywhere are lost",
+  "help.lifeModule.knowledgeOverflow":
+    "Knowledge and language grants stop at rating 9. This app lets you assign excess levels to another knowledge or language skill as a house rule; Run Faster does not specify this redistribution",
   "help.spell.statsLabel": "Spell",
   "help.spell.drain":
     "Drain is what the caster takes; F is the Force chosen when casting, so F\u22123 is Force \u2212 3 (minimum 2)",

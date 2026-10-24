@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { vi } from "vitest";
 import { LifeModuleSkillOverflow } from "./LifeModuleSkillOverflow";
-import { makeCharacter, testUi } from "@/tests/fixtures";
+import { makeCatalog, makeCharacter, testUi } from "@/tests/fixtures";
 import type { LifeModuleSkillPool } from "@/lib/types/life-modules";
 
 const pool: LifeModuleSkillPool = {
@@ -51,6 +51,7 @@ const pool: LifeModuleSkillPool = {
 function setup(over: Partial<LifeModuleSkillPool> = {}, career = false, patch = vi.fn()) {
   render(
     <LifeModuleSkillOverflow
+      catalog={makeCatalog()}
       character={makeCharacter({ career, life_module_transfers: [] })}
       pool={{ ...pool, ...over }}
       ui={testUi}
@@ -126,6 +127,7 @@ it("keeps invalid rows repairable and career history read-only", () => {
   };
   render(
     <LifeModuleSkillOverflow
+      catalog={makeCatalog()}
       character={makeCharacter({ career: true, life_module_transfers: [transfer] })}
       pool={{ ...pool, status: "invalid" }}
       ui={testUi}
@@ -136,6 +138,41 @@ it("keeps invalid rows repairable and career history read-only", () => {
   const remove = screen.getByRole("button", { name: "配分を削除" });
   expect(remove.closest("fieldset")?.disabled).toBe(true);
   expect(screen.queryByRole("combobox")).toBeNull();
+});
+
+it("saves a knowledge overflow to a chosen knowledge skill and category", () => {
+  const patch = setup({
+    kind: "knowledge",
+    source_skill_id: "History",
+    source_name: "History",
+    before: 8,
+    grant: 2,
+    kept: 1,
+    total: 1,
+    remaining: 1,
+    candidates: [],
+  });
+  const add = screen.getByRole("button", { name: "この配分を追加" }) as HTMLButtonElement;
+  expect(add.disabled).toBe(true);
+  fireEvent.change(screen.getByRole("combobox", { name: "移し替え先の知識・言語技能" }), {
+    target: { value: "Law" },
+  });
+  fireEvent.change(screen.getByRole("combobox", { name: "知識技能の区分" }), {
+    target: { value: "Academic" },
+  });
+  expect(add.disabled).toBe(false);
+  fireEvent.click(add);
+  expect(patch).toHaveBeenCalledWith({
+    life_module_transfers: [
+      expect.objectContaining({
+        source_kind: "knowledge",
+        source_skill_id: "History",
+        destination_skill_id: "Law",
+        destination_category: "Academic",
+        ranks: 1,
+      }),
+    ],
+  });
 });
 
 it("says what an overflow is, and keeps that open to a career character", () => {
