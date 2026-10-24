@@ -5,7 +5,6 @@ from __future__ import annotations
 import lzma
 import re
 import xml.etree.ElementTree as ET
-from pathlib import Path
 
 import pytest
 
@@ -634,11 +633,18 @@ def test_what_a_commlink_comes_with_is_not_bought_again() -> None:
 
 
 def test_serpent_top_level_mapsoft_survives_import_and_export() -> None:
-    save = (
-        Path(__file__).resolve().parents[1]
-        / "vendor/chummer-tests/d7e94f6a090f267362757675d05bbe4d7543c217/Serpent.chum5"
-    )
-    state, _ = chum5_to_state(save.read_bytes())
+    # Serpent.chum5 saves this Mapsoft under <gears>, not under a commlink.
+    # Keep the relevant entry inline: Windows backend CI fetches catalog data
+    # but does not download the optional 34 Chummer test saves.
+    xml = b"""<character><metatype>Human</metatype><buildmethod>Priority</buildmethod>
+      <gears><gear>
+        <guid>6557cef3-a781-49b8-afed-cbb8fac60aef</guid>
+        <id>2f30c3cc-a62e-4ac1-8e1f-5fa217cadae4</id>
+        <name>Mapsoft</name><category>Software</category>
+        <rating>0</rating><qty>1</qty><extra>Seattle</extra>
+      </gear></gears>
+    </character>"""
+    state, _ = chum5_to_state(xml)
     loose = [app for app in state["apps"] if app["gear_id"] == "2f30c3cc-a62e-4ac1-8e1f-5fa217cadae4"]
     assert len(loose) == 1
     assert loose[0].get("parent_id") is None
