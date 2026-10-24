@@ -27,10 +27,15 @@ def _definitions(filename: str, path: str) -> dict[str, ET.Element]:
     return {node.findtext("id") or "": node for node in parse_data(filename).findall(path)}
 
 
-def export_metatype_qualities(qualities: ET.Element, state: CharacterState, ctx: _Ctx) -> None:
+def export_metatype_qualities(
+    qualities: ET.Element, state: CharacterState, ctx: _Ctx
+) -> list[tuple[str, ET.Element, str]]:
+    """Returns (guid, bonus, extra) for each grant written with a `<bonus>` or
+    `<firstlevelbonus>`, whose improvements the caller writes."""
     grants = ctx["meta"].get("quality_grants") or []
     if not grants:
-        return
+        return []
+    bonuses: list[tuple[str, ET.Element, str]] = []
     definitions = _definitions("qualities.xml", "./qualities/quality")
     removed = set(state.removed_innate_qualities)
     for index, grant in enumerate(grants):
@@ -69,6 +74,9 @@ def export_metatype_qualities(qualities: ET.Element, state: CharacterState, ctx:
                 node = definition.find(tag)
                 if node is not None:
                     quality.append(deepcopy(node))
+                    if tag != "naturalweapons":
+                        bonuses.append((fields["guid"], node, fields["extra"]))
+    return bonuses
 
 
 def _removed_at_chargen(quality: ET.Element, state: CharacterState, grant: dict[str, Any], index: int) -> None:

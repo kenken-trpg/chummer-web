@@ -17,7 +17,7 @@ makes a lifestyle's free grid again (over a hundred "Public Grid"s naming
 no row at all), and a lifestyle quality's improvements are the lifestyles'
 to write, not the qualities'. The figure is a
 reading to work up, pinned by `FLOOR` so it cannot slide back: the export
-reproduces a little over a third, and which types to write next is chosen
+reproduces about half, and which types to write next is chosen
 from the per-type table this prints.
 """
 
@@ -29,7 +29,7 @@ from pathlib import Path
 
 #: Reproduced improvements over Chummer's 34 test saves at the pinned ref.
 #: Raise it when the export writes more; a drop means an improvement went missing.
-FLOOR = 127
+FLOOR = 167
 
 Key = tuple[str, ...]
 
@@ -47,9 +47,13 @@ def quality_improvements(root: ET.Element) -> collections.Counter[Key]:
     """(quality, type, improved name, target, val, aug, min, max) for every
     improvement whose source is one of the save's qualities, counted."""
     rows = {el.findtext("guid") or "": el.findtext("name") or "" for el in root.iter() if el.find("guid") is not None}
+    from app.chummer_import._common import _LEGACY_NAMES
+
     names: dict[str, str] = {}
     for quality in root.findall("./qualities/quality"):
+        # an old save's spelling is the import's to read: "Biocompatability"
         name = quality.findtext("name") or ""
+        name = _LEGACY_NAMES.get(name.lower(), name.lower())
         for field in ("guid", "sourceid"):
             if quality.findtext(field):
                 names[quality.findtext(field) or ""] = name

@@ -64,8 +64,12 @@ def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ct
         # what its `<bonus>` made, which Chummer keeps instead of running the
         # bonus again on load: an Adept's tab and skills, a Wanted's text
         definition = bonuses.get(qid)
-        bonus = definition.find("bonus") if definition is not None else None
-        rows = _bonus_improvements(bonus, 0, extra) if bonus is not None else []
+        rows = []
+        # `<firstlevelbonus>` runs for the first take only: a Gremlins' notoriety
+        for tag in ("bonus", "firstlevelbonus") if not take else ("bonus",):
+            node = definition.find(tag) if definition is not None else None
+            if node is not None:
+                rows += _bonus_improvements(node, 0, extra, state.mentor_id or "")
         if rows:
             if q.find("guid") is None:
                 # a second take needs a guid of its own to own its improvements
@@ -118,7 +122,8 @@ def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ct
         if (spec.get("critter_powers") or spec.get("optional_powers")) and q.find("guid") is None:
             _sub(q, "guid", qid)
 
-    export_metatype_qualities(quals, state, ctx)
+    for guid, bonus, extra in export_metatype_qualities(quals, state, ctx):
+        effects.append((guid, _bonus_improvements(bonus, 0, extra, state.mentor_id or "")))
     _export_talent_quality(quals, state, bonuses, effects)
     # Chummer keeps life modules here too, as a quality type of their own.
     export_life_modules(quals, state)
@@ -258,16 +263,25 @@ def _export_power_improvements(root: ET.Element, bonus: ET.Element, guid: str, r
     _write_improvements(root, _bonus_improvements(bonus, rating, pick or None), guid, "CritterPower")
 
 
-def _bonus_improvements(bonus: ET.Element, rating: int, pick: str | None) -> list[tuple[str, str, str, str, int]]:
+def _bonus_improvements(
+    bonus: ET.Element, rating: int, pick: str | None, mentor: str = ""
+) -> list[tuple[str, str, str, str, int]]:
     """(type, improved name, target, unique, val) for the tags of `bonus`
     whose improvement needs nothing but the bonus, its rating and its pick —
     as `AddImprovementCollection` makes them. `pick` None: nothing was picked,
-    so `<selecttext>` makes nothing."""
+    so `<selecttext>` makes nothing. `mentor`: the mentor spirit or paragon
+    picked, whose `<mentorspirit>` row `_export_mentor_block` writes with the
+    id as its guid."""
     rows: list[tuple[str, str, str, str, int]] = []
     for node in bonus:
         text = (node.text or "").strip()
         if node.tag == "selecttext" and pick is not None:
             rows.append(("Text", pick, "", "", 0))
+        elif node.tag in _NUMBERS and text.lstrip("-").isdigit():
+            rows.append((_NUMBERS[node.tag], "", "", "", int(text)))
+        elif node.tag in ("selectmentorspirit", "selectparagon") and mentor:
+            kind = "MentorSpirit" if node.tag == "selectmentorspirit" else "Paragon"
+            rows.append((kind, mentor, "", mentor, 0))
         elif node.tag == "unlockskills" and text:
             rows.append(("SpecialSkills", text, node.get("name") or "", "", 0))
         elif node.tag == "enabletab":
@@ -288,6 +302,13 @@ def _bonus_improvements(bonus: ET.Element, rating: int, pick: str | None) -> lis
                 rows.append(("Skill", node.findtext("name") or "", "", "", int(amount)))
     return rows
 
+
+#: tags whose improvement is their number and nothing else
+_NUMBERS = {
+    "notoriety": "Notoriety",
+    "cyberwareessmultiplier": "CyberwareEssCost",
+    "biowareessmultiplier": "BiowareEssCost",
+}
 
 #: `AddImprovementCollection.enabletab`: the tab names it knows, as it saves them
 _TABS = {
