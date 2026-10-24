@@ -161,7 +161,7 @@ export const JA_HELP = {
     "ドレイン：術者が受ける反動。F は唱えるときに選ぶフォースで、F−3 ならフォース −3（最低 2）",
   "help.spell.drainResist": "ドレイン抵抗は意志力＋様式の能力値で振り、抵抗しきれない分を食らう",
   "help.spell.force": "フォースが魔力以下なら精神ダメージ、超えると身体ダメージになる（SR5 p.281）",
-  "help.spell.range": "射程（LOS 視界内／T 接触／範囲）と持続（即時／維持／永続）",
+  "help.spell.range": "射程（LOS 視界内／T 接触／範囲）と効果時間（即時／維持／永続）",
   "help.spell.pointsLabel": "呪文の無料枠",
   "help.spell.pointsFree":
     "無料枠は、優先度表の魔法の欄で選んだタレントの呪文数に、資質などが足す分を加えたもの",
@@ -211,7 +211,7 @@ export const JA_HELP = {
   "help.mentor.disadvantage": "欠点は表示だけで、計算には入らない（卓で扱う）",
   "help.cf.fade": "フェイディング抵抗は意志力＋共振力で振り、抵抗しきれない分を食らう",
   "help.cf.level": "レベルが共振力以下なら精神ダメージ、超えると身体ダメージになる",
-  "help.cf.target": "対象（ペルソナ／機器／ファイル／スプライトなど）と持続",
+  "help.cf.target": "対象（ペルソナ／機器／ファイル／スプライトなど）と効果時間",
   "help.cf.pointsLabel": "複合体の無料枠",
   "help.cf.pointsFree": "無料枠は、優先度表の共振の欄で選んだタレントの複合体の数",
   "help.cf.pointsPaid": "枠を超えた複合体は 1 つずつカルマで買う",
@@ -250,7 +250,7 @@ export const JA_HELP = {
   "help.adept.statsLabel": "パワーポイント",
   "help.adept.pp": "アデプトのパワーポイントは魔力と同数。パワーを取った分だけ減る",
   "help.adept.mystic":
-    "ミスティックアデプトは 1 点 5 カルマで買う。買わなかった分の魔力は呪文用に残る",
+    "ミスティック・アデプトは 1 点 5 カルマで買う。買わなかった分の魔力は呪文用に残る",
   "help.adept.way": "Way（流儀）の資質は対象のパワーを安くする。割引の総量は魔力 ÷ 4（切り上げ）",
   "help.martial.statsLabel": "格闘技スタイルと技法",
   "help.martial.style": "格闘技スタイルは 7 カルマ（品目ごとに別のカルマのことがある）",

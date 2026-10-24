@@ -498,7 +498,7 @@ export const JA_CHARGEN = {
   // Explorer) keep their English names, as its metavariants do.
   "prio.cell.adeptOrAspectedMagician": "アデプト or 偏位魔法使い",
   "talent.magician": "魔法使い",
-  "talent.mysticAdept": "ミスティックアデプト",
+  "talent.mysticAdept": "ミスティック・アデプト",
   "talent.adept": "アデプト",
   "talent.aspectedMagician": "偏位魔法使い",
   "talent.technomancer": "テクノマンサー",

@@ -13,7 +13,7 @@ describe("talentLabel", () => {
       "魔法使い - 魔力6/呪文10",
     );
     expect(talentLabel("Mystic Adept", "Mystic Adept - 3 Magic/5 Spells", ja)).toBe(
-      "ミスティックアデプト - 魔力3/呪文5",
+      "ミスティック・アデプト - 魔力3/呪文5",
     );
     expect(talentLabel("Adept", "Adept - 6 Magic", ja)).toBe("アデプト - 魔力6");
     expect(talentLabel("Aspected Magician", "Aspected Magician - 2 Magic", ja)).toBe(

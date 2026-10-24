@@ -150,7 +150,7 @@ export const JA_SHEET = {
   "sheet.metagenicLimit": " ／ 上限 {limit}",
   "sheet.noTechnique": " ・ 技法未選択",
   "sheet.drugsActive": "使用中（能力値・テストに反映済み）",
-  "sheet.drugDuration": " ・ 持続 {duration}",
+  "sheet.drugDuration": " ・ 効果時間 {duration}",
 
   "sheet.drugVector": " ・ 経路 {list}",
   "sheet.grade": "等級 {grade}",

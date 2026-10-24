@@ -159,6 +159,7 @@ RULEBOOK_ONLY = {
     "Martial Arts Style": "格闘技スタイル",  # Run & Gun p.128: the text's form (the heading reads 格闘技のスタイル)
     "Technique": "技法",  # Run & Gun p.128
     "Spell Defense": "呪文防御",
+    "Mystic Adept": "ミスティック・アデプト",  # checked by the user (2026-10-24)
     "Cold Sim": "コールド・シム",  # core rulebook p.231, beside ホット・シム
     "Matrix Condition Monitor": "マトリックス・コンディション・モニター",  # core rulebook p.229
     # a spell's range, checked by the user (2026-10-20)

@@ -348,7 +348,7 @@ export const JA_APP = {
   "txt.vehicleMods": "  改造: {list}",
   "txt.licenses": "  ライセンス: {list}",
   "txt.drugsActive": "使用中のドラッグ（反映済み）",
-  "txt.duration": " / 持続 {duration}",
+  "txt.duration": " / 効果時間 {duration}",
 
   // --- editor errors, prompts and confirmations ----------------------------
   // `lib/api` and `lib/character/quality` have no locale and no React, so they

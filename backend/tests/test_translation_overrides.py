@@ -219,7 +219,9 @@ def test_committed_data_overlay_anchors() -> None:
     assert tr["Bolt Hole"] == "隠れ家"
     assert tr["German Jujitsu"] == "ジャーマン柔術"
     assert tr["Indomitable Will"] == "不屈の意志"
-    assert tr["Redundancy"] == "冗長化"
+    # Data Trails has no Japanese edition, and the Codex does not reprint
+    # Redundancy: the complex form, the A.I. quality and metatype stay English
+    assert not JP_RE.search(tr.get("Redundancy", "") or "")
     # parenthetical mentor variants stay on English fallback (upstream convention)
     assert not JP_RE.search(tr.get("Wolf (Alt)", "") or "")
     # SR5 core gear translated; supplement gear stays English by policy

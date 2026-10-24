@@ -6,10 +6,10 @@
 （`app/data_loader/codex.py`）。ここに載るのは `data.json` の全エントリで、出どころの表ごとに分けてある。
 訳の表は英語名だけで引くので、「品目」の列には、その名前を持つ品目の種類と本をすべて並べる。
 
-- オーバーレイ合計: **555 件**
+- オーバーレイ合計: **554 件**
 - 日本語版のある本: RG, SR5, SRCX（コデックスが再録した品目も日本語版ありと数える）
 
-## 日本語版の無い品目にだけ当たる自前の訳 (246)
+## 日本語版の無い品目にだけ当たる自前の訳 (245)
 
 サプリの用語は英語のままにする方針（本に無い片仮名を作らない）と食い違う候補。
 chumJA（SR4 の訳）は別に数える。
@@ -202,7 +202,6 @@ chumJA（SR4 の訳）は別に数える。
 | Radiation Shield | 放射線シールド/レイディエーション・シールド | ja_curated_spells.SPELLS | spells: SSP |
 | Rapid Draw | 早抜き | ja_curated_entities.ENTITIES | powers: SG |
 | Recorded Room | 録画室/レコーデッド・ルーム | ja_curated_spells.SPELLS | spells: SSP |
-| Redundancy | 冗長化 | ja_curated_entities.ENTITIES | complex_forms: DT / metatypes: DT / qualities: DT |
 | Resonance Bind | 共振バインド | ja_curated_entities.ENTITIES | complex_forms: KC |
 | Resonance Cache | 共振キャッシュ | ja_curated_entities.ENTITIES | complex_forms: KC |
 | Resonance Resistance | 共振抵抗 | ja_curated_entities.ENTITIES | echoes: KC |
@@ -323,7 +322,7 @@ chumJA（SR4 の訳）は別に数える。
 | Heavy [SR5] | 大型武器マウント | weapon_mounts: SR5 |
 | Standard [SR5] | 武器マウント | weapon_mounts: SR5 |
 
-## ja_curated_entities.ENTITIES (134)
+## ja_curated_entities.ENTITIES (133)
 
 | English | 日本語 | 品目 |
 |---|---|---|
@@ -427,7 +426,6 @@ chumJA（SR4 の訳）は別に数える。
 | Primed Charge | プライム・チャージ | complex_forms: KC |
 | Pryon | プライオン | echoes: DTD |
 | Rapid Draw | 早抜き | powers: SG |
-| Redundancy | 冗長化 | complex_forms: DT / metatypes: DT / qualities: DT |
 | Resonance Bind | 共振バインド | complex_forms: KC |
 | Resonance Cache | 共振キャッシュ | complex_forms: KC |
 | Resonance Resistance | 共振抵抗 | echoes: KC |
@@ -668,7 +666,7 @@ chumJA（SR4 の訳）は別に数える。
 | Wild Hunt | ワイルドハント | mentors: SAG |
 | Zoroastrianism | ゾロアスター教 | traditions: SG |
 
-## chumJA(SR4) category (49)
+## chumJA(SR4) category (48)
 
 | English | 日本語 | 品目 |
 |---|---|---|
@@ -697,7 +695,6 @@ chumJA（SR4 の訳）は別に数える。
 | Exotic Ranged Weapons | 特殊射撃武器 | category: CA, HT, LCD, RG, SL, SLG2, SOTG, SR5 |
 | Explosives | 爆発物 | category: 2050, RG, SR5 |
 | Eyeware | アイウェア | category: 2050, CF, SR5 |
-| Free Spirit | 自由精霊 | — |
 | Headware | ヘッドウェア | category: 2050, CF, KC, NF, SR5 |
 | Heavy Machine Guns | ヘビーマシンガン | category: KK, RG, SL, SOTG, SR5 |
 | Hovercraft | ホバークラフト | category: SAG |
@@ -722,7 +719,7 @@ chumJA（SR4 の訳）は別に数える。
 | Unarmed | 素手 | category: HT, SL, SR5 |
 | Weakness | 弱点 | — |
 
-## chumJA(SR4) name (131)
+## chumJA(SR4) name (132)
 
 | English | 日本語 | 品目 |
 |---|---|---|
@@ -773,6 +770,7 @@ chumJA（SR4 の訳）は別に数える。
 | Feedback Clothing | フィードバック・クロージング | armor_mods: SR5 |
 | Foot Anchor | 脚底アンカー | cyberware: CF |
 | Fox | キツネ | mentors: SAG |
+| Free Spirit | 自由精霊 | — |
 | Geomancy | 地霊術 | magic_arts: SG |
 | Gills | 鰓 | bioware: CF |
 | Giraffe | キリン | mentors: HS |
@@ -874,7 +872,7 @@ chumJA（SR4 の訳）は別に数える。
 | FA | Forbidden Arcana |  | 4 | 38 | 0 | 233 |
 | KC | Kill Code |  | 1 | 36 | 3 | 171 |
 | HT | Hard Targets |  | 10 | 34 | 11 | 147 |
-| DT | Data Trails |  | 2 | 21 | 2 | 175 |
+| DT | Data Trails |  | 2 | 20 | 2 | 176 |
 | SL | Street Lethal |  | 16 | 12 | 0 | 137 |
 | SAG | State of the Art ADL (German-Only) |  | 8 | 26 | 0 | 130 |
 | CA | Cutting Aces |  | 7 | 17 | 0 | 106 |
