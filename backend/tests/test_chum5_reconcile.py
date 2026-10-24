@@ -189,10 +189,16 @@ def test_a_quality_improvement_is_matched_by_names_not_guids() -> None:
               <improvement><improvedname /><sourcename>{quality_guid}</sourcename><val>2</val>
                 <improvementttype>Armor</improvementttype><improvementsource>CritterPower</improvementsource>
               </improvement>
+              <improvement><improvedname>Public Grid</improvedname><sourcename>{granted_guid}x</sourcename>
+                <improvementttype>Text</improvementttype><improvementsource>Quality</improvementsource>
+              </improvement>
             </improvements>
         """)
 
     chummer = quality_improvements(save("a1", "b1", "2"))
     export = quality_improvements(save("a2", "b2", "2.0"))
     assert chummer == export
-    assert sorted(kind for _, kind, *_ in chummer) == ["Attribute", "SpecificQuality"]  # not the power's armor
+    assert sorted(kind for _, kind, *_ in chummer) == [
+        "Attribute",
+        "SpecificQuality",
+    ]  # not the power's armor, not the orphan

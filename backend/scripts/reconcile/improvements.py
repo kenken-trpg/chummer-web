@@ -11,10 +11,14 @@ same character reproduces.
 An improvement is matched on its quality's name, its type, what it names and
 its numbers — never a guid, which every file draws afresh: one that names a
 row of the save (the quality a SpecificQuality grants, the contact an
-AddContact adds) is read as that row's name. The figure is a
+AddContact adds) is read as that row's name. Only an improvement whose
+quality is in the save counts: Chummer leaves a Text behind every time it
+makes a lifestyle's free grid again (over a hundred "Public Grid"s naming
+no row at all), and a lifestyle quality's improvements are the lifestyles'
+to write, not the qualities'. The figure is a
 reading to work up, pinned by `FLOOR` so it cannot slide back: the export
-reproduces almost nothing yet, and which types to write next is chosen from
-the per-type table this prints.
+reproduces a little over a third, and which types to write next is chosen
+from the per-type table this prints.
 """
 
 from __future__ import annotations
@@ -25,7 +29,7 @@ from pathlib import Path
 
 #: Reproduced improvements over Chummer's 34 test saves at the pinned ref.
 #: Raise it when the export writes more; a drop means an improvement went missing.
-FLOOR = 5
+FLOOR = 127
 
 Key = tuple[str, ...]
 
@@ -41,7 +45,7 @@ def _number(text: str | None) -> str:
 
 def quality_improvements(root: ET.Element) -> collections.Counter[Key]:
     """(quality, type, improved name, target, val, aug, min, max) for every
-    improvement whose source is a quality, counted."""
+    improvement whose source is one of the save's qualities, counted."""
     rows = {el.findtext("guid") or "": el.findtext("name") or "" for el in root.iter() if el.find("guid") is not None}
     names: dict[str, str] = {}
     for quality in root.findall("./qualities/quality"):
@@ -51,11 +55,12 @@ def quality_improvements(root: ET.Element) -> collections.Counter[Key]:
                 names[quality.findtext(field) or ""] = name
     out: collections.Counter[Key] = collections.Counter()
     for imp in root.findall("./improvements/improvement"):
-        if imp.findtext("improvementsource") != "Quality":
+        owner = names.get(imp.findtext("sourcename") or "")
+        if imp.findtext("improvementsource") != "Quality" or owner is None:
             continue
         out[
             (
-                names.get(imp.findtext("sourcename") or "", "?"),
+                owner,
                 imp.findtext("improvementttype") or "",
                 rows.get(imp.findtext("improvedname") or "", imp.findtext("improvedname") or ""),
                 imp.findtext("target") or "",

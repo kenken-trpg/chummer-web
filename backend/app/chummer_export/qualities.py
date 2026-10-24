@@ -21,6 +21,7 @@ from ..engine.constants import (
     quality_take_extra_key,
 )
 from ..engine.lookups import critter_power_label
+from ..engine.priority import talent_options
 from ..engine.qualities import _quality_needs_spell_category, _quality_needs_spirit_category, has_extra_per_take
 from ..models import CharacterState
 from ._common import _Ctx, _Names, _sub, improvements_of
@@ -35,6 +36,8 @@ def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ct
     ids_by_name = {str(row["name"]): str(row["id"]) for row in catalog()["qualities"]}
     spell_limits: list[tuple[str, str]] = []
     granted: list[tuple[str, str]] = []  # (granting quality id, granted quality's guid)
+    bonuses = {node.findtext("id") or "": node for node in parse_data("qualities.xml").findall("./qualities/quality")}
+    effects: list[tuple[str, list[tuple[str, str, str, str, int]]]] = []  # (quality guid, its improvements)
     takes: dict[str, int] = {}
     for qid in state.quality_ids:
         q = _sub(quals, "quality")
@@ -58,6 +61,16 @@ def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ct
             _sub(q, "guid", qid)
         _sub(q, "extra", extra)
         _sub(q, "qualitysource", "Selected")
+        # what its `<bonus>` made, which Chummer keeps instead of running the
+        # bonus again on load: an Adept's tab and skills, a Wanted's text
+        definition = bonuses.get(qid)
+        bonus = definition.find("bonus") if definition is not None else None
+        rows = _bonus_improvements(bonus, 0, extra) if bonus is not None else []
+        if rows:
+            if q.find("guid") is None:
+                # a second take needs a guid of its own to own its improvements
+                _sub(q, "guid", str(uuid.uuid5(uuid.NAMESPACE_URL, f"{qid}:take:{take}")) if take else qid)
+            effects.append((q.findtext("guid") or "", rows))
         # A quality with a `<selectskill>` bonus carries the skill picked for
         # it. Unlike the implant picks in `_export_ware`, these are keyed by
         # the quality's catalog id, which survives an import unchanged.
@@ -88,6 +101,13 @@ def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ct
             _sub(child, "qualitysource", "Improvement")
             _sub(child, "sourcename", names["quality"].get(qid, ""))
             granted.append((qid, child_guid))
+            # the pick's own bonus ran too: a Wanted it gave keeps its text
+            definition = bonuses.get(child_id)
+            child_bonus = definition.find("bonus") if definition is not None else None
+            if child_bonus is not None:
+                effects.append(
+                    (child_guid, _bonus_improvements(child_bonus, 0, state.quality_extras.get(child_id, "")))
+                )
         # a contact the quality added (Made Man): Chummer ties it to the
         # quality with an AddContact improvement, which the import follows back
         if any(c.source_quality_id == qid for c in state.contacts) and q.find("guid") is None:
@@ -99,6 +119,7 @@ def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ct
             _sub(q, "guid", qid)
 
     export_metatype_qualities(quals, state, ctx)
+    _export_talent_quality(quals, state, bonuses, effects)
     # Chummer keeps life modules here too, as a quality type of their own.
     export_life_modules(quals, state)
     power_links = _export_quality_critter_powers(root, state)
@@ -118,6 +139,57 @@ def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ct
             _sub(imp, "sourcename", qid)
             _sub(imp, "improvementttype", kind)
             _sub(imp, "improvementsource", "Quality")
+    for guid, rows in effects:
+        _write_improvements(root, rows, guid, "Quality")
+
+
+def _export_talent_quality(
+    quals: ET.Element,
+    state: CharacterState,
+    bonuses: dict[str, ET.Element],
+    effects: list[tuple[str, list[tuple[str, str, str, str, int]]]],
+) -> None:
+    """The quality the talent priority gives (Magician, Adept, Technomancer),
+    as Chummer's priority form adds it: `qualitysource` Metatype, outside the
+    quality limits, its `<bonus>` and what that bonus made — the SpecialTab
+    and SpecialSkills improvements Chummer reads to show the magic or
+    resonance tab and to unlock the talent's skills. The import passes over
+    a Metatype quality, as the talent says the same."""
+    name = next(
+        (
+            str(talent.get("quality") or "")
+            for letter in "ABCDE"
+            for talent in talent_options(letter)
+            if talent.get("name") == state.talent
+        ),
+        "",
+    )
+    spec = next((row for row in catalog()["qualities"] if row["name"] == name), None) if name else None
+    if spec is None:
+        return
+    guid = str(uuid.uuid5(uuid.NAMESPACE_URL, f"{state.id}:talent:{spec['id']}"))
+    q = _sub(quals, "quality")
+    for key, value in {
+        "sourceid": spec["id"],
+        "guid": guid,
+        "name": name,
+        "extra": "",
+        "bp": spec.get("karma") or 0,
+        "qualitytype": spec.get("category") or "Positive",
+        "qualitysource": "Metatype",
+        "contributetobp": "False",
+        "contributetolimit": "False",
+        "implemented": "True",
+        "print": "True",
+        "source": spec.get("source") or "",
+        "page": spec.get("page") or "",
+    }.items():
+        _sub(q, key, value)
+    definition = bonuses.get(str(spec["id"]))
+    bonus = definition.find("bonus") if definition is not None else None
+    if bonus is not None:
+        q.append(deepcopy(bonus))
+        effects.append((guid, _bonus_improvements(bonus, 0, None)))
 
 
 def _export_quality_critter_powers(root: ET.Element, state: CharacterState) -> list[tuple[str, str]]:
@@ -181,13 +253,28 @@ def _export_power_improvements(root: ET.Element, bonus: ET.Element, guid: str, r
     (a drake's Hardened Armor added no armor). Covers the tags the powers a
     quality grants carry; Innate Spell's `enabletab` / `selectspell` waits on
     a spell to pick, which the quality does not give."""
-    rows: list[tuple[str, str, str, str, int]] = []  # type, improved name, target, unique, val
+    if bonus.find("selectspell") is not None:
+        return
+    _write_improvements(root, _bonus_improvements(bonus, rating, pick or None), guid, "CritterPower")
+
+
+def _bonus_improvements(bonus: ET.Element, rating: int, pick: str | None) -> list[tuple[str, str, str, str, int]]:
+    """(type, improved name, target, unique, val) for the tags of `bonus`
+    whose improvement needs nothing but the bonus, its rating and its pick —
+    as `AddImprovementCollection` makes them. `pick` None: nothing was picked,
+    so `<selecttext>` makes nothing."""
+    rows: list[tuple[str, str, str, str, int]] = []
     for node in bonus:
         text = (node.text or "").strip()
-        if node.tag == "selecttext" and pick:
+        if node.tag == "selecttext" and pick is not None:
             rows.append(("Text", pick, "", "", 0))
         elif node.tag == "unlockskills" and text:
             rows.append(("SpecialSkills", text, node.get("name") or "", "", 0))
+        elif node.tag == "enabletab":
+            for name in node.findall("name"):
+                tab = _TABS.get((name.text or "").strip().upper())
+                if tab:
+                    rows.append(("SpecialTab", tab, "", "enabletab", 0))
         elif node.tag == "armor":
             value = rating if text == "Rating" else int(text) if text.lstrip("-").isdigit() else None
             if value is not None:
@@ -199,6 +286,22 @@ def _export_power_improvements(root: ET.Element, bonus: ET.Element, guid: str, r
             amount = (node.findtext("bonus") or "").strip()
             if amount.lstrip("-").isdigit():
                 rows.append(("Skill", node.findtext("name") or "", "", "", int(amount)))
+    return rows
+
+
+#: `AddImprovementCollection.enabletab`: the tab names it knows, as it saves them
+_TABS = {
+    "MAGICIAN": "Magician",
+    "ADEPT": "Adept",
+    "TECHNOMANCER": "Technomancer",
+    "ADVANCED PROGRAMS": "Advanced Programs",
+    "CRITTER": "Critter",
+}
+
+
+def _write_improvements(
+    root: ET.Element, rows: list[tuple[str, str, str, str, int]], source_name: str, source: str
+) -> None:
     if not rows:
         return
     imps = improvements_of(root)
@@ -208,11 +311,11 @@ def _export_power_improvements(root: ET.Element, bonus: ET.Element, guid: str, r
             _sub(imp, "unique", unique)
         _sub(imp, "target", target)
         _sub(imp, "improvedname", improved)
-        _sub(imp, "sourcename", guid)
+        _sub(imp, "sourcename", source_name)
         _sub(imp, "val", val)
         _sub(imp, "rating", 1)
         _sub(imp, "improvementttype", kind)
-        _sub(imp, "improvementsource", "CritterPower")
+        _sub(imp, "improvementsource", source)
 
 
 def _export_bought_critter_powers(root: ET.Element, state: CharacterState) -> None:
