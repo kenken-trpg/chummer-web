@@ -645,6 +645,49 @@ def test_a_bonded_focus_leaves_what_its_bonus_made() -> None:
     assert (power.findtext("name"), power.findtext("rating")) == ("Astral Perception", "0")
 
 
+def test_free_power_levels_get_a_power_row_and_its_pick() -> None:
+    """Free levels land on a rating 0 `<power>` row when the power was not
+    bought, and on the bought row when it was. A free power's own pick is
+    the improvement's unique name and the row's extra, and comes back as the
+    choice's extra from a file Chummer wrote."""
+    dragonslayer = next(m["id"] for m in catalog()["mentors"] if m["name"] == "Dragonslayer")
+    choice = "Adept: 1 free level of Enhanced Accuracy and Danger Sense"
+    danger = next(p["id"] for p in catalog()["powers"] if p["name"] == "Danger Sense")
+    state = CharacterState(
+        id="d",
+        name="Dragonslayer",
+        priorities=Priorities(Heritage="D", Attributes="A", Talent="B", Skills="C", Resources="E"),
+        metatype="Human",
+        attributes={},
+        talent="Adept",
+        adept_powers=[AdeptPowerInstall(id="ds", power_id=danger, rating=1)],
+        mentor_id=dragonslayer,
+        mentor_choices=[choice],
+        mentor_extras={choice: "Automatics"},
+    )
+    raw = state_to_chum5(state)
+    root = ET.fromstring(raw)
+    rows = sorted(
+        (imp.findtext("improvedname") or "", imp.findtext("unique") or "")
+        for imp in root.findall("./improvements/improvement")
+        if (imp.findtext("improvementttype") or "").startswith("AdeptPowerFree")
+    )
+    assert rows == [("Danger Sense", ""), ("Enhanced Accuracy (skill)", "Automatics")]
+    powers = sorted(
+        (p.findtext("name") or "", p.findtext("rating") or "", p.findtext("extra") or "")
+        for p in root.findall("./powers/power")
+    )
+    assert powers == [("Danger Sense", "1", ""), ("Enhanced Accuracy (skill)", "0", "Automatics")]
+    # a file Chummer wrote has neither this app's choice list nor its extras
+    mentor = root.find("./mentorspirits/mentorspirit")
+    assert mentor is not None
+    for tag in ("choices", "extras"):
+        mentor.remove(mentor.find(tag))  # type: ignore[arg-type]
+    back = chum5_to_state(ET.tostring(root))[0]
+    assert back["mentor_extras"] == {choice: "Automatics"}
+    assert [p["power_id"] for p in back["adept_powers"]] == [danger]
+
+
 def test_a_power_and_a_mentor_leave_what_their_bonus_made() -> None:
     """An adept power's improvements sit under its guid at its rating; the
     mentor's own bonus and each picked choice's sit under the mentor's guid,
