@@ -8,7 +8,7 @@ from app.characters import compute_state, import_character
 from app.chummer_export import state_to_chum5
 from app.chummer_import import chum5_to_state
 from app.data_loader import catalog
-from app.engine.constants import MENTOR_SPIRIT_ID, PARAGON_ID
+from app.engine.constants import MENTOR_SPIRIT_ID, PARAGON_ID, quality_take_extra_key
 from app.engine.priority import heritage_cost
 from app.models import (
     ArmorInstall,
@@ -302,6 +302,59 @@ def test_prototype_transhumans_pick_is_a_quality_of_its_own() -> None:
     back = chum5_to_state(xml)[0]
     assert back["quality_ids"] == [qid]  # the pick is granted, not bought
     assert back["quality_extras"] == {qid: "Allergy (Common, Mild)", allergy: "Soy"}
+
+
+def _quality_improvements(root: ET.Element) -> list[tuple[str, str, str, str]]:
+    """(quality, type, improved name, unique) for each improvement a quality made."""
+    names = {q.findtext("guid"): q.findtext("name") or "" for q in root.findall("./qualities/quality")}
+    return sorted(
+        (
+            names.get(imp.findtext("sourcename"), "?"),
+            imp.findtext("improvementttype") or "",
+            imp.findtext("improvedname") or "",
+            imp.findtext("unique") or "",
+        )
+        for imp in root.findall("./improvements/improvement")
+        if imp.findtext("improvementsource") == "Quality" and imp.findtext("improvementttype") != "SpecificQuality"
+    )
+
+
+def test_a_quality_leaves_what_its_bonus_made() -> None:
+    """Chummer never runs a `<bonus>` on load, only the improvements saved
+    with it: a Wanted's text, each take's under a guid of its own, and the
+    text of the Allergy a Prototype Transhuman picked."""
+    wanted = next(q["id"] for q in catalog()["qualities"] if q["name"] == "Records on File")
+    allergy = next(q["id"] for q in catalog()["qualities"] if q["name"] == "Allergy (Common, Mild)")
+    state, qid = _with_quality("Prototype Transhuman", {"{id}": "Allergy (Common, Mild)", allergy: "Soy"})
+    state.quality_ids += [wanted, wanted]
+    state.quality_extras |= {wanted: "Ares", quality_take_extra_key(wanted, 1): "EVO"}
+    root = ET.fromstring(state_to_chum5(state))
+    assert _quality_improvements(root) == [
+        ("Allergy (Common, Mild)", "Text", "Soy", ""),
+        ("Records on File", "Text", "Ares", ""),
+        ("Records on File", "Text", "EVO", ""),
+    ]
+
+
+def test_the_talent_quality_opens_its_tab_and_skills() -> None:
+    """The talent priority's quality, as Chummer's priority form adds it:
+    `qualitysource` Metatype, with the SpecialTab and SpecialSkills
+    improvements that show the tab and unlock the talent's skills. Reading
+    it back adds nothing — the talent says the same."""
+    state = CharacterState(
+        id="t", name="Talent", priorities=Priorities(), metatype="Human", attributes={}, talent="Mystic Adept"
+    )
+    xml = state_to_chum5(state)
+    root = ET.fromstring(xml)
+    quality = root.find("./qualities/quality")
+    assert quality is not None
+    assert (quality.findtext("name"), quality.findtext("qualitysource")) == ("Mystic Adept", "Metatype")
+    assert _quality_improvements(root) == [
+        ("Mystic Adept", "SpecialSkills", "Magician", ""),
+        ("Mystic Adept", "SpecialTab", "Adept", "enabletab"),
+        ("Mystic Adept", "SpecialTab", "Magician", "enabletab"),
+    ]
+    assert chum5_to_state(xml)[0]["quality_ids"] == []
 
 
 def test_a_prototype_transhuman_file_from_before_keeps_its_pick() -> None:

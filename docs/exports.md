@@ -66,8 +66,10 @@
   `scripts/chum5_reconcile.py --fidelity` が見ています（開発者向け）。
 - **資質・ウェア・装備などの効果（能力値の上昇など）は、Chummer では効かない
   状態で開かれます。** Chummer は開くときに効果を計算し直さず、ファイルに保存された
-  改善効果だけを使いますが、このアプリはそれをほとんど書きません。書くのは、
-  資質が付けるクリッター・パワーの効果（Hardened Armor のアーマーなど）です。
+  改善効果だけを使いますが、このアプリが書くのはその一部です。書くのは、
+  素質（Magician・Adept など）の資質が開くタブと技能、資質に書いた文字
+  （Wanted の内容など）、資質が付けるクリッター・パワーの効果（Hardened Armor
+  のアーマーなど）です。能力値の上昇などはまだ書きません。
   Chummer の *Special > Re-apply Improvements*（特殊 → Improvements の再適用）で
   資質の効果は付きますが、クリッター・パワーの効果が 2 重になります
   （[確認の記録](fixtures/critter-powers/README.md)）。
