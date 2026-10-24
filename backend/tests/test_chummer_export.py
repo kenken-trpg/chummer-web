@@ -472,6 +472,38 @@ def test_a_quality_leaves_its_attribute_bounds() -> None:
     ]
 
 
+def test_an_implant_leaves_what_its_bonus_made_at_its_rating() -> None:
+    """Ware improvements sit under the implant's guid with its source, and a
+    `Rating` value is worked out at the implant's rating: Wired Reflexes 2 is
+    +2 REA and +2 initiative dice. A `<selectskill>` takes the saved pick."""
+    items = catalog()["cyberware"]["items"]
+    wired = next(r["id"] for r in items if r["name"] == "Wired Reflexes")
+    recorder = next(r["id"] for r in catalog()["bioware"]["items"] if r["name"] == "Reflex Recorder")
+    state = CharacterState(
+        id="w",
+        name="Ware",
+        priorities=Priorities(),
+        metatype="Human",
+        attributes={},
+        cyberware=[CyberwareInstall(id="wr", ware_id=wired, rating=2, grade="Standard")],
+        bioware=[CyberwareInstall(id="rr", ware_id=recorder, rating=1, grade="Standard")],
+        skill_picks={"ware:rr:0": "Automatics"},
+    )
+    root = ET.fromstring(state_to_chum5(state))
+    rows = sorted(
+        tuple(
+            imp.findtext(field) or ""
+            for field in ("sourcename", "improvementsource", "improvementttype", "improvedname", "unique", "aug", "val")
+        )
+        for imp in root.findall("./improvements/improvement")
+    )
+    assert rows == [
+        ("rr", "Bioware", "Skill", "Automatics", "", "0", "1"),
+        ("wr", "Cyberware", "Attribute", "REA", "precedence0", "2", "0"),
+        ("wr", "Cyberware", "InitiativeDice", "", "precedence0", "0", "2"),
+    ]
+
+
 def test_the_talent_quality_opens_its_tab_and_skills() -> None:
     """The talent priority's quality, as Chummer's priority form adds it:
     `qualitysource` Metatype, with the SpecialTab and SpecialSkills
