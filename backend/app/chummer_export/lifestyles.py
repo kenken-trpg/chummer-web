@@ -5,17 +5,24 @@ The mirror of :mod:`app.chummer_import.lifestyles`.
 
 from __future__ import annotations
 
+import uuid
 import xml.etree.ElementTree as ET
 
 from ..data_loader import catalog
+from ..data_loader._xml import parse_data
 from ..models import CharacterState
 from ._common import _Ctx, _id_name, _Names, _sub
+from .improvements import _bonus_improvements, _write_improvements
 
 
 def _export_lifestyles(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
     """Write lifestyles and the qualities picked for them (the built-in free
     ones Chummer derives again, as this app does)."""
     lq_names = _id_name(catalog().get("lifestyle_qualities") or [])
+    bonuses = {
+        node.findtext("id") or "": node.find("bonus")
+        for node in parse_data("lifestyles.xml").findall("./qualities/quality")
+    }
     ls = _sub(root, "lifestyles")
     for lrow in state.lifestyles:
         base = names["lifestyle"].get(lrow.lifestyle_id, "")
@@ -27,12 +34,25 @@ def _export_lifestyles(root: ET.Element, state: CharacterState, names: _Names, c
             _sub(el, key, getattr(lrow, key))
         if lrow.quality_ids:
             quals = _sub(el, "lifestylequalities")
-            for qid in lrow.quality_ids:
+            for index, qid in enumerate(lrow.quality_ids):
                 q = _sub(quals, "lifestylequality")
                 _sub(q, "id", qid)
                 _sub(q, "name", lq_names.get(qid, ""))
-                _sub(q, "extra", lrow.quality_extras.get(qid, ""))
+                extra = lrow.quality_extras.get(qid, "")
+                _sub(q, "extra", extra)
                 _sub(q, "lifestylequalitysource", "Selected")
+                bonus = bonuses.get(qid)
+                # Chummer also uses <extra> for a formatted price label (for
+                # example "Special Work Area [1,000¥]"). That is no text pick
+                # and its saves contain no Text improvement.
+                pick = None if extra.startswith(f"{lq_names.get(qid, '')} [") else extra or None
+                rows = _bonus_improvements(bonus, 1, pick) if bonus is not None else []
+                if rows:
+                    # Chummer owns a lifestyle quality's improvements by its
+                    # instance guid, not by the catalog id in <id>.
+                    guid = str(uuid.uuid5(uuid.NAMESPACE_URL, f"lifestyle-quality:{lrow.id}:{index}:{qid}"))
+                    _sub(q, "guid", guid)
+                    _write_improvements(root, rows, guid, "Quality")
 
 
 def _export_custom_drugs(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:

@@ -80,6 +80,8 @@
   免許、Gas Mask の免疫、Medkit の限界値の修正など）と、結んだフォーカスの効果
   （Weapon Focus の武器、Power Focus、Qi Focus のパワーなど）も書きます。乗り物に
   積んだ装備の効果と、フォーカスの伝統は、まだ書きません。
+  ライフスタイルの資質で選んだテキスト（Public Transportation の利用先など）も
+  Chummer が読む改善効果として書きます。
   Chummer の *Special > Re-apply Improvements*（特殊 → Improvements の再適用）で
   資質の効果は付きますが、クリッター・パワーの効果が 2 重になります
   （[確認の記録](fixtures/critter-powers/README.md)）。

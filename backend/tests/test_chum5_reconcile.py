@@ -230,3 +230,23 @@ def test_an_implants_improvement_is_counted_under_its_source() -> None:
         ("Armor", "fire resistance", "FireArmor"),
         ("Cyberware", "dermal plating", "Armor"),
     ]
+
+
+def test_lifestyle_quality_improvement_is_counted_without_orphan_grid_text() -> None:
+    from scripts.reconcile.improvements import improvements
+
+    root = _save("""
+        <lifestyles><lifestyle><lifestylequalities>
+          <lifestylequality><id>catalog-id</id><guid>instance-id</guid>
+            <name>Public Transportation</name></lifestylequality>
+        </lifestylequalities></lifestyle></lifestyles>
+        <improvements>
+          <improvement><sourcename>instance-id</sourcename><improvedname>Subway</improvedname>
+            <improvementttype>Text</improvementttype><improvementsource>Quality</improvementsource>
+          </improvement>
+          <improvement><sourcename>old-grid-id</sourcename><improvedname>Public Grid</improvedname>
+            <improvementttype>Text</improvementttype><improvementsource>Quality</improvementsource>
+          </improvement>
+        </improvements>
+    """)
+    assert [key[:4] for key in improvements(root)] == [("LifestyleQuality", "public transportation", "Text", "Subway")]
