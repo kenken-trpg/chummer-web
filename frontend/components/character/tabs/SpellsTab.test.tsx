@@ -140,6 +140,10 @@ describe("<SpellsTab>", () => {
     expect(select.options).toHaveLength(attributes.length + 1);
     fireEvent.change(select, { target: { value: "CHA" } });
     expect(patch).toHaveBeenCalledWith({ spells: [{ id: "s1", spell_id: "inc", extra: "CHA" }] });
+    // the "?" says each pick is a spell of its own
+    expect(screen.getByRole("button", { name: "能力値 の説明" })).toBeDefined();
+    expect(screen.getByText(/選んだ能力値ごとに 1 つの呪文として数える/)).toBeDefined();
+    expect(screen.getByText(/重複として外れる/)).toBeDefined();
   });
 
   it("keeps a spell that picks on offer after it is learned, and only that one", () => {
@@ -186,5 +190,7 @@ describe("<SpellsTab>", () => {
     expect(patch).not.toHaveBeenCalled();
     fireEvent.focusOut(input);
     expect(patch).toHaveBeenCalledWith({ spells: [{ id: "s1", spell_id: "wall", extra: "Ice" }] });
+    expect(screen.getByRole("button", { name: "対象 の説明" })).toBeDefined();
+    expect(screen.getByText(/［ ］に入るもの/)).toBeDefined();
   });
 });

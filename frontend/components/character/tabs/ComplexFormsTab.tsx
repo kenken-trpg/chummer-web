@@ -78,8 +78,14 @@ export function ComplexFormsTab({ catalog, character: ch, d, tr, ui, patch }: Ta
               </label>
               {item.needs_extra ? (
                 <label>
-                  {ui("cf.attribute")}
+                  <HelpTip
+                    label={ui("help.open", { label: ui("cf.attribute") })}
+                    lines={[{ label: ui("help.cf.pickAttr") }, { label: ui("help.cf.pickSame") }]}
+                  >
+                    {ui("cf.attribute")}
+                  </HelpTip>{" "}
                   <select
+                    aria-label={ui("cf.attribute")}
                     value={item.extra || ""}
                     onChange={(e) =>
                       patch({

@@ -185,6 +185,11 @@ export const EN_HELP = {
   "help.spell.pointsTouch": "Some qualities add slots that only touch-range spells can use",
   "help.spell.pointsPaid":
     "Each spell past them is bought with karma; qualities can change how much",
+  "help.spell.pickAttr":
+    "Each attribute picked counts as a spell of its own: pick another and the same spell can be learned again, each taking a free slot or karma",
+  "help.spell.pickText":
+    "Each pick (what the [ ] names, such as the kind of life form to detect) counts as a spell of its own: name another and the same spell can be learned again, each taking a free slot or karma",
+  "help.spell.pickSame": "A second one with the same pick is dropped as a duplicate",
   "help.ware.statsLabel": "Ware",
   "help.ware.essence": "ESS \u2212n is the essence this piece costs, after its grade multiplier",
   "help.ware.capacity":
@@ -241,6 +246,9 @@ export const EN_HELP = {
   "help.cf.pointsFree":
     "The free complex forms are those of the talent picked in the priority table\u2019s Resonance column",
   "help.cf.pointsPaid": "Each complex form past them is bought with karma",
+  "help.cf.pickAttr":
+    "Each Matrix attribute picked counts as a complex form of its own: pick another and the same form can be learned again, each taking a free slot or karma",
+  "help.cf.pickSame": "A second one with the same attribute is dropped as a duplicate",
   "help.spirit.statsLabel": "Spirit",
   "help.spirit.force":
     "Force is the spirit\u2019s strength: its attributes and its dice pools follow from it",

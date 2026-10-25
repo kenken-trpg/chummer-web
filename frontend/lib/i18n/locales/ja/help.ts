@@ -169,6 +169,11 @@ export const JA_HELP = {
     "無料枠は、優先度表の魔法の欄で選んだタレントの呪文数に、資質などが足す分を加えたもの",
   "help.spell.pointsTouch": "資質によっては、接触射程の呪文にしか使えない枠を足す",
   "help.spell.pointsPaid": "枠を超えた呪文は 1 つずつカルマで買う。1 つのカルマは資質で変わる",
+  "help.spell.pickAttr":
+    "選んだ能力値ごとに 1 つの呪文として数える。別の能力値なら同じ呪文をもう 1 つ取れ、無料枠かカルマもそれぞれにかかる",
+  "help.spell.pickText":
+    "［ ］に入るもの（探知する生物の種類など）ごとに 1 つの呪文として数える。別の内容なら同じ呪文をもう 1 つ取れ、無料枠かカルマもそれぞれにかかる",
+  "help.spell.pickSame": "同じ選択で 2 つ目を取ると、重複として外れる",
   "help.ware.statsLabel": "ウェアの値",
   "help.ware.essence": "ESS −n はこの品が食うエッセンス。等級の倍率がかかった後の値",
   "help.ware.capacity":
@@ -217,6 +222,9 @@ export const JA_HELP = {
   "help.cf.pointsLabel": "複合体の無料枠",
   "help.cf.pointsFree": "無料枠は、優先度表の共振の欄で選んだタレントの複合体の数",
   "help.cf.pointsPaid": "枠を超えた複合体は 1 つずつカルマで買う",
+  "help.cf.pickAttr":
+    "選んだマトリックス能力値ごとに 1 つの複合体として数える。別の能力値なら同じ複合体をもう 1 つ取れ、無料枠かカルマもそれぞれにかかる",
+  "help.cf.pickSame": "同じ能力値で 2 つ目を取ると、重複として外れる",
   "help.spirit.statsLabel": "精霊の値",
   "help.spirit.force": "F（フォース）：精霊の強さ。能力値もテストのダイスもここから決まる",
   "help.spirit.services": "助力：命じられる残り回数。1 つの仕事で助力を 1 回使う",
