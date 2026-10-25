@@ -27,6 +27,7 @@ from app.models import (
     FocusInstall,
     GearInstall,
     LifestyleInstall,
+    MartialArtInstall,
     Priorities,
     QiFocusInstall,
     SpellInstall,
@@ -485,6 +486,43 @@ def test_a_tradition_leaves_what_its_bonus_made() -> None:
         for imp in root.findall("./improvements/improvement")
         if imp.findtext("improvementsource") == "Tradition"
     } == {root.findtext("./tradition/guid")}
+
+
+def test_the_artisans_way_cheapens_binding_each_qi_focus_it_names() -> None:
+    """One FocusBindingKarmaCost per power the Qi Focus may hold, with the
+    power as the target: Chummer works the binding cost out of these in play."""
+    state, _ = _with_quality("The Artisan's Way", {})
+    root = ET.fromstring(state_to_chum5(state))
+    rows = [
+        (imp.findtext("improvedname"), imp.findtext("target"), imp.findtext("val"))
+        for imp in root.findall("./improvements/improvement")
+        if imp.findtext("improvementttype") == "FocusBindingKarmaCost"
+    ]
+    assert ("Qi Focus", "Improved Ability (skill) (Animal Handling)", "-2") in rows
+    assert len(rows) == len({target for _, target, _ in rows}) > 1
+
+
+def test_a_martial_art_offers_its_specialization_under_its_guid() -> None:
+    """As Gentle Earthquake's Carromeleg has it: the skill, the style as the
+    unique, and the style's guid as the source name."""
+    art = next(row for row in catalog()["martial_arts"] if row["name"] == "Aikido")
+    state, _ = _with_quality("Magician", {})
+    state.martial_arts = [MartialArtInstall(art_id=art["id"])]
+    root = ET.fromstring(state_to_chum5(state))
+    guid = root.findtext("./martialarts/martialart/guid")
+    assert guid == state.martial_arts[0].id
+    assert [
+        (imp.findtext("improvedname"), imp.findtext("unique"), imp.findtext("sourcename"))
+        for imp in root.findall("./improvements/improvement")
+        if imp.findtext("improvementsource") == "MartialArt"
+    ] == [("Unarmed Combat", "Aikido", guid)]
+
+
+def test_electroception_offers_its_specialization_for_perception() -> None:
+    state, _ = _with_quality("Electroception (Electrosense)", {})
+    assert ("SkillSpecializationOption", "Perception", "0", "1") in _improvements_by(
+        ET.fromstring(state_to_chum5(state)), "Quality"
+    )
 
 
 def test_a_technoshaman_may_fetter_sprites_in_chummer() -> None:

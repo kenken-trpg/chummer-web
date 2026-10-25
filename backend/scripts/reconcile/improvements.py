@@ -1,4 +1,4 @@
-"""How much of what a quality, an implant, a piece of gear or a spell does reaches
+"""How much of what a quality, an implant, a piece of gear, a spell or a martial art does reaches
 Chummer through the export.
 
 Chummer never runs a `<bonus>` when it opens a file: it uses the
@@ -41,6 +41,7 @@ GROUPS = {
     "Power": ("Power",),
     "MentorSpirit": ("MentorSpirit",),
     "Spell": ("Spell",),
+    "MartialArt": ("MartialArt",),
 }
 
 #: Reproduced improvements over Chummer's 34 test saves at the pinned ref, by
@@ -56,6 +57,7 @@ FLOORS = {
     "Power": 62,
     "MentorSpirit": 37,
     "Spell": 15,
+    "MartialArt": 1,
 }
 
 Key = tuple[str, ...]
