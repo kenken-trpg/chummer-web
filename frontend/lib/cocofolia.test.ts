@@ -179,12 +179,24 @@ describe("buildChatPalette", () => {
       derived: {
         totals: { MAG: 5 } as never,
         skill_totals: { Spellcasting: 6 },
-        spells: [{ id: "s1", name: "Manabolt", dv: "F-3" }] as never,
+        spells: [
+          { id: "s1", name: "Manabolt", dv: "F-3" },
+          // one per attribute, so the line names which (the catalog here has
+          // no attribute names, so the code stands in for one)
+          {
+            id: "s2",
+            name: "Increase [Attribute]",
+            dv: "F-3",
+            extra: "WIL",
+            extra_kind: "attribute",
+          },
+        ] as never,
       },
     });
     const out = buildChatPalette(ch, scCatalog, identityTr);
     expect(out).toContain("// ── 呪文（リミット＝フォース） ──");
     expect(out).toContain("11B6 Manabolt ［DVF-3］");
+    expect(out).toContain("11B6 Increase [Attribute] (WIL) ［DVF-3］");
   });
 
   it("adds a matrix block when a persona is present", () => {

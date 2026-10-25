@@ -57,12 +57,18 @@ def _spells(derived: dict[str, Any], tr: Any) -> list[dict[str, str]]:
             "damage": str(row.get("damage") or ""),
             "descriptors": str(row.get("descriptor") or ""),
         }
+        extra = str(row.get("extra") or "")
         out.append(
             {
                 "guid": str(row.get("id") or ""),
                 "sourceid": str(row.get("spell_id") or ""),
                 "name": tr(name),
                 "name_english": name,
+                # what Increase [Attribute] picked, in brackets, as
+                # `Spell.Print` writes it beside the bare name
+                "fullname": _fullname(tr(name), tr(extra) if extra else ""),
+                "fullname_english": _fullname(name, extra),
+                "extra": extra or None,
                 **fields,
                 **{f"{key}_english": value for key, value in fields.items()},
                 "alchemy": _flag(row.get("alchemical")),

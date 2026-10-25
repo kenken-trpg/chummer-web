@@ -1,5 +1,6 @@
 import type { Catalog, Character } from "@/lib/types";
 import { attrShort, makeT, specTr } from "@/lib/ui-strings";
+import { spellLabel } from "@/lib/spell-terms";
 import { type Locale, type MsgKey, type UiFn, translate } from "@/lib/i18n";
 import { renderNotice } from "@/lib/engine-notices";
 import { skillDefault } from "@/lib/character/skill-default";
@@ -57,6 +58,7 @@ export function buildChatPalette(
   opts: CocofoliaOptions = {},
 ): string {
   const ui = uiFor(locale);
+  const t = makeT(catalog, locale);
   const d = ch.derived;
   const totals: Record<string, number> = d.totals || {};
   const at = (k: string) => totals[k] || 0;
@@ -164,7 +166,7 @@ export function buildChatPalette(
   spells.forEach((s) => {
     const sk = s.useskill || "Spellcasting";
     const pool = skillPool(sk) + at("MAG");
-    out.push(`${Math.max(pool, 0)}B6 ${tr(s.name)}${s.dv ? ` ［DV${s.dv}］` : ""}`);
+    out.push(`${Math.max(pool, 0)}B6 ${spellLabel(s, tr, t)}${s.dv ? ` ［DV${s.dv}］` : ""}`);
   });
 
   // --- conjuring: skill + MAG (limit = Force, variable) --------------------
@@ -221,7 +223,6 @@ export function buildChatPalette(
     roll(d.drain_resist.pool, ui("coco.drainResist", { attrs: d.drain_resist.attrs }));
   if (d.fade_resist && tabs.includes("complexforms"))
     roll(d.fade_resist.pool, ui("coco.fadeResist", { attrs: d.fade_resist.attrs }));
-  const t = makeT(catalog, locale);
   const spellDefense = spellDefenseRolls(d, ui, (k) => attrShort(k, t));
   if (spellDefense.length) out.push(ui("coco.secSpellDefense"));
   for (const row of spellDefense) roll(row.pool, row.label);

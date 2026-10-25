@@ -242,6 +242,17 @@ def test_spells_carry_every_keyword_in_english() -> None:
     assert spell["alchemy"] == "False"
 
 
+def test_a_spells_pick_is_in_its_fullname() -> None:
+    """`Spell.Print` writes the bare name and, as `fullname`, the name with
+    what it picked in brackets — Increase [Attribute] once per attribute."""
+    increase = _id("spells", "Increase [Attribute]")
+    state = compute_state(_mystic().model_copy(update={"spells": [SpellInstall(spell_id=increase, extra="WIL")]}))
+    (spell,) = _char(state)["spells"]["spell"]
+    assert spell["name_english"] == "Increase [Attribute]"
+    assert spell["fullname_english"] == "Increase [Attribute] (WIL)"
+    assert spell["extra"] == "WIL"
+
+
 def test_adept_powers_carry_the_level_and_the_points_spent() -> None:
     rows = {p["name_english"]: p for p in _char(_mystic())["powers"]["power"]}
     reflexes = rows["Improved Reflexes"]

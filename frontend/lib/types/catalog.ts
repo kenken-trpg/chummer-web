@@ -599,6 +599,9 @@ export interface Catalog {
     kind?: "spell" | "ritual" | "enchantment";
     useskill?: string;
     learnable?: boolean;
+    /** picks something when learned — a spell of its own for each pick, so
+     *  one already learned can be learned again */
+    needs_extra?: boolean;
     required?: string[];
     source: string;
     page: string;
