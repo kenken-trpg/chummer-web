@@ -122,7 +122,13 @@ export function ComplexFormsTab({ catalog, character: ch, d, tr, ui, patch }: Ta
       <div className="quality-list">
         <PickerList
           items={(catalog.complex_forms || [])
-            .filter((item) => !(ch.complex_forms || []).some((row) => row.form_id === item.id))
+            // Infusion of [Matrix Attribute] is one form per attribute: it
+            // stays offered after the first
+            .filter(
+              (item) =>
+                item.needs_extra ||
+                !(ch.complex_forms || []).some((row) => row.form_id === item.id),
+            )
             .filter((item) => {
               const q = cfSearch.trim().toLowerCase();
               if (q) {

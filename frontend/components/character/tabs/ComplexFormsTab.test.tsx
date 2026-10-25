@@ -71,4 +71,30 @@ describe("<ComplexFormsTab>", () => {
     );
     expect(names).toEqual(["Cleaner"]);
   });
+
+  it("keeps a form that picks an attribute on offer after it is learned, and only that one", () => {
+    const infusion = {
+      ...puppeteer,
+      id: "inf",
+      name: "Infusion of [Matrix Attribute]",
+      needs_extra: true,
+    };
+    const ch = makeCharacter({
+      complex_forms: [
+        { id: "c1", form_id: "inf", extra: "Sleaze" },
+        { id: "c2", form_id: "pw" },
+      ],
+    });
+    render(
+      <ComplexFormsTab
+        {...panelProps(ch, {
+          catalog: makeCatalog({ complex_forms: [puppeteer, infusion] as never }),
+        })}
+      />,
+    );
+    const offered = [...document.querySelectorAll(".quality-list .quality-item b")].map(
+      (b) => b.textContent,
+    );
+    expect(offered).toEqual(["Infusion of [Matrix Attribute]"]);
+  });
 });
