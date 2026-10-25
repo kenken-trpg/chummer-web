@@ -3,6 +3,222 @@
 Notable changes. Format follows [Keep a Changelog](https://keepachangelog.com/);
 self-hosters can pin to a tag instead of tracking `main`.
 
+## [0.5.15] — 2026-10-25
+
+### Added
+
+- **A spell's or a complex form's pick explains itself with "?".** Increase
+  [Attribute]'s attribute, a spell's typed pick and Infusion of [Matrix
+  Attribute]'s attribute say that each pick is a spell or form of its own,
+  taking its own free slot or karma, and that a second one with the same pick
+  is dropped.
+- **The manual walks through life-module creation.** The new section on the
+  priority tab takes the five stages, the module's choices and where the
+  skill overflow goes, and says what is not done yet. The spell and complex
+  form sections say how a spell that picks something is counted.
+
+- **ライフモジュール:** 知識・言語技能の上限超過分を、別の知識・言語技能へ無償で配分できるようにしました。配分の検証と保存復元にも対応します（本アプリの独自ルール）。
+
+- **呪文の選択**: 呪文の欄で、Increase [Attribute] の能力値や [Element] Wall の対象を選べるようにしました。
+  選ぶ呪文は覚えたあとも一覧に残り、能力値ごとに別の呪文として足せます。
+  呪文名には選んだものを括弧で添えます（ココフォリアのチャットパレットと Foundry VTT 書き出しの fullname も同じ）。
+
+### Changed
+
+- **Nine critter powers read in Japanese.** From the core rulebook:
+  顕現, 動物制御(Insect Type), 強化感覚(生体ソナー) and 念動(Infected) — the
+  book has no word for the insect variant, and Infected stays English. The
+  five hidden powers that grant a skill take the rulebook's skill category
+  names (戦闘系能動技能 and the rest).
+
+- **The nine homunculi read in Japanese.** Each takes the core rulebook's
+  word for its material from the barrier rating table (p.197), so
+  Homunculus (Fragile) reads ホムンクルス(壊れやすい素材) and Homunculus
+  (Hardened Material) ホムンクルス(特殊硬化材).
+
+- **Names from books with no Japanese edition read in English.** 241 of our
+  own translations reached only such books — 97 spells, the supplements'
+  mentor spirits, lifestyles, martial arts, complex forms, most of their adept
+  powers and echoes, and a few spirits, traditions and magic arts — and they
+  now read in English like the rest of those books, as does Run Faster's
+  Metavariant on the metatype tab. Three category names that are core terms
+  (加速値, 強靱力, 助力) keep their Japanese.
+
+### Fixed
+
+- **Armor and its mods take effect when Chummer opens the export.** A piece
+  of armor or an armor mod now leaves the improvements its bonus makes at its
+  rating (Fire Resistance, Nonconductivity, Chemical Protection, a mask's
+  limit modifier), under its guid, which the export now writes. Armor not
+  worn leaves them disabled, as Chummer keeps them. A bonus's `unique` name
+  now goes on its improvements too, so two pieces of the same protection do
+  not stack. Over Chummer's 34 test saves the export now reproduces 61 of 95
+  armor improvements; the rest are limit modifiers whose rows those saves
+  never kept, and YNT Softweave, which today's data gives no bonus.
+
+- **.chum5 のフォーカスと専門化**: フォーカスを結ぶカルマの割引（The Artisan's Way、The Warrior's Way など）と、格闘技スタイルや Electroception が選ばせる専門化を、.chum5 書出の改善効果に書くようにしました。
+  これまでは Chummer でキャリアを進めると、割引や専門化の選択肢がありませんでした。
+
+- **A drake's Hardened Armor counts when Chummer opens the export.** Chummer
+  never runs a bonus on load, and the `.chum5` carried none of the
+  improvements the powers a quality grants make, so the armor, a picked
+  element and Dual Natured's astral skills did nothing there. They are now
+  written as Chummer itself writes them, checked against a file Chummer
+  5.226.177 saved. The quality's own effects (attribute raises and the like)
+  are still not written; the export guide says so.
+
+- **Bonded foci take effect when Chummer opens the export.** A focus now
+  leaves the improvements bonding it makes, at its force: a Weapon Focus's
+  dice on the weapon it is bound to, a Power Focus's, a Spellcasting
+  Focus's, an Alchemical Focus's skill. A Qi focus gives an adept's power
+  its free points, on a rating 0 power row when the power was not bought.
+  The `<focus>` pointer now has a guid of its own rather than its gear's,
+  as in Chummer's saves. A focus's tradition is not written yet: this app
+  does not record one.
+
+- **Free power levels land in Chummer.** A mentor spirit's, a quality's or
+  a Qi focus's free levels name a power by name; when the character had not
+  bought it, Chummer had no power to put them on. The export now adds the
+  power at rating 0, as Chummer itself does: Eagle's Combat Sense,
+  Dragonslayer's Danger Sense. A free power's own pick (Dragonslayer's
+  Enhanced Accuracy skill) now goes out as its extra, and comes back from a
+  file Chummer wrote. Over Chummer's 34 test saves the export now writes the
+  same rating 0 powers in six of the seven that have any.
+
+- **Gear takes effect when Chummer opens the export.** An item now leaves
+  the improvements its bonus makes at its rating, with its extra as the
+  pick: a Fake License's license, a Fake SIN's or an autosoft's text, a
+  magical supply's tradition, a Gas Mask's immunities, a Medkit's limit
+  modifier. What armor carries is disabled while the armor is not worn.
+  Over Chummer's 34 test saves the export now reproduces 180 of 208 gear
+  improvements; the rest are limit modifiers whose rows those saves never
+  kept, foci, gear in a vehicle and items the import cannot read.
+
+- **Chummer 書き出し**: ライフスタイル資質の選択テキストの改善効果を `.chum5` に保存し、Chummer で開いたときにも選択内容が反映されるようにしました。
+
+- **A Made Man from a Chummer save keeps its own contact.** The import looked
+  for the quality's data id in `<sourceid>` and `<guid>`, but Chummer saves it
+  in `<id>`, so the contact Made Man added came back as a paid contact and
+  the quality added a made-up second one (Ushi Resub). The export now also
+  writes what Made Man's bonus makes for Chummer: the contact's forced
+  loyalty, free and group flags, and the Made Man improvement.
+
+- **.chum5 の魔法の制限**: 使えなくなる技能（Null Wizard、Dedicated Spellslinger、Chain Breaker など）、呪文・精霊の種別の制限（Elementalist、Apprentice、伝統 Toxic など）、呪文の種別ごとのドレインとダメージ（Death Dealer、Hedge Witch/Wizard）、資質が足す精霊（Chain Breaker、Dark Ally）を、.chum5 書出の改善効果に書くようにしました。
+  これまでは Chummer で開くと、これらの制限が外れていました。
+- **.chum5 の伝統**: 伝統の効果（Pariah の使えない技能、Missionist の呪文の種別など）を .chum5 書出に書くようにしました。
+- **呪文の種別を選ぶ資質の .chum5**: Apprentice・Elementalist・Hedge Witch/Wizard の `<extra>` を、Chummer と同じく「選んだ呪文の種別, 精霊」（例 `Combat, Spirit of Air`）で書くようにしました。Elementalist の種別は改善効果の側にも書きます。これまでの形のファイルも読めます。
+
+- **Adept powers and the mentor spirit take effect when Chummer opens the
+  export.** An adept power now leaves the improvements its bonus makes at
+  its rating (Improved Reflexes, Improved Ability, Combat Sense and the
+  rest), and its guid, which they name. The mentor spirit leaves its own
+  bonus's and each picked choice's, free power levels included for an
+  adept. Over Chummer's 34 test saves the export now reproduces 62 of 75
+  power and 37 of 51 mentor improvements; the rest come from older Chummer
+  data.
+
+- **Exceptional Attribute, Impaired Attribute, Infirm and Metagenic
+  Improvement change attribute limits when Chummer opens the export, and a
+  quality that opens MAG or RES says so.** `specificattribute`,
+  `selectattributes` (each pick, an Infected's four included) and
+  `enableattribute` now leave their Attribute improvements. The import no
+  longer takes the MAG a vampire's `enableattribute` opens for one of its
+  attribute picks. Over Chummer's 34 test saves the export now reproduces
+  323 of the 342 quality improvements; the rest come from older Chummer data
+  or import limits.
+
+- **A Magician's or Adept's export opens with its tab and skills unlocked in
+  Chummer, and a Wanted keeps its text.** The talent priority's quality was
+  missing from the `.chum5`, and no quality wrote the improvements its bonus
+  makes, which Chummer reads instead of running the bonus on load. The
+  talent's quality is now written as Chummer's priority form adds it, and a
+  quality's tabs, unlocked skills, picked text and skill bonuses leave their
+  improvements. Over Chummer's 34 test saves the export now reproduces 127 of
+  the 342 quality improvements Chummer saved, up from 5.
+
+- **A mentor spirit, notoriety and an essence multiplier from a quality take
+  effect when Chummer opens the export.** Mentor Spirit now leaves the
+  improvement that ties it to the `<mentorspirit>` row, and a quality's
+  notoriety and cyberware / bioware essence multipliers leave theirs —
+  Gremlins' from its first take only, as Chummer does. A quality the metatype
+  grants (an Uneducated) leaves its improvements too. Over Chummer's 34 test
+  saves the export now reproduces 167 of the 342 quality improvements.
+
+- **Many more quality effects work when Chummer opens the export: Celerity's
+  speed, Quick Healer's recovery, Consummate Professional's street cred,
+  Shiva Arms' limbs, Fame, Ambidextrous and the like.** Every
+  `AddImprovementCollection` tag that is one number (86 of them) now leaves
+  its improvement, as do condition monitor, movement, sprint, limb, lifestyle
+  cost, skill category / group, restricted gear, living persona and seeker
+  bonuses. A quality `<addqualities>` grants (Pie Iesu Domine's High Pain
+  Tolerance) is now written as a quality of its own, tied back to the
+  granting one. Over Chummer's 34 test saves the export now reproduces 265 of
+  the 342 quality improvements.
+
+- **A Technomancer's export carries the Living Persona in Chummer, and
+  Impassive and Prototype Transhuman take effect there.** A quality's
+  `addgear` now writes the gear it gives along with the Gear improvement
+  that ties it to the quality, `limitmodifier` writes the limit modifier and
+  its improvement, and `prototypetranshuman` leaves its improvement. A Dead
+  SIN's Fake SIN is left out: this app stocks that gear, so it would read
+  back as bought. Over Chummer's 34 test saves the export now reproduces 276
+  of the 342 quality improvements.
+
+- **College Education, School of Hard Knocks, Uneducated and Jack of All
+  Trades change skill costs when Chummer opens the export.** A quality's
+  karma and point cost tags (all 27 Chummer has, from attributes to skill
+  specializations) now leave their improvements with the bounds and the
+  condition Chummer reads. Over Chummer's 34 test saves the export now
+  reproduces 206 of the 342 quality improvements.
+
+- **.chum5 の Neural Amplifiers など**: 能力値に結びついた技能をまとめて上げるウェア（Neural Amplifiers、PuSHed、Qualia）の効果を、.chum5 書出の改善効果に書くようにしました。これまでは Chummer で開くと技能が上がっていませんでした。
+
+- **Chummer 書き出し**: Resonant Stream: Technoshaman の「スプライトを縛れる」改善効果を `.chum5` に保存し、Chummer で開いたあともスプライトを縛れるようにしました。
+
+- **Implants take effect when Chummer opens the export.** Wired Reflexes'
+  reaction and initiative, muscle and cerebral boosters, a Mnemonic
+  Enhancer's limits and skills, toxin and pathogen resistances and the rest
+  now leave the improvements their bonus makes, worked out at the implant's
+  rating, with the skill picked for a Reflex Recorder or a Cyberlimb
+  Optimization. Over Chummer's 34 test saves the export now reproduces 51 of
+  85 cyberware and 112 of 113 bioware improvements; the rest come from older
+  Chummer data.
+
+- **複合体の選択**: Infusion / Diffusion of [Matrix Attribute] を、マトリックス能力値ごとに別の複合体として覚えられるようにしました。
+  これまでは 2 つめ以降が重複として外れ、一覧からも足せませんでした。
+
+- **A long catalog category no longer runs off a phone screen.** The armour
+  category 高級ファッション志向のアーマー・クロージング was one unbroken chip
+  wider than a 320px screen; category chips now wrap inside themselves.
+
+- **A mentor spirit gives one choice per box, as in Chummer.** Every choice
+  but `set="2"` is one pick: Berserker's adept now takes one of its three
+  "Adept:" choices instead of all three, and a mystic adept one of the
+  Magician / Adept pair. The picker clears the other choices of the box.
+
+- **Mentor's Mask**: 2019 年より前の Chummer で導師精霊に印を付けて取った Mentor's Mask を、資質 Mentor's Mask として取り込むようにしました。
+  これまでは印が読まれず、パワーポイント +1 が数えられずに「パワーポイントの使いすぎ」が誤って出ていました。
+- **.chum5 のドレインとフェイディング**: 資質などが呪文のドレインや複合体のフェイディングを変える効果（Mentor's Mask、Resonant Stream: Machinist など）を、.chum5 書出の改善効果に書くようにしました。
+
+- **Data Trails' Redundancy reads in English, and Mystic Adept takes its
+  middle dot.** The complex form, the A.I. quality and the A.I. metatype of
+  that name showed our own coinage 冗長化; Data Trails has no Japanese edition,
+  so they now read Redundancy like the rest of the book. The talent picker,
+  its help and an engine message wrote `ミスティックアデプト` where the data
+  and the Excel import/export print ミスティック・アデプト.
+- **A duration reads 効果時間, as the glossary has it.** The spell and complex
+  form help and a drug's duration on the sheet, the text export and the
+  custom drug form wrote `持続`.
+
+- **呪文の選択**: Increase [Attribute] の能力値や Detect [Life Form] の対象など、呪文を覚えるときに選ぶものを持つようにしました。
+  能力値ごとに別の呪文として覚えられ、.chum5 の読み込みで 2 つめ以降が重複として外れることはなくなりました（Chummer のテスト用セーブ resub では 8 件中 2 件が外れていた）。
+  書き出しは選んだものを `<extra>` に書き、Chummer が呪文から作る改善効果も書きます。
+
+- **Chummer 取り込み:** Serpent などのセーブで端末に入っていない Mapsoft 等のアプリを、価格と対象を保ったまま取り込みます。装備画面から端末へ配置できます。
+
+- **.xlsx の呪文の選択**: .xlsx書出で、Increase [Attribute] の能力値や Detect [Life Form] の対象を呪文名の後ろに括弧で書くようにしました（複合体のマトリックス能力値も同じ）。
+  これまでは選んだものが落ちていました。読込でも括弧を外して読み戻し、能力値は日本語名（筋力）でも略号（STR）でも読めます。
+
 ## [0.5.14] — 2026-10-24
 
 ### Added
@@ -2463,7 +2679,8 @@ First tagged release.
 - One-container Docker image (Caddy + uvicorn + Next standalone) published to
   GHCR; `make up` / `compose.yaml` for local self-hosting.
 
-[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.14...HEAD
+[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.15...HEAD
+[0.5.15]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.14...v0.5.15
 [0.5.14]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.13...v0.5.14
 [0.5.13]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.12...v0.5.13
 [0.5.12]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.11...v0.5.12

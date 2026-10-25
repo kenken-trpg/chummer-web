@@ -1,1 +1,0 @@
-- **Chummer 書き出し**: Resonant Stream: Technoshaman の「スプライトを縛れる」改善効果を `.chum5` に保存し、Chummer で開いたあともスプライトを縛れるようにしました。

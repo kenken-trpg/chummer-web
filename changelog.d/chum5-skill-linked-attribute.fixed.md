@@ -1,1 +1,0 @@
-- **.chum5 の Neural Amplifiers など**: 能力値に結びついた技能をまとめて上げるウェア（Neural Amplifiers、PuSHed、Qualia）の効果を、.chum5 書出の改善効果に書くようにしました。これまでは Chummer で開くと技能が上がっていませんでした。
