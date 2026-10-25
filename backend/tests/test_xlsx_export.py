@@ -258,6 +258,36 @@ def test_the_spells_and_the_complex_forms_come_back() -> None:
     assert {row.form_id for row in again.complex_forms} == {row.form_id for row in first.complex_forms}
 
 
+def test_a_spell_comes_back_with_what_it_picked() -> None:
+    """Increase [Attribute] twice, once per attribute, and a Detect [Life Form]:
+    each goes out as the name with its pick in parentheses and reads back as
+    the same spell, so the round trip reports nothing lost."""
+    first = _character(
+        C8="A",
+        C17="魔法使い（メイジ）",
+        H28="1.0",
+        J28="5.0",
+        spells=["[能力値] 増強（筋力）", "[能力値] 増強（敏捷力）", "[生命体] 探知（トロール）"],
+    )
+    assert sorted(row.extra or "" for row in first.spells) == ["AGI", "STR", "トロール"]
+    sheet = Workbook(state_to_xlsx(first)).cells("呪文／複合体／アデプト・パワー")
+    assert any(text.endswith("（筋力）") for text in sheet.values())
+    again = _again(first)
+    assert sorted((row.spell_id, row.extra) for row in again.spells) == sorted(
+        (row.spell_id, row.extra) for row in first.spells
+    )
+    assert roundtrip_differences(first) == []
+
+
+def test_a_complex_form_comes_back_with_its_matrix_attribute() -> None:
+    first = _character(C8="A", C17="テクノマンサー", forms=["インフュージョン [Matrix Attribute]（Firewall）"])
+    assert [row.extra for row in first.complex_forms] == ["Firewall"]
+    again = _again(first)
+    assert [(row.form_id, row.extra) for row in again.complex_forms] == [
+        (row.form_id, row.extra) for row in first.complex_forms
+    ]
+
+
 def test_an_adept_power_and_its_level_come_back() -> None:
     first = _character(C8="C", C17="アデプト", H28="1.0", J28="5.0", powers=[("向上した反応速度", "2.0")])
     again = _again(first)
