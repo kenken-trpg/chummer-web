@@ -91,9 +91,9 @@ def improvements(root: ET.Element) -> collections.Counter[Key]:
         if (value := quality.findtext(field))
     }
     group_of: dict[str, str] = {}
-    for group, sources in GROUPS.items():
+    for name, sources in GROUPS.items():
         for source in sources:
-            group_of.setdefault(source, group)
+            group_of.setdefault(source, name)
     out: collections.Counter[Key] = collections.Counter()
     for imp in root.findall("./improvements/improvement"):
         group = group_of.get(imp.findtext("improvementsource") or "")
