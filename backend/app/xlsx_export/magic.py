@@ -22,6 +22,7 @@ from ..xlsx_import.magic import (
     POWERS_HEADING,
     POWERS_OFFSET,
     SPELL_NAME,
+    attribute_names,
 )
 from ._common import Limits, named, translator
 from ._workbook import Cells
@@ -33,13 +34,18 @@ NAMES_COUNT = 20
 POWERS_HEADING_ROW = NAMES_FROM_ROW + NAMES_COUNT + 1
 
 
-def _listed(rows: list[dict[str, Any]], key: str, by_id: dict[str, str], names: dict[str, str]) -> list[str]:
-    """The Japanese names of `rows`, which hold an id rather than a name."""
+def _listed(
+    rows: list[dict[str, Any]], key: str, by_id: dict[str, str], names: dict[str, str], attributes: dict[str, str]
+) -> list[str]:
+    """The Japanese names of `rows`, which hold an id rather than a name, with
+    what each picked in parentheses — an attribute under its Japanese name."""
     out = []
     for row in rows:
         english = by_id.get(str(row.get(key) or ""))
         if english:
-            out.append(named(names, english))
+            extra = str(row.get("extra") or "").strip()
+            name = named(names, english)
+            out.append(f"{name}（{attributes.get(extra, extra)}）" if extra else name)
     return out
 
 
@@ -54,6 +60,7 @@ def _power_name(row: dict[str, Any], by_id: dict[str, str], names: dict[str, str
 def magic_sheet(state: CharacterState, cat: CatalogDict, limits: Limits) -> Cells:
     """The 呪文／複合体／アデプト・パワー sheet for `state`."""
     names = translator(cat)
+    attributes = attribute_names(cat)
     cells: Cells = {}
     for column, key, bucket, what in (
         (SPELL_NAME, "spell_id", "spells", ui("engine.kind.spell")),
@@ -61,7 +68,8 @@ def magic_sheet(state: CharacterState, cat: CatalogDict, limits: Limits) -> Cell
     ):
         by_id = {str(row["id"]): str(row["name"]) for row in cat[bucket]}  # type: ignore[literal-required]
         held = [entry.model_dump() for entry in getattr(state, bucket, None) or []]
-        for offset, name in enumerate(limits.fit(_listed(held, key, by_id, names), NAMES_COUNT, what)):
+        listed = _listed(held, key, by_id, names, attributes if key == "spell_id" else {})
+        for offset, name in enumerate(limits.fit(listed, NAMES_COUNT, what)):
             cells[f"{column}{NAMES_FROM_ROW + offset}"] = name
 
     cells[f"{POWER_NAME}{POWERS_HEADING_ROW}"] = POWERS_HEADING

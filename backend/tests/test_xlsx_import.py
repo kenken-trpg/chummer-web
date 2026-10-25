@@ -874,6 +874,36 @@ def test_a_spell_is_never_alchemical() -> None:
     assert state["spells"][0]["alchemical"] is False
 
 
+def test_a_spell_brings_its_attribute_in_parentheses() -> None:
+    """[能力値] 増強（筋力） — the pick after the name, the way an adept power
+    has it, and the attribute under its Japanese name."""
+    state, warnings = xlsx_to_state(filled(spells=["[能力値] 増強（筋力）", "[能力値] 減退(AGI)"]))
+    assert [(row["spell_id"], row["extra"]) for row in state["spells"]] == [
+        (_catalog_id("spells", "Increase [Attribute]"), "STR"),
+        (_catalog_id("spells", "Decrease [Attribute]"), "AGI"),
+    ]
+    assert warnings == []
+
+
+def test_a_spell_brings_what_it_was_written_for() -> None:
+    state, _ = xlsx_to_state(filled(spells=["[生命体] 探知（トロール）"]))
+    assert [(row["spell_id"], row["extra"]) for row in state["spells"]] == [
+        (_catalog_id("spells", "Detect [Life Form]"), "トロール")
+    ]
+
+
+def test_a_note_after_a_spell_that_picks_nothing_is_still_unknown() -> None:
+    _, warnings = xlsx_to_state(filled(spells=["スタンボルト（練習中）"]))
+    assert has(warnings, "engine.import.skippedUnknown", name="スタンボルト（練習中）")
+
+
+def test_a_complex_form_brings_its_matrix_attribute() -> None:
+    state, _ = xlsx_to_state(filled(forms=["インフュージョン [Matrix Attribute]（Firewall）"]))
+    assert [(row["form_id"], row["extra"]) for row in state["complex_forms"]] == [
+        (_catalog_id("complex_forms", "Infusion of [Matrix Attribute]"), "Firewall")
+    ]
+
+
 def test_an_unknown_spell_warns() -> None:
     _, warnings = xlsx_to_state(filled(spells=["そんな呪文はない"]))
     assert has(warnings, "engine.import.skippedUnknown", name="そんな呪文はない")

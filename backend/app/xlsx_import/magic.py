@@ -8,7 +8,9 @@ book prints:
   fills the range, the drain and the duration in beside it — so the names come
   out clean and match the catalog as written. Rituals and alchemical
   preparations go in the same column, and the catalog holds them alongside the
-  spells, so they resolve the same way.
+  spells, so they resolve the same way. A spell that picks something when it
+  is learned — Increase [Attribute], Detect [Life Form] — carries the pick in
+  parentheses after the name, the way an adept power does: ``[能力値] 増強（筋力）``.
 * **Adept powers** (the nineteen rows under the アデプト・パワー heading, column A,
   with the level in F). Here the player writes a target onto the name the way
   they do for qualities — ``潜在力強化　身体`` is the catalog's
@@ -56,6 +58,21 @@ _VARIANTS = {"竜": "龍"}
 
 #: Mentors the template names differently from the catalog's Japanese.
 MENTOR_ALIASES = {"鮫": "Shark"}
+
+#: A spell or a complex form and what it picked: ``[能力値] 増強（筋力）``.
+_PICKED = re.compile(r"^(.+?)\s*[（(]([^（）()]+)[)）]\s*$")
+
+
+def attribute_names(cat: CatalogDict) -> dict[str, str]:
+    """Attribute code -> the Japanese name the sheet writes a pick under:
+    ``STR`` -> ``筋力``, from the same lang strings the app's own labels use."""
+    strings = (cat.get("ui_strings") or {}).get("ja") or {}
+    out = {}
+    for key, text in strings.items():
+        code = key.removeprefix("String_Attribute").removesuffix("Long")
+        if key.startswith("String_Attribute") and key.endswith("Long") and text:
+            out[code] = text
+    return out
 
 
 def _variant(text: str) -> str:
@@ -132,21 +149,31 @@ def _import_listed(
 ) -> None:
     """Spells or complex forms: a column of names, nothing else to read."""
     ids = {str(row["name"]): str(row["id"]) for row in rows}
+    picks = {str(row["name"]): row for row in rows if row.get("needs_extra")}
     index = japanese_index(cat, ids)
+    attributes = {japanese: code for code, japanese in attribute_names(cat).items()}
     out: list[dict[str, Any]] = []
     for _row, name in _named_rows(cells, column):
-        found = index.get(name) or index.get(no_interpunct(name))
+        found, extra = index.get(name) or index.get(no_interpunct(name)), ""
+        matched = None if found else _PICKED.match(name)
+        if matched:
+            # Only a spell that picks something takes it apart: a note in
+            # parentheses after any other name is still a name not found.
+            base = index.get(matched[1]) or index.get(no_interpunct(matched[1]))
+            if base in picks:
+                found, extra = base, matched[2].strip()
+                if picks[base].get("extra_kind") == "attribute":
+                    extra = attributes.get(extra, extra)
         if not found:
             warn.append(notice("engine.import.skippedUnknown", kind=kind, name=name))
             continue
-        entry: dict[str, Any] = {"id": str(uuid.uuid4()), id_key: ids[found]}
+        entry: dict[str, Any] = {"id": str(uuid.uuid4()), id_key: ids[found], "extra": extra or None}
         if id_key == "spell_id":
             # The sheet has no column for it: an alchemical preparation is a
             # name in the same list as the spells.
             entry["alchemical"] = False
         else:
             entry["level"] = None
-            entry["extra"] = None
         out.append(entry)
     if out:
         st[key] = out
@@ -202,4 +229,4 @@ def import_magic(cells: dict[str, str], cat: CatalogDict, st: dict[str, Any], wa
     _import_powers(cells, cat, st, warn)
 
 
-__all__ = ["MENTOR_ALIASES", "import_magic", "mentor_index", "resolve_mentor"]
+__all__ = ["MENTOR_ALIASES", "attribute_names", "import_magic", "mentor_index", "resolve_mentor"]
