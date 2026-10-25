@@ -232,6 +232,9 @@ _FLAGS = {
     "mademan": ("MadeMan", ""),
     "unarmeddvphysical": ("UnarmedDVPhysical", ""),
     "adapsin": ("Adapsin", "adapsin"),
+    # Resonant Stream: Technoshaman: Chummer lets a sprite be fettered only
+    # while this improvement is there, and nothing here fetters one
+    "allowspritefettering": ("AllowSpriteFettering", ""),
     **{
         f"{kind}{vector}immune": (f"{kind.title()}{vector.title()}Immune", "")
         for kind in ("toxin", "pathogen")

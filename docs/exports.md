@@ -82,6 +82,8 @@
   積んだ装備の効果と、フォーカスの伝統は、まだ書きません。
   ライフスタイルの資質で選んだテキスト（Public Transportation の利用先など）も
   Chummer が読む改善効果として書きます。
+  Resonant Stream: Technoshaman がスプライトを縛れることも書きます（縛る操作は
+  このアプリには無く、Chummer で行います）。
   エッセンスの減少による魔力・共鳴力・深度の上限の低下は書きません。これは
   Chummer が開くたびに自分で計算し直します。
   Chummer の *Special > Re-apply Improvements*（特殊 → Improvements の再適用）で
