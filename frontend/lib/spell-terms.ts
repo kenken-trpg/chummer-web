@@ -4,6 +4,7 @@
 // A code the rulebook does not define passes through unchanged.
 
 import type { MsgKey, UiFn } from "@/lib/i18n";
+import { attrName, type TFn } from "@/lib/ui-strings";
 
 const SPELL_TYPE: Record<string, MsgKey> = {
   M: "sr.type.mana",
@@ -159,3 +160,17 @@ export const spellDescriptors = (v: string | null | undefined, ui: UiFn): string
     .filter(Boolean)
     .map((t) => (SPELL_DESCRIPTOR[t] ? ui(SPELL_DESCRIPTOR[t]) : t))
     .join(ui("common.termSep"));
+
+/** A spell as Chummer's `Spell.DisplayName` writes it: the name, then what it
+ *  picked in parentheses — "Increase [Attribute] (Willpower)". An attribute is
+ *  our own vocabulary; a typed pick is a data name the glossary may know. */
+export const spellLabel = (
+  spell: { name: string; extra?: string | null; extra_kind?: string | null },
+  tr: (name: string) => string,
+  t: TFn,
+): string => {
+  const extra = (spell.extra || "").trim();
+  if (!extra) return tr(spell.name);
+  const picked = spell.extra_kind === "attribute" ? attrName(extra, t) : tr(extra);
+  return `${tr(spell.name)} (${picked})`;
+};

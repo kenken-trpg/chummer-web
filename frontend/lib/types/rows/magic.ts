@@ -25,6 +25,13 @@ export interface InstalledSpell {
   karma: number;
   barehanded_adept?: boolean;
   alchemical?: boolean;
+  /** what the spell picked when learned (Increase [Attribute]'s attribute,
+   *  Detect [Life Form]'s life form); "" while not picked yet */
+  extra?: string;
+  /** what it picks: "attribute" from `extra_options`, "text", or "" for a
+   *  spell that picks nothing */
+  extra_kind?: "attribute" | "text" | "";
+  extra_options?: string[];
   granted?: boolean;
   focus_bonus?: number;
   spell?: SpellCastInfo | null;

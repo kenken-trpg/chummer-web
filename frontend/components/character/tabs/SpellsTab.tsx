@@ -3,11 +3,12 @@ import { PickerList } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { useState } from "react";
 import { kindLabel, sourceBit } from "@/lib/character/format";
-import { spellDescriptors, spellDuration, spellRange } from "@/lib/spell-terms";
+import { spellDescriptors, spellDuration, spellLabel, spellRange } from "@/lib/spell-terms";
+import { attrLabel } from "@/lib/ui-strings";
 import { HelpTip } from "@/components/help/HelpTip";
 import { editRow } from "@/lib/character/rows";
 
-export function SpellsTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
+export function SpellsTab({ catalog, character: ch, d, t, tr, ui, patch }: TabPanelProps) {
   const [spellSearch, setSpellSearch] = useState("");
   const [spellKind, setSpellKind] = useState<"all" | "spell" | "ritual" | "enchantment">("all");
 
@@ -70,7 +71,7 @@ export function SpellsTab({ catalog, character: ch, d, tr, ui, patch }: TabPanel
       {(d.spells || []).map((item) => (
         <div className="cyber-item" key={item.id}>
           <div>
-            <b>{tr(item.name)}</b>
+            <b>{spellLabel(item, tr, t)}</b>
             <div className="muted">
               <HelpTip
                 label={ui("help.open", { label: tr(item.name) })}
@@ -115,22 +116,61 @@ export function SpellsTab({ catalog, character: ch, d, tr, ui, patch }: TabPanel
               {" / "}
               {sourceBit(item, ui)}
             </div>
-            {item.has_force && item.spell ? (
+            {(item.has_force && item.spell) || item.extra_kind ? (
               <div className="cyber-controls">
-                <label>
-                  {ui("common.force")}
-                  <input
-                    type="number"
-                    min={item.spell.force_min}
-                    max={item.spell.force_max}
-                    value={item.spell.force}
-                    onChange={(e) =>
-                      patch({
-                        spells: editRow(ch.spells, item.id, { force: Number(e.target.value) }),
-                      })
-                    }
-                  />
-                </label>
+                {item.extra_kind === "attribute" ? (
+                  <label>
+                    {ui("common.attribute")}
+                    <select
+                      value={item.extra || ""}
+                      onChange={(e) =>
+                        patch({
+                          spells: editRow(ch.spells, item.id, { extra: e.target.value || null }),
+                        })
+                      }
+                    >
+                      <option value="">{ui("common.choose")}</option>
+                      {(item.extra_options || []).map((name) => (
+                        <option key={name} value={name}>
+                          {attrLabel(name, t)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
+                {item.extra_kind === "text" ? (
+                  <label>
+                    {ui("common.target")}
+                    {/* committed on leaving the field, as a quality's text
+                        is: each keystroke would recompute the character */}
+                    <input
+                      type="text"
+                      key={item.extra || ""}
+                      defaultValue={item.extra || ""}
+                      onBlur={(e) => {
+                        const extra = e.target.value.trim();
+                        if (extra !== (item.extra || ""))
+                          patch({ spells: editRow(ch.spells, item.id, { extra: extra || null }) });
+                      }}
+                    />
+                  </label>
+                ) : null}
+                {item.has_force && item.spell ? (
+                  <label>
+                    {ui("common.force")}
+                    <input
+                      type="number"
+                      min={item.spell.force_min}
+                      max={item.spell.force_max}
+                      value={item.spell.force}
+                      onChange={(e) =>
+                        patch({
+                          spells: editRow(ch.spells, item.id, { force: Number(e.target.value) }),
+                        })
+                      }
+                    />
+                  </label>
+                ) : null}
               </div>
             ) : null}
           </div>
@@ -175,7 +215,12 @@ export function SpellsTab({ catalog, character: ch, d, tr, ui, patch }: TabPanel
         <PickerList
           items={(catalog.spells || [])
             .filter((item) => item.learnable !== false)
-            .filter((item) => !(ch.spells || []).some((row) => row.spell_id === item.id))
+            // a spell that picks is one spell per pick: Increase [Attribute]
+            // stays offered after the first
+            .filter(
+              (item) =>
+                item.needs_extra || !(ch.spells || []).some((row) => row.spell_id === item.id),
+            )
             .filter((item) => spellKind === "all" || (item.kind || "spell") === spellKind)
             .filter((item) => {
               const limits = d.limit_spell_categories || [];
