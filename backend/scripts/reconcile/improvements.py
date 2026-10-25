@@ -15,8 +15,8 @@ that names a row of the save (the quality a SpecificQuality grants, the
 contact an AddContact adds) is read as that row's name. Only an improvement
 whose owner is in the save counts: Chummer leaves a Text behind every time
 it makes a lifestyle's free grid again (over a hundred "Public Grid"s naming
-no row at all). A quality's owner must be one of `<qualities>`: a lifestyle
-quality's improvements are the lifestyles' to write.
+no row at all). A normal quality's owner must be in `<qualities>`; a
+lifestyle quality's owner is its own nested row.
 
 The figures are readings to work up, pinned by `FLOORS` so they cannot slide
 back, and which types to write next is chosen from the per-type tables this
@@ -33,6 +33,7 @@ from pathlib import Path
 #: mods on it are one row to the player.
 GROUPS = {
     "Quality": ("Quality",),
+    "LifestyleQuality": ("Quality",),
     "Cyberware": ("Cyberware",),
     "Bioware": ("Bioware",),
     "Gear": ("Gear",),
@@ -46,6 +47,7 @@ GROUPS = {
 #: went missing.
 FLOORS = {
     "Quality": 323,
+    "LifestyleQuality": 6,
     "Cyberware": 51,
     "Bioware": 112,
     "Gear": 182,
@@ -82,11 +84,25 @@ def improvements(root: ET.Element) -> collections.Counter[Key]:
         for field in ("guid", "sourceid"):
             if quality.findtext(field):
                 qualities[quality.findtext(field) or ""] = spelled(quality.findtext("name") or "")
-    group_of = {source: group for group, sources in GROUPS.items() for source in sources}
+    lifestyle_qualities = {
+        value: spelled(quality.findtext("name") or "")
+        for quality in root.findall("./lifestyles/lifestyle/lifestylequalities/lifestylequality")
+        for field in ("guid", "id")
+        if (value := quality.findtext(field))
+    }
+    group_of: dict[str, str] = {}
+    for name, sources in GROUPS.items():
+        for source in sources:
+            group_of.setdefault(source, name)
     out: collections.Counter[Key] = collections.Counter()
     for imp in root.findall("./improvements/improvement"):
         group = group_of.get(imp.findtext("improvementsource") or "")
-        owner = (qualities if group == "Quality" else owners).get(imp.findtext("sourcename") or "")
+        source_name = imp.findtext("sourcename") or ""
+        if group == "Quality" and source_name in lifestyle_qualities:
+            group = "LifestyleQuality"
+        owner = (
+            qualities if group == "Quality" else lifestyle_qualities if group == "LifestyleQuality" else owners
+        ).get(source_name)
         if group is None or owner is None:
             continue
         out[

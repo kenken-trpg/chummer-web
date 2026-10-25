@@ -909,6 +909,61 @@ def test_raised_lifestyle_points_round_trip() -> None:
     assert (back["comforts"], back["area"], back["security"]) == (1, 1, 0)
 
 
+def test_chummer_lifestyle_quality_text_improvement_round_trip() -> None:
+    """Chummer's Public Transportation save owns Text by the quality guid.
+
+    Special Work Area's formatted price in <extra> is a display label; its
+    Chummer save has no improvement despite the catalog's <selecttext>.
+    """
+    raw = b"""<character><metatype>Human</metatype><buildmethod>Priority</buildmethod>
+      <lifestyles><lifestyle><baselifestyle>Low</baselifestyle><months>1</months>
+        <lifestylequalities>
+          <lifestylequality><id>20c5e92c-deb7-4d88-9972-507ecccb1e50</id>
+            <guid>a4808af4-5042-40f3-b063-e2d549aef372</guid>
+            <name>Public Transportation</name><extra>Subway</extra>
+            <lifestylequalitysource>Selected</lifestylequalitysource></lifestylequality>
+          <lifestylequality><id>24c33e2d-bb97-4f82-a68d-dfa7c89a69d7</id>
+            <name>Special Work Area</name><extra>Special Work Area [1,000\xc2\xa5]</extra>
+            <lifestylequalitysource>Selected</lifestylequalitysource></lifestylequality>
+        </lifestylequalities></lifestyle></lifestyles>
+      <improvements><improvement><improvementttype>Text</improvementttype>
+        <improvementsource>Quality</improvementsource>
+        <sourcename>a4808af4-5042-40f3-b063-e2d549aef372</sourcename>
+        <improvedname>Subway</improvedname></improvement></improvements>
+    </character>"""
+    imported, warnings = chum5_to_state(raw)
+    assert warnings == []
+    exported = ET.fromstring(state_to_chum5(import_character(imported)))
+    qualities = exported.findall("./lifestyles/lifestyle/lifestylequalities/lifestylequality")
+    assert [q.findtext("name") for q in qualities] == ["Public Transportation", "Special Work Area"]
+    guid = qualities[0].findtext("guid")
+    assert guid and guid != qualities[0].findtext("id")
+    assert qualities[1].find("guid") is None
+    improvements = [i for i in exported.findall("./improvements/improvement") if i.findtext("sourcename") == guid]
+    assert [
+        (
+            i.findtext("improvementsource"),
+            i.findtext("sourcename"),
+            i.findtext("improvementttype"),
+            i.findtext("improvedname"),
+        )
+        for i in improvements
+    ] == [("Quality", guid, "Text", "Subway")]
+    back, warnings = chum5_to_state(ET.tostring(exported))
+    assert warnings == []
+    assert back["lifestyles"][0]["quality_ids"] == [
+        "20c5e92c-deb7-4d88-9972-507ecccb1e50",
+        "24c33e2d-bb97-4f82-a68d-dfa7c89a69d7",
+    ]
+    again = ET.fromstring(state_to_chum5(import_character(back)))
+    again_guid = again.findtext("./lifestyles/lifestyle/lifestylequalities/lifestylequality/guid")
+    assert [
+        i.findtext("improvedname")
+        for i in again.findall("./improvements/improvement")
+        if i.findtext("sourcename") == again_guid
+    ] == ["Subway"]
+
+
 def test_a_picked_price_and_a_custom_name_round_trip() -> None:
     custom = "0025f1c7-45a4-4ec5-a692-e18aab2f97a9"
     state = CharacterState(
