@@ -82,6 +82,8 @@
   積んだ装備の効果と、フォーカスの伝統は、まだ書きません。
   ライフスタイルの資質で選んだテキスト（Public Transportation の利用先など）も
   Chummer が読む改善効果として書きます。
+  エッセンスの減少による魔力・共鳴力・深度の上限の低下は書きません。これは
+  Chummer が開くたびに自分で計算し直します。
   Chummer の *Special > Re-apply Improvements*（特殊 → Improvements の再適用）で
   資質の効果は付きますが、クリッター・パワーの効果が 2 重になります
   （[確認の記録](fixtures/critter-powers/README.md)）。
