@@ -322,6 +322,27 @@ def _spirit_pick(node: ET.Element, spirits: list[str]) -> list[_Imp]:
     return rows
 
 
+def _focus_binding(node: ET.Element, rating: int) -> list[_Imp]:
+    """`focusbindingkarmacost`, `focusbindingkarmamultiplier`: the focus is
+    the improved name and `extracontains` (the power a Qi Focus must hold,
+    for The Artisan's Way) the target, as `AddImprovementCollection` passes
+    it."""
+    kind = "FocusBindingKarmaCost" if node.tag == "focusbindingkarmacost" else "FocusBindingKarmaMultiplier"
+    value = _text(node, "val")
+    if not _text(node, "name") or not _is_int(value):
+        return []
+    return [_Imp(kind, _text(node, "name"), target=_text(node, "extracontains"), val=int(value))]
+
+
+def _specialization_option(node: ET.Element, rating: int) -> list[_Imp]:
+    """`addskillspecializationoption`: one SkillSpecializationOption for each
+    skill it names, the skill as the improved name and the specialization as
+    the unique (a martial art's style, Electroception's own)."""
+    skills = [_text(skill) for skill in node.findall("./skills/skill")] or [_text(node, "skill")]
+    spec = _text(node, "spec")
+    return [_Imp("SkillSpecializationOption", skill, unique=spec) for skill in skills if skill and spec]
+
+
 def _drain_or_fading(node: ET.Element, rating: int) -> list[_Imp]:
     """`drainvalue`, `fadingvalue`: a change to the drain or fading of every
     spell or form, or of the one its `specific` names."""
@@ -630,6 +651,9 @@ _READERS: dict[str, Callable[[ET.Element, int], list[_Imp]]] = {
     "physicallimit": _limit,
     "mentallimit": _limit,
     "smartlink": _smartlink,
+    "focusbindingkarmacost": _focus_binding,
+    "focusbindingkarmamultiplier": _focus_binding,
+    "addskillspecializationoption": _specialization_option,
     "skilldisable": _named("SkillDisable"),
     "skillgroupdisable": _named("SkillGroupDisable"),
     "limitspellcategory": _named("LimitSpellCategory"),

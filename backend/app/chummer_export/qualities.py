@@ -399,12 +399,25 @@ def _quality_selects_contact(spec: dict[str, Any]) -> bool:
 
 
 def _export_martial_arts(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
-    """Write martial arts and their techniques."""
+    """Write martial arts and their techniques, and what each style's
+    `<bonus>` made — the specialization it offers, a SkillSpecializationOption
+    under the style's guid — which Chummer keeps instead of running it again."""
     marts = _sub(root, "martialarts")
+    definitions = {
+        node.findtext("id") or "": node for node in parse_data("martialarts.xml").findall("./martialarts/martialart")
+    }
     for row in state.martial_arts:
         el = _sub(marts, "martialart")
         _sub(el, "sourceid", row.art_id)
+        _sub(el, "guid", row.id)
         _sub(el, "name", names["martialart"].get(row.art_id, ""))
+        definition = definitions.get(row.art_id)
+        bonus = definition.find("bonus") if definition is not None else None
+        if definition is not None and bonus is not None:
+            rows = _bonus_improvements(bonus, 1, None)
+            _write_improvements(
+                root, _with_rows(root, rows, row.id, definition.findtext("name") or ""), row.id, "MartialArt"
+            )
         techs = _sub(el, "martialarttechniques")
         for tn in row.techniques:
             _sub(_sub(techs, "martialarttechnique"), "name", tn)
