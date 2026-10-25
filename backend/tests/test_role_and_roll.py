@@ -177,6 +177,15 @@ def test_a_metavariant_without_its_shapeshifter_forms():
     assert [row["id"] for _, row in rr.candidates(oni, public_catalog())] == [ONI]
 
 
+INVOCATION = "155c3b67-7118-4cd6-90fa-d8d6a3dfe21b"  # SG, an art
+
+
+def test_metamagic_takes_the_arts_too():
+    # Chummer keeps the arts in metamagic.xml; the magazine prints them alongside
+    art = _entry(source="SG", category="メタマジック", english="Invocation", ids=())
+    assert [row["id"] for _, row in rr.candidates(art, public_catalog())] == [INVOCATION]
+
+
 def test_resolve_finds_the_source_when_it_is_empty(tmp_path: Path, capsys):
     path = tmp_path / "entries.tsv"
     rows = [
