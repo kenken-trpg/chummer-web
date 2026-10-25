@@ -9,7 +9,7 @@ from typing import Any
 
 from ..data_loader import CatalogDict
 from ..data_loader._xml import _int, _text
-from ..notices import Notice, notice, ui
+from ..notices import Notice, notice, term, ui
 from ._common import _Resolver
 
 
@@ -225,6 +225,30 @@ def _import_magic(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: 
             row = next((m for m in mentors if m["id"] == mid), None)
             extras = _mentor_power_picks(root, row, choices) if row else {}
         st["mentor_extras"] = extras
+        _import_mentors_mask(men, cat, st, warn)
+
+
+#: Mentor's Mask (Forbidden Arcana p.182), the quality.
+MENTORS_MASK = "bf68095e-35b9-49dc-a008-f67bbac9b83b"
+
+
+def _import_mentors_mask(men: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
+    """Mentor's Mask as the quality, from a save that took it the old way.
+
+    Until 2019 Chummer took the mask with a tick on the mentor, which made
+    a power point and a point less drain of the mentor's own; it became a
+    0-karma quality that does the same. Chummer still keeps the tick in
+    `<mentormask>`, but nothing reads it any more, so a save from before
+    then holds only the tick and the two improvements — and this app works
+    from the quality."""
+    if _text(men.find("mentormask")).lower() != "true":
+        return
+    if not any(str(row["id"]) == MENTORS_MASK for row in cat["qualities"]):
+        return
+    quality_ids = st.setdefault("quality_ids", [])
+    if MENTORS_MASK not in quality_ids:
+        quality_ids.append(MENTORS_MASK)
+        warn.append(notice("engine.import.mentorsMaskQuality", name=term("Mentor's Mask")))
 
 
 def _import_spirits(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:

@@ -262,6 +262,13 @@ def _smartlink(node: ET.Element, rating: int) -> list[_Imp]:
     return [_Imp("Smartlink", unique="smartlink", val=int(_text(node)))] if _is_int(_text(node)) else []
 
 
+def _drain_or_fading(node: ET.Element, rating: int) -> list[_Imp]:
+    """`drainvalue`, `fadingvalue`: a change to the drain or fading of every
+    spell or form, or of the one its `specific` names."""
+    kind = {"drainvalue": "DrainValue", "fadingvalue": "FadingValue"}[node.tag]
+    return [_Imp(kind, node.get("specific") or "", val=int(_text(node)))] if _is_int(_text(node)) else []
+
+
 def _dodge(node: ET.Element, rating: int) -> list[_Imp]:
     if not _is_int(_text(node)):
         return []
@@ -563,6 +570,8 @@ _READERS: dict[str, Callable[[ET.Element, int], list[_Imp]]] = {
     "physicallimit": _limit,
     "mentallimit": _limit,
     "smartlink": _smartlink,
+    "drainvalue": _drain_or_fading,
+    "fadingvalue": _drain_or_fading,
     "dodge": _dodge,
     "initiativedice": _initiativedice,
     "initiativepass": _initiativedice,

@@ -349,6 +349,42 @@ def test_an_explicit_mentor_choice_still_wins() -> None:
     assert st["mentor_choices"] == ["Magician: +2 dice summoning spirits of air"]
 
 
+_MASKED = b"""
+  <qualities><quality><name>Mentor Spirit</name><qualitysource>Selected</qualitysource></quality></qualities>
+  <mentorspirits><mentorspirit><id>9e38a8c0-f11c-461d-a489-ba1432f4551f</id><name>Eagle</name>
+    <mentormask>True</mentormask></mentorspirit></mentorspirits>
+"""
+
+
+def _mentors_mask() -> str:
+    return next(q["id"] for q in catalog()["qualities"] if q["name"] == "Mentor's Mask")
+
+
+def test_a_mentor_taken_with_the_old_mask_tick_takes_the_quality() -> None:
+    """Chummer before 2019 took Mentor's Mask with a tick on the mentor; it is
+    a 0-karma quality now, and nothing reads the tick any more."""
+    st, warn = chum5_to_state(SAMPLE.replace(b"</character>", _MASKED + b"</character>"))
+    assert st["quality_ids"].count(_mentors_mask()) == 1
+    assert has(warn, "engine.import.mentorsMaskQuality")
+
+
+def test_a_mentor_without_the_tick_takes_no_mask() -> None:
+    plain = _MASKED.replace(b"<mentormask>True</mentormask>", b"<mentormask>False</mentormask>")
+    st, warn = chum5_to_state(SAMPLE.replace(b"</character>", plain + b"</character>"))
+    assert _mentors_mask() not in st["quality_ids"]
+    assert not has(warn, "engine.import.mentorsMaskQuality")
+
+
+def test_the_mask_already_taken_as_the_quality_is_not_taken_twice() -> None:
+    both = _MASKED.replace(
+        b"</quality></qualities>",
+        b"</quality><quality><name>Mentor's Mask</name><qualitysource>Selected</qualitysource></quality></qualities>",
+    )
+    st, warn = chum5_to_state(SAMPLE.replace(b"</character>", both + b"</character>"))
+    assert st["quality_ids"].count(_mentors_mask()) == 1
+    assert not has(warn, "engine.import.mentorsMaskQuality")
+
+
 def test_ware_nested_three_deep_keeps_each_parent() -> None:
     """A modular connector holds the arm, the arm holds its enhancements: the
     enhancements belong to the arm, not to the connector at the top."""
