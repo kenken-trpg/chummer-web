@@ -225,6 +225,29 @@ def _specificskill(node: ET.Element, rating: int) -> list[_Imp]:
     return [_Imp("Skill", _text(node, "name"), val=int(amount))] if _is_int(amount) else []
 
 
+def _skilllinkedattribute(node: ET.Element, rating: int) -> list[_Imp]:
+    """`skilllinkedattribute`: every skill linked to the attribute it names
+    (Neural Amplifiers, PuSHed, Qualia), with the `applytorating`, `exclude`
+    and `condition` `specificskill`'s `Skill` does not need, and a
+    `precedence` on the tag or its name as the unique."""
+    amount = _text(node, "bonus")
+    if not _text(node, "name") or not _is_int(amount):
+        return []
+    name = node.find("name")
+    precedence = node.get("precedence") or (name.get("precedence") if name is not None else None)
+    return [
+        _Imp(
+            "SkillLinkedAttribute",
+            _text(node, "name"),
+            unique=f"precedence{precedence}" if precedence else "",
+            val=int(amount),
+            exclude=_text(node, "exclude"),
+            addtorating=_text(node, "applytorating").lower() == "true",
+            condition=_text(node, "condition"),
+        )
+    ]
+
+
 def _selectskill(node: ET.Element, name: str) -> list[_Imp]:
     """The picked skill's bonus, its specialization switch and its cap, each
     an improvement of its own, as `selectskill` makes them."""
@@ -651,6 +674,7 @@ _READERS: dict[str, Callable[[ET.Element, int], list[_Imp]]] = {
     "physicallimit": _limit,
     "mentallimit": _limit,
     "smartlink": _smartlink,
+    "skilllinkedattribute": _skilllinkedattribute,
     "focusbindingkarmacost": _focus_binding,
     "focusbindingkarmamultiplier": _focus_binding,
     "addskillspecializationoption": _specialization_option,
