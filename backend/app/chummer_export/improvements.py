@@ -31,6 +31,7 @@ def _bonus_improvements(
     contact: str = "",
     attributes: list[str] | None = None,
     skills: dict[str, str] | None = None,
+    spell_category: str = "",
 ) -> list[_Imp]:
     """The improvements the tags of `bonus` make whose improvement needs
     nothing but the bonus, its rating and its pick — as
@@ -41,9 +42,15 @@ def _bonus_improvements(
     `attributes`: the attribute picked for each `<selectattribute>`, in order.
     `skills`: the skill picks, keyed as `resolve_skill_picks` numbers them —
     `0`, `1`… for each `<selectskill>` / `<hardwires>`, `acc0`… for each
-    `<weaponskillaccuracy>` that asks for one."""
+    `<weaponskillaccuracy>` that asks for one. `spell_category`: the category
+    an empty `<limitspellcategory />` picked, which Chummer keeps on that
+    improvement rather than in the extra; a `<spellcategorydrain>` with no
+    category of its own is that one's (Hedge Witch/Wizard)."""
     rows: list[_Imp] = []
     picked = accuracy = 0
+    # the spirits `AddSpiritOrSprite` asked for, in the order the tags ask:
+    # Chain Breaker's two `<addspirit />` are the first and second of its pick
+    spirits = [part.strip() for part in (pick or "").split(",") if part.strip()]
     for node in _rated(bonus, rating) if rating else bonus:
         if node.tag in ("selectskill", "hardwires"):
             # the first pick is also the owner's own pick (`SelectedValue`,
@@ -81,6 +88,13 @@ def _bonus_improvements(
             rows += _attribute(node, pick) if pick and pick in options else []
         elif node.tag == "selectattributes":
             rows += _selectattributes(node, attributes or [])
+        elif node.tag in ("limitspiritcategory", "addspirit"):
+            rows += _spirit_pick(node, spirits)
+        elif node.tag in _SPELL_DRAIN:
+            kind, field = _SPELL_DRAIN[node.tag]
+            named = _text(node, field) or (spell_category if node.tag == "spellcategorydrain" else "")
+            value = _text(node, "val")
+            rows += [_Imp(kind, named, val=int(value))] if named and _is_int(value) else []
         elif node.tag == "addcontact":
             rows += _addcontact(node, contact) if contact else []
         elif node.tag in _COSTS:
@@ -260,6 +274,51 @@ def _limit(node: ET.Element, rating: int) -> list[_Imp]:
 
 def _smartlink(node: ET.Element, rating: int) -> list[_Imp]:
     return [_Imp("Smartlink", unique="smartlink", val=int(_text(node)))] if _is_int(_text(node)) else []
+
+
+def _named(kind: str) -> Callable[[ET.Element, int], list[_Imp]]:
+    """A tag whose text is the one thing it names: `<skilldisable>Binding`,
+    `<limitspellcategory>Rituals`. An empty `<limitspellcategory />` is a
+    pick, which `_export_qualities` writes."""
+
+    def read(node: ET.Element, rating: int) -> list[_Imp]:
+        return [_Imp(kind, _text(node))] if _text(node) else []
+
+    return read
+
+
+#: (type, the field naming the category or the descriptor) for the tags that
+#: change the drain or the damage of some spells.
+_SPELL_DRAIN = {
+    "spellcategorydrain": ("SpellCategoryDrain", "category"),
+    "spellcategorydamage": ("SpellCategoryDamage", "category"),
+    "spelldescriptordrain": ("SpellDescriptorDrain", "descriptor"),
+    "spelldescriptordamage": ("SpellDescriptorDamage", "descriptor"),
+}
+
+
+def _spirit_pick(node: ET.Element, spirits: list[str]) -> list[_Imp]:
+    """`limitspiritcategory`, `addspirit`: one spirit each, from the list the
+    tag gives when it gives one alone (Elementalist's, a Watcher's), or else
+    the next of the spirits picked (`spirits`, taken from the front). A
+    Dedicated Conjurer's `skill` adds the AddSpiritSkill that counts its
+    picks, with the divisor as the improvement's rating."""
+    rows = []
+    if node.tag == "addspirit" and node.get("skill"):
+        divisor = node.get("ratingdivisor") or "1"
+        rows.append(_Imp("AddSpiritSkill", node.get("skill") or "", rating=int(divisor) if _is_int(divisor) else 1))
+        # how many it asks for follows the skill's rating, which the bonus
+        # alone does not know, and this app keeps no pick for them
+        return rows
+    listed = [_text(spirit) for spirit in node.findall("spirit") if _text(spirit)]
+    kind = "LimitSpiritCategory" if node.tag == "limitspiritcategory" else "AddSpirit"
+    if len(listed) == 1:
+        if spirits and spirits[0] == listed[0]:
+            spirits.pop(0)
+        return [*rows, _Imp(kind, listed[0])]
+    if spirits and (not listed or spirits[0] in listed):
+        return [*rows, _Imp(kind, spirits.pop(0))]
+    return rows
 
 
 def _drain_or_fading(node: ET.Element, rating: int) -> list[_Imp]:
@@ -570,6 +629,9 @@ _READERS: dict[str, Callable[[ET.Element, int], list[_Imp]]] = {
     "physicallimit": _limit,
     "mentallimit": _limit,
     "smartlink": _smartlink,
+    "skilldisable": _named("SkillDisable"),
+    "skillgroupdisable": _named("SkillGroupDisable"),
+    "limitspellcategory": _named("LimitSpellCategory"),
     "drainvalue": _drain_or_fading,
     "fadingvalue": _drain_or_fading,
     "dodge": _dodge,

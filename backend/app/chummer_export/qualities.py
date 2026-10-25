@@ -84,6 +84,7 @@ def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ct
                     contacts.get(qid, ""),
                     _attribute_picks(qid, state),
                     skills,
+                    spell_category,
                 )
         if rows:
             if q.find("guid") is None:
@@ -351,8 +352,9 @@ def _quality_extra_out(
 
     Chummer's `AddSpiritOrSprite` appends every spirit it is given to the
     quality's selected value, `, `-joined: Chain Breaker's two `<addspirit>`
-    picks, or Apprentice's `<limitspiritcategory>` spirit — whose
-    `<limitspellcategory>` pick is not added, so it rides an improvement.
+    picks, or Apprentice's and an Elementalist's `<limitspiritcategory>`
+    spirit — whose `<limitspellcategory>` pick is not added, so it rides an
+    improvement.
     `<selectcontact>` appends the contact's name the same way, after Black
     Market Pipeline's category.
     """
@@ -370,8 +372,19 @@ def _quality_extra_out(
             if key.startswith(marker) and key[len(marker) :].isdigit() and value
         )
         return ", ".join(value for _, value in picks), ""
-    if _quality_needs_spirit_category(spec) and _quality_needs_spell_category(spec):
-        return extras.get(quality_spirit_category_extra_key(qid), ""), extras.get(qid, "")
+    if _quality_needs_spell_category(spec):
+        # Apprentice's spirit is a pick; an Elementalist's is the one its
+        # `<limitspiritcategory>` names, which goes in all the same; Hedge
+        # Witch/Wizard has none, and its extra is empty
+        if _quality_needs_spirit_category(spec):
+            spirit = extras.get(quality_spirit_category_extra_key(qid), "")
+        else:
+            spirit = ", ".join(
+                str((node.get("fields") or {}).get("spirit") or "")
+                for node in spec.get("bonus") or []
+                if node.get("tag") == "limitspiritcategory" and (node.get("fields") or {}).get("spirit")
+            )
+        return spirit, extras.get(qid, "")
     if str(spec.get("extra_kind") or "") == "quality":
         # the pick is a quality of its own; see `_export_qualities`
         return "", ""
