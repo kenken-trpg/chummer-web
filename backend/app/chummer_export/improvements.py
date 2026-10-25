@@ -73,7 +73,11 @@ def _bonus_improvements(
             kind = "MentorSpirit" if node.tag == "selectmentorspirit" else "Paragon"
             rows += [_Imp(kind, mentor, unique=mentor)] if mentor else []
         elif node.tag == "selectattribute":
-            options = {_text(option) for option in node.findall("attribute")} or _SEEKER - {"BOX", "ESS"}
+            options = {_text(option) for option in node.findall("attribute")} or _SEEKER - {
+                "BOX",
+                "ESS",
+                *(_text(option) for option in node.findall("excludeattribute")),
+            }
             rows += _attribute(node, pick) if pick and pick in options else []
         elif node.tag == "selectattributes":
             rows += _selectattributes(node, attributes or [])

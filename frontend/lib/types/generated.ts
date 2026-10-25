@@ -99,6 +99,10 @@ export interface SpellInstall {
   force?: number | null;
   source_quality_id?: string | null;
   alchemical?: boolean;
+  /** what the spell picked when learned: Increase [Attribute]'s attribute,
+   *  Detect [Life Form]'s life form (Chummer's `<extra>`)
+   */
+  extra?: string | null;
 }
 
 export interface QiFocusInstall {

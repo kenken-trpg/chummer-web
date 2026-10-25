@@ -1244,6 +1244,49 @@ def test_a_tradition_is_written_in_full_so_chummer_keeps_it() -> None:
     assert trad.findtext("spiritform") == "Materialization"
 
 
+def test_a_spells_pick_is_its_extra_and_its_improvement() -> None:
+    """`Spell.Create` saves what the spell picked as its `<extra>` and leaves
+    the improvement its bonus made under the spell's guid: an Attribute of
+    nothing naming Increase [Attribute]'s attribute, a Text naming the
+    element. Each pick is a spell of its own and comes back as one."""
+    c = catalog()
+    hermetic = next(r for r in c["traditions"] if r["name"] == "Hermetic")
+    increase, wall = (
+        next(s["id"] for s in c["spells"] if s["name"] == n) for n in ("Increase [Attribute]", "[Element] Wall")
+    )
+    src = _rich_state().model_copy(
+        update={
+            "tradition_id": hermetic["id"],
+            "spells": [
+                SpellInstall(spell_id=increase, extra="CHA"),
+                SpellInstall(spell_id=increase, extra="WIL"),
+                SpellInstall(spell_id=wall, extra="Ice"),
+            ],
+        }
+    )
+    state = import_character(src.model_dump())
+    root = ET.fromstring(state_to_chum5(state))
+    spells = {el.findtext("guid"): (el.findtext("name"), el.findtext("extra")) for el in root.findall("./spells/spell")}
+    assert sorted(spells.values()) == [
+        ("Increase [Attribute]", "CHA"),
+        ("Increase [Attribute]", "WIL"),
+        ("[Element] Wall", "Ice"),
+    ]
+    made = sorted(
+        (
+            spells[imp.findtext("sourcename")][1],
+            imp.findtext("improvementttype"),
+            imp.findtext("improvedname"),
+            imp.findtext("val"),
+        )
+        for imp in root.findall("./improvements/improvement")
+        if imp.findtext("improvementsource") == "Spell"
+    )
+    assert made == [("CHA", "Attribute", "CHA", "0"), ("Ice", "Text", "Ice", "0"), ("WIL", "Attribute", "WIL", "0")]
+    back = compute_state(import_character(chum5_to_state(state_to_chum5(state))[0]))
+    assert sorted((s.spell_id, s.extra) for s in back.spells) == sorted((s.spell_id, s.extra) for s in state.spells)
+
+
 def test_a_stream_is_written_as_the_res_tradition_chummer_reads() -> None:
     """Chummer keeps a technomancer's stream in the same element, typed `RES`:
     the five spirit fields stay empty and the sprites it can compile are the

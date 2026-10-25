@@ -107,7 +107,12 @@ def _import_magic(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: 
     """Read spells, adept powers, complex forms and magic arts."""
     spell_r = _Resolver(cat["spells"])
     st["spells"] = [
-        {"id": str(uuid.uuid4()), "spell_id": spell_ref, "alchemical": _text(sp.find("alchemical")).lower() == "true"}
+        {
+            "id": str(uuid.uuid4()),
+            "spell_id": spell_ref,
+            "alchemical": _text(sp.find("alchemical")).lower() == "true",
+            "extra": _text(sp.find("extra")) or None,
+        }
         for sp in root.findall("./spells/spell")
         if (spell_ref := spell_r.resolve(sp, warn, ui("engine.kind.spell")))
     ]

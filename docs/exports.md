@@ -84,6 +84,8 @@
   Chummer が読む改善効果として書きます。
   Resonant Stream: Technoshaman がスプライトを縛れることも書きます（縛る操作は
   このアプリには無く、Chummer で行います）。
+  呪文で選んだもの（Increase [Attribute] の能力値など）も、呪文の `<extra>` と
+  Chummer が呪文から作る改善効果として書きます。
   エッセンスの減少による魔力・共鳴力・深度の上限の低下は書きません。これは
   Chummer が開くたびに自分で計算し直します。
   Chummer の *Special > Re-apply Improvements*（特殊 → Improvements の再適用）で
