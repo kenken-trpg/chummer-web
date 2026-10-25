@@ -258,13 +258,13 @@ def test_chain_breakers_spirits_ride_the_quality_extra() -> None:
 
 
 def test_apprentices_spirit_is_the_extra_and_its_spell_category_an_improvement() -> None:
-    """Apprentice: `<limitspiritcategory />` adds the spirit to the selected
-    value, `<limitspellcategory />` does not — Chummer keeps that pick on the
-    improvement, tied to the quality's guid."""
+    """Apprentice: `<limitspellcategory />` and `<limitspiritcategory />` both
+    add their pick to the selected value, in that order, and the category
+    rides the improvement too, tied to the quality's guid."""
     state, qid = _with_quality("Apprentice", {"{id}": "Combat", "{id}:spiritcategory": "Spirit of Fire"})
     xml = state_to_chum5(state)
     quality = _quality_el(xml)
-    assert quality.findtext("extra") == "Spirit of Fire"
+    assert quality.findtext("extra") == "Combat, Spirit of Fire"
     imp = ET.fromstring(xml).find("./improvements/improvement")
     assert imp is not None
     assert imp.findtext("improvementttype") == "LimitSpellCategory"
@@ -285,6 +285,18 @@ def test_an_apprentice_file_from_before_keeps_its_spell_category() -> None:
     quality.find("extra").text = "Health"  # type: ignore[union-attr]
     back = chum5_to_state(ET.tostring(root))[0]["quality_extras"]
     assert back == {qid: "Health"}
+
+
+def test_an_apprentice_file_from_before_with_only_its_spirit_reads_back() -> None:
+    """The shape this app wrote before: the spirit in `<extra>`, the category
+    on the improvement."""
+    state, qid = _with_quality("Apprentice", {"{id}": "Combat", "{id}:spiritcategory": "Spirit of Fire"})
+    root = ET.fromstring(state_to_chum5(state))
+    quality = root.find("./qualities/quality")
+    assert quality is not None
+    quality.find("extra").text = "Spirit of Fire"  # type: ignore[union-attr]
+    back = chum5_to_state(ET.tostring(root))[0]["quality_extras"]
+    assert back == {qid: "Combat", f"{qid}:spiritcategory": "Spirit of Fire"}
 
 
 def test_prototype_transhumans_pick_is_a_quality_of_its_own() -> None:
@@ -421,12 +433,13 @@ def test_chain_breaker_leaves_the_skill_it_shuts_and_the_spirits_it_adds() -> No
 
 
 def test_an_elementalist_keeps_its_spirit_in_the_extra_and_its_category_on_the_improvement() -> None:
-    """As Chummer's `AddSpiritOrSprite` leaves it: the extra is the spirit,
-    the category picked rides the LimitSpellCategory — and reads back."""
+    """As Chummer leaves it: the extra is the category picked and the spirit
+    the bonus names, the category rides the LimitSpellCategory as well — and
+    reads back."""
     state, qid = _with_quality("Elementalist (Air)", {"{id}": "Combat"})
     xml = state_to_chum5(state)
     root = ET.fromstring(xml)
-    assert root.findtext("./qualities/quality/extra") == "Spirit of Air"
+    assert root.findtext("./qualities/quality/extra") == "Combat, Spirit of Air"
     rows = _quality_improvements(root)
     assert ("Elementalist (Air)", "LimitSpellCategory", "Combat", "") in rows
     assert ("Elementalist (Air)", "LimitSpiritCategory", "Spirit of Air", "") in rows

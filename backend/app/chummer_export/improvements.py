@@ -50,7 +50,8 @@ def _bonus_improvements(
     picked = accuracy = 0
     # the spirits `AddSpiritOrSprite` asked for, in the order the tags ask:
     # Chain Breaker's two `<addspirit />` are the first and second of its pick
-    spirits = [part.strip() for part in (pick or "").split(",") if part.strip()]
+    # (an Apprentice's extra leads with its spell category, which is not one)
+    spirits = [part.strip() for part in (pick or "").split(",") if part.strip() and part.strip() != spell_category]
     for node in _rated(bonus, rating) if rating else bonus:
         if node.tag in ("selectskill", "hardwires"):
             # the first pick is also the owner's own pick (`SelectedValue`,

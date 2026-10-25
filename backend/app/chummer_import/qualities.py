@@ -168,11 +168,11 @@ def _quality_extra_in(cat: CatalogDict, qid: str, extra: str, guid: str, root: E
 
     Chain Breaker / Dark Ally: the `, `-joined spirits, one `:addspirit:N`
     slot each. Apprentice, an Elementalist, Hedge Witch/Wizard: `<extra>` is
-    the spirit (Apprentice's pick, an Elementalist's fixed one, Hedge
-    Witch/Wizard's none) and the spell category is on the
-    `LimitSpellCategory` improvement carrying the quality's guid — a file
-    this app wrote before that has the category in `<extra>` instead, told
-    apart by whether the text names a spirit.
+    the spell category and the spirit, `, `-joined in the order the tags run
+    (`Combat, Spirit of Air`; Hedge Witch/Wizard's has no spirit), and the
+    category is on the `LimitSpellCategory` improvement carrying the
+    quality's guid as well. A file this app wrote before holds the spirit
+    alone, or the category alone; a part is told for a spirit by its name.
     """
     spec = next((row for row in cat["qualities"] if row["id"] == qid), None) or {}
     if any(node.get("tag") == "selectcontact" for node in spec.get("bonus") or []):
@@ -198,18 +198,19 @@ def _quality_extra_in(cat: CatalogDict, qid: str, extra: str, guid: str, root: E
                     category = _text(imp.find("improvedname"))
                     break
         spirit_names = {str(row.get("name") or "") for row in cat.get("spirits") or []}
-        # only Apprentice picks its spirit; an Elementalist's extra is the
-        # spirit its bonus names, which is nothing to keep
-        picks_spirit = _quality_needs_spirit_category(spec)
+        parts = [part.strip() for part in extra.split(",") if part.strip()]
+        spirits = [part for part in parts if part in spirit_names]
+        others = [part for part in parts if part not in spirit_names]
+        # the category from its improvement, or else the part of the extra
+        # that is no spirit: Chummer's `Combat, Spirit of Air`, or the bare
+        # category this app wrote before
+        category = category or (others[0] if others else "")
         if category:
-            out[qid] = category
-            if extra and picks_spirit:
-                out[quality_spirit_category_extra_key(qid)] = extra
-        elif extra in spirit_names:
-            if picks_spirit:
-                out[quality_spirit_category_extra_key(qid)] = extra
-        elif extra:
-            out[qid] = _match_option(spec, extra) if not picks_spirit else extra
+            out[qid] = category if _quality_needs_spirit_category(spec) else _match_option(spec, category)
+        # only Apprentice picks its spirit; an Elementalist's is the one its
+        # bonus names, which is nothing to keep
+        if spirits and _quality_needs_spirit_category(spec):
+            out[quality_spirit_category_extra_key(qid)] = spirits[0]
         return out
     slots = [slot for node in spec.get("bonus") or [] for slot in node.get("attribute_choices") or []]
     if slots:
