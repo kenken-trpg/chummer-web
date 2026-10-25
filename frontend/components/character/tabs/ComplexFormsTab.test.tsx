@@ -97,4 +97,32 @@ describe("<ComplexFormsTab>", () => {
     );
     expect(offered).toEqual(["Infusion of [Matrix Attribute]"]);
   });
+
+  it("explains that each Matrix attribute picked is a form of its own", () => {
+    const ch = makeCharacter({
+      complex_forms: [{ id: "c1", form_id: "inf", extra: "Sleaze" }],
+      derived: {
+        complex_forms: [
+          {
+            ...puppeteer,
+            id: "c1",
+            form_id: "inf",
+            name: "Infusion of [Matrix Attribute]",
+            level: 1,
+            extra: "Sleaze",
+            needs_extra: true,
+            options: ["Attack", "Sleaze", "Data Processing", "Firewall"],
+          },
+        ] as never,
+      },
+    });
+    render(<ComplexFormsTab {...panelProps(ch, { catalog: makeCatalog() })} />);
+    expect((screen.getByRole("combobox", { name: "能力値" }) as HTMLSelectElement).value).toBe(
+      "Sleaze",
+    );
+    expect(screen.getByRole("button", { name: "能力値 の説明" })).toBeDefined();
+    expect(
+      screen.getByText(/選んだマトリックス能力値ごとに 1 つの複合体として数える/),
+    ).toBeDefined();
+  });
 });

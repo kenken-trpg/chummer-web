@@ -120,8 +120,17 @@ export function SpellsTab({ catalog, character: ch, d, t, tr, ui, patch }: TabPa
               <div className="cyber-controls">
                 {item.extra_kind === "attribute" ? (
                   <label>
-                    {ui("common.attribute")}
+                    <HelpTip
+                      label={ui("help.open", { label: ui("common.attribute") })}
+                      lines={[
+                        { label: ui("help.spell.pickAttr") },
+                        { label: ui("help.spell.pickSame") },
+                      ]}
+                    >
+                      {ui("common.attribute")}
+                    </HelpTip>{" "}
                     <select
+                      aria-label={ui("common.attribute")}
                       value={item.extra || ""}
                       onChange={(e) =>
                         patch({
@@ -140,11 +149,20 @@ export function SpellsTab({ catalog, character: ch, d, t, tr, ui, patch }: TabPa
                 ) : null}
                 {item.extra_kind === "text" ? (
                   <label>
-                    {ui("common.target")}
+                    <HelpTip
+                      label={ui("help.open", { label: ui("common.target") })}
+                      lines={[
+                        { label: ui("help.spell.pickText") },
+                        { label: ui("help.spell.pickSame") },
+                      ]}
+                    >
+                      {ui("common.target")}
+                    </HelpTip>{" "}
                     {/* committed on leaving the field, as a quality's text
                         is: each keystroke would recompute the character */}
                     <input
                       type="text"
+                      aria-label={ui("common.target")}
                       key={item.extra || ""}
                       defaultValue={item.extra || ""}
                       onBlur={(e) => {
