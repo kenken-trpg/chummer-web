@@ -683,6 +683,30 @@ def test_an_implant_leaves_what_its_bonus_made_at_its_rating() -> None:
     ]
 
 
+def test_ware_that_raises_the_skills_of_an_attribute_says_which() -> None:
+    """Neural Amplifiers (Limbic) and Qualia: a SkillLinkedAttribute naming
+    the attribute, under the implant's guid — Chummer never runs the bonus
+    again, so without it the skills stayed where they were in Chummer."""
+    limbic = next(r["id"] for r in catalog()["cyberware"]["items"] if r["name"] == "Neural Amplifiers (Limbic)")
+    qualia = next(r["id"] for r in catalog()["bioware"]["items"] if r["name"] == "Qualia")
+    state = CharacterState(
+        id="n",
+        name="Neural",
+        priorities=Priorities(),
+        metatype="Human",
+        attributes={},
+        cyberware=[CyberwareInstall(id="na", ware_id=limbic, rating=1, grade="Standard")],
+        bioware=[CyberwareInstall(id="qu", ware_id=qualia, rating=1, grade="Standard")],
+    )
+    root = ET.fromstring(state_to_chum5(state))
+    rows = sorted(
+        (imp.findtext("sourcename"), imp.findtext("improvedname"), imp.findtext("val"))
+        for imp in root.findall("./improvements/improvement")
+        if imp.findtext("improvementttype") == "SkillLinkedAttribute"
+    )
+    assert rows == [("na", "INT", "1"), ("qu", "INT", "1")]
+
+
 def test_armor_and_its_mods_leave_what_their_bonus_made() -> None:
     """Armor improvements sit under the piece's guid at its rating, with the
     bonus's unique name; a limit modifier gets its row. Armor not worn keeps
