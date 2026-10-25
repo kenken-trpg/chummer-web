@@ -64,12 +64,15 @@ SILENT_TAGS = {
     "selectattribute",
     # Astral Reputation (SG p.35) is a tracked value of its own, like
     # notoriety, and we track none of it. One quality (`Conjuring Geas`)
-    # carries the only -1 in the data.
+    # carries the only -1 in the data. Chummer reads the improvement type but
+    # has no handler for the tag, so its own Conjuring Geas makes nothing
+    # either: the export has nothing to write.
     "astralreputation",
     # Only on `Resonant Burnout`, which is on hold as a whole.
     "specialattburnmultiplier",
     # Permission to Fetter a sprite, on `Resonant Stream: Technoshaman`.
-    # Fettering is a career action; nothing here performs it.
+    # Fettering is a career action; nothing here performs it. The export
+    # still writes the permission, so Chummer lets the sprite be fettered.
     "allowspritefettering",
     # A vehicle's Device Rating is nowhere in `vehicles.xml`; Chummer derives
     # it, and we do not model it at all, so the one mod that raises it has

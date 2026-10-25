@@ -362,6 +362,19 @@ def test_a_quality_leaves_its_numbers_and_its_mentor() -> None:
     assert root.findtext("./mentorspirits/mentorspirit/guid") == mentor
 
 
+def test_a_technoshaman_may_fetter_sprites_in_chummer() -> None:
+    """Chummer lets a sprite be fettered only while an AllowSpriteFettering
+    improvement is there, and it never makes one on load: without it, a
+    Technoshaman exported from here could not fetter in Chummer."""
+    state, qid = _with_quality("Resonant Stream: Technoshaman", {})
+    state.talent = "Technomancer"
+    xml = state_to_chum5(state)
+    assert ("Resonant Stream: Technoshaman", "AllowSpriteFettering", "", "") in _quality_improvements(
+        ET.fromstring(xml)
+    )
+    assert qid in chum5_to_state(xml)[0]["quality_ids"]
+
+
 def test_a_quality_leaves_its_skill_costs_with_their_bounds() -> None:
     """A karma or point cost tag is one improvement of its name, val, min,
     max and condition: Run Faster's College Education makes Academic skills
