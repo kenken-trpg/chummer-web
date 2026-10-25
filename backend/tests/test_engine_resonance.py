@@ -196,6 +196,23 @@ def test_diffusion_needs_matrix_attribute() -> None:
     assert not has(out.derived["warnings"], "engine.complexforms.pickMatrixAttribute")
 
 
+def test_a_complex_form_that_picks_is_a_form_of_its_own_for_each_attribute() -> None:
+    """Diffusion of Attack and Diffusion of Sleaze are two forms; only the
+    same attribute twice is a duplicate."""
+    out = compute(
+        _techno(
+            "diff-two",
+            complex_forms=[
+                ComplexFormInstall(form_id=DIFFUSION, extra="Attack"),
+                ComplexFormInstall(form_id=DIFFUSION, extra="Sleaze"),
+                ComplexFormInstall(form_id=DIFFUSION, extra="Sleaze"),
+            ],
+        )
+    )
+    assert [row["label"] for row in out.derived["complex_forms"]] == ["Diffusion of Attack", "Diffusion of Sleaze"]
+    assert has(out.derived["warnings"], "engine.complexforms.duplicateDropped")
+
+
 def test_overdrive_requires_stream_quality() -> None:
     out = compute(_techno("overdrive", complex_forms=[ComplexFormInstall(form_id=OVERDRIVE)]))
     assert out.derived["complex_forms"] == []

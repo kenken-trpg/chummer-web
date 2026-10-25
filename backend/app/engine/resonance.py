@@ -182,9 +182,6 @@ def resolve_complex_forms(
         spec = _complex_form_by_id(inst.form_id)
         if not spec:
             continue
-        if spec["id"] in seen:
-            warnings.append(notice("engine.complexforms.duplicateDropped", name=term(str(spec["name"]))))
-            continue
         missing = [name for name in _required_names(spec) if name not in quality_names]
         if missing:
             warnings.append(notice("engine.complexforms.requires", name=term(str(spec["name"])), needed=terms(missing)))
@@ -194,7 +191,13 @@ def resolve_complex_forms(
             warnings.append(notice("engine.complexforms.pickMatrixAttribute", name=term(str(spec["name"]))))
             extra = extra if extra in MATRIX_ATTRIBUTES else ""
             inst.extra = extra or None
-        seen.add(spec["id"])
+        # Infusion of [Matrix Attribute] is a form of its own for each
+        # attribute, as a spell that picks is one spell per pick
+        seen_key = f"{spec['id']}:{extra}" if spec.get("needs_extra") and extra else spec["id"]
+        if seen_key in seen:
+            warnings.append(notice("engine.complexforms.duplicateDropped", name=term(str(spec["name"]))))
+            continue
+        seen.add(seen_key)
         level_max = max(1, res * 2) if res else 1
         chosen = int(inst.level) if inst.level else (res or 1)
         chosen = max(1, min(level_max, chosen))
