@@ -365,10 +365,24 @@ def resolve_spells(
                 )
             )
             continue
-        if spec["id"] in seen:
+        # A spell that picks something when learned (Increase [Attribute],
+        # Detect [Life Form]) is a spell of its own for each pick, as
+        # Chummer's saves hold Increase [Attribute] once for each attribute.
+        # One not picked yet stays, with a warning, as a complex form does.
+        extra_kind = str(spec.get("extra_kind") or "")
+        options = list(spec.get("extra_options") or [])
+        extra = (inst.extra or "").strip()
+        if extra_kind == "attribute" and extra not in options:
+            extra = ""
+        inst.extra = extra or None
+        if extra_kind and not extra:
+            key = "engine.spells.pickAttribute" if extra_kind == "attribute" else "engine.spells.pickText"
+            warnings.append(notice(key, name=term(str(spec["name"]))))
+        seen_key = f"{spec['id']}:{extra}" if extra_kind and extra else spec["id"]
+        if seen_key in seen:
             warnings.append(notice("engine.spells.duplicateDropped", name=term(str(spec["name"]))))
             continue
-        seen.add(spec["id"])
+        seen.add(seen_key)
         kind = spec.get("kind") or "spell"
         has_force = kind != "enchantment"
         granted = bool(inst.source_quality_id)
@@ -428,6 +442,9 @@ def resolve_spells(
                 "karma": cost,
                 "barehanded_adept": barehanded,
                 "alchemical": bool(inst.alchemical),
+                "extra": extra,
+                "extra_kind": extra_kind,
+                "extra_options": options,
                 "granted": granted,
                 "spell": info if has_force else None,
             }

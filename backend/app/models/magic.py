@@ -22,6 +22,9 @@ class SpellInstall(BaseModel):
     force: int | None = None
     source_quality_id: str | None = None
     alchemical: bool = False
+    #: what the spell picked when learned: Increase [Attribute]'s attribute,
+    #: Detect [Life Form]'s life form (Chummer's `<extra>`)
+    extra: str | None = None
 
 
 class QiFocusInstall(BaseModel):

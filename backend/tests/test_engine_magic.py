@@ -319,6 +319,58 @@ def test_duplicate_spell_is_dropped() -> None:
     assert has(out.derived["warnings"], "engine.spells.duplicateDropped")
 
 
+def _spell_id(name: str) -> str:
+    return next(s["id"] for s in catalog()["spells"] if s["name"] == name)
+
+
+def test_a_spell_that_picks_is_a_spell_of_its_own_for_each_pick() -> None:
+    """Increase [Attribute] once for each attribute, as Chummer's resub.chum5
+    holds it three times: each pick is kept, and only the same pick twice is
+    a duplicate."""
+    increase = _spell_id("Increase [Attribute]")
+    out = compute(
+        _mage(
+            "picks",
+            tradition_id=HERMETIC,
+            spells=[
+                SpellInstall(spell_id=increase, extra="CHA"),
+                SpellInstall(spell_id=increase, extra="WIL"),
+                SpellInstall(spell_id=increase, extra="WIL"),
+            ],
+        )
+    )
+    rows = out.derived["spells"]
+    assert [(row["extra"], row["extra_kind"]) for row in rows] == [("CHA", "attribute"), ("WIL", "attribute")]
+    assert rows[0]["extra_options"] == ["BOD", "AGI", "REA", "STR", "CHA", "INT", "LOG", "WIL"]
+    assert has(out.derived["warnings"], "engine.spells.duplicateDropped")
+    assert not has(out.derived["warnings"], "engine.spells.pickAttribute")
+
+
+def test_a_spell_not_picked_yet_stays_with_a_warning() -> None:
+    """A character saved before spells kept their pick still has its
+    Increase [Attribute]: it stays, and asks for the attribute. One naming an
+    attribute the spell may not (MAG) is not picked either."""
+    increase = _spell_id("Increase [Attribute]")
+    detect = _spell_id("Detect [Life Form]")
+    out = compute(
+        _mage(
+            "unpicked",
+            tradition_id=HERMETIC,
+            spells=[
+                SpellInstall(spell_id=increase),
+                SpellInstall(spell_id=increase, extra="MAG"),
+                SpellInstall(spell_id=detect),
+            ],
+        )
+    )
+    assert [(row["name"], row["extra"]) for row in out.derived["spells"]] == [
+        ("Increase [Attribute]", ""),
+        ("Detect [Life Form]", ""),
+    ]
+    assert has(out.derived["warnings"], "engine.spells.pickAttribute")
+    assert has(out.derived["warnings"], "engine.spells.pickText")
+
+
 def test_aspected_magician_buys_spells() -> None:
     attrs = default_attributes(find_metatype("Human", None))
     out = compute(

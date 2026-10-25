@@ -52,8 +52,13 @@ def _export_spell_lists(root: ET.Element, state: CharacterState, names: _Names, 
         state.spells,
         "spell_id",
         "spell",
-        {"alchemical": lambda r: "True" if r.alchemical else "False"},
+        {
+            "guid": lambda r: r.id,
+            "alchemical": lambda r: "True" if r.alchemical else "False",
+            "extra": lambda r: r.extra or "",
+        },
     )
+    _export_spell_improvements(root, state)
     _named_list(
         "powers",
         "power",
@@ -87,6 +92,21 @@ def _export_power_improvements(root: ET.Element, state: CharacterState) -> None:
             continue
         rows = _bonus_improvements(bonus, int(row.rating or 1), row.extra or "")
         _write_improvements(root, _with_rows(root, rows, row.id, definition.findtext("name") or ""), row.id, "Power")
+
+
+def _export_spell_improvements(root: ET.Element, state: CharacterState) -> None:
+    """What `Spell.Create` leaves in `<improvements>` when it runs a spell's
+    `<bonus>`, under the spell's guid: the attribute Increase [Attribute]
+    names, the text of a Detect [Life Form]. Its pick is its extra; one not
+    picked makes nothing, as Chummer could not have learned it."""
+    definitions = {node.findtext("id") or "": node for node in parse_data("spells.xml").findall("./spells/spell")}
+    for row in state.spells:
+        definition = definitions.get(row.spell_id)
+        bonus = definition.find("bonus") if definition is not None else None
+        if definition is None or bonus is None or not row.extra:
+            continue
+        rows = _bonus_improvements(bonus, 1, row.extra)
+        _write_improvements(root, _with_rows(root, rows, row.id, definition.findtext("name") or ""), row.id, "Spell")
 
 
 def _export_tradition_block(root: ET.Element, state: CharacterState, ctx: _Ctx) -> None:

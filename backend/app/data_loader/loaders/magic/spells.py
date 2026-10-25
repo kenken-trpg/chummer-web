@@ -36,6 +36,29 @@ def spell_kind(category: str) -> str:
     return "spell"
 
 
+#: The attributes Chummer's `selectattribute` offers before a bonus narrows
+#: them: `AttributeSection.AttributeStrings` less ESS, and less MAGAdept,
+#: which only a mystic adept with the second-MAG setting has.
+SELECTABLE_ATTRIBUTES = ("BOD", "AGI", "REA", "STR", "CHA", "INT", "LOG", "WIL", "EDG", "MAG", "RES", "DEP")
+
+
+def spell_extra(bonus: Any) -> tuple[str, list[str]]:
+    """What a spell's `<bonus>` asks to pick when it is learned, as Chummer's
+    `Spell.Create` saves it in `<extra>`: `attribute` (Increase [Attribute],
+    with the attributes it may name) or `text` (Detect [Life Form]); "" for
+    a spell that picks nothing."""
+    if bonus is None:
+        return "", []
+    node = bonus.find("selectattribute")
+    if node is not None:
+        named = [_text(a) for a in node.findall("attribute")]
+        excluded = {_text(a) for a in node.findall("excludeattribute")}
+        return "attribute", named or [a for a in SELECTABLE_ATTRIBUTES if a not in excluded]
+    if bonus.find("selecttext") is not None:
+        return "text", []
+    return "", []
+
+
 def load_spells() -> list[dict[str, Any]]:
     root = data_root("spells.xml")
     if root is None:
@@ -49,6 +72,7 @@ def load_spells() -> list[dict[str, Any]]:
         if not name or not spell_id:
             continue
         category = _text(el.find("category"))
+        extra_kind, extra_options = spell_extra(el.find("bonus"))
         items.append(
             {
                 "id": spell_id,
@@ -63,6 +87,9 @@ def load_spells() -> list[dict[str, Any]]:
                 "type": _text(el.find("type")),
                 "damage": _text(el.find("damage")),
                 "learnable": category in SPELL_CATEGORIES,
+                "needs_extra": bool(extra_kind),
+                "extra_kind": extra_kind,
+                "extra_options": extra_options,
                 "required": parse_required(el.find("required")),
                 "source": _text(el.find("source")),
                 "page": _text(el.find("page")),
