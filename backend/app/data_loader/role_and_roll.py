@@ -57,7 +57,7 @@ CATEGORIES: dict[str, tuple[str, ...]] = {
     "ドラッグ": ("drugs", "drug_components"),
     "呪文": ("spells",),
     "アデプトパワー": ("powers", "enhancements"),
-    "メタマジック": ("metamagics",),
+    "メタマジック": ("metamagics", "magic_arts"),
     "エコー": ("echoes",),
     "複合体": ("complex_forms",),
     "プログラム": ("programs", "ai_programs", "apps"),
