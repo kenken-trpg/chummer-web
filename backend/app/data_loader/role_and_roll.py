@@ -18,8 +18,8 @@ and fills in the Chummer id (and the 出典原書, when the English name finds
 it). A row without an id is work in progress and changes nothing.
 See docs/role-and-roll.md.
 
-`public_catalog` lists the issues in `books`, with `group` set so the book
-list folds them under one title, and carries their names as
+`public_catalog` lists the issues that have data in `books`, with `group`
+set so the book list folds them under one title, and carries their names as
 `book_translations`.
 """
 
@@ -79,8 +79,16 @@ def code(vol: int) -> str:
     return f"{PREFIX}{vol}"
 
 
-def books() -> list[dict[str, Any]]:
-    """One book per issue, oldest first. `group` lets the UI fold them."""
+def books(entries: Iterable[Entry] | None = None) -> list[dict[str, Any]]:
+    """One book per issue that has a row with an id, oldest first. An issue
+    nothing has been typed in for would be a checkbox that does nothing, so
+    it stays off the list until its first row lands. `group` lets the UI
+    fold them."""
+    vols = {
+        e.vol
+        for e in (load() if entries is None else entries)
+        if e.ids and e.vol is not None and FIRST_ISSUE <= e.vol <= LAST_ISSUE
+    }
     return [
         {
             "code": code(vol),
@@ -88,7 +96,7 @@ def books() -> list[dict[str, Any]]:
             "name_ja": f"Role&Roll Vol.{vol}",
             "group": PREFIX,
         }
-        for vol in range(FIRST_ISSUE, LAST_ISSUE + 1)
+        for vol in sorted(vols)
     ]
 
 

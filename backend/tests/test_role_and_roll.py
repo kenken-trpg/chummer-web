@@ -40,11 +40,24 @@ def _find(node, id_):
 
 def test_one_book_per_issue_none_of_them_chummers():
     codes = [book["code"] for book in rr.books()]
-    assert codes[0] == "RR213" and codes[-1] == "RR241" and len(codes) == 29
+    assert "RR229" in codes and codes == sorted(codes)
     assert all(book["group"] == "RR" for book in rr.books())
     chummers = {book["code"] for book in public_catalog()["books"] if not book.get("group")}
     assert not set(codes) & chummers
-    assert public_catalog()["books"][-29:] == rr.books()
+    assert public_catalog()["books"][-len(codes) :] == rr.books()
+
+
+def test_only_issues_with_a_resolved_row_are_listed():
+    # an issue with nothing typed in, or only rows still without an id, would
+    # be a checkbox that does nothing
+    entries = [
+        _entry(vol=241, ids=(WANTED,)),
+        _entry(vol=216, ids=()),
+        _entry(vol=215, ids=(WANTED,)),
+        _entry(vol=215, ids=(WANTED,)),
+    ]
+    assert [book["code"] for book in rr.books(entries)] == ["RR215", "RR241"]
+    assert rr.books([]) == []
 
 
 def test_the_shipped_entries_have_no_problems():
