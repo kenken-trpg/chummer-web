@@ -22,7 +22,7 @@ from ..engine.constants import (
 )
 from ..engine.lookups import critter_power_label
 from ..engine.priority import talent_options
-from ..engine.qualities import _quality_needs_spell_category, _quality_needs_spirit_category, has_extra_per_take
+from ..engine.qualities import _quality_needs_spell_category, has_extra_per_take
 from ..models import CharacterState
 from ._common import _Ctx, _Names, _sub, improvements_of
 from .improvements import _bonus_improvements, _Imp, _text, _with_rows, _write_improvements
@@ -84,6 +84,7 @@ def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ct
                     contacts.get(qid, ""),
                     _attribute_picks(qid, state),
                     skills,
+                    spell_category,
                 )
         if rows:
             if q.find("guid") is None:
@@ -351,8 +352,10 @@ def _quality_extra_out(
 
     Chummer's `AddSpiritOrSprite` appends every spirit it is given to the
     quality's selected value, `, `-joined: Chain Breaker's two `<addspirit>`
-    picks, or Apprentice's `<limitspiritcategory>` spirit — whose
-    `<limitspellcategory>` pick is not added, so it rides an improvement.
+    picks, or Apprentice's and an Elementalist's `<limitspiritcategory>`
+    spirit. `<limitspellcategory>` adds its category the same way, through
+    the `CreateImprovement` overload that appends to the selected value, and
+    the pick rides its improvement as well.
     `<selectcontact>` appends the contact's name the same way, after Black
     Market Pipeline's category.
     """
@@ -370,8 +373,18 @@ def _quality_extra_out(
             if key.startswith(marker) and key[len(marker) :].isdigit() and value
         )
         return ", ".join(value for _, value in picks), ""
-    if _quality_needs_spirit_category(spec) and _quality_needs_spell_category(spec):
-        return extras.get(quality_spirit_category_extra_key(qid), ""), extras.get(qid, "")
+    if _quality_needs_spell_category(spec):
+        # in the order the tags run: the category picked, then Apprentice's
+        # spirit pick or the one an Elementalist's `<limitspiritcategory>`
+        # names — `Combat, Spirit of Air`; Hedge Witch/Wizard's is the category
+        parts = []
+        for node in spec.get("bonus") or []:
+            if node.get("tag") == "limitspellcategory":
+                parts.append(str(node.get("value") or "").strip() or extras.get(qid, ""))
+            elif node.get("tag") == "limitspiritcategory":
+                fields = node.get("fields") or {}
+                parts.append(str(fields.get("spirit") or "") or extras.get(quality_spirit_category_extra_key(qid), ""))
+        return ", ".join(part for part in parts if part), extras.get(qid, "")
     if str(spec.get("extra_kind") or "") == "quality":
         # the pick is a quality of its own; see `_export_qualities`
         return "", ""

@@ -258,9 +258,33 @@ def _export_mentor_block(root: ET.Element, state: CharacterState, names: _Names,
         _sub(extra_row, "value", value)
 
 
+def _export_tradition_improvements(root: ET.Element, state: CharacterState) -> None:
+    """What `Tradition.Create` leaves in `<improvements>` when it runs a
+    tradition's `<bonus>`, under the tradition's guid (its id, see
+    `_export_tradition_block`): the skills a Pariah may not use, the spirits
+    a Toxic one is held to, the spell categories Missionist favours."""
+    if not state.tradition_id:
+        return
+    definition = next(
+        (
+            node
+            for node in parse_data("traditions.xml").findall("./traditions/tradition")
+            if node.findtext("id") == state.tradition_id
+        ),
+        None,
+    )
+    bonus = definition.find("bonus") if definition is not None else None
+    if definition is None or bonus is None:
+        return
+    rows = _bonus_improvements(bonus, 1, None)
+    guid = state.tradition_id
+    _write_improvements(root, _with_rows(root, rows, guid, definition.findtext("name") or ""), guid, "Tradition")
+
+
 def _export_magic_tradition(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
     """The tradition, stream or mentor spirit a magician or technomancer has."""
     _export_tradition_block(root, state, ctx)
+    _export_tradition_improvements(root, state)
     if state.mentor_id:
         _export_mentor_block(root, state, names, state.mentor_id)
         _export_mentor_improvements(root, state, "adept" in set(ctx["derived"].get("enabled_tabs") or []))
