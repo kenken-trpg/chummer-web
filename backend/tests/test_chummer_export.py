@@ -362,6 +362,29 @@ def test_a_quality_leaves_its_numbers_and_its_mentor() -> None:
     assert root.findtext("./mentorspirits/mentorspirit/guid") == mentor
 
 
+def test_mentors_mask_leaves_its_power_point_and_its_drain() -> None:
+    """Chummer never makes them on load: without the DrainValue the mask's
+    point less drain was lost in Chummer."""
+    state, _ = _with_quality("Mentor's Mask", {})
+    imps = [
+        (kind, val)
+        for imp in ET.fromstring(state_to_chum5(state)).findall("./improvements/improvement")
+        if imp.findtext("improvementsource") == "Quality"
+        and (kind := imp.findtext("improvementttype") or "") in ("AdeptPowerPoints", "DrainValue")
+        and (val := imp.findtext("val"))
+    ]
+    assert sorted(imps) == [("AdeptPowerPoints", "1"), ("DrainValue", "-1")]
+
+
+def test_a_stream_leaves_the_fading_of_the_forms_it_names() -> None:
+    """Machinist's `<fadingvalue specific="Puppeteer">`: the form is the improved name."""
+    state, _ = _with_quality("Resonant Stream: Machinist", {})
+    state.talent = "Technomancer"
+    fading = [row for row in _quality_improvements(ET.fromstring(state_to_chum5(state))) if row[1] == "FadingValue"]
+    assert ("Resonant Stream: Machinist", "FadingValue", "Puppeteer", "") in fading
+    assert len(fading) == 13
+
+
 def test_a_technoshaman_may_fetter_sprites_in_chummer() -> None:
     """Chummer lets a sprite be fettered only while an AllowSpriteFettering
     improvement is there, and it never makes one on load: without it, a

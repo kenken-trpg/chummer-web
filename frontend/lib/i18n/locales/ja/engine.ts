@@ -456,6 +456,8 @@ export const JA_ENGINE = {
     "「{host}」に入っていた「{name}」は、そこに入れられないので別に持たせました",
   "engine.import.hostGearSkipped":
     "{kind}「{host}」に積まれていた「{name}」は取り込めませんでした（ほかの装備に付けるものです）",
+  "engine.import.mentorsMaskQuality":
+    "導師精霊に付いていた {name} を、今の Chummer と同じく資質として取り込みました",
   "engine.import.portraitDropped":
     "ポートレート画像は取り込めませんでした（3 MB を超えるか、PNG / JPEG / GIF / WebP ではありません）",
   "engine.import.skippedUnknown": "{kind}「{name}」はカタログに無いためスキップしました",
