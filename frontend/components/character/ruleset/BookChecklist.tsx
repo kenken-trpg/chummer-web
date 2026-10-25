@@ -8,7 +8,7 @@ import { useLocale, type UiFn } from "@/lib/i18n";
 const CORE_BOOK = "SR5";
 
 /** `BookInfo.group` -> the folded list's title. A magazine's issues are one
- *  book each, 29 of them, so they fold away under its name. */
+ *  book each, up to 29 of them, so they fold away under its name. */
 const GROUP_TITLES: Record<string, string> = { RR: "Role&Roll" };
 
 /**
