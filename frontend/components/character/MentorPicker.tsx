@@ -5,6 +5,7 @@ import { filterByBooks, isBookEnabled, useAllowedBooks } from "@/lib/character/b
 import { useUiText } from "@/lib/i18n";
 import { limitLabel, sourceBit } from "@/lib/character/format";
 import { HelpTip } from "@/components/help/HelpTip";
+import { renderNotices } from "@/lib/engine-notices";
 
 export function MentorPicker({
   catalog,
@@ -76,7 +77,11 @@ export function MentorPicker({
         </div>
         {mentor ? (
           <>
-            <p className="muted">{ui("mentor.advantage")}</p>
+            <p className="muted">
+              {mentor.effects?.length
+                ? ui("mentor.advantageEffects", { effects: renderNotices(mentor.effects, ui, tr) })
+                : ui("mentor.advantage")}
+            </p>
             <p className="muted">{ui("mentor.disadvantage", { ref })}</p>
           </>
         ) : null}
