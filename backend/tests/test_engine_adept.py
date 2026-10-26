@@ -714,3 +714,35 @@ def test_an_adept_takes_one_of_the_mentors_adept_choices() -> None:
     assert chosen == ["Adept: 2 free levels of Pain Resistance"]
     free = {row["name"]: row["free_levels"] for row in out.derived["adept_powers"] if row.get("free_levels")}
     assert free == {"Pain Resistance": 2}
+
+
+def test_a_text_pick_is_typed_with_the_datas_list_offered() -> None:
+    """Improved Sense's sense and Toxic Strike's toxin are the player's
+    words; Elemental Strike offers Chummer's elements but, as Chummer, takes
+    any. A typed pick is kept, not dropped as off the list, and a mentor's
+    free one (Dog's Improved Sense) asks for nothing it has no box for."""
+    from app.data_loader import catalog
+
+    powers = {p["name"]: p for p in catalog()["powers"]}
+    sense, strike = powers["Improved Sense"], powers["Elemental Strike"]
+    assert (sense["select"], strike["select"]) == ("text", "text")
+    out = compute(
+        _adept(
+            "text-picks",
+            adept_powers=[
+                AdeptPowerInstall(power_id=sense["id"], extra="Low-Light Vision"),
+                AdeptPowerInstall(power_id=strike["id"], extra="Lightning"),
+            ],
+        )
+    ).derived
+    rows = {row["name"]: row for row in out["adept_powers"]}
+    assert rows["Improved Sense"]["extra"] == "Low-Light Vision"
+    assert rows["Improved Sense"]["options"] == []
+    assert rows["Elemental Strike"]["extra"] == "Lightning"
+    assert "Fire" in rows["Elemental Strike"]["options"]
+    assert not has(out["warnings"], "engine.adept.selectInvalid")
+
+    dog = next(m for m in catalog()["mentors"] if m["name"] == "Dog")
+    choice = next(c["name"] for c in dog["choices"] if "Improved Sense" in c["name"])
+    out = compute(_adept("dog", quality_ids=[MENTOR_SPIRIT], mentor_id=dog["id"], mentor_choices=[choice])).derived
+    assert not has(out["warnings"], "engine.qualities.mentorPowerTarget")

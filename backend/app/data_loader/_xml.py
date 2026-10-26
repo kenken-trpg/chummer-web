@@ -128,6 +128,10 @@ ATTR_KEYS = ("bod", "agi", "rea", "str", "cha", "int", "log", "wil", "edg", "mag
 PHYSICAL_ATTRS = ("BOD", "AGI", "REA", "STR", "WIL", "LOG", "INT", "CHA")
 SPECIAL_ATTRS = ("EDG", "MAG", "RES", "DEP")
 MATRIX_ATTRIBUTES = ("Attack", "Sleaze", "Data Processing", "Firewall")
+#: `/chummer/elements/element` of Chummer's `data/strings.xml` at the pinned
+#: ref — Elemental Strike's and Elemental Weapon's pick. The file is not
+#: vendored: this list is all of it anything here reads.
+ELEMENTS = ("Acid", "Cold", "Electricity", "Fire", "Pollutant", "Radiation", "Water")
 
 
 #: Ceilings for an uploaded tree. The largest of Chummer's own test saves has

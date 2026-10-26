@@ -6,7 +6,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from ._xml import MATRIX_ATTRIBUTES
+from ._xml import ELEMENTS, MATRIX_ATTRIBUTES
 
 MATRIX_ACTION_OPTIONS = [
     "Brute Force",
@@ -158,6 +158,8 @@ def selecttext_catalog_options(attrs: dict[str, Any], catalog_data: Mapping[str,
         return names
     if "strings.xml" in xml and "matrixattributes" in xpath.lower():
         return list(MATRIX_ATTRIBUTES)
+    if "strings.xml" in xml and "elements" in xpath.lower():
+        return list(ELEMENTS)
     if "programs.xml" in xml:
         return [str(item.get("name") or "") for item in catalog_data.get("programs") or [] if item.get("name")]
     return []

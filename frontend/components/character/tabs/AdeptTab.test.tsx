@@ -152,6 +152,34 @@ describe("<AdeptTab>", () => {
     expect(row.textContent).toContain("合計R3");
   });
 
+  it("types a power's text pick, with the data's list offered, and commits it on blur", () => {
+    const patch = vi.fn();
+    renderTab({
+      character: {
+        adept_powers: [{ id: "p1", power_id: "imprv", rating: 1 }] as never,
+        derived: {
+          adept_powers: [
+            { ...installed, select: "text", options: ["Acid", "Fire"], extra: null },
+          ] as never,
+        },
+      },
+      patch,
+    });
+    const input = screen.getByLabelText("対象") as HTMLInputElement;
+    const list = document.getElementById(input.getAttribute("list") || "");
+    expect([...(list?.querySelectorAll("option") || [])].map((o) => o.value)).toEqual([
+      "Acid",
+      "Fire",
+    ]);
+    fireEvent.change(input, { target: { value: "Fire" } });
+    expect(patch).not.toHaveBeenCalled();
+    // React's onBlur listens for focusout, which the dom package's blur does not send
+    fireEvent.focusOut(input, { target: { value: " Fire " } });
+    expect(patch).toHaveBeenLastCalledWith({
+      adept_powers: [{ id: "p1", power_id: "imprv", rating: 1, extra: "Fire" }],
+    });
+  });
+
   it("edits an installed power's rating, option and Way discount through patch", () => {
     const patch = vi.fn();
     renderTab({

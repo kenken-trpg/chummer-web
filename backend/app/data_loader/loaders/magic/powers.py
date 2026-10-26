@@ -53,6 +53,10 @@ def _power_select_kind(nodes: list[dict[str, Any]]) -> str | None:
         return "spell"
     if "selectlimit" in tags:
         return "limit"
+    # Improved Sense's sense, Elemental Strike's element: written, or picked
+    # from a list that still allows other words
+    if "selecttext" in tags:
+        return "text"
     return None
 
 

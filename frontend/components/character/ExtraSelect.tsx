@@ -42,6 +42,34 @@ export function ExtraSelect({
 }) {
   const { ui } = useUiText();
   if (!item.select) return null;
+  if (item.select === "text") {
+    // Improved Sense's sense, Elemental Strike's element: typed, with the
+    // data's list (if any) offered. Committed on leaving the field, as a
+    // spell's text is: each keystroke would recompute the character.
+    const listId = `power-text-${item.id}`;
+    return (
+      <label>
+        {ui(selectLabel(item.select))}
+        <input
+          type="text"
+          list={item.options.length ? listId : undefined}
+          key={item.extra || ""}
+          defaultValue={item.extra || ""}
+          onBlur={(e) => {
+            const extra = e.target.value.trim();
+            if (extra !== (item.extra || "")) onChange(extra);
+          }}
+        />
+        {item.options.length ? (
+          <datalist id={listId}>
+            {item.options.map((name) => (
+              <option key={name} value={name} label={tr(name)} />
+            ))}
+          </datalist>
+        ) : null}
+      </label>
+    );
+  }
   return (
     <label>
       {ui(selectLabel(item.select))}

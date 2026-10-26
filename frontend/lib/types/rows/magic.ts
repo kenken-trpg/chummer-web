@@ -199,7 +199,7 @@ export interface InstalledAdeptPower {
   full_cost?: number;
   discounted?: boolean;
   can_discount?: boolean;
-  select?: "skill" | "attribute" | "spell" | null;
+  select?: "skill" | "attribute" | "spell" | "limit" | "text" | null;
   options: string[];
   source?: string;
   page?: string;
@@ -241,7 +241,7 @@ export interface InstalledQiFocus {
   power_rating: number;
   power_rating_max: number;
   extra: string;
-  select?: "skill" | "attribute" | "spell" | null;
+  select?: "skill" | "attribute" | "spell" | "limit" | "text" | null;
   options: string[];
   nuyen: number;
   karma: number;
