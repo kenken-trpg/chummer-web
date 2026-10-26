@@ -23,7 +23,7 @@ def test_a_key_names_a_known_kind_and_field_and_its_id_is_lower_cased(
     (tmp_path / "texts.json").write_text(
         json.dumps(
             {
-                "mentor/136A3DC5-D9C4/advantage": "全員：ダメージ抵抗テストにダイス+2",
+                "mentor/136A3DC5-D9C4/advantage": "すべて：ダメージ抵抗テストにダイス+2",
                 "mentor/136a3dc5-d9c4/notes": "読まれない欄",
                 "quality/abc/advantage": "読まれない種類",
                 "mentor//advantage": "id が無い",
@@ -33,7 +33,7 @@ def test_a_key_names_a_known_kind_and_field_and_its_id_is_lower_cased(
         encoding="utf-8",
     )
     monkeypatch.setattr(loader, "OVERRIDE_DIR", tmp_path)
-    assert load_text_translations() == {"mentor/136a3dc5-d9c4/advantage": "全員：ダメージ抵抗テストにダイス+2"}
+    assert load_text_translations() == {"mentor/136a3dc5-d9c4/advantage": "すべて：ダメージ抵抗テストにダイス+2"}
 
 
 def test_the_catalog_carries_the_table() -> None:
