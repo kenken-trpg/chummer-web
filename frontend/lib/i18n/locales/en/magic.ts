@@ -161,5 +161,6 @@ export const EN_MAGIC = {
   "mentor.chooseTarget": "Choose a target",
   "mentor.ref": "{source} p.{page}",
   "mentor.advantage": "Advantage: its effects are applied",
+  "mentor.advantageEffects": "Advantage (applied): {effects}",
   "mentor.disadvantage": "Disadvantage: applies in certain situations; see the rulebook ({ref})",
 };

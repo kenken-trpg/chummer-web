@@ -253,6 +253,8 @@ export interface MentorInfo {
   name: string;
   source?: string;
   page?: string;
+  /** The fixed advantage's effects, as the engine applies them; see `mentor_effects`. */
+  effects?: Notice[];
   choices: MentorChoice[];
 }
 

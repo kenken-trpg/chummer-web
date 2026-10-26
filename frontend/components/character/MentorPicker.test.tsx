@@ -114,6 +114,35 @@ describe("MentorPicker", () => {
     ).toBeTruthy();
   });
 
+  it("lists the advantage's fixed effects as the engine applies them", () => {
+    const dog: MentorInfo = {
+      ...chaos,
+      id: "DOG-1",
+      name: "Dog",
+      source: "SR5",
+      page: "321",
+      effects: [
+        { key: "engine.mentorEffect.skill", params: { names: [{ tr: "Tracking" }], value: "+2" } },
+        { key: "engine.mentorEffect.damageResistance", params: { value: "+2" } },
+      ],
+      choices: [],
+    };
+    render(
+      <MentorPicker
+        catalog={makeCatalog({
+          mentors: [{ id: "DOG-1", name: "Dog", source: "SR5", page: "321" }],
+        })}
+        mentor={dog}
+        ch={makeCharacter({ mentor_id: "DOG-1" })}
+        tr={(n) => (n === "Tracking" ? "トラッキング" : n)}
+        onPatch={vi.fn()}
+      />,
+    );
+    expect(
+      screen.getByText("利点（計算に反映済み）：トラッキング +2 / ダメージ抵抗 +2"),
+    ).toBeTruthy();
+  });
+
   it("names a choice through the translation table", () => {
     // the core rulebook pass translates these labels; untranslated, they stay English
     renderPicker(vi.fn(), (n) => (n === CHOICE ? "アデプト：向上能力 2 レベル無料" : n));
