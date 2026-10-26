@@ -266,6 +266,7 @@ export const JA_CHARGEN = {
   "quality.marketCategory": "商品カテゴリーを選択",
   "quality.marketContact": "コンタクトを選択",
   "quality.marketBonus": "入手テスト +{bonus}（実効 Avail −{bonus}）",
+  "quality.marketInactive": "分類とコンタクトを選ぶと効く",
   "quality.side": "左右を選択",
   "quality.matrixAction": "マトリックスアクションを選択",
   "quality.matrixActionFree": "マトリックスアクションを手入力",

@@ -264,6 +264,14 @@ export const JA_HELP = {
   "help.adept.mystic":
     "ミスティック・アデプトは 1 点 5 カルマで買う。買わなかった分の魔力は呪文用に残る",
   "help.adept.way": "Way（流儀）の資質は対象のパワーを安くする。割引の総量は魔力 ÷ 4（切り上げ）",
+  "help.adept.qiCost": "価格はフォース × 3,000¥",
+  "help.adept.qiBinding": "結合カルマはフォース × 2（卓の設定で変わる）。The Artisan's Way で減る",
+  "help.adept.qiPower":
+    "フォース 1 につき 0.25 パワーポイント分のパワーが入る。パワーのレーティングを上げると、要るフォースも上がる",
+  "help.adept.enhancementKarma": "Enhancement は 1 つ 2 カルマ（卓の設定で変わる）",
+  "help.adept.enhancementWay":
+    "それぞれ決まった Way の資質が要る。Way を外すと Enhancement も外れる",
+  "help.adept.enhancementPower": "対応するパワーも要る。持っていないと警告が出る",
   "help.martial.statsLabel": "格闘技スタイルと技法",
   "help.martial.style": "格闘技スタイルは 7 カルマ（品目ごとに別のカルマのことがある）",
   "help.martial.technique": "技法は 1 つ 5 カルマ。資質で付いてくる分は無料",
@@ -444,6 +452,10 @@ export const JA_HELP = {
   "help.side.scBurn": "ストリートの評判を 2 点燃やして、悪名を 1 点下げる（SR5 p.373）",
   "help.qual.rebaseline": "作成時のミスを、キャリアに入ってから直したときに使う",
   "help.qual.rebaselineEffect": "キャリアでの資質の取得・買い戻しの請求を、すべて取り消す",
+  "help.qual.marketAvail":
+    "選んだ分類の品目は入手テスト +2。作成時の入手値の上限も、2 下げた入手値で比べる",
+  "help.qual.marketDiscount": "その分類の品目は、1 つずつ 10% 引きにできる（品目の行の「闇市」）",
+  "help.qual.marketNeeds": "分類とコンタクトの両方を選ぶまで効かない（RF p.145）",
   "help.toolbar.import":
     "読めるのは 4 種類だけです：このアプリで書き出した JSON ／ Foundry VTT（shadowrun5e）のアクターを Export Data した JSON ／ Chummer5a の .chum5・.chum5lz ／ シャドウラン5th 日本版非公式wiki で紹介されている、音の兔（ねのうさ）様の「［SR5］キャラシテンプレート」 を .xlsx で書き出したもの。一般の Excel ブックや他の JSON は読めません",
   "help.toolbar.share":

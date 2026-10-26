@@ -3,6 +3,7 @@ import { useState } from "react";
 import { PickerList } from "@/components/character/CatalogPicker";
 import { optionLabel, selectLabel } from "@/components/character/ExtraSelect";
 import type { TabPanelProps } from "@/components/character/types";
+import { HelpTip } from "@/components/help/HelpTip";
 import { sourceBit } from "@/lib/character/format";
 import { editRow } from "@/lib/character/rows";
 
@@ -20,7 +21,18 @@ export function QiFociSection({
   const [qiSearch, setQiSearch] = useState("");
   return (
     <>
-      <h3>{ui("adept.qiTitle")}</h3>
+      <h3>
+        <HelpTip
+          label={ui("help.open", { label: ui("adept.qiTitle") })}
+          lines={[
+            { label: ui("help.adept.qiCost") },
+            { label: ui("help.adept.qiBinding") },
+            { label: ui("help.adept.qiPower") },
+          ]}
+        >
+          {ui("adept.qiTitle")}
+        </HelpTip>
+      </h3>
       <p className="muted">{ui("adept.qiNote")}</p>
       {(d.qi_foci || []).map((item) => (
         <div className="cyber-item" key={item.id}>

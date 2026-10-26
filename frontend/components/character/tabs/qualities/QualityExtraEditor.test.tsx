@@ -121,6 +121,21 @@ describe("<QualityExtraEditor> accessible names", () => {
     ).toBeDefined();
   });
 
+  it("says on the pipeline's '?' what the pick does, before and after it applies", () => {
+    renderFor({ name: "Black Market Pipeline" });
+    const tip = screen.getByRole("button", { name: "Black Market Pipeline の説明" });
+    expect(screen.getByText("分類とコンタクトを選ぶと効く")).toBeDefined();
+    const body = document.getElementById(tip.getAttribute("aria-describedby") || "");
+    expect(body?.textContent).toContain("入手テスト +2");
+    expect(body?.textContent).toContain("10% 引き");
+  });
+
+  it("shows the pipeline's bonus on its '?' once it applies", () => {
+    renderFor({ name: "Black Market Pipeline" }, { d: { black_market_avail_bonus: 2 } });
+    expect(screen.getByText("入手テスト +2（実効 Avail −2）")).toBeDefined();
+    expect(screen.queryByText("分類とコンタクトを選ぶと効く")).toBeNull();
+  });
+
   it("renders nothing for a quality that takes no target", () => {
     const { container } = render(
       <QualityExtraEditor
@@ -500,7 +515,7 @@ describe("<QualityExtraEditor> what each control writes", () => {
 
     expect(patch.mock.calls[0][0]).toEqual({ quality_extras: { q1: "Cyberware" } });
     expect(patch.mock.calls[1][0]).toEqual({ quality_extras: { "q1:contact": "k1" } });
-    expect(screen.getByText(/入手テスト \+2/)).toBeDefined();
+    expect(screen.getByText("入手テスト +2（実効 Avail −2）")).toBeDefined();
   });
 
   it("names an unnamed contact rather than offering a blank row", () => {

@@ -3,8 +3,9 @@
 import type { Character } from "@/lib/types";
 import type { UiFn } from "@/lib/i18n";
 import { contactTerm } from "@/lib/ui-strings";
+import { HelpTip } from "@/components/help/HelpTip";
 
-/** The gear categories Black Market Pipeline can cover (SR5 p.79). */
+/** The gear categories Black Market Pipeline can cover (RF p.145). */
 const MARKET_CATEGORIES = [
   "Weapons",
   "Armor",
@@ -75,11 +76,20 @@ export function BlackMarketPipeline({
           </option>
         ))}
       </select>
-      {d.black_market_avail_bonus ? (
-        <span className="muted">
-          {ui("quality.marketBonus", { bonus: d.black_market_avail_bonus })}
-        </span>
-      ) : null}
+      <span className="muted">
+        <HelpTip
+          label={ui("help.open", { label: tr(q.name) })}
+          lines={[
+            { label: ui("help.qual.marketAvail") },
+            { label: ui("help.qual.marketDiscount") },
+            { label: ui("help.qual.marketNeeds") },
+          ]}
+        >
+          {d.black_market_avail_bonus
+            ? ui("quality.marketBonus", { bonus: d.black_market_avail_bonus })
+            : ui("quality.marketInactive")}
+        </HelpTip>
+      </span>
     </div>
   );
 }
