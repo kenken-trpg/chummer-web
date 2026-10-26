@@ -279,7 +279,12 @@ def _granted_powers(
         options = power_select_options(power_spec, skills_data)
         own = (state.mentor_extras or {}).get(_power_target_key(picked, power_spec["name"]), "")
         bound_extra = next((value for value in (own, extra) if value in options), "")
-        if power_spec.get("select") and not bound_extra:
+        if power_spec.get("select") == "text":
+            # a sense or a toxin is the player's word, and the picker has no
+            # box for it (the choice's own pick names something else): a free
+            # one stays unnamed rather than nagging
+            bound_extra = own
+        elif power_spec.get("select") and not bound_extra:
             warnings.append(
                 notice(
                     "engine.qualities.mentorPowerTarget",

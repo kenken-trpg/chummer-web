@@ -20,6 +20,7 @@ from ...data_loader.bonus_extra import (
     _weaponcategorydv_categories,
     _weaponskillaccuracy_needs_select,
     _weaponskillaccuracy_select_attrs,
+    selecttext_catalog_options,
 )
 from ...improvements import substitute_rating
 from ...models import CharacterState
@@ -181,6 +182,10 @@ def power_select_options(spec: dict[str, Any], skills_data: dict[str, Any]) -> l
             return []
         named = {name.title() for name in _field_list((node.get("fields") or {}).get("limit"))}
         return [name for name in LIMIT_CHOICES if not named or name in named]
+    if kind == "text":
+        # suggestions only: Chummer lets the text be typed either way
+        node = next((item for item in (spec.get("bonus") or []) if item.get("tag") == "selecttext"), None)
+        return selecttext_catalog_options((node or {}).get("attrs") or {}, catalog()) if node else []
     return []
 
 
@@ -354,7 +359,7 @@ class _Adept:
     def _checked_pick(self, inst: Any, spec: dict[str, Any], extra: str, options: list[str]) -> str:
         """The saved pick if it is one of the options, else "" — warned either way."""
         kind = spec.get("select")
-        if kind and extra and extra not in options:
+        if kind and kind != "text" and extra and extra not in options:
             self.warnings.append(notice("engine.adept.selectInvalid", name=term(str(spec["name"])), picked=term(extra)))
             extra = ""
             inst.extra = None
