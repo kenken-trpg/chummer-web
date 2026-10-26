@@ -3,6 +3,23 @@
 Notable changes. Format follows [Keep a Changelog](https://keepachangelog.com/);
 self-hosters can pin to a tag instead of tracking `main`.
 
+## [0.5.17] — 2026-10-26
+
+### Added
+
+- **The mentor and paragon picker lists what the mentor does**, as the engine
+  applies it: the advantage's fixed effects (`トラッキング +2`,
+  `ダメージ抵抗 +2`), and with the disadvantage the negative qualities it
+  grants (Eagle's allergy, Gambler's Distinctive Style, Tohu Wa-Bohu's
+  Driven).
+
+### Changed
+
+- **Mentor spirits and paragons no longer show the advantage and disadvantage
+  text.** That text is the rulebook's own, so the picker gives the page (the
+  English edition's), says the advantage is applied, and points to the
+  rulebook for the disadvantage.
+
 ## [0.5.16] — 2026-10-26
 
 ### Added
@@ -2699,7 +2716,8 @@ First tagged release.
 - One-container Docker image (Caddy + uvicorn + Next standalone) published to
   GHCR; `make up` / `compose.yaml` for local self-hosting.
 
-[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.16...HEAD
+[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.17...HEAD
+[0.5.17]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.16...v0.5.17
 [0.5.16]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.15...v0.5.16
 [0.5.15]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.14...v0.5.15
 [0.5.14]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.13...v0.5.14
