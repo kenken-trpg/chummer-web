@@ -54,7 +54,7 @@ FLOORS = {
     "Bioware": 112,
     "Gear": 182,
     "Armor": 61,
-    "Power": 62,
+    "Power": 69,
     "MentorSpirit": 37,
     "Spell": 15,
     "MartialArt": 1,

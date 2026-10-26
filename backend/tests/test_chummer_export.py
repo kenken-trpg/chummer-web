@@ -888,6 +888,65 @@ def test_free_power_levels_get_a_power_row_and_its_pick() -> None:
     assert [p["power_id"] for p in back["adept_powers"]] == [danger]
 
 
+def _berserker(adept_powers: list[AdeptPowerInstall]) -> ET.Element:
+    berserker = next(m["id"] for m in catalog()["mentors"] if m["name"] == "Berserker")
+    mentor_spirit = next(q["id"] for q in catalog()["qualities"] if q["name"] == "Mentor Spirit")
+    state = CharacterState(
+        id="b",
+        name="Berserker",
+        priorities=Priorities(Heritage="D", Attributes="A", Talent="B", Skills="C", Resources="E"),
+        metatype="Human",
+        attributes={},
+        talent="Adept",
+        quality_ids=[mentor_spirit],
+        adept_powers=adept_powers,
+        mentor_id=berserker,
+        mentor_choices=["Adept: 2 free levels of Pain Resistance"],
+    )
+    return ET.fromstring(state_to_chum5(state))
+
+
+def test_a_power_leaves_its_bonus_at_the_free_levels_too() -> None:
+    """Chummer runs a power's bonus at its `TotalRating`, the levels bought
+    plus the free ones — on the rating 0 row a mentor's free levels land on
+    when the power was not bought, as on the bought row."""
+    root = _berserker([])
+    (row,) = root.findall("./powers/power")
+    assert _improvements_by(root, "Power") == [("CMThresholdOffset", "", "2", "1")]
+    assert root.findtext("./improvements/improvement[improvementsource='Power']/sourcename") == row.findtext("guid")
+
+    pain = next(p["id"] for p in catalog()["powers"] if p["name"] == "Pain Resistance")
+    root = _berserker([AdeptPowerInstall(id="pr", power_id=pain, rating=1)])
+    assert [p.findtext("guid") for p in root.findall("./powers/power")] == ["pr"]
+    assert _improvements_by(root, "Power") == [("CMThresholdOffset", "", "3", "1")]
+
+
+def test_a_weapon_category_power_names_its_category() -> None:
+    """`CreateWeaponCategoryImprovement`: Master Archer names its own
+    category; Critical Strike names the one picked, with its `<bonus>`."""
+
+    def pid(name: str) -> str:
+        return next(p["id"] for p in catalog()["powers"] if p["name"] == name)
+
+    state = CharacterState(
+        id="w",
+        name="Archer",
+        priorities=Priorities(Heritage="D", Attributes="A", Talent="B", Skills="C", Resources="E"),
+        metatype="Human",
+        attributes={},
+        talent="Adept",
+        adept_powers=[
+            AdeptPowerInstall(id="ma", power_id=pid("Master Archer"), rating=1),
+            AdeptPowerInstall(id="cs", power_id=pid("Critical Strike"), rating=1, extra="Unarmed Combat"),
+        ],
+    )
+    root = ET.fromstring(state_to_chum5(state))
+    assert _improvements_by(root, "Power") == [
+        ("WeaponCategoryDV", "Unarmed Combat", "1", "1"),
+        ("WeaponCategoryDice", "Bows", "1", "1"),
+    ]
+
+
 def test_a_power_and_a_mentor_leave_what_their_bonus_made() -> None:
     """An adept power's improvements sit under its guid at its rating; the
     mentor's own bonus and each picked choice's sit under the mentor's guid,

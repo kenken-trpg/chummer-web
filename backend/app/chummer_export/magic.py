@@ -68,7 +68,7 @@ def _export_spell_lists(root: ET.Element, state: CharacterState, names: _Names, 
         # the guid the power's improvements name it by
         {"guid": lambda r: r.id, "rating": lambda r: r.rating, "extra": lambda r: r.extra or ""},
     )
-    _export_power_improvements(root, state)
+    _export_power_improvements(root, state, ctx)
     _named_list(
         "complexforms",
         "complexform",
@@ -79,19 +79,33 @@ def _export_spell_lists(root: ET.Element, state: CharacterState, names: _Names, 
     )
 
 
-def _export_power_improvements(root: ET.Element, state: CharacterState) -> None:
+def _export_power_improvements(root: ET.Element, state: CharacterState, ctx: _Ctx) -> None:
     """What `Power.Create` leaves in `<improvements>` when it runs an adept
-    power's `<bonus>` at its rating, under the power's guid — Chummer never
-    runs it again on load. A power's pick (Improved Ability's skill,
-    Improved Physical Attribute's attribute) is its extra."""
-    definitions = {node.findtext("id") or "": node for node in parse_data("powers.xml").findall("./powers/power")}
+    power's `<bonus>`, under the power's guid — Chummer never runs it again
+    on load. It runs it at the power's `TotalRating`, the levels bought plus
+    the free ones (a mentor's, a quality's), as the engine's `total_rating`
+    has it. A power's pick (Improved Ability's skill, Improved Physical
+    Attribute's attribute) is its extra."""
+    totals = {
+        str(row.get("id") or ""): int(row.get("total_rating") or 0) for row in ctx["derived"].get("adept_powers") or []
+    }
+    definitions = _power_definitions()
     for row in state.adept_powers:
-        definition = definitions.get(row.power_id)
-        bonus = definition.find("bonus") if definition is not None else None
-        if definition is None or bonus is None:
-            continue
-        rows = _bonus_improvements(bonus, int(row.rating or 1), row.extra or "")
-        _write_improvements(root, _with_rows(root, rows, row.id, definition.findtext("name") or ""), row.id, "Power")
+        rating = totals.get(row.id) or int(row.rating or 1)
+        _write_power_bonus(root, definitions.get(row.power_id), row.id, rating, row.extra or "")
+
+
+def _write_power_bonus(root: ET.Element, definition: ET.Element | None, guid: str, rating: int, extra: str) -> None:
+    """The improvements a power's `<bonus>` makes at `rating`, under `guid`."""
+    bonus = definition.find("bonus") if definition is not None else None
+    if definition is None or bonus is None:
+        return
+    rows = _bonus_improvements(bonus, rating, extra)
+    _write_improvements(root, _with_rows(root, rows, guid, definition.findtext("name") or ""), guid, "Power")
+
+
+def _power_definitions() -> dict[str, ET.Element]:
+    return {node.findtext("id") or "": node for node in parse_data("powers.xml").findall("./powers/power")}
 
 
 def _export_spell_improvements(root: ET.Element, state: CharacterState) -> None:
@@ -417,12 +431,19 @@ def _export_free_power_rows(root: ET.Element, state: CharacterState, names: _Nam
     `selectpowers` add for them to land on, as a mentor's (Eagle's Combat
     Sense), a quality's or a Qi focus's. Chummer counts free levels on the
     power of that name and extra; with no row they count nowhere. The import
-    reads a rating 0 row as nothing bought."""
+    reads a rating 0 row as nothing bought. The row's own `<bonus>` makes its
+    improvements at the free levels, as for a bought power."""
     powers = root.find("powers")
     if powers is None:
         return
     have = {(p.findtext("name") or "", p.findtext("extra") or "") for p in powers.findall("power")}
     ids = {name: pid for pid, name in names["power"].items()}
+    totals = {
+        (str(row.get("power_id") or ""), str(row.get("extra") or "")): int(row.get("total_rating") or 0)
+        for row in ctx["derived"].get("adept_powers") or []
+        if row.get("free_only")
+    }
+    definitions: dict[str, ET.Element] = {}
     for imp in root.findall("./improvements/improvement"):
         if not (imp.findtext("improvementttype") or "").startswith("AdeptPowerFree"):
             continue
@@ -439,3 +460,8 @@ def _export_free_power_rows(root: ET.Element, state: CharacterState, names: _Nam
             ("extra", key[1]),
         ):
             _sub(el, field, value)
+        # the bonus `Power.Create` runs for the row, at the free levels
+        if totals.get((ids[key[0]], key[1])):
+            definitions = definitions or _power_definitions()
+            rating = totals[(ids[key[0]], key[1])]
+            _write_power_bonus(root, definitions.get(ids[key[0]]), el.findtext("guid") or "", rating, key[1])
