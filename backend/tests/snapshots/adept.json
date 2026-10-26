@@ -35,13 +35,19 @@
       "id": "#2",
       "name": "Critical Strike",
       "notes": [],
-      "options": [],
+      "options": [
+        "Astral Combat",
+        "Blades",
+        "Clubs",
+        "Exotic Melee Weapon",
+        "Unarmed Combat"
+      ],
       "page": "309",
       "power_id": "dbf16604-164c-485c-96c8-fe3136cd5caa",
       "rating": 1,
       "rating_max": 1,
       "rating_min": 1,
-      "select": null,
+      "select": "skill",
       "source": "SR5",
       "spell": null,
       "total_rating": 1
