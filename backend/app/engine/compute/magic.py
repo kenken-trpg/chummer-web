@@ -124,8 +124,17 @@ def awakened(ctx: Ctx) -> None:
     )
     ctx.warnings.extend(ctx.enhancements["warnings"])
     ctx.effects["enabled_tabs"] = set(ctx.effects["enabled_tabs"])
+    slots_before = len(ctx.effects["weapon_skill_accuracy_slots"])
     for source, nodes in ctx.adept["bonus_sources"] + ctx.enhancements["bonus_sources"]:
         apply_bonus_nodes(nodes, ctx.effects, source)
+    # The qualities' accuracy slots were resolved before the powers ran; a
+    # power's own pick is already bound into a fixed slot (`bind_power_bonus`:
+    # Enhanced Accuracy's skill), so it only needs folding in.
+    for slot in ctx.effects["weapon_skill_accuracy_slots"][slots_before:]:
+        if slot["name"] and slot["bonus"] and not slot["needs_select"]:
+            ctx.effects.setdefault("weapon_skill_accuracy", []).append(
+                {"name": slot["name"], "bonus": slot["bonus"], "source": slot["source"]}
+            )
     ctx.attr_totals = into_metahuman_form(
         ctx, {key: int(ctx.ratings.get(key) or 0) + ctx.attr_bonus(key) for key in ctx.ratings}
     )
