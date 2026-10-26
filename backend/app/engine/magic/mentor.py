@@ -312,11 +312,13 @@ def _public_choice(
     )
     extras = power_options
     if not extras:
-        # the last granted power that exists names the options
+        # the last granted power that takes a pick names the options:
+        # Dragonslayer's Danger Sense, which takes none, follows the
+        # Enhanced Accuracy whose skill the choice picks
         for power in choice.get("powers") or []:
             power_spec = _power_by_name(power["name"])
             if power_spec:
-                extras = power_select_options(power_spec, skills_data)
+                extras = power_select_options(power_spec, skills_data) or extras
     power_targets: list[dict[str, Any]] = []
     if power_options:
         for power in choice.get("powers") or []:

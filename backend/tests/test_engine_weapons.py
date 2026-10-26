@@ -781,6 +781,35 @@ def test_practice_practice_practice_weapon_skill_accuracy() -> None:
     assert "weaponskillaccuracy" not in tags
 
 
+def test_enhanced_accuracy_takes_the_skill_it_picks() -> None:
+    """Enhanced Accuracy (skill) asks for its skill inside its
+    `<weaponskillaccuracy>`: the pick is the power's own, bought or given
+    free by a mentor, and adds 1 to the accuracy of that skill's weapons."""
+    power = next(p for p in catalog()["powers"] if p["name"] == "Enhanced Accuracy (skill)")
+    assert power["select"] == "skill"
+    rifle = WeaponInstall(weapon_id=next(w["id"] for w in catalog()["weapons"] if w["name"] == "AK-97"))
+
+    def accuracy(name: str, **over: object) -> str:
+        return str(compute(_adept(name, weapons=[rifle], **over)).derived["weapons"][0]["accuracy"])
+
+    base = accuracy("ea-none")
+    bought = AdeptPowerInstall(power_id=power["id"], extra="Automatics")
+    assert accuracy("ea-auto", adept_powers=[bought]) == str(int(base) + 1)
+    assert accuracy("ea-blades", adept_powers=[bought.model_copy(update={"extra": "Blades"})]) == base
+    choice = "Adept: 1 free level of Enhanced Accuracy and Danger Sense"
+    mentor = {
+        "quality_ids": [next(q["id"] for q in catalog()["qualities"] if q["name"] == "Mentor Spirit")],
+        "mentor_id": next(m["id"] for m in catalog()["mentors"] if m["name"] == "Dragonslayer"),
+        "mentor_choices": [choice],
+        "mentor_extras": {choice: "Automatics"},
+    }
+    assert accuracy("ea-mentor", **mentor) == str(int(base) + 1)
+    out = compute(_adept("ea-choice", **mentor)).derived
+    (picked,) = [c for c in out["mentor"]["choices"] if c["name"] == choice]
+    # Danger Sense, granted after it, takes no pick and leaves the options be
+    assert "Automatics" in picked["extra_options"] and "Unarmed Combat" not in picked["extra_options"]
+
+
 def test_death_dealer_adept_weapon_dv_and_skill_select() -> None:
     missing = compute(
         _adept(

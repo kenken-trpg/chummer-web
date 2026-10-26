@@ -96,6 +96,7 @@ def _weaponskillaccuracy_select_attrs(node: dict[str, Any]) -> dict[str, str]:
 
 def _filter_active_skill_names(skills: list[dict[str, Any]], attrs: dict[str, str]) -> list[str]:
     names = {part.strip() for part in str(attrs.get("limittoskill") or "").split(",") if part.strip()}
+    excluded = {part.strip() for part in str(attrs.get("excludeskill") or "").split(",") if part.strip()}
     cats = {
         part.strip()
         for part in str(attrs.get("limittocategory") or attrs.get("skillcategory") or "").split(",")
@@ -109,7 +110,7 @@ def _filter_active_skill_names(skills: list[dict[str, Any]], attrs: dict[str, st
         name = str(skill.get("name") or "")
         if not name:
             continue
-        if names and name not in names:
+        if names and name not in names or name in excluded:
             continue
         category = str(skill.get("category") or "")
         if cats and category not in cats:

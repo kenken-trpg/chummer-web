@@ -15,6 +15,11 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from ...data_loader import SPELL_CAST_CATEGORIES, catalog
+from ...data_loader.bonus_extra import (
+    _filter_active_skill_names,
+    _weaponskillaccuracy_needs_select,
+    _weaponskillaccuracy_select_attrs,
+)
 from ...improvements import substitute_rating
 from ...models import CharacterState
 from ...notices import Notice, notice, term, terms, ui
@@ -131,6 +136,11 @@ def bind_power_bonus(nodes: list[dict[str, Any]], extra: str, rating: int) -> li
             continue
         if tag == "selectspell":
             continue
+        if _weaponskillaccuracy_needs_select(node):
+            # the pick names the skill: the slot becomes a fixed one
+            if extra:
+                bound.append({"tag": tag, "fields": {"name": extra, "value": fields.get("value")}})
+            continue
         bound.append(node)
     return bound
 
@@ -139,6 +149,11 @@ def power_select_options(spec: dict[str, Any], skills_data: dict[str, Any]) -> l
     kind = spec.get("select")
     if kind == "skill":
         node = next((item for item in (spec.get("bonus") or []) if item.get("tag") == "selectskill"), None)
+        accuracy = next((item for item in spec.get("bonus") or [] if _weaponskillaccuracy_needs_select(item)), None)
+        if not node and accuracy:
+            return _filter_active_skill_names(
+                list(skills_data.get("skills") or []), _weaponskillaccuracy_select_attrs(accuracy)
+            )
         if not node:
             return []
         parsed = parse_selectskill_spec(node)
