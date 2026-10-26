@@ -990,7 +990,8 @@ def test_a_level_on_a_power_that_has_none_is_reported() -> None:
 
 
 def test_a_target_a_power_cannot_hold_is_reported() -> None:
-    _, warnings = xlsx_to_state(filled(powers=[("強打（拳）", "")]))
+    # 強打 (Critical Strike) picks its skill now; 殺戮の手 picks nothing
+    _, warnings = xlsx_to_state(filled(powers=[("殺戮の手（拳）", "")]))
     assert has(warnings, "engine.import.xlsxPowerNote", note="拳")
 
 

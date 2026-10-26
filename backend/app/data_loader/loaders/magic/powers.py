@@ -12,7 +12,7 @@ from typing import Any
 
 from ..._xml import _float, _int, _text, data_root
 from ...bonus import _specific_powers, parse_bonus, parse_select_power_slot
-from ...bonus_extra import _weaponskillaccuracy_needs_select
+from ...bonus_extra import _weaponcategorydv_categories, _weaponskillaccuracy_needs_select
 from ...requirements import parse_required
 
 
@@ -41,8 +41,11 @@ def _way_quality_names(el: ET.Element | None) -> list[str]:
 
 def _power_select_kind(nodes: list[dict[str, Any]]) -> str | None:
     tags = {node.get("tag") for node in nodes}
-    # Enhanced Accuracy (skill) asks for its skill inside the tag it feeds
-    if "selectskill" in tags or any(_weaponskillaccuracy_needs_select(node) for node in nodes):
+    # Enhanced Accuracy (skill) and Critical Strike ask for their skill inside
+    # the tag it feeds
+    if "selectskill" in tags or any(
+        _weaponskillaccuracy_needs_select(node) or _weaponcategorydv_categories(node) for node in nodes
+    ):
         return "skill"
     if "selectattribute" in tags:
         return "attribute"

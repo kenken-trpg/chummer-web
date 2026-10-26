@@ -50,14 +50,16 @@ def _attacks(state: CharacterState) -> dict[str, tuple[str, str, str]]:
 @pytest.mark.parametrize("enabled", [None, False, True])
 def test_kick_and_claws_distinguish_category_dv_from_optional_unarmed_modifiers(enabled: bool | None) -> None:
     state = _fighter(enabled)
-    # Death Dealer's category DV always applies. Bone Density's unarmed
-    # DV, Penetrating Strike and Kick Attack need the optional weapon rule.
+    # Death Dealer's and Critical Strike's category DV always apply, and add
+    # up as Chummer's `GetWeaponCategoryImprovements` sums them. Bone
+    # Density's unarmed DV, Penetrating Strike and Kick Attack need the
+    # optional weapon rule.
     assert state.derived["unarmed_dv"] == 1
     assert state.derived["unarmed_ap"] == -2
     assert state.derived["unarmed_reach"] == 1
     assert _attacks(state) == {
-        "Kick (Centaur)": ("7P", "-1", "2") if enabled else ("6P", "+1", "1"),
-        "Razor Claws": ("6P", "-3", "1") if enabled else ("5P", "-1", "0"),
+        "Kick (Centaur)": ("8P", "-1", "2") if enabled else ("7P", "+1", "1"),
+        "Razor Claws": ("7P", "-3", "1") if enabled else ("6P", "-1", "0"),
     }
     assert state.weapons == []
     assert len(state.derived["weapons"]) == 2
@@ -77,12 +79,12 @@ def test_settings_upload_and_patch_toggle_modifiers_without_baking_them_into_gra
     assert parsed.unarmed_improvements_apply_to_weapons is True
     assert "unarmedimprovementsapplytoweapons" not in parsed.unsupported
     state = apply_patch(state, CharacterPatch(settings=parsed.model_dump(exclude_unset=True)))
-    assert _attacks(state)["Kick (Centaur)"] == ("7P", "-1", "2")
+    assert _attacks(state)["Kick (Centaur)"] == ("8P", "-1", "2")
     state = apply_patch(state, CharacterPatch(attributes={**state.attributes, "STR": 5}))
-    assert _attacks(state)["Kick (Centaur)"] == ("9P", "-1", "2")
-    assert _attacks(state)["Razor Claws"] == ("8P", "-3", "1")
+    assert _attacks(state)["Kick (Centaur)"] == ("10P", "-1", "2")
+    assert _attacks(state)["Razor Claws"] == ("9P", "-3", "1")
     state = apply_patch(state, CharacterPatch(settings={"unarmed_improvements_apply_to_weapons": False}))
-    assert _attacks(state)["Kick (Centaur)"] == ("8P", "+1", "1")
+    assert _attacks(state)["Kick (Centaur)"] == ("9P", "+1", "1")
     state = apply_patch(state, CharacterPatch(metatype="Human"))
     assert set(_attacks(state)) == {"Razor Claws"}
     state = apply_patch(state, CharacterPatch(metatype="Centaur"))

@@ -88,6 +88,14 @@ def _weaponskillaccuracy_needs_select(node: dict[str, Any]) -> bool:
     return "selectskill" in fields or bool(attrs)
 
 
+def _weaponcategorydv_categories(node: dict[str, Any]) -> list[str]:
+    """The categories a `<weaponcategorydv>` asks to pick from with its own
+    `<selectcategory>` (Critical Strike) — melee skill names."""
+    if node.get("tag") != "weaponcategorydv":
+        return []
+    return [str(name) for name in (node.get("nested") or {}).get("selectcategory") or [] if str(name).strip()]
+
+
 def _weaponskillaccuracy_select_attrs(node: dict[str, Any]) -> dict[str, str]:
     if not _weaponskillaccuracy_needs_select(node):
         return {}

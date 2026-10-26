@@ -17,6 +17,7 @@ from typing import Any
 from ...data_loader import SPELL_CAST_CATEGORIES, catalog
 from ...data_loader.bonus_extra import (
     _filter_active_skill_names,
+    _weaponcategorydv_categories,
     _weaponskillaccuracy_needs_select,
     _weaponskillaccuracy_select_attrs,
 )
@@ -141,6 +142,11 @@ def bind_power_bonus(nodes: list[dict[str, Any]], extra: str, rating: int) -> li
             if extra:
                 bound.append({"tag": tag, "fields": {"name": extra, "value": fields.get("value")}})
             continue
+        if _weaponcategorydv_categories(node):
+            # likewise Critical Strike's category
+            if extra:
+                bound.append({"tag": tag, "fields": {"name": extra, "bonus": fields.get("bonus")}})
+            continue
         bound.append(node)
     return bound
 
@@ -154,6 +160,9 @@ def power_select_options(spec: dict[str, Any], skills_data: dict[str, Any]) -> l
             return _filter_active_skill_names(
                 list(skills_data.get("skills") or []), _weaponskillaccuracy_select_attrs(accuracy)
             )
+        categories = next((_weaponcategorydv_categories(item) for item in spec.get("bonus") or []), [])
+        if not node and categories:
+            return categories
         if not node:
             return []
         parsed = parse_selectskill_spec(node)

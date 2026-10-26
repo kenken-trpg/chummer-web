@@ -4,7 +4,10 @@ spirits, complex forms and sprites once ``ctx.total`` is settled (``spells``).""
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 from ...improvements import apply_bonus_nodes
+from ...improvements.effect_rows import WeaponCategoryDvSlotRow, WeaponDvBonusRow, WeaponSkillAccuracySlotRow
 from ...notices import notice
 from ...rules import current_rules
 from ..constants import (
@@ -124,20 +127,28 @@ def awakened(ctx: Ctx) -> None:
     )
     ctx.warnings.extend(ctx.enhancements["warnings"])
     ctx.effects["enabled_tabs"] = set(ctx.effects["enabled_tabs"])
-    slots_before = len(ctx.effects["weapon_skill_accuracy_slots"])
+    accuracy_before = len(ctx.effects["weapon_skill_accuracy_slots"])
+    dv_before = len(ctx.effects["weapon_category_dv_slots"])
     for source, nodes in ctx.adept["bonus_sources"] + ctx.enhancements["bonus_sources"]:
         apply_bonus_nodes(nodes, ctx.effects, source)
-    # The qualities' accuracy slots were resolved before the powers ran; a
-    # power's own pick is already bound into a fixed slot (`bind_power_bonus`:
-    # Enhanced Accuracy's skill), so it only needs folding in.
-    for slot in ctx.effects["weapon_skill_accuracy_slots"][slots_before:]:
-        if slot["name"] and slot["bonus"] and not slot["needs_select"]:
-            ctx.effects.setdefault("weapon_skill_accuracy", []).append(
-                {"name": slot["name"], "bonus": slot["bonus"], "source": slot["source"]}
-            )
+    # The qualities' accuracy and DV slots were resolved before the powers
+    # ran; a power's own pick is already bound into a fixed slot
+    # (`bind_power_bonus`: Enhanced Accuracy's skill, Critical Strike's), so
+    # it only needs folding in.
+    ctx.effects["weapon_skill_accuracy"] += _fixed(ctx.effects["weapon_skill_accuracy_slots"][accuracy_before:])
+    ctx.effects["weapon_category_dv"] += _fixed(ctx.effects["weapon_category_dv_slots"][dv_before:])
     ctx.attr_totals = into_metahuman_form(
         ctx, {key: int(ctx.ratings.get(key) or 0) + ctx.attr_bonus(key) for key in ctx.ratings}
     )
+
+
+def _fixed(slots: Sequence[WeaponSkillAccuracySlotRow | WeaponCategoryDvSlotRow]) -> list[WeaponDvBonusRow]:
+    """The slots whose skill is already named, as the rows the weapons read."""
+    return [
+        {"name": slot["name"], "bonus": slot["bonus"], "source": slot["source"]}
+        for slot in slots
+        if slot["name"] and slot["bonus"] and not slot["needs_select"]
+    ]
 
 
 def spells(ctx: Ctx) -> None:

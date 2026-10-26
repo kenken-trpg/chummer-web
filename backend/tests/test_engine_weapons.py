@@ -810,6 +810,25 @@ def test_enhanced_accuracy_takes_the_skill_it_picks() -> None:
     assert "Automatics" in picked["extra_options"] and "Unarmed Combat" not in picked["extra_options"]
 
 
+def test_critical_strike_takes_the_category_it_picks() -> None:
+    """Critical Strike asks for its melee skill inside its
+    `<weaponcategorydv>`: the pick is the power's own and adds 1 to the DV of
+    that skill's weapons."""
+    power = next(p for p in catalog()["powers"] if p["name"] == "Critical Strike")
+    assert power["select"] == "skill"
+    katana = WeaponInstall(weapon_id=KATANA)
+
+    def damage(name: str, **over: object) -> str:
+        return str(compute(_adept(name, weapons=[katana], **over)).derived["weapons"][0]["damage"])
+
+    base = int(damage("cs-none").rstrip("PS"))
+    picked = AdeptPowerInstall(power_id=power["id"], extra="Blades")
+    assert damage("cs-blades", adept_powers=[picked]) == f"{base + 1}P"
+    assert damage("cs-clubs", adept_powers=[picked.model_copy(update={"extra": "Clubs"})]) == f"{base}P"
+    out = compute(_adept("cs-empty", adept_powers=[AdeptPowerInstall(power_id=power["id"])]))
+    assert has(out.derived["warnings"], "engine.adept.pickSelect")
+
+
 def test_death_dealer_adept_weapon_dv_and_skill_select() -> None:
     missing = compute(
         _adept(
