@@ -100,9 +100,8 @@ def resolve_mentor(
     public = {
         "id": spec["id"],
         "name": spec["name"],
-        "advantage": spec.get("advantage") or "",
-        "disadvantage": spec.get("disadvantage") or "",
         "source": spec.get("source"),
+        "page": spec.get("page"),
         "choices": [_public_choice(state, choice, selected, skills_data) for choice in allowed],
     }
     return {

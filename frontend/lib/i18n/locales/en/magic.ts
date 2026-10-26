@@ -159,6 +159,7 @@ export const EN_MAGIC = {
   "mentor.label": "Mentor",
 
   "mentor.chooseTarget": "Choose a target",
-  "mentor.advantage": "Advantage: {text}",
-  "mentor.disadvantage": "Disadvantage: {text}",
+  "mentor.ref": "{source} p.{page}",
+  "mentor.advantage": "Advantage: its effects are applied",
+  "mentor.disadvantage": "Disadvantage: applies in certain situations; see the rulebook ({ref})",
 };

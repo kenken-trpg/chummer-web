@@ -161,6 +161,7 @@ export const JA_MAGIC = {
   "mentor.label": "導師精霊",
 
   "mentor.chooseTarget": "対象を選択",
-  "mentor.advantage": "利点：{text}",
-  "mentor.disadvantage": "欠点：{text}",
+  "mentor.ref": "{source} p.{page}（英語版の頁）",
+  "mentor.advantage": "利点：効果は計算に反映済み",
+  "mentor.disadvantage": "欠点：特定の状況で適用する。内容はルールブックを参照：{ref}",
 } as const;

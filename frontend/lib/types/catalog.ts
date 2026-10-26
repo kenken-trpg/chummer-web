@@ -563,10 +563,6 @@ export interface Catalog {
    *  thing shares ("Binding" the skill is 束縛, the critter power 接着). Read
    *  through `scopeTr`; see backend/data/ja_overrides/by_kind.json. */
   translations_by_kind?: Record<string, Record<string, string>>;
-  /** `{"kind/id/field": japanese}` — sentences, keyed by row id rather than by
-   *  their English (a mentor's advantage). Read through `makeTextTr`; see
-   *  backend/data/ja_overrides/texts.json. */
-  text_translations?: Record<string, string>;
   /** `{book: {english: japanese}}` — the names a Role&Roll issue prints,
    *  applied only while that issue is ticked. Read through `makeTr`; see
    *  backend/app/data_loader/role_and_roll.py. */
@@ -584,9 +580,9 @@ export interface Catalog {
     page: string;
     required?: { quality?: string[]; power?: string[] };
   }[];
-  mentors?: { id: string; name: string; source: string; page: string; advantage: string }[];
+  mentors?: { id: string; name: string; source: string; page: string }[];
   /** Paragons (KC p.103) — the technomancer's mentor spirits, same shape. */
-  paragons?: { id: string; name: string; source: string; page: string; advantage: string }[];
+  paragons?: { id: string; name: string; source: string; page: string }[];
   spells?: {
     id: string;
     name: string;

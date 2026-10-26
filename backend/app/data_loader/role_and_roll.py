@@ -72,7 +72,7 @@ CATEGORIES: dict[str, tuple[str, ...]] = {
 }
 
 #: Not rows: walking into these would match their keys as names.
-_SKIP = ("translations", "translations_by_kind", "text_translations", "ui_strings", "books")
+_SKIP = ("translations", "translations_by_kind", "ui_strings", "books")
 
 
 def code(vol: int) -> str:

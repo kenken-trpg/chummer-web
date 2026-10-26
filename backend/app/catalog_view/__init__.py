@@ -55,6 +55,5 @@ def public_catalog() -> dict:
     # issue is ticked, so they ride per book; see data_loader/role_and_roll.py.
     out["book_translations"] = role_and_roll.book_translations(out, codex_names)
     out["translations_by_kind"] = raw.get("translations_by_kind") or {}
-    out["text_translations"] = raw.get("text_translations") or {}
     out["ui_strings"] = raw["ui_strings"]
     return out

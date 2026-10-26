@@ -251,9 +251,8 @@ export interface InstalledQiFocus {
 export interface MentorInfo {
   id: string;
   name: string;
-  advantage: string;
-  disadvantage: string;
   source?: string;
+  page?: string;
   choices: MentorChoice[];
 }
 
