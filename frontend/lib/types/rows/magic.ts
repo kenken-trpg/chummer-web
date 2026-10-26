@@ -255,6 +255,8 @@ export interface MentorInfo {
   page?: string;
   /** The fixed advantage's effects, as the engine applies them; see `mentor_effects`. */
   effects?: Notice[];
+  /** The negative qualities it grants (Eagle's allergy): part of the disadvantage. */
+  drawbacks?: Notice[];
   choices: MentorChoice[];
 }
 

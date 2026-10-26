@@ -82,7 +82,14 @@ export function MentorPicker({
                 ? ui("mentor.advantageEffects", { effects: renderNotices(mentor.effects, ui, tr) })
                 : ui("mentor.advantage")}
             </p>
-            <p className="muted">{ui("mentor.disadvantage", { ref })}</p>
+            <p className="muted">
+              {mentor.drawbacks?.length
+                ? ui("mentor.disadvantageEffects", {
+                    effects: renderNotices(mentor.drawbacks, ui, tr),
+                    ref,
+                  })
+                : ui("mentor.disadvantage", { ref })}
+            </p>
           </>
         ) : null}
         {(mentor?.choices || []).map((choice) => (
