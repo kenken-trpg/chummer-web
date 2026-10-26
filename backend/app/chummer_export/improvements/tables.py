@@ -17,6 +17,17 @@ _ARMORS = {
 _PICKS = {"selectrestricted": "Restricted", "selecttradition": "Tradition"}
 
 
+#: The weapon category tags `CreateWeaponCategoryImprovement` handles, as the
+#: types they make
+_WEAPON_CATEGORY = {
+    "weaponcategorydv": "WeaponCategoryDV",
+    "weaponcategorydice": "WeaponCategoryDice",
+    "weaponcategoryap": "WeaponCategoryAP",
+    "weaponcategoryaccuracy": "WeaponCategoryAccuracy",
+    "weaponcategoryreach": "WeaponCategoryReach",
+}
+
+
 #: Tags whose improvement carries no value, as the types they make
 _FLAGS = {
     "ambidextrous": ("Ambidextrous", ""),

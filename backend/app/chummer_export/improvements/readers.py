@@ -2,7 +2,7 @@
 
 Most take the tag and the owner's rating and are found through `_READERS`;
 the few that need a pick (`_selectskill`, `_spirit_pick`, `_attribute`,
-`_selectattributes`, `_addcontact`, `_cost`) are called by `_bonus_improvements`
+`_selectattributes`, `_addcontact`, `_cost`, `_weapon_category`) are called by `_bonus_improvements`
 with it."""
 
 from __future__ import annotations
@@ -11,7 +11,7 @@ import xml.etree.ElementTree as ET
 from collections.abc import Callable
 
 from ._imp import _Imp, _is_int, _precedence, _text
-from .tables import _ARMORS, _COSTS, _FLAGS, _PERSONA, _SEEKER, _TABS
+from .tables import _ARMORS, _COSTS, _FLAGS, _PERSONA, _SEEKER, _TABS, _WEAPON_CATEGORY
 
 
 def _cost(node: ET.Element) -> list[_Imp]:
@@ -23,6 +23,23 @@ def _cost(node: ET.Element) -> list[_Imp]:
     return [
         _Imp(kind, _text(node, "name") if named else "", val=val, min=low, max=high, condition=_text(node, "condition"))
     ]
+
+
+def _weapon_category(node: ET.Element, pick: str | None) -> list[_Imp]:
+    """`CreateWeaponCategoryImprovement`: the category is the owner's pick
+    when the tag asks for a skill or a category (Critical Strike, Death
+    Dealer), else its `<name>` (Master Archer's Bows). The value is
+    `<bonus>`, except that a `<selectcategory>` reads its own `<value>` — which
+    Critical Strike's has none of, so Chummer today makes it 0 where its
+    saves (and the rule, and this app's sheet) have the `<bonus>` of 1; the
+    export keeps the `<bonus>` when there is no `<value>`."""
+    select = node.find("selectcategory")
+    if node.find("selectskill") is not None or select is not None:
+        name = pick or ""
+    else:
+        name = _text(node, "name")
+    value = (_text(select, "value") if select is not None else "") or _text(node, "bonus")
+    return [_Imp(_WEAPON_CATEGORY[node.tag], name, val=int(value))] if name and _is_int(value) else []
 
 
 def _unlockskills(node: ET.Element, rating: int) -> list[_Imp]:

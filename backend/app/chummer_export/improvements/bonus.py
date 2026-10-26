@@ -6,8 +6,17 @@ import xml.etree.ElementTree as ET
 
 from ._imp import _Imp, _is_int, _text
 from .rating import _rated
-from .readers import _READERS, _addcontact, _attribute, _cost, _selectattributes, _selectskill, _spirit_pick
-from .tables import _COSTS, _NUMBERS, _PICKS, _SEEKER, _SPELL_DRAIN
+from .readers import (
+    _READERS,
+    _addcontact,
+    _attribute,
+    _cost,
+    _selectattributes,
+    _selectskill,
+    _spirit_pick,
+    _weapon_category,
+)
+from .tables import _COSTS, _NUMBERS, _PICKS, _SEEKER, _SPELL_DRAIN, _WEAPON_CATEGORY
 
 
 def _bonus_improvements(
@@ -62,6 +71,8 @@ def _bonus_improvements(
             # the weapon picked, by its guid
             value = _text(node)
             rows += [_Imp("WeaponSpecificDice", pick, val=int(value))] if pick and _is_int(value) else []
+        elif node.tag in _WEAPON_CATEGORY:
+            rows += _weapon_category(node, pick)
         elif node.tag in _PICKS:
             rows += [_Imp(_PICKS[node.tag], pick)] if pick else []
         elif node.tag in ("selectmentorspirit", "selectparagon"):
