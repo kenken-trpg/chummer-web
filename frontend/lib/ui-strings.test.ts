@@ -5,7 +5,6 @@ import {
   attrShort,
   contactTerm,
   makeT,
-  makeTextTr,
   makeTr,
   makeTrSkillGroup,
   scopeTr,
@@ -155,23 +154,6 @@ describe("specTr", () => {
       specTr(scopeTr(makeTr(catalog as never, "ja"), "skill"), "Astral Combat", "Spirits"),
     ).toBe("対精霊");
     expect(specTr(makeTr(catalog as never, "en"), "Astral Combat", "Spirits")).toBe("Spirits");
-  });
-});
-
-describe("makeTextTr", () => {
-  const texts = { text_translations: { "mentor/ab-12/advantage": "全員：追跡テストにダイス+2" } };
-
-  it("reads a row's sentence by its id, whatever the id's case", () => {
-    const textTr = makeTextTr(texts, "ja");
-    expect(textTr("mentor", "AB-12", "advantage", "All: +2 dice for Tracking tests.")).toBe(
-      "全員：追跡テストにダイス+2",
-    );
-  });
-
-  it("keeps the English for another field, an untranslated row, or the English UI", () => {
-    expect(makeTextTr(texts, "ja")("mentor", "ab-12", "disadvantage", "Loyal.")).toBe("Loyal.");
-    expect(makeTextTr(texts, "ja")("mentor", "cd-34", "advantage", "Other.")).toBe("Other.");
-    expect(makeTextTr(texts, "en")("mentor", "ab-12", "advantage", "All: +2")).toBe("All: +2");
   });
 });
 

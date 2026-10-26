@@ -42,7 +42,6 @@ def section(raw: CatalogDict) -> dict:
                 "name": m["name"],
                 "source": m.get("source"),
                 "page": m.get("page"),
-                "advantage": m.get("advantage") or "",
             }
             for m in raw.get("mentors") or []
         ],
@@ -52,7 +51,6 @@ def section(raw: CatalogDict) -> dict:
                 "name": m["name"],
                 "source": m.get("source"),
                 "page": m.get("page"),
-                "advantage": m.get("advantage") or "",
             }
             for m in raw.get("paragons") or []
         ],

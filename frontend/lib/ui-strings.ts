@@ -155,22 +155,6 @@ export function makeTrSkillGroup(
   return (group) => groupNames?.[group] || tr(group);
 }
 
-/** A sentence field of one row, e.g. a mentor's advantage. */
-export type TextTrFn = (kind: string, id: string, field: string, english: string) => string;
-
-/**
- * Sentence translator: the row's own Japanese if `text_translations` has one,
- * else the English it was given. Keyed by id, not by the English the way
- * `makeTr` is — a sentence changes whenever upstream fixes a comma.
- */
-export function makeTextTr(
-  catalog?: Pick<Catalog, "text_translations"> | null,
-  locale: Locale = "ja",
-): TextTrFn {
-  const table = locale === "en" ? undefined : catalog?.text_translations;
-  return (kind, id, field, english) => table?.[`${kind}/${id.toLowerCase()}/${field}`] || english;
-}
-
 /** Short attribute label, e.g. "強靱" — from String_Attribute<KEY>Short. */
 export function attrShort(key: string, t: TFn): string {
   return t(`String_Attribute${key}Short`, key);

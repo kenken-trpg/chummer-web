@@ -3,7 +3,6 @@
 import type { Catalog, Character, MentorInfo } from "@/lib/types";
 import { filterByBooks, isBookEnabled, useAllowedBooks } from "@/lib/character/books";
 import { useUiText } from "@/lib/i18n";
-import { makeTextTr } from "@/lib/ui-strings";
 import { limitLabel, sourceBit } from "@/lib/character/format";
 import { HelpTip } from "@/components/help/HelpTip";
 
@@ -24,8 +23,7 @@ export function MentorPicker({
    * (KC p.102). It shares `mentor_id`, because no character can have both. */
   paragon?: boolean;
 }) {
-  const { ui, locale } = useUiText();
-  const textTr = makeTextTr(catalog, locale);
+  const { ui } = useUiText();
   const allowed = useAllowedBooks();
   const all = (paragon ? catalog.paragons : catalog.mentors) || [];
   // The one already chosen stays on the list whatever the settings say — a
@@ -36,6 +34,11 @@ export function MentorPicker({
       ? all.filter((item) => item.id === ch.mentor_id)
       : [],
   );
+  // The advantage and disadvantage are the rulebook's own text, so the page
+  // stands in for them — Chummer's data gives the English edition's.
+  const ref = mentor?.page
+    ? ui("mentor.ref", { source: mentor.source || "", page: mentor.page })
+    : sourceBit(mentor, ui);
   return (
     <div className="cyber-item">
       <div>
@@ -46,14 +49,13 @@ export function MentorPicker({
               { label: ui("help.mentor.what") },
               { label: ui("help.mentor.choices") },
               { label: ui("help.mentor.disadvantage") },
+              { label: ui("help.mentor.text") },
             ]}
           >
             {ui(paragon ? "mentor.paragonTitle" : "mentor.title")}
           </HelpTip>
         </b>
-        <div className="muted">
-          {mentor ? `${tr(mentor.name)} / ${sourceBit(mentor, ui)}` : ui("mentor.none")}
-        </div>
+        <div className="muted">{mentor ? `${tr(mentor.name)} / ${ref}` : ui("mentor.none")}</div>
         <div className="cyber-controls">
           <label>
             {ui(paragon ? "mentor.paragonLabel" : "mentor.label")}
@@ -72,19 +74,11 @@ export function MentorPicker({
             </select>
           </label>
         </div>
-        {mentor?.advantage ? (
-          <p className="muted">
-            {ui("mentor.advantage", {
-              text: textTr("mentor", mentor.id, "advantage", mentor.advantage),
-            })}
-          </p>
-        ) : null}
-        {mentor?.disadvantage ? (
-          <p className="muted">
-            {ui("mentor.disadvantage", {
-              text: textTr("mentor", mentor.id, "disadvantage", mentor.disadvantage),
-            })}
-          </p>
+        {mentor ? (
+          <>
+            <p className="muted">{ui("mentor.advantage")}</p>
+            <p className="muted">{ui("mentor.disadvantage", { ref })}</p>
+          </>
         ) : null}
         {(mentor?.choices || []).map((choice) => (
           <label key={choice.name} className="skill-row">

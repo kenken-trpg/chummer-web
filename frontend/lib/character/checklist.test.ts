@@ -101,8 +101,6 @@ describe("buildChecklist", () => {
       ch.derived.mentor = {
         id: "selected-mentor",
         name: "Selected mentor",
-        advantage: "",
-        disadvantage: "",
         choices: [],
       };
       expect(buildChecklist(ch).find((i) => i.id === `needs-${kind}`)).toBeUndefined();

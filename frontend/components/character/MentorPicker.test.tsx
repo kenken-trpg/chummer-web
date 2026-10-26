@@ -11,8 +11,6 @@ const TARGET_KEY = `${CHOICE} / Improved Potential (Chaos Mentor)`;
 const chaos: MentorInfo = {
   id: "chaos",
   name: "Chaos",
-  advantage: "",
-  disadvantage: "",
   source: "SG",
   choices: [
     {
@@ -40,7 +38,7 @@ function renderPicker(onPatch = vi.fn(), tr: (name: string) => string = (n) => n
   render(
     <MentorPicker
       catalog={makeCatalog({
-        mentors: [{ id: "chaos", name: "Chaos", source: "SG", page: "200", advantage: "" }],
+        mentors: [{ id: "chaos", name: "Chaos", source: "SG", page: "200" }],
       })}
       mentor={chaos}
       ch={ch}
@@ -57,8 +55,8 @@ describe("MentorPicker", () => {
   it("narrows the list to the enabled books, but keeps the current pick", () => {
     const catalog = makeCatalog({
       mentors: [
-        { id: "chaos", name: "Chaos", source: "SG", page: "200", advantage: "" },
-        { id: "bear", name: "Bear", source: "SR5", page: "394", advantage: "" },
+        { id: "chaos", name: "Chaos", source: "SG", page: "200" },
+        { id: "bear", name: "Bear", source: "SR5", page: "394" },
       ],
     });
     const picker = (mentorId: string) => (
@@ -87,20 +85,19 @@ describe("MentorPicker", () => {
     expect(options()).toEqual(["Bear", "Chaos"]);
   });
 
-  it("shows the advantage and the disadvantage, in Japanese where the table has them", () => {
+  it("gives the page in place of the rulebook's advantage and disadvantage", () => {
     const dog: MentorInfo = {
       ...chaos,
       id: "DOG-1",
       name: "Dog",
-      advantage: "All: +2 dice for Tracking tests.",
-      disadvantage: "Dogs are loyal to a fault.",
+      source: "SR5",
+      page: "321",
       choices: [],
     };
     render(
       <MentorPicker
         catalog={makeCatalog({
-          mentors: [{ id: "DOG-1", name: "Dog", source: "SR5", page: "321", advantage: "" }],
-          text_translations: { "mentor/dog-1/advantage": "全員：追跡テストにダイス+2" },
+          mentors: [{ id: "DOG-1", name: "Dog", source: "SR5", page: "321" }],
         })}
         mentor={dog}
         ch={makeCharacter({ mentor_id: "DOG-1" })}
@@ -108,9 +105,13 @@ describe("MentorPicker", () => {
         onPatch={vi.fn()}
       />,
     );
-    expect(screen.getByText("利点：全員：追跡テストにダイス+2")).toBeTruthy();
-    // no summary written yet: Chummer's English, under the Japanese label
-    expect(screen.getByText("欠点：Dogs are loyal to a fault.")).toBeTruthy();
+    expect(screen.getByText("Dog / SR5 p.321（英語版の頁）")).toBeTruthy();
+    expect(screen.getByText("利点：効果は計算に反映済み")).toBeTruthy();
+    expect(
+      screen.getByText(
+        "欠点：特定の状況で適用する。内容はルールブックを参照：SR5 p.321（英語版の頁）",
+      ),
+    ).toBeTruthy();
   });
 
   it("names a choice through the translation table", () => {
@@ -142,8 +143,8 @@ describe("MentorPicker", () => {
     render(
       <MentorPicker
         catalog={makeCatalog({
-          mentors: [{ id: "chaos", name: "Chaos", source: "SG", page: "200", advantage: "" }],
-          paragons: [{ id: "delphi", name: "Delphi", source: "KC", page: "103", advantage: "" }],
+          mentors: [{ id: "chaos", name: "Chaos", source: "SG", page: "200" }],
+          paragons: [{ id: "delphi", name: "Delphi", source: "KC", page: "103" }],
         })}
         mentor={null}
         ch={makeCharacter({})}

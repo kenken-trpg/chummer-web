@@ -457,8 +457,6 @@ describe("<SkillsTab> skills that come with something", () => {
           mentor: {
             id: "m1",
             name: "Bear",
-            advantage: "",
-            disadvantage: "",
             choices: [
               {
                 name: "Bear (Combat)",
@@ -502,8 +500,6 @@ describe("<SkillsTab> skills that come with something", () => {
           mentor: {
             id: "m1",
             name: "Bear",
-            advantage: "",
-            disadvantage: "",
             choices: [
               {
                 name: "Bear (Combat)",

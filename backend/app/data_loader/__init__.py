@@ -99,7 +99,6 @@ from .loaders import (  # noqa: E402  (domain loaders; see data_loader/loaders/)
     load_spirits,
     load_sprites,
     load_streams,
-    load_text_translations,
     load_traditions,
     load_translations,
     load_translations_by_kind,
@@ -476,7 +475,6 @@ def _catalog_for(_overlay_key: str) -> CatalogDict:
         "settings_presets": load_settings_presets(),
         "translations": translations,
         "translations_by_kind": load_translations_by_kind(),
-        "text_translations": load_text_translations(),
         "ui_strings": load_ui_strings_by_locale(),
     }
 
