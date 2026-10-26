@@ -207,5 +207,4 @@ Chummer5a の既存の重複制限を移植したものではありません。
 [Skill.cs](https://github.com/chummer5a/chummer5a/blob/master/Chummer/Backend/Skills/Skill.cs)
 の `FreeKarma` がこれを無償レベルとして読み取ります。表示上の `Karma` は `RatingMaximum` で制限されます。
 この経路に、超過分から同じ関連能力値の技能へ割り振るプールを作る処理は確認できませんでした。
-上流に再配分機能があると解釈して自動的に値を移すことはせず、本アプリでは引き続き
-超過を明示的な作成エラーにします。技能超過の再配分 UI・計算・保存は未対応です。
+本アプリの超過分の割り振り（[操作](#操作)の 4.）は、Chummer 本体には無い処理です。
