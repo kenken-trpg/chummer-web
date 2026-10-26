@@ -236,8 +236,10 @@ export const EN_HELP = {
     "Shown once the Mentor Spirit quality is taken (Paragon for a technomancer). The spirit's fixed effects and the options picked below are computed",
   "help.mentor.choices":
     "The checkboxes are the advantage's options. One per group applies; with none picked, the group's first does. Options the talent cannot use are not shown",
-  "help.mentor.disadvantage": "The disadvantage comes up in certain situations, so it is not computed — it is for the table",
-  "help.mentor.text": "The advantage and disadvantage are the rulebook's own text, so only the page is given",
+  "help.mentor.disadvantage":
+    "The disadvantage comes up in certain situations, so it is not computed — it is for the table",
+  "help.mentor.text":
+    "The advantage and disadvantage are the rulebook's own text, so only the page is given",
   "help.cf.fv":
     "FV is the fading; L is the Level chosen when threading, so L\u22121 is Level \u2212 1 (minimum 2)",
   "help.cf.fade": "Resist fading with Willpower + Resonance; the rest is damage",
