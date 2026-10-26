@@ -266,6 +266,7 @@ export const EN_CHARGEN = {
   "quality.marketCategory": "Choose a goods category",
   "quality.marketContact": "Choose a contact",
   "quality.marketBonus": "Availability test +{bonus} (effective Avail −{bonus})",
+  "quality.marketInactive": "Applies once both are picked",
   "quality.side": "Choose a side",
   "quality.matrixAction": "Choose a Matrix action",
   "quality.matrixActionFree": "Type a Matrix action",

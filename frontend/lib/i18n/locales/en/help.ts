@@ -298,6 +298,15 @@ export const EN_HELP = {
     "A mystic adept buys them at 5 karma each; the Magic not spent that way stays for spells",
   "help.adept.way":
     "A Way quality makes its powers cheaper, up to Magic \u00f7 4 (rounded up) of discount",
+  "help.adept.qiCost": "It costs Force × 3,000¥",
+  "help.adept.qiBinding":
+    "Binding takes Force × 2 karma (a table's settings may change it); The Artisan's Way lowers it",
+  "help.adept.qiPower":
+    "Each point of Force holds 0.25 power points of the power; a higher power rating needs more Force",
+  "help.adept.enhancementKarma": "An enhancement costs 2 karma (a table's settings may change it)",
+  "help.adept.enhancementWay":
+    "Each needs a particular Way quality; dropping the Way drops the enhancement",
+  "help.adept.enhancementPower": "It needs its power too; without it, a warning shows",
   "help.martial.statsLabel": "Styles and techniques",
   "help.martial.style": "A style costs 7 karma (some list a price of their own)",
   "help.martial.technique": "Each technique costs 5 karma; the ones a quality brings are free",
@@ -519,6 +528,12 @@ export const EN_HELP = {
   "help.side.scBurn": "Burn two points of Street Cred to take one off Notoriety (SR5 p.373)",
   "help.qual.rebaseline": "For a creation mistake put right after entering career",
   "help.qual.rebaselineEffect": "Cancels every career charge for taking or buying off a quality",
+  "help.qual.marketAvail":
+    "Items of the picked category get +2 on the Availability test, and chargen checks their Availability 2 lower",
+  "help.qual.marketDiscount":
+    'Items of that category can each be bought at 10% off (the item row\'s "Black market")',
+  "help.qual.marketNeeds":
+    "Nothing applies until both the category and the contact are picked (RF p.145)",
   "help.toolbar.import":
     "Four things can be read: this app\u2019s own JSON, a Foundry VTT (shadowrun5e) actor\u2019s Export Data JSON, a Chummer5a .chum5/.chum5lz save, and the 「［SR5］キャラシテンプレート」 Google Sheet by 音の兔 (Nenousa), the one the Japanese Shadowrun 5th unofficial wiki links to, downloaded as .xlsx. An ordinary Excel workbook or any other JSON cannot be read.",
   "help.toolbar.share":

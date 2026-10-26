@@ -20,7 +20,7 @@ export const JA_MAGIC = {
   "adept.searchEnhancements": "Enhancement を検索",
   "adept.qiTitle": "氣収束具",
   "adept.qiNote":
-    "フォース × 3,000¥。結合カルマ = フォース（Way で減）。フォースはパワーポイント×4",
+    "フォース × 3,000¥。結合カルマ = フォース × 2（Way で減）。フォースはパワーポイント×4",
   "adept.qiBinding": " / 結合 {karma}カルマ",
   "adept.qiPowerRating": "パワーR",
   "adept.searchQi": "氣収束具に入れるパワーを検索",

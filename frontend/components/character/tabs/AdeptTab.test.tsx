@@ -80,8 +80,22 @@ describe("<AdeptTab>", () => {
   it("renders the power-point line and the sub-section headings", () => {
     renderTab();
     expect(screen.getByText(/パワーポイント 0\/0/)).toBeDefined();
-    expect(screen.getByRole("heading", { name: "Enhancement" })).toBeDefined();
-    expect(screen.getByRole("heading", { name: "氣収束具" })).toBeDefined();
+    // the heading's name runs on into its '?' and the tip's lines
+    expect(screen.getByRole("heading", { name: /^Enhancement/ })).toBeDefined();
+    expect(screen.getByRole("heading", { name: /^氣収束具/ })).toBeDefined();
+  });
+
+  it("explains a Qi focus's price and binding, and what an enhancement needs", () => {
+    renderTab();
+    const body = (name: string) => {
+      const tip = screen.getByRole("button", { name: `${name} の説明` });
+      return document.getElementById(tip.getAttribute("aria-describedby") || "")?.textContent;
+    };
+    // `bindRuns` joins "× 2" and "2 カルマ" with a no-break space; `\s` takes either
+    expect(body("氣収束具")).toMatch(/フォース\s×\s3,000¥/);
+    expect(body("氣収束具")).toMatch(/フォース\s×\s2/);
+    expect(body("Enhancement")).toMatch(/2\sカルマ/);
+    expect(body("Enhancement")).toContain("Way");
   });
 
   it("adds a power from the catalog via patch", () => {

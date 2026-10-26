@@ -20,7 +20,7 @@ export const EN_MAGIC = {
   "adept.searchEnhancements": "Search enhancements",
   "adept.qiTitle": "Qi foci",
   "adept.qiNote":
-    "Force × 3,000¥. Binding karma = Force (reduced by a Way). Force is power points × 4.",
+    "Force × 3,000¥. Binding karma = Force × 2 (reduced by a Way). Force is power points × 4.",
   "adept.qiBinding": " / binding {karma} karma",
   "adept.qiPowerRating": "Power R",
   "adept.searchQi": "Search powers to bind into a qi focus",

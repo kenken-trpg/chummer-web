@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import type { TabPanelProps } from "@/components/character/types";
+import { HelpTip } from "@/components/help/HelpTip";
 import { sourceBit } from "@/lib/character/format";
 
 /** The adept's Enhancements: the ones taken, and a searchable list of the
@@ -16,7 +17,18 @@ export function EnhancementsSection({
   const [enhSearch, setEnhSearch] = useState("");
   return (
     <>
-      <h3>Enhancement</h3>
+      <h3>
+        <HelpTip
+          label={ui("help.open", { label: "Enhancement" })}
+          lines={[
+            { label: ui("help.adept.enhancementKarma") },
+            { label: ui("help.adept.enhancementWay") },
+            { label: ui("help.adept.enhancementPower") },
+          ]}
+        >
+          Enhancement
+        </HelpTip>
+      </h3>
       <p className="muted">{ui("adept.enhancementNote")}</p>
       {(d.enhancements || []).map((item) => (
         <div className="cyber-item" key={item.id}>
