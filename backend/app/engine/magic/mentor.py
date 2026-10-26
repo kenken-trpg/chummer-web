@@ -16,7 +16,7 @@ from ...data_loader import parse_select_power_slot
 from ...models import CharacterState
 from ...notices import Notice, notice, term, terms, ui
 from ..constants import ADEPT_TALENTS, MAG_TALENTS
-from ..lookups import _mentor_by_id, _paragon_by_id, _power_by_name
+from ..lookups import _mentor_by_id, _paragon_by_id, _power_by_name, _quality_by_name
 from .powers import power_select_options
 
 
@@ -103,6 +103,7 @@ def resolve_mentor(
         "source": spec.get("source"),
         "page": spec.get("page"),
         "effects": mentor_effects(spec.get("bonus") or []),
+        "drawbacks": mentor_drawbacks(spec.get("bonus") or []),
         "choices": [_public_choice(state, choice, selected, skills_data) for choice in allowed],
     }
     return {
@@ -171,13 +172,7 @@ def mentor_effects(nodes: list[dict[str, Any]]) -> list[Notice]:
         elif tag == "selectskill":
             out.append(_select_skill(attrs, fields, value))
         elif tag == "addqualities":
-            for grant in node.get("quality_grants") or []:
-                pick = str(grant.get("select") or "")
-                out.append(
-                    notice("engine.mentorEffect.qualityPick", name=term(grant["name"]), pick=term(pick))
-                    if pick
-                    else notice("engine.mentorEffect.quality", name=term(grant["name"]))
-                )
+            out.extend(_granted_qualities(node, negative=False))
         elif tag == "skillgrouplevel":
             out.append(
                 notice("engine.mentorEffect.skillGroupLevel", name=term(str(fields.get("name") or "")), value=value)
@@ -207,6 +202,32 @@ def mentor_effects(nodes: list[dict[str, Any]]) -> list[Notice]:
             out.append(notice("engine.mentorEffect.other"))
     for at, names in listed.values():
         out[at]["params"]["names"] = terms(names)
+    return out
+
+
+def mentor_drawbacks(nodes: list[dict[str, Any]]) -> list[Notice]:
+    """The negative qualities a mentor grants (Eagle's allergy), which belong
+    with its disadvantage rather than among the advantage's effects."""
+    out: list[Notice] = []
+    for node in nodes:
+        if node.get("tag") == "addqualities":
+            out.extend(_granted_qualities(node, negative=True))
+    return out
+
+
+def _granted_qualities(node: dict[str, Any], *, negative: bool) -> list[Notice]:
+    """One ``<addqualities>`` node's grants, the negative ones or the rest."""
+    out: list[Notice] = []
+    for grant in node.get("quality_grants") or []:
+        row = _quality_by_name(grant["name"]) or {}
+        if (row.get("category") == "Negative") != negative:
+            continue
+        pick = str(grant.get("select") or "")
+        out.append(
+            notice("engine.mentorEffect.qualityPick", name=term(grant["name"]), pick=term(pick))
+            if pick
+            else notice("engine.mentorEffect.quality", name=term(grant["name"]))
+        )
     return out
 
 

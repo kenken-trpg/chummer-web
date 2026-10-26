@@ -165,4 +165,6 @@ export const JA_MAGIC = {
   "mentor.advantage": "利点：効果は計算に反映済み",
   "mentor.advantageEffects": "利点（計算に反映済み）：{effects}",
   "mentor.disadvantage": "欠点：特定の状況で適用する。内容はルールブックを参照：{ref}",
+  "mentor.disadvantageEffects":
+    "欠点（計算に反映済み）：{effects}。特定の状況で適用するものがあれば、ルールブックを参照：{ref}",
 } as const;

@@ -163,4 +163,6 @@ export const EN_MAGIC = {
   "mentor.advantage": "Advantage: its effects are applied",
   "mentor.advantageEffects": "Advantage (applied): {effects}",
   "mentor.disadvantage": "Disadvantage: applies in certain situations; see the rulebook ({ref})",
+  "mentor.disadvantageEffects":
+    "Disadvantage (applied): {effects}. For anything that applies in certain situations, see the rulebook ({ref})",
 };

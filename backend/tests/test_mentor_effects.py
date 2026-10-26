@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 from app.data_loader import load_mentors, load_paragons
-from app.engine.magic.mentor import mentor_effects
+from app.engine.magic.mentor import mentor_drawbacks, mentor_effects
 
 JA_ENGINE = Path(__file__).resolve().parents[2] / "frontend" / "lib" / "i18n" / "locales" / "ja" / "engine.ts"
 
@@ -25,7 +25,7 @@ def test_every_mentor_and_paragon_effect_has_a_line_of_its_own() -> None:
     keys = set(re.findall(r'"(engine\.mentorEffect\.[A-Za-z]+)"', JA_ENGINE.read_text(encoding="utf-8")))
     problems = []
     for row in load_mentors() + load_paragons():
-        for effect in mentor_effects(row.get("bonus") or []):
+        for effect in mentor_effects(row.get("bonus") or []) + mentor_drawbacks(row.get("bonus") or []):
             if effect["key"] == "engine.mentorEffect.other" or effect["key"] not in keys:
                 problems.append(f"{row['name']}: {effect['key']}")
     assert not problems, problems
@@ -53,11 +53,23 @@ def test_a_mentor_reads_as_what_the_engine_applies(name: str, expected: list[dic
     assert _by_name(name) == expected
 
 
-def test_eagle_names_the_allergy_it_grants_with_its_pick() -> None:
-    assert _by_name("Eagle")[0] == {
-        "key": "engine.mentorEffect.qualityPick",
-        "params": {"name": {"tr": "Allergy (Common, Mild)"}, "pick": {"tr": "Pollutants"}},
-    }
+def _row(name: str) -> dict:
+    return next(m for m in load_mentors() + load_paragons() if m["name"] == name)
+
+
+def test_a_negative_quality_it_grants_is_a_drawback_not_an_effect() -> None:
+    # Eagle's allergy is its disadvantage (SR5 p.322); Badger's Perceptive is a gift.
+    eagle = _row("Eagle")["bonus"]
+    assert mentor_drawbacks(eagle) == [
+        {
+            "key": "engine.mentorEffect.qualityPick",
+            "params": {"name": {"tr": "Allergy (Common, Mild)"}, "pick": {"tr": "Pollutants"}},
+        }
+    ]
+    assert [e["key"] for e in mentor_effects(eagle)] == ["engine.mentorEffect.skill"]
+    badger = _row("Badger")["bonus"]
+    assert mentor_drawbacks(badger) == []
+    assert [e["key"] for e in mentor_effects(badger)] == ["engine.mentorEffect.quality"] * 2
 
 
 def test_nodes_that_differ_only_by_name_share_a_line() -> None:

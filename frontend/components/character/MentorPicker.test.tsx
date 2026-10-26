@@ -143,6 +143,46 @@ describe("MentorPicker", () => {
     ).toBeTruthy();
   });
 
+  it("puts a granted negative quality with the disadvantage", () => {
+    const eagle: MentorInfo = {
+      ...chaos,
+      id: "EAGLE-1",
+      name: "Eagle",
+      source: "SR5",
+      page: "322",
+      effects: [
+        {
+          key: "engine.mentorEffect.skill",
+          params: { names: [{ tr: "Perception" }], value: "+2" },
+        },
+      ],
+      drawbacks: [
+        {
+          key: "engine.mentorEffect.qualityPick",
+          params: { name: { tr: "Allergy (Common, Mild)" }, pick: { tr: "Pollutants" } },
+        },
+      ],
+      choices: [],
+    };
+    render(
+      <MentorPicker
+        catalog={makeCatalog({
+          mentors: [{ id: "EAGLE-1", name: "Eagle", source: "SR5", page: "322" }],
+        })}
+        mentor={eagle}
+        ch={makeCharacter({ mentor_id: "EAGLE-1" })}
+        tr={(n) => n}
+        onPatch={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("利点（計算に反映済み）：Perception +2")).toBeTruthy();
+    expect(
+      screen.getByText(
+        "欠点（計算に反映済み）：資質 Allergy (Common, Mild)（Pollutants）。特定の状況で適用するものがあれば、ルールブックを参照：SR5 p.322（英語版の頁）",
+      ),
+    ).toBeTruthy();
+  });
+
   it("names a choice through the translation table", () => {
     // the core rulebook pass translates these labels; untranslated, they stay English
     renderPicker(vi.fn(), (n) => (n === CHOICE ? "アデプト：向上能力 2 レベル無料" : n));
