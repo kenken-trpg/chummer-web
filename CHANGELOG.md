@@ -3,6 +3,26 @@
 Notable changes. Format follows [Keep a Changelog](https://keepachangelog.com/);
 self-hosters can pin to a tag instead of tracking `main`.
 
+## [0.5.16] — 2026-10-26
+
+### Added
+
+- **Role&Roll Vol.224: Invocation and Summon Great Form Spirit.** With the
+  issue ticked they show as 大召霊術門 and グレートフォーム召喚, and the
+  ritual can be picked with Street Grimoire off.
+
+- **Role&Roll Vol.228: Data Trails' cyberdeck modules and device
+  modifications.** Ticking the issue lets you pick the six modules, the
+  electronic parts and the 31 device modifications with Data
+  Trails off, and shows them by the magazine's names.
+
+### Changed
+
+- **Only the Role&Roll issues with data are in the book list.** The folded
+  Role&Roll group now lists an issue once it has a translated item — for
+  now Vols. 224, 228 and 229 — instead of all 29 checkboxes, most of which
+  did nothing. Other issues appear as their data is typed in.
+
 ## [0.5.15] — 2026-10-25
 
 ### Added
@@ -2679,7 +2699,8 @@ First tagged release.
 - One-container Docker image (Caddy + uvicorn + Next standalone) published to
   GHCR; `make up` / `compose.yaml` for local self-hosting.
 
-[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.15...HEAD
+[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.16...HEAD
+[0.5.16]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.15...v0.5.16
 [0.5.15]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.14...v0.5.15
 [0.5.14]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.13...v0.5.14
 [0.5.13]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.12...v0.5.13
