@@ -9,6 +9,8 @@ Chummer 本体で開き、資質を外して保存し直した記録です。
 - Chummer 5.226.177（Nightly、2026-10-24 に確認）。このアプリが固定している
   chummer5a のコミット `d7e94f6` から作られたビルドで、データとコードが同じ。
 - Windows 版。キャラクター設定で Run Faster と Howling Shadows を有効にした。
+- 2026-10-26 に同じ手順を Mac の Wine で繰り返し、同じ結果になった
+  （[chummer-on-mac.md](../../chummer-on-mac.md)）。このフォルダーのファイルは Windows 版のまま。
 
 ## ファイル
 
