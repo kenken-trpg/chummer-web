@@ -74,6 +74,9 @@ def load_foci() -> list[dict[str, Any]]:
                 "effect": _focus_effect(bonus),
                 "needs_weapon": bool(weapon_type),
                 "weapon_type": weapon_type,
+                # `<selecttradition>`: the tradition it is made for, which
+                # Chummer asks for on bonding (a label, it changes no number)
+                "needs_tradition": any(node.get("tag") == "selecttradition" for node in bonus),
                 "formula": None,
                 "source": _text(el.find("source")),
                 "page": _text(el.find("page")),

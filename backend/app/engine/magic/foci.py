@@ -205,6 +205,7 @@ def resolve_foci(
         }
     kept: list[FocusInstall] = []
     max_force = max(1, int(mag or 0))
+    traditions = {str(t.get("name") or "") for t in catalog().get("traditions") or []} - {""}
     for inst in state.foci:
         spec = _focus_by_id(inst.gear_id)
         if not spec:
@@ -222,7 +223,10 @@ def resolve_foci(
         extra = (inst.extra or "").strip()
         needs_weapon = bool(spec.get("needs_weapon"))
         weapon_type = str(spec.get("weapon_type") or "")
-        if needs_weapon:
+        needs_tradition = bool(spec.get("needs_tradition"))
+        if needs_tradition and extra not in traditions:
+            extra = ""
+        if needs_weapon or needs_tradition:
             inst.extra = extra or None
         else:
             inst.extra = None
@@ -269,6 +273,8 @@ def resolve_foci(
                 "needs_weapon": needs_weapon,
                 "weapon_type": weapon_type,
                 "weapon_id": extra if needs_weapon else "",
+                "needs_tradition": needs_tradition,
+                "tradition": extra if needs_tradition else "",
                 "weapon_name": "",
                 "weapon_dice": force if needs_weapon else 0,
                 "weapon_options": [],

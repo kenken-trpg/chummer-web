@@ -372,6 +372,7 @@ export interface FocusCatalogItem {
   effect?: string;
   needs_weapon?: boolean;
   weapon_type?: string;
+  needs_tradition?: boolean;
   formula?: { id?: string; name?: string; cost?: string } | null;
   source?: string;
   page?: string;

@@ -181,6 +181,9 @@ export interface InstalledFocus {
   weapon_name?: string;
   weapon_dice?: number;
   weapon_options?: { id: string; name: string }[];
+  /** `<selecttradition>`: the tradition the focus is made for (a label). */
+  needs_tradition?: boolean;
+  tradition?: string;
   source?: string;
   page?: string;
 }

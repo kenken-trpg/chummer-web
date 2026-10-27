@@ -38,7 +38,8 @@
   - 乗り物の装備は、乗り物に最初から付いてくるもの（Caduceus の Medkit、ドローンのオートソフトなど）だけ書く。
     今の Chummer は後から積んだ装備に改善効果を作らない（`PurchaseVehicleGear` が `blnAddImprovements: false`）。
   - 結んだフォーカスの改善効果も書く（Weapon Focus の武器、Power Focus、Spellcasting Focus、Qi Focus の
-    パワーなど）。フォーカスが選ばせる伝統（`<selecttradition>`）は、このアプリが持っていないので書かない。
+    パワーなど）。フォーカスが選ばせる様式（`<selecttradition>`、27 種）は、
+    収束具のタブで選び、装備の `<extra>` と Tradition の改善効果に書く。計算には効かない（Chummer でも表示だけ）。
   - ライフスタイルの資質の改善効果も書く。現行の 34 セーブには選択済みの資質が 51 行あり、
     43 行は改善効果の定義なし、6 行は選択テキストの改善効果、2 行は価格の表示文字列のみ。
     保存された改善効果 6 件を 6 件とも再現し、余分な改善効果も書かない。

@@ -179,6 +179,7 @@ def section(raw: CatalogDict) -> dict:
                 # the picker tells a weapon focus apart before you buy it
                 "needs_weapon": bool(f.get("needs_weapon")),
                 "weapon_type": f.get("weapon_type") or "",
+                "needs_tradition": bool(f.get("needs_tradition")),
                 "formula": (
                     {
                         "id": (f.get("formula") or {}).get("id"),
