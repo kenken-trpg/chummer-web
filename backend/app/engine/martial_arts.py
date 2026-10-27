@@ -45,6 +45,36 @@ def _martial_art_by_name(name: str) -> dict[str, Any] | None:
     return None
 
 
+def style_spec_options(art: dict[str, Any]) -> list[tuple[str, str]]:
+    """The (skill, specialization) pairs a style's `<addskillspecializationoption>`
+    offers — one skill, or each of its `<skills>` (Firefight: Pistols,
+    Longarms and Automatics)."""
+    pairs: list[tuple[str, str]] = []
+    for node in art.get("bonus") or []:
+        if node.get("tag") != "addskillspecializationoption":
+            continue
+        fields = node.get("fields") or {}
+        spec = str(fields.get("spec") or "").strip()
+        skills = [*((node.get("nested") or {}).get("skills") or []), fields.get("skill")]
+        pairs.extend((str(skill).strip(), spec) for skill in skills if spec and str(skill or "").strip())
+    return pairs
+
+
+def free_martial_art_specs(state: CharacterState) -> dict[str, str]:
+    """`<freemartialartspecialization>`: skill -> the style install whose
+    offered specialization is the one taken, which then costs nothing.
+    Nothing is added on its own — the player still picks the specialization."""
+    if not current_rules().free_martial_art_specialization:
+        return {}
+    chosen = state.skill_specializations or {}
+    free: dict[str, str] = {}
+    for inst in state.martial_arts or []:
+        for skill, spec in style_spec_options(_martial_art_by_id(str(inst.art_id)) or {}):
+            if str(chosen.get(skill) or "").strip() == spec:
+                free.setdefault(skill, inst.id)
+    return free
+
+
 def _martial_technique_by_name(name: str) -> dict[str, Any] | None:
     techniques: list[dict[str, Any]] = catalog().get("martial_art_techniques") or []
     for item in techniques:

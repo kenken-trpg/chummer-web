@@ -30,6 +30,7 @@ from app.models import (
     MartialArtInstall,
     Priorities,
     QiFocusInstall,
+    SettingsState,
     SpellInstall,
     WeaponAccessoryInstall,
     WeaponInstall,
@@ -516,6 +517,37 @@ def test_a_martial_art_offers_its_specialization_under_its_guid() -> None:
         for imp in root.findall("./improvements/improvement")
         if imp.findtext("improvementsource") == "MartialArt"
     ] == [("Unarmed Combat", "Aikido", guid)]
+
+
+def test_a_free_style_specialization_is_tied_to_the_style() -> None:
+    """With `<freemartialartspecialization>`, the offered specialization taken
+    is written free, and a SkillSpecialization improvement under the style's
+    guid points at it — Chummer removes it with the style. A specialization
+    the style does not offer stays paid and untied."""
+    art = next(row for row in catalog()["martial_arts"] if row["name"] == "Firefight")
+    state, _ = _with_quality("Magician", {})
+    state.settings = SettingsState(free_martial_art_specialization=True)
+    state.skills = {"Longarms": 3, "Pistols": 3}
+    state.skill_specializations = {"Longarms": "Firefight", "Pistols": "Revolvers"}
+    state.martial_arts = [MartialArtInstall(art_id=art["id"])]
+    root = ET.fromstring(state_to_chum5(state))
+    guid = state.martial_arts[0].id
+    specs = {(spec.findtext("name"), spec.findtext("free")): spec.findtext("guid") for spec in root.iter("spec")}
+    assert set(specs) == {("Firefight", "True"), ("Revolvers", "False")}
+    assert [
+        (imp.findtext("improvedname"), imp.findtext("unique"), imp.findtext("sourcename"))
+        for imp in root.findall("./improvements/improvement")
+        if imp.findtext("improvementttype") == "SkillSpecialization"
+    ] == [("Longarms", specs[("Firefight", "True")], guid)]
+
+    state.settings = SettingsState()
+    root = ET.fromstring(state_to_chum5(state))
+    assert {spec.findtext("free") for spec in root.iter("spec")} == {"False"}
+    assert not [
+        imp
+        for imp in root.findall("./improvements/improvement")
+        if imp.findtext("improvementttype") == "SkillSpecialization"
+    ]
 
 
 def test_electroception_offers_its_specialization_for_perception() -> None:

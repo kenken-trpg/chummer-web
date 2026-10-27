@@ -21,6 +21,7 @@ from ..engine.constants import (
     quality_take_extra_key,
 )
 from ..engine.lookups import critter_power_label
+from ..engine.martial_arts import free_martial_art_specs
 from ..engine.priority import talent_options
 from ..engine.qualities import _quality_needs_spell_category, has_extra_per_take
 from ..models import CharacterState
@@ -28,6 +29,7 @@ from ._common import _Ctx, _Names, _sub, improvements_of
 from .improvements import _bonus_improvements, _Imp, _text, _with_rows, _write_improvements
 from .life_modules import export_life_modules
 from .metatype import export_metatype_powers, export_metatype_qualities
+from .skills import spec_guid
 
 
 def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
@@ -401,8 +403,13 @@ def _quality_selects_contact(spec: dict[str, Any]) -> bool:
 def _export_martial_arts(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
     """Write martial arts and their techniques, and what each style's
     `<bonus>` made — the specialization it offers, a SkillSpecializationOption
-    under the style's guid — which Chummer keeps instead of running it again."""
+    under the style's guid — which Chummer keeps instead of running it again.
+
+    With `<freemartialartspecialization>`, the offered specialization taken
+    also gets the SkillSpecialization improvement Chummer ties it to the style
+    with (by the specialization's guid), so removing the style removes it."""
     marts = _sub(root, "martialarts")
+    style_free = free_martial_art_specs(state)
     definitions = {
         node.findtext("id") or "": node for node in parse_data("martialarts.xml").findall("./martialarts/martialart")
     }
@@ -415,6 +422,11 @@ def _export_martial_arts(root: ET.Element, state: CharacterState, names: _Names,
         bonus = definition.find("bonus") if definition is not None else None
         if definition is not None and bonus is not None:
             rows = _bonus_improvements(bonus, 1, None)
+            rows += [
+                _Imp("SkillSpecialization", skill, unique=spec_guid(state, skill))
+                for skill, owner in style_free.items()
+                if owner == row.id
+            ]
             _write_improvements(
                 root, _with_rows(root, rows, row.id, definition.findtext("name") or ""), row.id, "MartialArt"
             )
