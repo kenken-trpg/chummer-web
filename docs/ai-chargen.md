@@ -261,4 +261,5 @@ Home Node、Core Damage Track（Core CM）、Depth、Program Limit、Persona Fir
    日本語の本（コア・ラン＆ガン・コデックス）にはA.I.の章が無いので、英語版のData Trailsが要る。
 2. **実セーブとの照合**。Chummer.TestsにA.I.のPCが無い。Chummerで作ったセーブが手に入れば
    `make reconcile`と同じ形で確かめる。
-3. **キャリアで消したプログラムのカルマ**。上の「Chummerとの違い」。呪文など、ほかに消せる品目でも同じかを確かめてから、まとめて決める。
+3. **キャリアで消したプログラムのカルマ**。上の「Chummerとの違い」。呪文・格闘技・イニシエーションなども同じだった。
+   まとめて[開発 TODO](TODO.md)の「キャリアで消した品目・下げた値のカルマ」で扱う。
