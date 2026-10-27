@@ -48,8 +48,32 @@ rating, and still skips anything with more in it (`MinRating`). That is what
 `Rating * 500` now, 1,500, and the other 128 is the ammunition read as boxes of
 ten rounded up (`chummer_import/gear.py`). `BLUE` (R4, 1,000 of its 2,000) and
 `Gangerbean` (R6) have the same Autopicker. Neither save's gap is all of it,
-so neither is marked `gdrift`: BLUE has 1,000.33 left, Gangerbean 1,870 the
-other way.
+so neither is marked `gdrift`; what is left was traced as follows.
+
+`BLUE`'s other 1,000.33 is its Redmond lifestyle. This app applies Extra
+Secure's `<multiplierbaseonly>20` on top of Obscure/Difficult to Find's 10%
+(5,000 x 1.1 x 1.2), 1,100 more than without it. The 5.202 save charges the
+two Grid Subscriptions this app takes as the Medium lifestyle's free grids,
+50 apiece. And this app rounds the month to 8,667 where Chummer keeps the
+0.33 of `5000 div 12` (DocWagon Contract, Basic). 1,100 - 100 + 0.33. The
+data is the same in 5.202.0 and now, so this is that version's arithmetic.
+
+`Gangerbean`'s +370 is four things this app gets wrong and its lifestyle:
+- A Qi Focus R1 with no power picked and not bonded (3,000). The import reads
+  foci from `<foci>`, where only bonded ones are, and skips the category in
+  `<gears>`, so an unbonded focus is dropped without a word.
+- A Polychromic Lens in its Contacts (100). It is ordinary gear, not a vision
+  enhancement. The import keeps it under the optic, and the gear engine,
+  which has no optic among its hosts, cascades it away as an orphan.
+- A GridLink at cost 0, not included (750). That is Chummer's "free item"
+  tick, which saves `<cost>0`. This app charges the catalogue price. Vehicle
+  mods are also not among the elements price drift reads.
+- The Autopicker above (+1,500 here).
+That nets -850 against the +370 seen. The 480 left matches Extra Secure again:
+this app's Low is (2,000 + 400 for a comfort and a security point) x 1.2 =
+2,880, and 2,400 without the 20%. That last step is inferred from BLUE, not
+shown: if 5.202 charged this save's Grid Subscription as it did BLUE's, 50 of
+it is unaccounted for.
 
 Lifestyles are where `--locate` points most often, and the trail ends in the
 saves rather than in this app. Chummer 5.202 did not compute these the way its
