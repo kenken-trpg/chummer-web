@@ -7,6 +7,9 @@ against — which is what makes them worth setting beside today's catalogue.
 
 from __future__ import annotations
 
+import ast
+import operator
+import re
 import xml.etree.ElementTree as ET
 
 _PRICED_TAGS = {
@@ -53,6 +56,61 @@ def _stored_prices(root: ET.Element) -> list[tuple[str, str, float]]:
     return out
 
 
+_ARITHMETIC = re.compile(r"[0-9.+\-*/() ]+")
+_OPERATORS = {
+    ast.Add: operator.add,
+    ast.Sub: operator.sub,
+    ast.Mult: operator.mul,
+    ast.Div: operator.truediv,
+}
+
+
+def _at_rating(expr: str, rating: int) -> float | None:
+    """`Rating * 250` at the given rating, or None for anything that is more
+    than numbers, `Rating` and arithmetic (`MinRating`, `FixedValues(...)`)."""
+    text = expr.replace("Rating", str(rating)).strip()
+    if not text or not _ARITHMETIC.fullmatch(text):
+        return None
+
+    def ev(node: ast.AST) -> float:
+        if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
+            return float(node.value)
+        if isinstance(node, ast.BinOp) and type(node.op) in _OPERATORS:
+            return float(_OPERATORS[type(node.op)](ev(node.left), ev(node.right)))
+        if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.USub):
+            return -ev(node.operand)
+        raise ValueError(text)
+
+    try:
+        return ev(ast.parse(text, mode="eval").body)
+    except (SyntaxError, ValueError, ZeroDivisionError):
+        return None
+
+
+def _stored_rating_prices(root: ET.Element) -> list[tuple[str, str, str, int]]:
+    """(bucket, name, expression, rating) for every item whose save records a
+    `Rating` formula — what `_stored_prices` skips.
+
+    The formula is the catalogue's at the time the save was written, so it can
+    move under the save just as a plain number does: Blindfire's Autopicker is
+    `Rating * 250` in its 5.202 save and `Rating * 500` today, 1,500 nuyen at
+    rating 6 that the plain-number comparison never saw.
+    """
+    out: list[tuple[str, str, str, int]] = []
+    for tag, bucket in _PRICED_TAGS.items():
+        for node in root.iter(tag):
+            name = (node.findtext("name") or "").strip()
+            cost = (node.findtext("cost") or "").strip()
+            if not name or "Rating" not in cost or (node.findtext("parentid") or "").strip():
+                continue
+            try:
+                rating = int((node.findtext("rating") or "").strip())
+            except ValueError:
+                continue
+            out.append((bucket, name, cost, rating))
+    return out
+
+
 def _gear_drift(root: ET.Element) -> list[tuple[str, float, float]]:
     """Items whose stored price is not what today's catalogue charges.
 
@@ -64,6 +122,7 @@ def _gear_drift(root: ET.Element) -> list[tuple[str, float, float]]:
     from app.data_loader import catalog
 
     listed: dict[str, float] = {}
+    formulas: dict[str, str] = {}
     seen_twice: set[str] = set()
 
     def as_price(cost: object) -> float | None:
@@ -84,6 +143,11 @@ def _gear_drift(root: ET.Element) -> list[tuple[str, float, float]]:
                 if key in listed and listed[key] != price:
                     seen_twice.add(key)  # same name, two prices: cannot tell which
                 listed.setdefault(key, price)
+            elif isinstance(name, str) and name.strip() and isinstance(obj.get("cost"), str):
+                key = name.strip()
+                if key in formulas and formulas[key] != obj["cost"]:
+                    seen_twice.add(key)
+                formulas.setdefault(key, obj["cost"])
             for value in obj.values():
                 walk(value)
         elif isinstance(obj, list):
@@ -107,4 +171,17 @@ def _gear_drift(root: ET.Element) -> list[tuple[str, float, float]]:
             continue
         if listed[name] != stored:
             drift.append((name, listed[name], stored))
+    return drift + _formula_drift(root, formulas, seen_twice)
+
+
+def _formula_drift(root: ET.Element, formulas: dict[str, str], skip: set[str]) -> list[tuple[str, float, float]]:
+    """`_gear_drift` for the `Rating` formulas a save stores, each side worked
+    out at the save's own rating."""
+    drift: list[tuple[str, float, float]] = []
+    for _bucket, name, expr, rating in _stored_rating_prices(root):
+        if name in skip or name not in formulas:
+            continue
+        theirs, ours = _at_rating(expr, rating), _at_rating(formulas[name], rating)
+        if theirs is not None and ours is not None and theirs != ours:
+            drift.append((f"{name} R{rating}", ours, theirs))
     return drift

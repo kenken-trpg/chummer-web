@@ -166,7 +166,10 @@ def locate(path: Path) -> None:
             print(f"    {name:<44} save {stored:>10,.0f}  catalogue {catalogue:>10,.0f}")
         print(f"    {'total':<44} {sum(stored - c for _, c, stored in drift):>+10,.0f}")
     else:
-        print("\n  price drift: none — every stored price matches the catalogue")
+        print(
+            "\n  price drift: none — every stored price it can compare (a number, or a"
+            "\n  formula in Rating alone) matches the catalogue"
+        )
 
     gap = (pool - theirs_left) - ours_spent
     if abs(gap) <= NUYEN_TOLERANCE:
