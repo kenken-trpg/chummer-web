@@ -376,6 +376,7 @@ def _import_foci(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
     qi_spec = cat.get("qi_focus") or {}
     qi_id = str(qi_spec.get("id") or "")
     focus_r = _Resolver(cat.get("foci") or [])
+    tradition_foci = {str(row["id"]) for row in cat.get("foci") or [] if row.get("needs_tradition")}
     power_r = _Resolver(
         cat["powers"],
         {
@@ -423,6 +424,9 @@ def _import_foci(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
         if not gid:
             continue
         weapon_name = _text(f.find("weaponname"))
+        # the tradition a spellcasting or power focus is made for is the
+        # gear's `<extra>`, where Chummer keeps the pick
+        tradition = _text(gear.find("extra")) if gid in tradition_foci else ""
         foci.append(
             {
                 "id": str(uuid.uuid4()),
@@ -432,7 +436,7 @@ def _import_foci(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
                 "formula_bought": _text(f.find("formulabought")).lower() != "false",
                 "hits": _int(f.find("hits"), 0) or None,
                 "opposed_hits": _int(f.find("opposedhits"), 0) or None,
-                "extra": weapon_ids.get(weapon_name.lower()),
+                "extra": weapon_ids.get(weapon_name.lower()) or tradition or None,
             }
         )
     st["foci"] = foci

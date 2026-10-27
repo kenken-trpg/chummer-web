@@ -100,6 +100,26 @@ export function FociTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
                   </select>
                 </label>
               ) : null}
+              {item.needs_tradition ? (
+                <label>
+                  {ui("magic.tradition")}
+                  <select
+                    value={item.tradition || ""}
+                    onChange={(e) =>
+                      patch({
+                        foci: editRow(ch.foci, item.id, { extra: e.target.value || null }),
+                      })
+                    }
+                  >
+                    <option value="">{ui("common.choose")}</option>
+                    {(catalog.traditions || []).map((opt) => (
+                      <option key={opt.id} value={opt.name}>
+                        {tr(opt.name)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
               {item.crafted ? (
                 <>
                   <label>

@@ -715,6 +715,26 @@ def test_power_focus_costs_and_boosts_magic_skills() -> None:
     assert out.derived["focus_limits"]["force"] == 2
 
 
+def test_a_focus_keeps_a_tradition_and_drops_anything_else() -> None:
+    """`<selecttradition>`: a Power focus is made for a tradition, which the
+    row keeps; a pick that names no tradition is cleared. A focus that asks
+    for none keeps no pick."""
+    out = compute(
+        _mage_rich(
+            "focus-tradition",
+            tradition_id=HERMETIC,
+            foci=[
+                FocusInstall(id="a", gear_id=POWER_FOCUS, force=1, extra="Shamanic"),
+                FocusInstall(id="b", gear_id=POWER_FOCUS, force=1, extra="Katana"),
+            ],
+        )
+    )
+    rows = {row["id"]: row for row in out.derived["foci"]}
+    assert (rows["a"]["needs_tradition"], rows["a"]["tradition"]) == (True, "Shamanic")
+    assert rows["b"]["tradition"] == ""
+    assert {f.id: f.extra for f in out.foci} == {"a": "Shamanic", "b": None}
+
+
 def test_spellcasting_focus_marks_combat_spells() -> None:
     out = compute(
         _mage_rich(

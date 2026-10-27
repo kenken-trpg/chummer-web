@@ -859,6 +859,36 @@ def test_only_the_gear_a_vehicle_came_with_leaves_improvements() -> None:
     ] == [("own-kit", "LimitModifier", "6")]
 
 
+def test_a_focus_keeps_the_tradition_it_is_made_for() -> None:
+    """`<selecttradition>`: bonding asks which tradition a Power or
+    Spellcasting focus is made for. Chummer keeps the pick as the gear's
+    `<extra>` and a Tradition improvement, and it comes back on import. A
+    name that is no tradition is dropped."""
+    power_focus = next(r["id"] for r in catalog()["foci"] if r["name"] == "Power Focus")
+    state = CharacterState(
+        id="t",
+        name="Tradition focus",
+        priorities=Priorities(Heritage="D", Attributes="A", Talent="B", Skills="C", Resources="E"),
+        metatype="Human",
+        attributes={},
+        talent="Adept",
+        foci=[
+            FocusInstall(id="pf", gear_id=power_focus, force=2, extra="Hermetic"),
+            FocusInstall(id="bad", gear_id=power_focus, force=1, extra="Katana"),
+        ],
+    )
+    root = ET.fromstring(state_to_chum5(state))
+    extras = {g.findtext("guid"): g.findtext("extra") for g in root.findall("./gears/gear")}
+    assert (extras["pf"], extras["bad"]) == ("Hermetic", None)
+    assert [
+        (imp.findtext("sourcename"), imp.findtext("improvedname"))
+        for imp in root.findall("./improvements/improvement")
+        if imp.findtext("improvementttype") == "Tradition"
+    ] == [("pf", "Hermetic")]
+    st, _ = chum5_to_state(ET.tostring(root, encoding="unicode"))
+    assert sorted(f["extra"] or "" for f in st["foci"]) == ["", "Hermetic"]
+
+
 def test_a_bonded_focus_leaves_what_its_bonus_made() -> None:
     """A focus's improvements sit under its gear's guid at its force — a
     Weapon Focus's dice name its weapon's guid — and the `<focus>` pointer

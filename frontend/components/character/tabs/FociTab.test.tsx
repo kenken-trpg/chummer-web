@@ -54,4 +54,40 @@ describe("<FociTab>", () => {
     expect(tip.textContent).toContain("同時に結合できる数は魔力まで");
     expect(tip.textContent).toContain("結合カルマはフォースと同数");
   });
+
+  it("picks the tradition a focus is made for", () => {
+    const patch = vi.fn();
+    const ch = makeCharacter({ foci: [{ id: "f1", gear_id: "pf", force: 2 }] } as never);
+    ch.derived = {
+      ...ch.derived,
+      foci: [
+        {
+          id: "f1",
+          gear_id: "pf",
+          name: "Power Focus",
+          force: 2,
+          force_max: 6,
+          nuyen: 36000,
+          karma: 12,
+          needs_tradition: true,
+          tradition: "",
+        },
+      ],
+    } as never;
+    render(
+      <FociTab
+        {...panelProps(ch, {
+          catalog: makeCatalog({
+            foci: [powerFocus] as never,
+            traditions: [{ id: "h", name: "Hermetic" }] as never,
+          }),
+          patch,
+        })}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText("様式"), { target: { value: "Hermetic" } });
+    expect(patch).toHaveBeenCalledWith({
+      foci: [{ id: "f1", gear_id: "pf", force: 2, extra: "Hermetic" }],
+    });
+  });
 });

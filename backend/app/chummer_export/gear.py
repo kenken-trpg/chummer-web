@@ -14,7 +14,8 @@ from ..data_loader import catalog, catalog_list
 from ..data_loader._xml import parse_data
 from ..engine.gear.ammo import ammo_fits_weapon
 from ..engine.gear.weapons.hosts import ware_weapon_specs
-from ..models import CharacterState, GearInstall
+from ..engine.lookups import _focus_by_id
+from ..models import CharacterState, FocusInstall, GearInstall
 from ._common import _Ctx, _Names, _sub
 from .improvements import _bonus_improvements, _Imp, _text, _with_rows, _write_improvements
 from .metatype import export_metatype_weapons
@@ -422,6 +423,15 @@ def _export_gear_improvements(root: ET.Element, state: CharacterState, by_parent
         _write_improvements(root, _with_rows(root, rows, row.id, owner), row.id, "Gear", enabled=enabled)
 
 
+def _focus_tradition(frow: FocusInstall) -> str:
+    """The tradition a `<selecttradition>` focus is made for, if its pick
+    names one."""
+    if not (_focus_by_id(frow.gear_id) or {}).get("needs_tradition"):
+        return ""
+    names = {str(t.get("name") or "") for t in catalog().get("traditions") or []}
+    return frow.extra if frow.extra and frow.extra in names else ""
+
+
 def _emit_focus_gear(gears: ET.Element, state: CharacterState, names: _Names) -> None:
     """A bonded focus is gear: Chummer keeps it in `<gears>` with `<bonded>`,
     and `<foci>` only holds a pointer to it.
@@ -436,6 +446,11 @@ def _emit_focus_gear(gears: ET.Element, state: CharacterState, names: _Names) ->
         _sub(el, "name", names["focus"].get(frow.gear_id, ""))
         _sub(el, "category", "Foci")
         _sub(el, "rating", frow.force)
+        tradition = _focus_tradition(frow)
+        if tradition:
+            # the tradition it is made for, which bonding asks for: Chummer
+            # keeps the pick as the gear's `<extra>`
+            _sub(el, "extra", tradition)
         _sub(el, "qty", 1)
         _sub(el, "bonded", "True")
     for qrow in state.qi_foci:
@@ -504,7 +519,8 @@ def _export_focus_improvements(root: ET.Element, state: CharacterState, names: _
         bonus = definition.find("bonus") if definition is not None else None
         if definition is None or bonus is None:
             continue
-        rows = _bonus_improvements(bonus, int(frow.force or 1), frow.extra)
+        pick = _focus_tradition(frow) if (_focus_by_id(frow.gear_id) or {}).get("needs_tradition") else frow.extra
+        rows = _bonus_improvements(bonus, int(frow.force or 1), pick)
         _write_improvements(root, _with_rows(root, rows, frow.id, definition.findtext("name") or ""), frow.id, "Gear")
     qi = definitions.get(names["qifocus"].get("id", ""))
     choices = qi.findall("./bonus/selectpowers/selectpower") if qi is not None and adept else []
