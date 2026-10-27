@@ -11,6 +11,7 @@ from dataclasses import replace
 
 from ..data_loader import CatalogDict, catalog
 from ..engine import all_talent_options, is_way_quality, priority_value, talent_allowed, talent_options
+from ..engine.martial_arts import style_spec_options
 from ..rules import DEFAULT_PRIORITY_TABLE, current_rules, using_rules
 
 #: The five SR5 core metatypes. Creation also offers Centaur, the A.I. and the
@@ -84,14 +85,7 @@ def section(raw: CatalogDict) -> dict:
                 "page": art.get("page") or "",
                 "is_quality": bool(art.get("is_quality")),
                 "all_techniques": bool(art.get("all_techniques")),
-                "spec_options": [
-                    {"skill": skill, "spec": spec}
-                    for node in (art.get("bonus") or [])
-                    if node.get("tag") == "addskillspecializationoption"
-                    for skill in [str((node.get("fields") or {}).get("skill") or "").strip()]
-                    for spec in [str((node.get("fields") or {}).get("spec") or "").strip()]
-                    if skill and spec
-                ],
+                "spec_options": [{"skill": skill, "spec": spec} for skill, spec in style_spec_options(art)],
             }
             for art in raw.get("martial_arts") or []
             if not art.get("is_quality")

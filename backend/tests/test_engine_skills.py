@@ -502,6 +502,25 @@ def test_free_martial_art_specialization_setting() -> None:
     assert build(True)["points"]["skills"]["used"] == 4
 
 
+def test_a_style_offering_several_skills_frees_each_one() -> None:
+    """Firefight offers its specialization for Pistols, Longarms and
+    Automatics (`<skills>`), not just a single `<skill>`."""
+    firefight = next(art["id"] for art in catalog()["martial_arts"] if art["name"] == "Firefight")
+
+    def used(free: bool | None) -> int:
+        return compute(
+            _human(
+                f"firefight-spec-{free}",
+                skills={"Longarms": 4},
+                skill_specializations={"Longarms": "Firefight"},
+                martial_arts=[MartialArtInstall(art_id=firefight)],
+                settings=SettingsState(free_martial_art_specialization=free),
+            )
+        ).derived["points"]["skills"]["used"]
+
+    assert (used(None), used(True)) == (5, 4)
+
+
 SKILLJACK = "d31497dd-2be9-4b8a-808f-3ced36287c0c"
 KNOWSOFT = "d9d017c4-b3b5-4d28-9c41-870d69287cfb"
 LINGUASOFT = "c4599705-6b8c-45d0-8687-63a720043f7d"

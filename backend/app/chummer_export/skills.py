@@ -10,11 +10,18 @@ import uuid
 import xml.etree.ElementTree as ET
 
 from ..data_loader import catalog
+from ..engine.martial_arts import free_martial_art_specs
 from ..models import CharacterState
 from ._common import _Ctx, _Names, _sub, improvements_of
 
 #: Chummer's id for a knowledge skill it has no data for (a custom one).
 _NO_SKILL_ID = "00000000-0000-0000-0000-000000000000"
+
+
+def spec_guid(state: CharacterState, skill: str) -> str:
+    """The guid of the skill's specialization, which a martial art's
+    SkillSpecialization improvement points at."""
+    return str(uuid.uuid5(uuid.NAMESPACE_URL, f"{state.id}:spec:{skill}"))
 
 
 def _export_skills(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
@@ -44,13 +51,17 @@ def _export_skills(root: ET.Element, state: CharacterState, names: _Names, ctx: 
         # the top levels bought with karma at creation are Chummer's <karma>
         return 0 if state.career else max(0, min(int(levels.get(name, 0)), int(rating)))
 
+    # a style's specialization this app counts free is free in Chummer too,
+    # though Chummer's own adds it as paid (`addskillspecializationoption`)
+    style_free = free_martial_art_specs(state)
+
     def specs(el: ET.Element, name: str) -> None:
         spn = state.skill_specializations.get(name)
         if spn:
             spec = _sub(_sub(el, "specs"), "spec")
-            _sub(spec, "guid", str(uuid.uuid5(uuid.NAMESPACE_URL, f"{state.id}:spec:{name}")))
+            _sub(spec, "guid", spec_guid(state, name))
             _sub(spec, "name", spn)
-            _sub(spec, "free", "False")
+            _sub(spec, "free", "True" if name in style_free else "False")
         _sub(el, "buywithkarma", "True" if spn and name in state.skill_specs_karma else "False")
 
     active = _sub(ns, "skills")
