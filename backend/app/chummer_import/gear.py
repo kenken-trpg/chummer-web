@@ -91,6 +91,9 @@ class _GearRouter:
             return _misc_child_fits(_commlink_accessory_parent_spec(parent), spec)
         if parent_bucket in ("cyberdecks", "rccs"):
             return _misc_child_fits(_matrix_device_parent_spec(parent, cyberdeck=parent_bucket == "cyberdecks"), spec)
+        if parent_bucket == "optics":
+            # an optic holds only gear that names it (`_misc_external_hosts`)
+            return _misc_child_fits({"name": parent.get("name"), "category": parent.get("category")}, spec)
         return True
 
     def resolve(

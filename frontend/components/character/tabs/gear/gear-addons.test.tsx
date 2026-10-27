@@ -561,3 +561,100 @@ it("loading a purchased loose program keeps its row and stops it", () => {
   fireEvent.change(screen.getByRole("combobox", { name: "入れる先" }), { target: { value: "d" } });
   expect(patch.mock.calls[0][0].programs).toEqual([{ ...p, parent_id: "d", running: false }]);
 });
+
+describe("<OpticsGear> gear that goes in an optic", () => {
+  // Gangerbean's Polychromic Lens in its Contacts: gear, not an optics row,
+  // so the panel drew nothing of it while the engine charged for it.
+  const optic = (id: string, name: string) => ({
+    id,
+    gear_id: `c-${id}`,
+    name,
+    category: "Vision Devices",
+    rating: 1,
+    rating_max: 0,
+    nuyen: 600,
+    source: "SR5",
+    parent_id: null,
+    addoncategories: [],
+  });
+  const lens = (id: string, parent_id: string) => ({
+    id,
+    gear_id: "lens",
+    name: "Polychromic Lens",
+    category: "Tools of the Trade",
+    rating: 1,
+    rating_max: 0,
+    nuyen: 100,
+    source: "HT",
+    parent_id,
+  });
+  const loose = {
+    id: "g9",
+    gear_id: "chisel",
+    name: "Chisel",
+    category: "Tools",
+    rating: 1,
+    nuyen: 20,
+  };
+  const character = () =>
+    makeCharacter({
+      optics: [optic("o1", "Contacts"), optic("o2", "Glasses")],
+      gear: [lens("g1", "o1"), loose],
+      derived: {
+        optics: [optic("o1", "Contacts"), optic("o2", "Glasses")],
+        gear: [lens("g1", "o1"), loose],
+      },
+    } as never);
+  const catalog = {
+    gear: [
+      {
+        id: "lens",
+        name: "Polychromic Lens",
+        category: "Tools of the Trade",
+        required_names: ["Contacts"],
+        cost: 100,
+      },
+      { id: "chisel", name: "Chisel", category: "Tools", cost: 20 },
+    ] as never,
+  };
+
+  it("draws the lens under the Contacts it is in, not under the Glasses", () => {
+    const { container } = renderPanel(OpticsGear, character(), vi.fn(), catalog);
+    const rows = [...container.querySelectorAll<HTMLElement>(".cyber-item")];
+    expect(rows[0].textContent).toContain("Polychromic Lens");
+    expect(rows[1].textContent).not.toContain("Polychromic Lens");
+  });
+
+  it("removing the lens takes it out of the gear list", () => {
+    const patch = vi.fn();
+    renderPanel(OpticsGear, character(), patch, catalog);
+    fireEvent.click(screen.getByRole("button", { name: /Polychromic Lens/ }));
+    expect(patch.mock.calls[0][0]).toEqual({ gear: [loose] });
+  });
+
+  it("deleting the Contacts takes the lens with it and nothing else", () => {
+    const patch = vi.fn();
+    renderPanel(OpticsGear, character(), patch, catalog);
+    fireEvent.click(screen.getAllByRole("button", { name: /削除/ })[0]);
+    expect(patch.mock.calls[0][0].gear).toEqual([loose]);
+  });
+
+  it("offers the lens to the Contacts only", () => {
+    const { container } = renderPanel(
+      OpticsGear,
+      makeCharacter({
+        optics: [optic("o1", "Contacts"), optic("o2", "Glasses")],
+        derived: { optics: [optic("o1", "Contacts"), optic("o2", "Glasses")], gear: [] },
+      } as never),
+      vi.fn(),
+      catalog,
+    );
+    const rows = [...container.querySelectorAll<HTMLElement>(".cyber-item")];
+    expect(
+      within(rows[0])
+        .getAllByRole("option")
+        .some((o) => o.textContent?.includes("Polychromic Lens")),
+    ).toBe(true);
+    expect(rows[1].textContent).not.toContain("Polychromic Lens");
+  });
+});

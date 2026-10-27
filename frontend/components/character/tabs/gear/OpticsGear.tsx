@@ -5,7 +5,7 @@ import { DiscountToggle } from "@/components/character/DiscountToggle";
 import { HelpTip } from "@/components/help/HelpTip";
 import type { TabPanelProps } from "@/components/character/types";
 import { OPTICS_DEVICE_CATS } from "@/lib/character/constants";
-import { dropTree } from "@/lib/character/gear";
+import { alreadySlotted, dropTree, miscFits } from "@/lib/character/gear";
 import { sourceBit } from "@/lib/character/format";
 import { editRow } from "@/lib/character/rows";
 
@@ -21,6 +21,15 @@ export function OpticsGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
               (item.addoncategories || []).includes(mod.category) &&
               Boolean(mod.requireparent) &&
               !childrenItems.some((child) => child.gear_id === mod.id),
+          );
+          // gear that names this optic as its host: a Polychromic Lens in Contacts
+          const heldGear = (d.gear || []).filter((row) => row.parent_id === item.id);
+          const gearAddons = (catalog.gear || []).filter(
+            (mod) =>
+              ((mod.required_names || []).length > 0 ||
+                (mod.required_categories || []).some((c) => c && c !== "Custom")) &&
+              miscFits({ name: item.name, category: item.category }, mod) &&
+              !alreadySlotted(mod, heldGear),
           );
           return (
             <div className="cyber-item" key={item.id}>
@@ -114,6 +123,43 @@ export function OpticsGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                     ) : null}
                   </div>
                 ))}
+                {heldGear.map((child) => (
+                  <div className="muted" key={child.id} style={{ marginTop: 6 }}>
+                    {tr(child.name)}
+                    {child.included
+                      ? ` / ${ui("common.included")}`
+                      : ` / ${child.nuyen.toLocaleString()}¥`}{" "}
+                    {child.included ? null : (
+                      <button
+                        className="btn danger"
+                        aria-label={ui("common.removeLabel", { name: tr(child.name) })}
+                        onClick={() => patch({ gear: dropTree(ch.gear || [], child.id) })}
+                      >
+                        {ui("common.remove")}
+                      </button>
+                    )}
+                  </div>
+                ))}
+                {gearAddons.length ? (
+                  <AddonSelect
+                    rowName={tr(item.name)}
+                    prompt={ui("gear.addAccessory")}
+                    options={gearAddons}
+                    tr={tr}
+                    onAdd={(mod) =>
+                      patch({
+                        gear: [
+                          ...(ch.gear || []),
+                          {
+                            gear_id: mod.id,
+                            rating: Math.max(1, mod.minrating || 1),
+                            parent_id: item.id,
+                          },
+                        ],
+                      })
+                    }
+                  />
+                ) : null}
                 <AddonSelect
                   rowName={tr(item.name)}
                   prompt={ui("gear.addMod")}
@@ -136,7 +182,12 @@ export function OpticsGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
               <button
                 className="btn danger"
                 aria-label={ui("common.deleteLabel", { name: tr(item.name) })}
-                onClick={() => patch({ optics: dropTree(ch.optics || [], item.id) })}
+                onClick={() =>
+                  patch({
+                    optics: dropTree(ch.optics || [], item.id),
+                    gear: dropTree(ch.gear || [], item.id),
+                  })
+                }
               >
                 {ui("common.delete")}
               </button>
