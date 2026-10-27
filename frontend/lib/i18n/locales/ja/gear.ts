@@ -67,6 +67,7 @@ export const JA_GEAR = {
     "材料履歴はJSON保存・共有で保持されます。.chum5等では残量のみ出力され、作成中の消費済み支出・施工履歴は完全に復元できません。",
 
   "veh.slots": " / スロット {used}/{max}",
+  "veh.freeItem": "無料",
   "veh.slotCost": " / スロット {slots}",
   "veh.addSubsystem": "強化を追加",
   "veh.noWeapon": " / 未搭載",

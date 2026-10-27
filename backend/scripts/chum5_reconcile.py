@@ -58,7 +58,7 @@ two Grid Subscriptions this app takes as the Medium lifestyle's free grids,
 0.33 of `5000 div 12` (DocWagon Contract, Basic). 1,100 - 100 + 0.33. The
 data is the same in 5.202.0 and now, so this is that version's arithmetic.
 
-`Gangerbean`'s +370 (+270 now) is four things this app got wrong and its lifestyle:
+`Gangerbean`'s +370 (+1,020 now) is four things this app got wrong and its lifestyle:
 - A Qi Focus R1 with no power picked and not bonded (3,000). The import reads
   foci from `<foci>`, where only bonded ones are, and skips the category in
   `<gears>`, so an unbonded focus is dropped without a word.
@@ -67,8 +67,9 @@ data is the same in 5.202.0 and now, so this is that version's arithmetic.
   the gear engine, which had no optic among its hosts, cascaded it away as an
   orphan. Fixed: an optic now hosts the gear that names it.
 - A GridLink at cost 0, not included (750). That is Chummer's "free item"
-  tick, which saves `<cost>0`. This app charges the catalogue price. Vehicle
-  mods are also not among the elements price drift reads.
+  tick, which saves `<cost>0`. This app charged the catalogue price. Fixed:
+  a vehicle mod saved that way is read as free. Vehicle mods are also not
+  among the elements price drift reads.
 - The Autopicker above (+1,500 here).
 That nets -850 against the +370 seen. The 480 left matches Extra Secure again:
 this app's Low is (2,000 + 400 for a comfort and a security point) x 1.2 =

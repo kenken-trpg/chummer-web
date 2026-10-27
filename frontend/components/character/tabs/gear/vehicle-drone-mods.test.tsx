@@ -303,3 +303,31 @@ describe("<VehicleDroneGear> the mod-slot help", () => {
     expect(tipFor("Steel Lynx の説明")).toContain("1 つのプール");
   });
 });
+
+describe("<VehicleDroneGear> a mod Chummer was told is free", () => {
+  // Gangerbean's GridLink: bought with Chummer's "free item" tick. It costs
+  // nothing, but it is the player's, so it can still be removed.
+  const car = () =>
+    owning(
+      vehicle("v1", "Americar", {
+        mods: [
+          mod("m1", "GridLink", { free: true, nuyen: 0 }),
+          mod("m2", "Spoof Chips", { nuyen: 500 }),
+        ],
+      }),
+    );
+
+  it("says free instead of a price, and only on that mod", () => {
+    renderVehicle(car(), vi.fn());
+    expect(screen.getByText(/GridLink/).textContent).toContain("無料");
+    expect(screen.getByText(/Spoof Chips/).textContent).toContain("500¥");
+  });
+
+  it("can be removed, unlike what came with the vehicle", () => {
+    const patch = vi.fn();
+    renderVehicle(car(), patch);
+    const row = screen.getByText(/GridLink/);
+    fireEvent.click(within(row).getByRole("button", { name: "外す" }));
+    expect(patch).toHaveBeenCalled();
+  });
+});

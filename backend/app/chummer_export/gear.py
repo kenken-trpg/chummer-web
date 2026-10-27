@@ -556,6 +556,9 @@ def _export_vehicles(root: ET.Element, state: CharacterState, names: _Names, ctx
             _sub(mm, "name", names["vmod"].get(vrow.mod_id, ""))
             _sub(mm, "rating", vrow.rating)
             _sub(mm, "included", "True" if vrow.included else "False")
+            if vrow.free:
+                # Chummer's "free item" tick is a `<cost>` of 0
+                _sub(mm, "cost", 0)
             # the implants in it (a drone arm's Shock Hand)
             ware = ware_by_parent.get(vrow.id)
             if ware:

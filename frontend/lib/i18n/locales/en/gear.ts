@@ -68,6 +68,7 @@ export const EN_GEAR = {
     "JSON saves and shares preserve the ledger. Other formats export stock remaining; chargen consumed expenditure and construction history cannot be fully restored.",
 
   "veh.slots": " / slots {used}/{max}",
+  "veh.freeItem": "free",
   "veh.slotCost": " / slots {slots}",
   "veh.addSubsystem": "Add an upgrade",
   "veh.noWeapon": " / no weapon",

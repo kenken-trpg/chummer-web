@@ -352,6 +352,48 @@ def test_gear_that_does_not_go_in_an_optic_is_carried_on_its_own() -> None:
     assert not has(out.derived["warnings"], "engine.gear.doesNotFit")
 
 
+_GRIDLINK = "831a60c3-f57b-40c7-9b4d-92906897ee90"
+
+
+def _car_with_gridlink(cost: bytes) -> bytes:
+    return (
+        b"<vehicles><vehicle><sourceid>898906ec-f2b9-43a4-98ad-6f79230b9a0c</sourceid>"
+        b"<name>Ford Americar (Sedan)</name><mods><mod>"
+        b"<sourceid>" + _GRIDLINK.encode() + b"</sourceid><name>GridLink</name>"
+        b"<rating>0</rating>" + cost + b"<included>False</included>"
+        b"</mod></mods></vehicle></vehicles>"
+    )
+
+
+def _gridlink(cost: bytes) -> tuple[dict, CharacterState]:
+    state, _ = chum5_to_state(SAMPLE.replace(b"</character>", _car_with_gridlink(cost) + b"</character>"))
+    mod = next(r for r in state["vehicle_mods"] if r["mod_id"] == _GRIDLINK)
+    return mod, import_character(state)
+
+
+def test_a_mod_chummer_was_told_is_free_costs_nothing() -> None:
+    """Gangerbean's GridLink: Chummer's "free item" tick saves `<cost>0`,
+    and this app charged the catalogue's 750 for it."""
+    mod, out = _gridlink(b"<cost>0</cost>")
+    assert mod.get("free") is True
+    _, paid = _gridlink(b"<cost>750</cost>")
+    assert paid.derived["nuyen_spent"] - out.derived["nuyen_spent"] == 750
+    row = next(m for v in out.derived["vehicles"] for m in v["mods"] if m["mod_id"] == _GRIDLINK)
+    assert (row["free"], row["nuyen"]) == (True, 0)
+
+
+def test_a_mod_saved_with_its_price_or_without_one_is_not_free() -> None:
+    for cost in (b"<cost>750</cost>", b""):
+        mod, _ = _gridlink(cost)
+        assert "free" not in mod
+
+
+def test_a_free_mod_stays_free_through_the_export() -> None:
+    _, out = _gridlink(b"<cost>0</cost>")
+    again, _ = chum5_to_state(state_to_chum5(out))
+    assert next(r for r in again["vehicle_mods"] if r["mod_id"] == _GRIDLINK).get("free") is True
+
+
 _EAGLE_ADEPT = b"""
   <mentorspirits><mentorspirit><id>9e38a8c0-f11c-461d-a489-ba1432f4551f</id><name>Eagle</name></mentorspirit></mentorspirits>
   <powers><power><name>Combat Sense</name><rating>0</rating></power>
