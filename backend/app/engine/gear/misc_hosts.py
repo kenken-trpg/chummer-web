@@ -66,6 +66,13 @@ def _misc_external_hosts(state: CharacterState) -> dict[str, tuple[str, dict[str
             spec = _item_by_id(kind, inst.gear_id)
             if spec:
                 hosts[inst.id] = ("commlink", _matrix_device_parent_spec(spec, cyberdeck=kind == "cyberdecks"))
+    for optic_inst in list(state.optics or []):
+        # gear that names an optic as its host: a Polychromic Lens goes in
+        # Contacts (HT p.188). Anything else there does not fit, and is said
+        # so rather than cascaded away as an orphan.
+        spec = _item_by_id("optics", optic_inst.gear_id)
+        if spec:
+            hosts[optic_inst.id] = ("optic", {"name": spec.get("name") or "", "category": spec.get("category") or ""})
     for veh_inst, spec in _iter_vehicle_hosts(state):
         hosts[veh_inst.id] = ("vehicle", _vehicle_interior_parent_spec(spec))
     for armor_inst in list(state.armor or []):

@@ -312,6 +312,46 @@ def test_gear_nobody_included_is_still_reported() -> None:
     assert has(import_character(state).derived["warnings"], "engine.gear.needsHost")
 
 
+_LENS_IN_CONTACTS = b"""
+  <gears><gear><id>1a3a9204-959b-4db5-83de-094f921c5e7f</id><name>Contacts</name>
+    <category>Vision Devices</category><rating>3</rating><qty>1</qty>
+    <children><gear><id>badca1de-593e-4bae-9a0b-e40528c0774e</id><name>Polychromic Lens</name>
+      <category>Tools of the Trade</category><qty>1</qty><parentid /></gear></children>
+  </gear></gears>
+"""
+
+
+def test_gear_that_goes_in_an_optic_stays_there() -> None:
+    """Gangerbean keeps a Polychromic Lens in its Contacts, where the lens's
+    `<required><geardetails>` puts it. The gear engine had no optic among its
+    hosts, so the lens was cascaded away as an orphan: gone from the sheet and
+    its 100 nuyen from the spend, with nothing said."""
+    lens = "badca1de-593e-4bae-9a0b-e40528c0774e"
+    state, _ = chum5_to_state(SAMPLE.replace(b"</character>", _LENS_IN_CONTACTS + b"</character>"))
+    contacts = next(r for r in state["optics"] if r["gear_id"] == "1a3a9204-959b-4db5-83de-094f921c5e7f")
+    out = import_character(state)
+    kept = next(r for r in out.gear if r.gear_id == lens)
+    assert kept.parent_id == contacts["id"]
+    assert not has(out.derived["warnings"], "engine.gear.doesNotFit")
+    without, _ = chum5_to_state(SAMPLE)
+    spent = import_character(without).derived["nuyen_spent"]
+    # the Contacts R3 (600) and the lens in it (100)
+    assert out.derived["nuyen_spent"] - spent == 600 + 100
+
+
+def test_gear_that_does_not_go_in_an_optic_is_carried_on_its_own() -> None:
+    chisel = "f5ac4b53-82ad-4a2f-8f3d-990e075951f7"
+    xml = _LENS_IN_CONTACTS.replace(
+        b"<id>badca1de-593e-4bae-9a0b-e40528c0774e</id><name>Polychromic Lens</name>",
+        f"<id>{chisel}</id><name>Chisel</name>".encode(),
+    )
+    state, warnings = chum5_to_state(SAMPLE.replace(b"</character>", xml + b"</character>"))
+    assert has(warnings, "engine.import.gearMovedOut")
+    out = import_character(state)
+    assert next(r for r in out.gear if r.gear_id == chisel).parent_id is None
+    assert not has(out.derived["warnings"], "engine.gear.doesNotFit")
+
+
 _EAGLE_ADEPT = b"""
   <mentorspirits><mentorspirit><id>9e38a8c0-f11c-461d-a489-ba1432f4551f</id><name>Eagle</name></mentorspirit></mentorspirits>
   <powers><power><name>Combat Sense</name><rating>0</rating></power>
