@@ -396,13 +396,23 @@ def _export_gear_improvements(root: ET.Element, state: CharacterState, by_parent
     `<bonus>` at its rating, with its extra as the pick, under its guid: the
     character's own gear and what their armor carries, which is off with
     armor not worn. Not a focus, whose improvements wait for its bonding,
-    nor what sits in a vehicle or a weapon, which works on that."""
+    nor what sits in a weapon, which works on that.
+
+    A vehicle's gear counts only when it came with the vehicle (the Shiawase
+    Caduceus's Medkit): `Vehicle.Create` makes its `<gears>` with improvements,
+    but gear put in a vehicle afterwards is made without them
+    (`PurchaseVehicleGear` passes `blnAddImprovements: false`), and so is
+    what is put in that gear."""
     definitions = {node.findtext("id") or "": node for node in parse_data("gear.xml").findall("./gears/gear")}
-    stack = [(row, True) for row in by_parent.get(None, [])]
-    stack += [(row, a.equipped) for a in state.armor for row in by_parent.get(a.id, [])]
+    # (row, enabled, only what came with its parent)
+    stack = [(row, True, False) for row in by_parent.get(None, [])]
+    stack += [(row, a.equipped, False) for a in state.armor for row in by_parent.get(a.id, [])]
+    stack += [(row, True, True) for v in [*state.vehicles, *state.drones] for row in by_parent.get(v.id, [])]
     while stack:
-        row, enabled = stack.pop()
-        stack += [(child, enabled) for child in by_parent.get(row.id) or []]
+        row, enabled, built_in = stack.pop()
+        if built_in and not getattr(row, "included", False):
+            continue
+        stack += [(child, enabled, built_in) for child in by_parent.get(row.id) or []]
         definition = definitions.get(row.gear_id)
         bonus = definition.find("bonus") if definition is not None else None
         if definition is None or bonus is None or (definition.findtext("category") or "").endswith("Foci"):

@@ -832,6 +832,33 @@ def test_gear_leaves_what_its_bonus_made() -> None:
     )
 
 
+def test_only_the_gear_a_vehicle_came_with_leaves_improvements() -> None:
+    """`Vehicle.Create` runs the bonus of the gear in the vehicle's entry (the
+    Caduceus's Medkit), but gear put in afterwards is made without
+    improvements (`PurchaseVehicleGear`), and so is what goes in that."""
+    c = catalog()
+    caduceus = next(r["id"] for r in c["drones"] if r["name"].startswith("Shiawase Caduceus"))
+    medkit = next(r["id"] for r in c["gear"] if r["name"] == "Medkit")
+    state = CharacterState(
+        id="v",
+        name="Vehicle gear",
+        priorities=Priorities(),
+        metatype="Human",
+        attributes={},
+        drones=[GearInstall(id="cad", gear_id=caduceus)],
+        gear=[
+            GearInstall(id="own-kit", gear_id=medkit, parent_id="cad", included=True, rating=6),
+            GearInstall(id="put-in", gear_id=medkit, parent_id="cad", rating=3),
+        ],
+    )
+    root = ET.fromstring(state_to_chum5(state))
+    assert [
+        (imp.findtext("sourcename"), imp.findtext("improvementttype"), imp.findtext("val"))
+        for imp in root.findall("./improvements/improvement")
+        if imp.findtext("improvementsource") == "Gear"
+    ] == [("own-kit", "LimitModifier", "6")]
+
+
 def test_a_bonded_focus_leaves_what_its_bonus_made() -> None:
     """A focus's improvements sit under its gear's guid at its force — a
     Weapon Focus's dice name its weapon's guid — and the `<focus>` pointer
