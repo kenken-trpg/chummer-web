@@ -41,6 +41,16 @@ The same drift happens to gear: a save records each item's own cost, so
 catalogue now says 73,000. A row whose nuyen gap is exactly that is marked
 `gdrift`, and `-v` lists the items.
 
+A save stores a formula verbatim when the catalogue had one, and those drift
+too. The comparison works out a formula in `Rating` alone at the save's own
+rating, and still skips anything with more in it (`MinRating`). That is what
+`Blindfire`'s 1,628 was: its `Autopicker` R6 is `Rating * 250` in the save and
+`Rating * 500` now, 1,500, and the other 128 is the ammunition read as boxes of
+ten rounded up (`chummer_import/gear.py`). `BLUE` (R4, 1,000 of its 2,000) and
+`Gangerbean` (R6) have the same Autopicker. Neither save's gap is all of it,
+so neither is marked `gdrift`: BLUE has 1,000.33 left, Gangerbean 1,870 the
+other way.
+
 Lifestyles are where `--locate` points most often, and the trail ends in the
 saves rather than in this app. Chummer 5.202 did not compute these the way its
 own current source does (`Lifestyle.CostPreSplit`, which this app follows):

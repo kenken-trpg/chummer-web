@@ -12,7 +12,7 @@ from __future__ import annotations
 import xml.etree.ElementTree as ET
 
 from scripts.reconcile.fidelity import _accepted_drop, _leaves
-from scripts.reconcile.prices import _stored_prices
+from scripts.reconcile.prices import _at_rating, _stored_prices, _stored_rating_prices
 
 
 def _save(body: str) -> ET.Element:
@@ -45,6 +45,29 @@ def test_a_cost_that_is_an_expression_is_left_alone() -> None:
         </gears>
     """)
     assert _stored_prices(root) == [("otherGear", "Kamikaze", 100.0)]
+
+
+def test_a_rating_formula_is_read_with_the_rating_it_was_bought_at() -> None:
+    """The formula moves under a save as a number does: Blindfire's Autopicker
+    is `Rating * 250` in its 5.202 save and `Rating * 500` today."""
+    root = _save("""
+        <gears>
+          <gear><name>Autopicker</name><rating>6</rating><cost>Rating * 250</cost></gear>
+          <gear><name>Kamikaze</name><cost>100</cost></gear>
+          <gear><name>Fake License</name><rating>4</rating><cost>Rating * 200</cost>
+                <parentid>x</parentid></gear>
+        </gears>
+    """)
+    assert _stored_rating_prices(root) == [("otherGear", "Autopicker", "Rating * 250", 6)]
+
+
+def test_only_numbers_rating_and_arithmetic_are_worked_out() -> None:
+    assert _at_rating("Rating * 250", 6) == 1500
+    assert _at_rating("(Rating + 1) * 100 - 50", 2) == 250
+    # needs more than the save says about the piece
+    assert _at_rating("(Rating - MinRating + 1) * 5000", 7) is None
+    assert _at_rating("FixedValues(100,200)", 1) is None
+    assert _at_rating("Rating / 0", 3) is None
 
 
 def test_every_priced_kind_of_element_is_read() -> None:
