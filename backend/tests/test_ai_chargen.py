@@ -576,3 +576,73 @@ def test_an_ai_without_a_vehicle_has_no_body_to_defend_with() -> None:
     pools = compute(_deck()).derived["spell_defense_pools"]
     assert pools["direct_physical"] == 0
     assert pools["physical_manipulation"] == 0
+
+
+# --- career -------------------------------------------------------------------
+#
+# Chummer's CharacterCareer has nothing of its own for an A.I. beyond buying a
+# program (`cmdAddAIProgram_Click`, at the same 5 / 8 as creation) and the home
+# node box. Depth is raised like MAG and RES (`UpgradeKarmaCost`, from the value
+# essence loss left), so the career rules every character has already cover it.
+
+
+def _career_ai_dep_5() -> CharacterState:
+    from app.engine import snapshot_career_baseline
+
+    # Talent B: Depth starts at 4, and one raise takes it to 5
+    state = compute(_ai("E-Ghost", talent_letter="B", attributes="C"))
+    state.career = True
+    state.career_baseline = snapshot_career_baseline(state)
+    state.karma_earned = 100
+    return compute(state)
+
+
+def test_a_career_depth_raise_costs_its_new_rating_times_five() -> None:
+    state = _career_ai_dep_5()
+    assert state.attributes["DEP"] == 4
+    state.attributes = {**state.attributes, "DEP": 5}
+    out = compute(state)
+    assert out.derived["totals"]["DEP"] == 5
+    assert out.derived["career_advancement_karma"] == 25
+    # and Edge's cap follows the raised Depth
+    assert out.derived["metatype_info"]["attributes"]["EDG"]["max"] == 5 + 1  # Lucky
+
+
+def test_a_career_depth_raise_is_priced_from_the_value_after_essence_loss() -> None:
+    from app.models import CyberwareInstall
+
+    state = _career_ai_dep_5()
+    state.cyberware = [CyberwareInstall(ware_id=_ware_id("Datajack"))]
+    state = compute(state)
+    assert state.derived["totals"]["DEP"] == 3
+    state.attributes = {**state.attributes, "DEP": 5}
+    out = compute(state)
+    # Depth 4 -> 5 stands at 3 -> 4: 4 x 5, not 5 x 5
+    assert out.derived["totals"]["DEP"] == 4
+    assert out.derived["career_advancement_karma"] == 20
+
+
+def test_a_program_bought_in_career_costs_what_it_costs_in_creation() -> None:
+    from app.data_loader import catalog
+    from app.models import AIProgramInstall
+
+    def program(name: str) -> AIProgramInstall:
+        return AIProgramInstall(program_id=next(p["id"] for p in catalog()["ai_programs"] if p["name"] == name))
+
+    state = _career_ai_dep_5()
+    left = state.derived["karma"]["remaining"]
+    state.ai_programs = [program("Exploit"), program("Authority")]
+    out = compute(state)
+    assert left - out.derived["karma"]["remaining"] == 5 + 8
+    assert not has(out.derived["errors"], "engine.aiPrograms.prereq")
+
+
+def test_a_career_ai_keeps_its_balance_through_the_chum5() -> None:
+    state = _career_ai_dep_5()
+    state.attributes = {**state.attributes, "DEP": 5}
+    first = compute(state)
+    again, _ = chum5_to_state(state_to_chum5(first))
+    second = compute(CharacterState(**again))
+    assert second.career is True
+    assert second.attributes["DEP"] == 5
+    assert second.derived["karma"]["remaining"] == first.derived["karma"]["remaining"]

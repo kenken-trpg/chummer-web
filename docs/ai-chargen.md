@@ -232,9 +232,20 @@ Chummerのホームノード（`Character.HomeNode`）は、ギア・ヴィー�
 - ココフォリア・ユドナリウムのチャットパレットにも同じ値を数値で並べる（A.I.のBodyを変数では表せないため）。
 - 検証：`backend/tests/test_ai_chargen.py`の「spell defense」の節、`SpellDefenseSection`の単体テスト。
 
-## これからの段階
+## キャリア
 
-- **キャリア**：作成後の扱いは未検討。
+固定版の[CharacterCareer](https://github.com/chummer5a/chummer5a/blob/d7e94f6a090f267362757675d05bbe4d7543c217/Chummer/Forms/Character%20Forms/CharacterCareer.cs)
+で、A.I.だけのキャリアの処理は、プログラムの追加（`cmdAddAIProgram_Click`）とホームノードのチェックボックスだけ。
+どちらもこのアプリの既存の仕組みで足りていたので、新しい処理は足さずに、テストで固定した。
+
+- DEPの上昇はMAG・RESと同じ（`UpgradeKarmaCost`）。新しい値×5で、エッセンスで下がった後の値から数える
+  （`career_raise_karma`の`level_drops`）。EDGの上限は上げた後のDEPになる。
+- キャリアで足すプログラムは作成時と同じ値段（5／8）。前提のプログラムは確かめない（Chummerも追加するときだけ）。
+- `.chum5`の往復で、キャリアの残りカルマとDEPが変わらない。
+- **Chummerとの違い**：キャリアで作成時からのプログラムを消すと、このアプリではカルマが戻る。Chummerは消すだけで戻さない
+  （`cmdDeleteAIProgram_Click`は`RemoveSelectedObject`だけ）。資質は戻さないようにしてある（`_career_qualities.py`）が、
+  プログラムにはその仕組みが無い。
+- 検証：`backend/tests/test_ai_chargen.py`の「career」の節。
 
 ## 表記
 
@@ -250,3 +261,4 @@ Home Node、Core Damage Track（Core CM）、Depth、Program Limit、Persona Fir
    日本語の本（コア・ラン＆ガン・コデックス）にはA.I.の章が無いので、英語版のData Trailsが要る。
 2. **実セーブとの照合**。Chummer.TestsにA.I.のPCが無い。Chummerで作ったセーブが手に入れば
    `make reconcile`と同じ形で確かめる。
+3. **キャリアで消したプログラムのカルマ**。上の「Chummerとの違い」。呪文など、ほかに消せる品目でも同じかを確かめてから、まとめて決める。
