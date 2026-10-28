@@ -13,11 +13,24 @@ from ._common import _Resolver, _unexpected_children
 from .combat import _read_weapon, weapon_resolvers
 
 
+def _free_item(node: ET.Element, listed: str | None) -> bool:
+    """Chummer's "free item" tick, which saves `<cost>0` for something the
+    catalogue charges for (Gangerbean's GridLink, 750 nuyen). A save without a
+    `<cost>` says nothing, and a piece the catalogue gives away is not one."""
+    saved = _text(node.find("cost"))
+    try:
+        zero = bool(saved) and float(saved) == 0
+    except ValueError:
+        return False
+    return zero and (listed or "0").strip() not in ("", "0")
+
+
 def _import_vehicles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
     """Read vehicles, drones and vehicle mods."""
     veh_r = _Resolver(cat["vehicles"])
     drone_r = _Resolver(cat["drones"])
     vmod_r = _Resolver(cat["vehicle_mods"])
+    mod_costs = {row["id"]: str(row.get("cost") or "") for row in cat["vehicle_mods"]}
     mount_r = _Resolver(cat["weapon_mounts"])
     mount_categories = {row["id"]: row.get("category") or "" for row in cat["weapon_mounts"]}
     mod_ware: dict[int, list[dict[str, Any]]] = dict(st.pop("_vehicle_mod_ware", None) or {})
@@ -64,6 +77,8 @@ def _import_vehicles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], war
                     "rating": max(1, _int(m.find("rating"), 1)),
                     "included": _text(m.find("included")).lower() == "true",
                 }
+                if not mod_row["included"] and _free_item(m, mod_costs.get(mid)):
+                    mod_row["free"] = True
                 st_vmods.append(mod_row)
                 for ware_row in held_ware:
                     # only the mod's own implants: what is plugged into those

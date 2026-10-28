@@ -213,6 +213,10 @@ export interface VehicleModInstall {
   parent_id?: string | null;
   included?: boolean;
   rating?: number;
+  /** Chummer's "free item" tick: bought, but at no cost (`<cost>0`).
+   *  Unlike `included`, it takes slots and the player may remove it.
+   */
+  free?: boolean;
 }
 
 export interface WeaponMountInstall {

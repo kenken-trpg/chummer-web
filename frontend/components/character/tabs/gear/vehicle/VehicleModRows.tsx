@@ -80,7 +80,11 @@ export function VehicleModRows({
             </HelpTip>{" "}
             {tr(mod.name)}
             {mod.rating_max > 0 ? ` R${mod.rating}` : ""}
-            {mod.included ? ` / ${ui("common.included")}` : ` / ${mod.nuyen.toLocaleString()}¥`}
+            {mod.included
+              ? ` / ${ui("common.included")}`
+              : mod.free
+                ? ` / ${ui("veh.freeItem")}`
+                : ` / ${mod.nuyen.toLocaleString()}¥`}
             {mod.slots ? ui("veh.slotCost", { slots: mod.slots }) : ""}
             {mod.capacity_max
               ? ui("gear.capacity", {

@@ -76,6 +76,9 @@ class VehicleModInstall(BaseModel):
     parent_id: str | None = None
     included: bool = False
     rating: int = 1
+    #: Chummer's "free item" tick: bought, but at no cost (`<cost>0`).
+    #: Unlike `included`, it takes slots and the player may remove it.
+    free: bool = False
 
 
 class WeaponMountInstall(BaseModel):

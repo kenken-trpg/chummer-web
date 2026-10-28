@@ -10,6 +10,8 @@ export interface InstalledVehicleMod {
   category: string;
   parent_id?: string | null;
   included?: boolean;
+  /** Chummer's "free item": bought at no cost, unlike `included` removable */
+  free?: boolean;
   rating: number;
   rating_max: number;
   slots: number;
