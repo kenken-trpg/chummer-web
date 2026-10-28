@@ -164,6 +164,8 @@ export interface InstalledFocus {
   force_max: number;
   nuyen: number;
   karma: number;
+  /** False for one bought but not bonded: its price only, no bonus, not against MAG. */
+  bonded?: boolean;
   crafted?: boolean;
   formula_bought?: boolean;
   formula_nuyen?: number;
@@ -248,6 +250,8 @@ export interface InstalledQiFocus {
   options: string[];
   nuyen: number;
   karma: number;
+  /** False for one bought but not bonded, which carries no power yet. */
+  bonded?: boolean;
   source?: string;
 }
 

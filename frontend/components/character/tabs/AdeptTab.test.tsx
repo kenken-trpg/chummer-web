@@ -342,6 +342,24 @@ describe("<AdeptTab>", () => {
     expect(patch).toHaveBeenLastCalledWith({ qi_foci: [] });
   });
 
+  it("shows a qi focus not bonded, which carries no power yet", () => {
+    renderTab({
+      character: {
+        qi_foci: [{ id: "q1", power_id: "", rating: 1, bonded: false }] as never,
+        derived: {
+          qi_foci: [
+            { ...qiFocus, power_id: "", name: "", rating: 1, nuyen: 3000, karma: 0, bonded: false },
+          ] as never,
+        },
+      },
+    });
+    const row = document.querySelector(".cyber-item") as HTMLElement;
+    expect(row.textContent).toContain("3,000¥ / 結合していない");
+    expect(row.textContent).not.toContain("結合 0カルマ");
+    expect(screen.queryByLabelText("結合する")).toBeNull();
+    expect(screen.queryByLabelText("パワーR")).toBeNull();
+  });
+
   it("filters the qi-focus list by its own search box", () => {
     renderTab();
     fireEvent.change(screen.getByPlaceholderText("氣収束具に入れるパワーを検索"), {

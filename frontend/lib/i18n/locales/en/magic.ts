@@ -34,6 +34,8 @@ export const EN_MAGIC = {
     "Buying pays list price. Crafting needs a formula plus Force×20¥ of reagents and Artificing + MAG[Force] vs Force×2 (Force days). Bonding costs Force karma. Bonded {count}/{countMax} · total Force {force}/{forceMax}",
   "foci.adeptNote": " · qi foci live on the adept tab (they count against this limit)",
   "foci.crafted": "Crafted",
+  "foci.unbonded": "not bonded",
+  "foci.bondedLabel": "Bonded",
   "foci.bind": "bonding {karma} karma",
   "foci.craftBreakdown": " (formula {formula}¥ + reagents {reagent}¥ / list {retail}¥)",
   "foci.target": " / target {name} +{dice}",

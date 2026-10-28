@@ -34,6 +34,8 @@ export const JA_MAGIC = {
     "購入は定価。クラフトは術式＋原質フォース×20¥とアーティフィシング+MAG[フォース] vs フォース×2（フォース日）。結合カルマはフォース。同時 {count}/{countMax} ・ フォース合計 {force}/{forceMax}",
   "foci.adeptNote": " ・ 氣収束具はアデプトタブ（この上限に含む）",
   "foci.crafted": "クラフト",
+  "foci.unbonded": "結合していない",
+  "foci.bondedLabel": "結合する",
   "foci.bind": "結合 {karma}カルマ",
   "foci.craftBreakdown": "（術式 {formula}¥ + 原質 {reagent}¥ / 定価 {retail}¥）",
   "foci.target": " / 対象 {name} +{dice}",

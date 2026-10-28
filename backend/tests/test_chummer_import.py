@@ -394,6 +394,54 @@ def test_a_free_mod_stays_free_through_the_export() -> None:
     assert next(r for r in again["vehicle_mods"] if r["mod_id"] == _GRIDLINK).get("free") is True
 
 
+_UNBONDED_FOCI = b"""
+  <gears>
+    <gear><guid>0c1b4a52-3f0e-4c35-9a52-6c0d3c1f7a01</guid><id>{power}</id><name>Power Focus</name>
+      <category>Foci</category><rating>2</rating><qty>1</qty><bonded>False</bonded></gear>
+    <gear><guid>0c1b4a52-3f0e-4c35-9a52-6c0d3c1f7a02</guid><id>a64c073c-8aa9-4383-b885-267f8ce1ea99</id>
+      <name>Qi Focus</name><category>Foci</category><rating>1</rating><qty>1</qty><extra /><bonded>False</bonded></gear>
+  </gears>
+"""
+
+
+def _with_unbonded_foci() -> bytes:
+    """A mystic adept carrying a Power Focus F2 and a Qi Focus F1, neither
+    bonded: in `<gears>` with `<bonded>False` and no `<foci>` pointer, the way
+    Gangerbean keeps its Qi Focus."""
+    power = next(f["id"] for f in catalog()["foci"] if f["name"] == "Power Focus")
+    xml = SAMPLE.replace(b"<prioritytalent>Magician<", b"<prioritytalent>Mystic Adept<")
+    return xml.replace(b"</character>", _UNBONDED_FOCI.replace(b"{power}", power.encode()) + b"</character>")
+
+
+def test_a_focus_not_bonded_comes_in_and_costs_its_price_only() -> None:
+    """The gear pass skips category Foci and the foci pass read only what
+    `<foci>` points at, so a focus bought but not bonded was dropped with
+    nothing said, its price with it (Gangerbean's Qi Focus R1, 3,000 nuyen)."""
+    state, warnings = chum5_to_state(_with_unbonded_foci())
+    assert [(f["force"], f["bonded"]) for f in state["foci"]] == [(2, False)]
+    assert [(q["rating"], q["power_id"], q["bonded"]) for q in state["qi_foci"]] == [(1, "", False)]
+    out = import_character(state)
+    bare, bare_warnings = chum5_to_state(SAMPLE.replace(b"<prioritytalent>Magician<", b"<prioritytalent>Mystic Adept<"))
+    assert warnings == bare_warnings
+    before = import_character(bare).derived
+    # Power Focus F2 (36,000) and Qi Focus F1 (3,000); no bonding karma
+    assert out.derived["nuyen_spent"] - before["nuyen_spent"] == 36000 + 3000
+    assert out.derived["karma"]["spent"] == before["karma"]["spent"]
+    # not bonded, so not against MAG and no bonus
+    assert out.derived["focus_limits"]["count"] == 0
+    assert out.derived["skill_bonus"].get("Spellcasting", 0) == before["skill_bonus"].get("Spellcasting", 0)
+
+
+def test_a_focus_not_bonded_goes_out_unbonded() -> None:
+    state, _ = chum5_to_state(_with_unbonded_foci())
+    root = ET.fromstring(state_to_chum5(import_character(state)))
+    foci = [g for g in root.findall("./gears/gear") if _text(g.find("category")) == "Foci"]
+    assert sorted(_text(g.find("bonded")) for g in foci) == ["False", "False"]
+    assert root.findall("./foci/focus") == []
+    back, _ = chum5_to_state(ET.tostring(root))
+    assert [f["bonded"] for f in back["foci"] + back["qi_foci"]] == [False, False]
+
+
 _EAGLE_ADEPT = b"""
   <mentorspirits><mentorspirit><id>9e38a8c0-f11c-461d-a489-ba1432f4551f</id><name>Eagle</name></mentorspirit></mentorspirits>
   <powers><power><name>Combat Sense</name><rating>0</rating></power>

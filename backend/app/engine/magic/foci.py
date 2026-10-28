@@ -76,6 +76,30 @@ def qi_focus_granted_power_rating(
     return min(max(1, int(user_rating or 1)), granted)
 
 
+def _unbonded_qi_row(inst: QiFocusInstall, max_force: int, source: Any) -> dict[str, Any]:
+    """A Qi focus bought but not bonded: its price, and no power until it is."""
+    force = max(1, min(max_force, int(inst.rating or 1)))
+    inst.rating = force
+    spec = _power_by_id(inst.power_id) or {}
+    return {
+        "id": inst.id,
+        "rating": force,
+        "rating_min": 1,
+        "rating_max": max_force,
+        "power_id": str(spec.get("id") or ""),
+        "name": str(spec.get("name") or ""),
+        "power_rating": 0,
+        "power_rating_max": 0,
+        "extra": (inst.extra or "").strip(),
+        "select": None,
+        "options": [],
+        "nuyen": force * 3000,
+        "karma": 0,
+        "bonded": False,
+        "source": source,
+    }
+
+
 def resolve_qi_foci(
     state: CharacterState,
     talent_name: str,
@@ -105,6 +129,11 @@ def resolve_qi_foci(
     points_per_level = float((select_power or {}).get("points_per_level") or gear.get("pointsperlevel") or 0.25)
     kept: list[QiFocusInstall] = []
     for inst in state.qi_foci:
+        if not inst.bonded:
+            public.append(_unbonded_qi_row(inst, max_force, gear.get("source")))
+            nuyen += int(public[-1]["nuyen"])
+            kept.append(inst)
+            continue
         spec = _power_by_id(inst.power_id)
         if not spec:
             continue
@@ -168,6 +197,7 @@ def resolve_qi_foci(
                 "options": options,
                 "nuyen": cost,
                 "karma": bind,
+                "bonded": True,
                 "source": gear.get("source"),
             }
         )
@@ -210,7 +240,11 @@ def resolve_foci(
         spec = _focus_by_id(inst.gear_id)
         if not spec:
             continue
-        cap = min(int(spec.get("maxrating") or 6), max_force) if mag else 0
+        bonded = bool(inst.bonded)
+        # MAG caps the Force one can bond, not what one can buy
+        cap = int(spec.get("maxrating") or 6)
+        if bonded:
+            cap = min(cap, max_force) if mag else 0
         if cap <= 0:
             warnings.append(notice("engine.foci.bindNeedsMagic", name=term(str(spec["name"]))))
             continue
@@ -242,16 +276,16 @@ def resolve_foci(
             cost = int(eval_formula(str(spec.get("cost") or "0"), force, 0))
             formula_cost = 0
             reagent = 0
-        bind = focus_bind_karma(spec["name"], force, focus_binding)
+        bind = focus_bind_karma(spec["name"], force, focus_binding) if bonded else 0
         nuyen += cost
         karma += bind
-        nodes = [
-            node
-            for node in substitute_rating(list(spec.get("bonus") or []), force)
-            if node.get("tag") != "weaponspecificdice"
-        ]
-        label = f"{spec['name']} F{force}"
-        bonus_sources.append((label, nodes))
+        if bonded:
+            nodes = [
+                node
+                for node in substitute_rating(list(spec.get("bonus") or []), force)
+                if node.get("tag") != "weaponspecificdice"
+            ]
+            bonus_sources.append((f"{spec['name']} F{force}", nodes))
         public.append(
             {
                 "id": inst.id,
@@ -261,6 +295,7 @@ def resolve_foci(
                 "force_max": cap,
                 "nuyen": cost,
                 "karma": bind,
+                "bonded": bonded,
                 "crafted": crafted,
                 "formula_bought": formula_bought,
                 "formula_nuyen": formula_cost,
@@ -310,7 +345,7 @@ def attach_weapon_focus_dice(
 ) -> None:
     by_id = {str(item.get("id") or ""): item for item in weapons if item.get("id")}
     for focus in foci_public:
-        if not focus.get("needs_weapon"):
+        if not focus.get("needs_weapon") or not focus.get("bonded", True):
             continue
         weapon_type = str(focus.get("weapon_type") or "Melee")
         options = [
@@ -353,8 +388,10 @@ def apply_focus_limits(
     foci_public: list[dict[str, Any]],
     errors: list[Notice],
 ) -> FocusLimits:
-    count = len(qi_public) + len(foci_public)
-    force = sum(int(item.get("rating") or item.get("force") or 0) for item in qi_public + foci_public)
+    # only what is bonded counts against MAG
+    bonded = [item for item in qi_public + foci_public if item.get("bonded", True)]
+    count = len(bonded)
+    force = sum(int(item.get("rating") or item.get("force") or 0) for item in bonded)
     count_max = max(0, int(mag or 0))
     force_max = count_max * FOCUS_FORCE_MULT
     if count_max and count > count_max:

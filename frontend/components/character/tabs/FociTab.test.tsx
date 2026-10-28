@@ -90,4 +90,41 @@ describe("<FociTab>", () => {
       foci: [{ id: "f1", gear_id: "pf", force: 2, extra: "Hermetic" }],
     });
   });
+
+  /** Chummer's `<bonded>False`: a focus bought but not bonded (Gangerbean's
+   *  Qi Focus) shows its price with no bonding karma, and bonding it is a tick. */
+  it("shows a focus not bonded and bonds it", () => {
+    const patch = vi.fn();
+    const ch = makeCharacter({
+      foci: [{ id: "f1", gear_id: "pf", force: 2, bonded: false }],
+    } as never);
+    ch.derived = {
+      ...ch.derived,
+      foci: [
+        {
+          id: "f1",
+          gear_id: "pf",
+          name: "Power Focus",
+          force: 2,
+          force_max: 6,
+          nuyen: 36000,
+          karma: 0,
+          bonded: false,
+        },
+      ],
+    } as never;
+    render(
+      <FociTab
+        {...panelProps(ch, { catalog: makeCatalog({ foci: [powerFocus] as never }), patch })}
+      />,
+    );
+    expect(screen.getByText(/結合していない/)).toBeDefined();
+    expect(screen.queryByText(/結合 0カルマ/)).toBeNull();
+    const tick = screen.getByLabelText("結合する") as HTMLInputElement;
+    expect(tick.checked).toBe(false);
+    fireEvent.click(tick);
+    expect(patch).toHaveBeenCalledWith({
+      foci: [{ id: "f1", gear_id: "pf", force: 2, bonded: true }],
+    });
+  });
 });

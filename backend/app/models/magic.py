@@ -30,9 +30,12 @@ class SpellInstall(BaseModel):
 class QiFocusInstall(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     rating: int = 2
-    power_id: str
+    # empty only on a focus not bonded yet, which carries no power
+    power_id: str = ""
     extra: str | None = None
     power_rating: int = 1
+    # Chummer's `<bonded>`: one bought but not bonded costs its price only
+    bonded: bool = True
 
 
 class SpiritInstall(BaseModel):
@@ -93,6 +96,8 @@ class FocusInstall(BaseModel):
     hits: int | None = None
     opposed_hits: int | None = None
     extra: str | None = None
+    # Chummer's `<bonded>`: one bought but not bonded costs its price only
+    bonded: bool = True
 
 
 class InitiationChoice(BaseModel):

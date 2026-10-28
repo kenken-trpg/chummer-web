@@ -39,12 +39,36 @@ export function QiFociSection({
           <div>
             <b>Qi Focus F{item.rating}</b>
             <div className="muted">
-              {tr(item.name)}
-              {item.extra ? `（${tr(item.extra)}）` : ""} / R{item.power_rating}
-              {" / "}
-              {item.nuyen.toLocaleString()}¥{ui("adept.qiBinding", { karma: item.karma })}
+              {item.bonded === false ? (
+                <>
+                  {item.name ? `${tr(item.name)} / ` : ""}
+                  {item.nuyen.toLocaleString()}¥ / {ui("foci.unbonded")}
+                </>
+              ) : (
+                <>
+                  {tr(item.name)}
+                  {item.extra ? `（${tr(item.extra)}）` : ""} / R{item.power_rating}
+                  {" / "}
+                  {item.nuyen.toLocaleString()}¥{ui("adept.qiBinding", { karma: item.karma })}
+                </>
+              )}
             </div>
             <div className="cyber-controls">
+              {item.power_id ? (
+                // one that carries no power has nothing to bond yet
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={item.bonded !== false}
+                    onChange={(e) =>
+                      patch({
+                        qi_foci: editRow(ch.qi_foci, item.id, { bonded: e.target.checked }),
+                      })
+                    }
+                  />
+                  {ui("foci.bondedLabel")}
+                </label>
+              ) : null}
               <label>
                 {ui("common.force")}
                 <input
@@ -59,7 +83,7 @@ export function QiFociSection({
                   }
                 />
               </label>
-              {item.power_rating_max > 1 ? (
+              {item.bonded !== false && item.power_rating_max > 1 ? (
                 <label>
                   {ui("adept.qiPowerRating")}
                   <input
@@ -77,7 +101,7 @@ export function QiFociSection({
                   />
                 </label>
               ) : null}
-              {item.select ? (
+              {item.bonded !== false && item.select ? (
                 <label>
                   {ui(selectLabel(item.select))}
                   <select

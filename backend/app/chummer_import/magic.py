@@ -365,13 +365,16 @@ def _import_initiation(root: ET.Element, cat: CatalogDict, st: dict[str, Any], w
 
 
 def _import_foci(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
-    """Read bonded foci back out of `<foci>` and the gear it points at.
+    """Read foci back out of `<foci>` and the gear it points at.
 
     Chummer keeps the focus itself in `<gears>` (category `Foci`, `<bonded>`)
     and only a pointer in `<foci>`; a Qi focus is the same gear with the power
     it carries in `<extra>`. What this app knows on top of that — crafted vs.
     bought, the artificing test, the weapon a weapon focus is bound to — rides
     on the pointer and is simply absent on a file Chummer wrote.
+
+    A focus bought but not bonded is in `<gears>` alone, with `<bonded>False`
+    and no pointer (Gangerbean's Qi Focus R1); it comes in unbonded.
     """
     qi_spec = cat.get("qi_focus") or {}
     qi_id = str(qi_spec.get("id") or "")
@@ -395,16 +398,26 @@ def _import_foci(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
 
     foci: list[dict[str, Any]] = []
     qi_foci: list[dict[str, Any]] = []
-    for f in root.findall("./foci/focus"):
-        gear = gear_by_id.get(_text(f.find("gearid")))
-        if gear is None:
-            continue
+    pointed = [
+        (gear, f) for f in root.findall("./foci/focus") if (gear := gear_by_id.get(_text(f.find("gearid")))) is not None
+    ]
+    pointed_ids = {id(gear) for gear, _ in pointed}
+    loose = [
+        (g, None)
+        for g in root.findall("./gears/gear")
+        if _text(g.find("category")) == "Foci"
+        and id(g) not in pointed_ids
+        and _text(g.find("bonded")).lower() != "true"
+    ]
+    for gear, pointer in pointed + loose:
+        bonded = pointer is not None
+        f = pointer if pointer is not None else ET.Element("focus")
         force = max(1, _int(gear.find("rating"), 1))
         sid = _text(gear.find("sourceid")) or _text(gear.find("guid"))
         if sid == qi_id or _text(gear.find("name")) == str(qi_spec.get("name") or ""):
             power_name = _text(gear.find("extra"))
-            pid = power_r.by_name.get(power_name.lower())
-            if not pid:
+            pid = power_r.by_name.get(power_name.lower()) or ""
+            if not pid and bonded:
                 if power_name:
                     warn.append(
                         notice("engine.import.skippedUnknown", kind=ui("engine.kind.adeptPower"), name=power_name)
@@ -417,6 +430,7 @@ def _import_foci(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
                     "power_id": pid,
                     "power_rating": max(1, _int(f.find("powerrating"), 1)),
                     "extra": _text(f.find("powerextra")) or None,
+                    "bonded": bonded,
                 }
             )
             continue
@@ -437,6 +451,7 @@ def _import_foci(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
                 "hits": _int(f.find("hits"), 0) or None,
                 "opposed_hits": _int(f.find("opposedhits"), 0) or None,
                 "extra": weapon_ids.get(weapon_name.lower()) or tradition or None,
+                "bonded": bonded,
             }
         )
     st["foci"] = foci
