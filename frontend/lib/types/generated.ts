@@ -108,9 +108,12 @@ export interface SpellInstall {
 export interface QiFocusInstall {
   id?: string;
   rating?: number;
-  power_id: string;
+  /** empty only on a focus not bonded yet, which carries no power */
+  power_id?: string;
   extra?: string | null;
   power_rating?: number;
+  /** Chummer's `<bonded>`: one bought but not bonded costs its price only */
+  bonded?: boolean;
 }
 
 export interface SpiritInstall {
@@ -165,6 +168,8 @@ export interface FocusInstall {
   hits?: number | null;
   opposed_hits?: number | null;
   extra?: string | null;
+  /** Chummer's `<bonded>`: one bought but not bonded costs its price only */
+  bonded?: boolean;
 }
 
 export interface ArmorInstall {

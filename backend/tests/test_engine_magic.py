@@ -761,6 +761,24 @@ def test_bound_focus_count_cannot_exceed_magic() -> None:
     assert has(out.derived["errors"], "engine.foci.countOverMagic")
 
 
+def test_a_focus_not_bonded_is_bought_but_not_held_to_magic() -> None:
+    """Chummer's `<bonded>False`: the focus is paid for, but bonding is what
+    costs karma, counts against MAG and switches its bonus on."""
+    out = compute(
+        _mage_rich(
+            "unbonded-foci",
+            tradition_id=HERMETIC,
+            foci=[FocusInstall(gear_id=POWER_FOCUS, force=2, bonded=False) for _ in range(7)],
+        )
+    )
+    assert [row["bonded"] for row in out.derived["foci"]] == [False] * 7
+    assert out.derived["nuyen_spent"] == 7 * 36000
+    assert out.derived["karma"]["spent"] == 0
+    assert out.derived["focus_limits"]["count"] == 0
+    assert not has(out.derived["errors"], "engine.foci.countOverMagic")
+    assert out.derived["skill_bonus"].get("Spellcasting", 0) == 0
+
+
 def test_bound_focus_force_total_cannot_exceed_magic_times_five() -> None:
     out = compute(
         _mage_rich(

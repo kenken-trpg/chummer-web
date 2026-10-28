@@ -1,5 +1,5 @@
 """Everything a character carries or wears: ware, armor, weapons, gear, the
-bonded foci that are gear, and vehicles.
+foci that are gear, and vehicles.
 
 The mirror of :mod:`app.chummer_import.gear`.
 """
@@ -433,8 +433,8 @@ def _focus_tradition(frow: FocusInstall) -> str:
 
 
 def _emit_focus_gear(gears: ET.Element, state: CharacterState, names: _Names) -> None:
-    """A bonded focus is gear: Chummer keeps it in `<gears>` with `<bonded>`,
-    and `<foci>` only holds a pointer to it.
+    """A focus is gear: Chummer keeps it in `<gears>` with `<bonded>`,
+    and `<foci>` only holds a pointer to a bonded one.
 
     The gear's `<guid>` is the focus row's own id, which is what `_export_foci`
     writes as the `<gearid>` on the other side of that pointer.
@@ -452,7 +452,7 @@ def _emit_focus_gear(gears: ET.Element, state: CharacterState, names: _Names) ->
             # keeps the pick as the gear's `<extra>`
             _sub(el, "extra", tradition)
         _sub(el, "qty", 1)
-        _sub(el, "bonded", "True")
+        _sub(el, "bonded", "True" if frow.bonded else "False")
     for qrow in state.qi_foci:
         el = _sub(gears, "gear")
         _sub(el, "guid", qrow.id)
@@ -461,7 +461,7 @@ def _emit_focus_gear(gears: ET.Element, state: CharacterState, names: _Names) ->
         _sub(el, "category", "Foci")
         _sub(el, "rating", qrow.rating)
         _sub(el, "qty", 1)
-        _sub(el, "bonded", "True")
+        _sub(el, "bonded", "True" if qrow.bonded else "False")
         # Which power the Qi focus carries — Chummer's own `<extra>` on the
         # gear, the same field its `<selectpower>` bonus fills in.
         _sub(el, "extra", names["power"].get(qrow.power_id, ""))
@@ -484,7 +484,8 @@ def _export_foci(root: ET.Element, state: CharacterState, names: _Names, ctx: _C
     """
     foci = _sub(root, "foci")
     weapon_names = {w.id: names["weapon"].get(w.weapon_id, "") for w in state.weapons}
-    for frow in state.foci:
+    # one bought but not bonded has no pointer, only its gear
+    for frow in (row for row in state.foci if row.bonded):
         el = _sub(foci, "focus")
         _sub(el, "guid", _focus_guid(frow.id))
         _sub(el, "gearid", frow.id)
@@ -498,7 +499,7 @@ def _export_foci(root: ET.Element, state: CharacterState, names: _Names, ctx: _C
         # every import — so the link travels as the weapon's name instead.
         if frow.extra:
             _sub(el, "weaponname", weapon_names.get(frow.extra, ""))
-    for qrow in state.qi_foci:
+    for qrow in (row for row in state.qi_foci if row.bonded):
         el = _sub(foci, "focus")
         _sub(el, "guid", _focus_guid(qrow.id))
         _sub(el, "gearid", qrow.id)
@@ -514,7 +515,7 @@ def _export_focus_improvements(root: ET.Element, state: CharacterState, names: _
     it is bound to. A Qi focus's power gets its free points (an adept's only,
     as `selectpowers` checks); `_export_free_power_rows` gives them a row."""
     definitions = {node.findtext("id") or "": node for node in parse_data("gear.xml").findall("./gears/gear")}
-    for frow in state.foci:
+    for frow in (row for row in state.foci if row.bonded):
         definition = definitions.get(frow.gear_id)
         bonus = definition.find("bonus") if definition is not None else None
         if definition is None or bonus is None:
@@ -524,7 +525,7 @@ def _export_focus_improvements(root: ET.Element, state: CharacterState, names: _
         _write_improvements(root, _with_rows(root, rows, frow.id, definition.findtext("name") or ""), frow.id, "Gear")
     qi = definitions.get(names["qifocus"].get("id", ""))
     choices = qi.findall("./bonus/selectpowers/selectpower") if qi is not None and adept else []
-    for qrow in state.qi_foci:
+    for qrow in (row for row in state.qi_foci if row.bonded):
         power = names["power"].get(qrow.power_id, "")
         rows = []
         for choice in choices:

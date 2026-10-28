@@ -380,6 +380,15 @@ def test_qi_focus_binds_combat_sense() -> None:
     assert names["Combat Sense"]["free_levels"] == 1
 
 
+def test_a_qi_focus_not_bonded_carries_no_power() -> None:
+    out = compute(_adept("qi-unbonded", qi_foci=[QiFocusInstall(rating=1, bonded=False)]))
+    focus = out.derived["qi_foci"][0]
+    assert (focus["bonded"], focus["nuyen"], focus["karma"], focus["name"]) == (False, 3000, 0, "")
+    assert out.derived["nuyen_spent"] == 3000
+    assert out.derived["karma"]["spent"] == 0
+    assert out.derived["adept_powers"] == []
+
+
 def test_athlete_way_reduces_qi_binding_karma() -> None:
     out = compute(
         _adept(

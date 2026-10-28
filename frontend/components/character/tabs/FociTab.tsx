@@ -37,7 +37,8 @@ export function FociTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
             <b>{tr(item.name)}</b>
             <div className="muted">
               {item.name} / F{item.force} / {item.crafted ? ui("foci.crafted") : ui("common.buy")} /{" "}
-              {item.nuyen.toLocaleString()}¥ / {ui("foci.bind", { karma: item.karma })}
+              {item.nuyen.toLocaleString()}¥ /{" "}
+              {item.bonded === false ? ui("foci.unbonded") : ui("foci.bind", { karma: item.karma })}
               {item.crafted
                 ? ui("foci.craftBreakdown", {
                     formula: item.formula_nuyen?.toLocaleString() || 0,
@@ -64,6 +65,16 @@ export function FociTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
             ) : null}
             {item.test ? <div className="muted">{testLine(item.test, ui)}</div> : null}
             <div className="cyber-controls">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={item.bonded !== false}
+                  onChange={(e) =>
+                    patch({ foci: editRow(ch.foci, item.id, { bonded: e.target.checked }) })
+                  }
+                />
+                {ui("foci.bondedLabel")}
+              </label>
               <label>
                 {ui("common.force")}
                 <input
