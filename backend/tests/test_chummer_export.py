@@ -92,6 +92,42 @@ def test_export_is_wellformed_chummer_xml() -> None:
     assert "<prioritytalent>Magician</prioritytalent>" in text
 
 
+def test_items_carry_what_chummer_reads_from_the_save_alone() -> None:
+    """Chummer's `Load` of an item reads its price, availability, essence,
+    armor and damage from the save and never from its data, so an export
+    without them opened at 0 nuyen, no armor and no damage. They go out as
+    Chummer's own save has them: the data file's text."""
+    root = ET.fromstring(state_to_chum5(_rich_state()))
+    jacket = root.find("./armors/armor")
+    assert jacket is not None
+    assert (jacket.findtext("armor"), jacket.findtext("cost"), jacket.findtext("avail")) == ("12", "1000", "2")
+    mod = jacket.find("./armormods/armormod")
+    assert mod is not None and mod.findtext("cost") == "Rating * 250"
+    wired = root.find("./cyberwares/cyberware")
+    assert wired is not None
+    assert (wired.findtext("ess"), wired.findtext("capacity")) == ("FixedValues(2,3,5)", "0")
+    assert wired.findtext("cost") == "FixedValues(39000,149000,217000)"
+    gun = root.find("./weapons/weapon")
+    assert gun is not None
+    assert (gun.findtext("damage"), gun.findtext("ap"), gun.findtext("accuracy")) == ("8P", "-1", "5")
+    acc = gun.find("./accessories/accessory")
+    assert acc is not None and acc.findtext("cost") == "500"
+    medkit = next(g for g in root.findall("./gears/gear") if g.findtext("name") == "Medkit")
+    assert medkit.findtext("cost") == "Rating * 250"
+
+
+def test_a_price_the_player_set_and_a_piece_that_came_with_its_parent_keep_theirs() -> None:
+    state = _rich_state()
+    state.armor[0].cost = 777
+    state.armor_mods[0].included = True
+    root = ET.fromstring(state_to_chum5(state))
+    jacket = root.find("./armors/armor")
+    assert jacket is not None
+    assert [c.text for c in jacket.findall("cost")] == ["777"]
+    # Chummer saves what came with its parent at no cost
+    assert jacket.findtext("./armormods/armormod/cost") == "0"
+
+
 def test_round_trip_preserves_the_core() -> None:
     src = _rich_state()
     st, warnings = chum5_to_state(state_to_chum5(src))
