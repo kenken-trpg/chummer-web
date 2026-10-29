@@ -135,6 +135,20 @@ def test_bioware_goes_where_chummer_reads_it() -> None:
     assert [w["ware_id"] for w in st["bioware"]] == [orthoskin]
 
 
+def test_the_highest_rating_goes_out_as_chummer_names_it() -> None:
+    """The data file's `<rating>` is the highest rating, which Chummer's save
+    keeps as `<maxrating>`. Without it Chummer capped Orthoskin R2 at 0, and
+    its `Rating * 6000` and `Rating * 0.25` essence came to nothing."""
+    orthoskin = next(r["id"] for r in catalog()["bioware"]["items"] if r["name"] == "Orthoskin")
+    state = _rich_state()
+    state.bioware = [CyberwareInstall(ware_id=orthoskin, rating=2)]
+    root = ET.fromstring(state_to_chum5(state))
+    skin = next(w for w in root.findall("./cyberwares/cyberware") if w.findtext("name") == "Orthoskin")
+    assert (skin.findtext("rating"), skin.findtext("maxrating")) == ("2", "4")
+    medkit = next(g for g in root.findall("./gears/gear") if g.findtext("name") == "Medkit")
+    assert (medkit.findtext("rating"), medkit.findtext("maxrating")) == ("6", "6")
+
+
 def test_a_ware_weapon_carries_its_data_too() -> None:
     """The weapon an implant grants (Spurs) was written from a short list of
     the catalogue's keys, without its availability, concealability or book."""

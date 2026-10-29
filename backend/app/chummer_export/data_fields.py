@@ -110,6 +110,19 @@ _FROM_DATA: dict[str, tuple[str, str, tuple[str, ...]]] = {
 }
 
 
+#: Fields Chummer's save names apart from its data: the data file's
+#: `<rating>` is the highest rating, which the save keeps as `<maxrating>`
+#: (its `<rating>` is the one chosen). Without it Chummer caps the rating at
+#: 0, and a price or essence of `Rating * …` comes to nothing.
+#: A vehicle's off-road stats are the same field: Chummer splits `3/2` itself,
+#: but reads a plain `3` off road from `<offroadspeed>` and the like, saved at
+#: the same value, and takes a missing one for 0.
+_SAVED_AS: dict[str, dict[str, str]] = {
+    **{kind: {"maxrating": "rating"} for kind in ("gear", "armor", "cyberware", "bioware", "mod")},
+    "vehicle": {"offroadhandling": "handling", "offroadaccel": "accel", "offroadspeed": "speed"},
+}
+
+
 @cache
 def _definitions(kind: str) -> dict[str, ET.Element]:
     file, path, _ = _FROM_DATA[kind]
@@ -126,7 +139,8 @@ def _from_data(el: ET.Element, kind: str, source_id: str, *, included: bool = Fa
     definition = _definitions(kind).get(source_id)
     if definition is None:
         return
-    for tag in _FROM_DATA[kind][2]:
-        node = definition.find(tag)
+    renamed = _SAVED_AS.get(kind, {})
+    for tag in (*_FROM_DATA[kind][2], *renamed):
+        node = definition.find(renamed.get(tag, tag))
         if el.find(tag) is None and node is not None and not len(node) and (node.text or "").strip():
             _sub(el, tag, node.text)
