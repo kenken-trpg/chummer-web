@@ -149,6 +149,26 @@ def test_the_highest_rating_goes_out_as_chummer_names_it() -> None:
     assert (medkit.findtext("rating"), medkit.findtext("maxrating")) == ("6", "6")
 
 
+def test_a_focus_carries_its_price_and_highest_rating() -> None:
+    """A focus is gear written apart from the rest, and it went out with no
+    `<cost>` and no `<maxrating>`: Chummer charged Gangerbean's two Qi foci
+    nothing (15,000 nuyen). A crafted one goes out at what it cost here,
+    since Chummer has no crafted focus."""
+    power = next(f["id"] for f in catalog()["foci"] if f["name"] == "Power Focus")
+    state = _rich_state()
+    state.talent = "Mystic Adept"  # a Qi focus is an adept's
+    state.foci = [
+        FocusInstall(id="bought", gear_id=power, force=2),
+        FocusInstall(id="made", gear_id=power, force=2, crafted=True),
+    ]
+    state.qi_foci = [QiFocusInstall(id="qi", rating=1, bonded=False)]
+    gears = {g.findtext("guid"): g for g in ET.fromstring(state_to_chum5(compute_state(state))).findall("./gears/gear")}
+    assert (gears["bought"].findtext("cost"), gears["bought"].findtext("maxrating")) == ("Rating * 18000", "18")
+    made = compute_state(state).derived["foci"][1]["nuyen"]
+    assert [c.text for c in gears["made"].findall("cost")] == [str(made)]
+    assert (gears["qi"].findtext("cost"), gears["qi"].findtext("maxrating")) == ("Rating * 3000", "18")
+
+
 def test_a_ware_weapon_carries_its_data_too() -> None:
     """The weapon an implant grants (Spurs) was written from a short list of
     the catalogue's keys, without its availability, concealability or book."""
