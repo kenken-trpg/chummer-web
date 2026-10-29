@@ -85,6 +85,7 @@ def _ware_writer(state: CharacterState, names: _Names) -> Any:
             _sub(w, "discountedcost", "True" if getattr(r, "discounted", False) else "False")
             _sub(w, "essdiscount", getattr(r, "ess_discount", 0) or 0)
             kind = "cyberware" if r.ware_id in _definitions("cyberware") else "bioware"
+            _sub(w, "improvementsource", kind.capitalize())
             _from_data(w, kind, r.ware_id, included=bool(getattr(r, "included", False)))
             picks = _picks_of(r.id)
             if picks:
@@ -113,8 +114,9 @@ def _export_ware(root: ET.Element, state: CharacterState, names: _Names, ctx: _C
     cyber_ids = {r.id for r in state.cyberware}
     bio_ids = {r.id for r in state.bioware}
     top = by_parent.get(None, [])
-    emit(_sub(root, "cyberwares"), [r for r in top if r.id in cyber_ids], "cyberware")
-    emit(_sub(root, "biowares"), [r for r in top if r.id in bio_ids], "bioware")
+    # Chummer has no `<biowares>`: bioware is a `<cyberware>` told apart by its
+    # `<improvementsource>`, and one written anywhere else is lost on opening
+    emit(_sub(root, "cyberwares"), [r for r in top if r.id in cyber_ids or r.id in bio_ids], "cyberware")
     _export_ware_improvements(root, state, by_parent, top, cyber_ids)
 
 
