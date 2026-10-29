@@ -17,6 +17,7 @@ from ..data_loader import catalog
 from ..data_loader._xml import parse_data
 from ..models import CharacterState
 from ._common import _Ctx, _sub, improvements_of
+from .data_fields import _from_data
 
 
 def _grant_guid(state: CharacterState, grant: dict[str, Any], index: int, kind: str) -> str:
@@ -156,8 +157,23 @@ def export_metatype_weapons(weapons: ET.Element, state: CharacterState, ctx: _Ct
         if not spec:
             continue
         weapon = _sub(weapons, "weapon")
+        _sub(weapon, "name", spec.get("name") or "")
+        for key, value in {
+            "sourceid": spec["id"],
+            "guid": _grant_guid(state, grant, index, "weapon"),
+            "parentid": _grant_guid(state, grant, index, "quality"),
+            "weapontype": spec.get("weapon_type") or "",
+            "cost": 0,
+            "qty": 1,
+            "allowaccessory": "False",
+            "equipped": "True",
+            "included": "False",
+            "cyberware": "False",
+        }.items():
+            _sub(weapon, key, value)
+        _from_data(weapon, "weapon", spec["id"])
+        # what the data file lacks keeps the catalogue's value
         for key in (
-            "name",
             "category",
             "type",
             "reach",
@@ -173,17 +189,5 @@ def export_metatype_weapons(weapons: ET.Element, state: CharacterState, ctx: _Ct
             "source",
             "page",
         ):
-            _sub(weapon, key, spec.get(key) or "")
-        for key, value in {
-            "sourceid": spec["id"],
-            "guid": _grant_guid(state, grant, index, "weapon"),
-            "parentid": _grant_guid(state, grant, index, "quality"),
-            "weapontype": spec.get("weapon_type") or "",
-            "cost": 0,
-            "qty": 1,
-            "allowaccessory": "False",
-            "equipped": "True",
-            "included": "False",
-            "cyberware": "False",
-        }.items():
-            _sub(weapon, key, value)
+            if weapon.find(key) is None:
+                _sub(weapon, key, spec.get(key) or "")
