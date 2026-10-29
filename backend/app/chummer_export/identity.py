@@ -12,13 +12,20 @@ from ..models import CharacterState
 from ._common import _Ctx, _Names, _sub
 from .build import _export_reward_log, _export_settings_key
 
+#: The Chummer this export is written against (the pinned source's
+#: `AssemblyVersion`). `Character.Load` parses `<appversion>` as a version, and
+#: one it cannot read ("Chummer Web") counts as 0.0.0: every shim for saves
+#: older than 5.225.686 then runs on the file, and the books prompt says it
+#: was saved by an older Chummer. `<createdversion>` still says Chummer Web.
+CHUMMER_VERSION = "5.226.0"
+
 _ATTR_ORDER = ("BOD", "AGI", "REA", "STR", "CHA", "INT", "LOG", "WIL", "EDG", "MAG", "RES", "DEP")
 _BUILD_METHOD_OUT = {"Priority": "Priority", "SumToTen": "SumtoTen", "Karma": "Karma", "LifeModule": "LifeModule"}
 
 
 def _export_identity(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
     """Write name, metatype, build method, the bio fields, portrait and career totals."""
-    _sub(root, "appversion", "Chummer Web")
+    _sub(root, "appversion", CHUMMER_VERSION)
     _sub(root, "name", "")
     _sub(root, "alias", state.name)
     _sub(root, "metatype", state.metatype)
