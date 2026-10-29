@@ -6,7 +6,7 @@
 pytest>=9.1.1
 pytest-xdist>=3.8.0  # `-n auto` in CI: the suite is CPU-bound and splits cleanly
 pytest-cov>=7.1.0  # `make coverage-backend`; measurement only, no gate
-httpx2>=2.14.0  # starlette TestClient; plain `httpx` there is deprecated
+httpx2>=2.16.0  # starlette TestClient; plain `httpx` there is deprecated
 starlette>=1.9.0  # the first TestClient that takes httpx2 (fastapi alone allows 0.46)
 hypothesis>=6.170.2  # generated .chum5 roundtrips (tests/test_chummer_roundtrip_property.py)
 # Pinned, not floored: ruff's own output is the gate, so a new release turns CI
