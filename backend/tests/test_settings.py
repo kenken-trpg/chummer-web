@@ -90,6 +90,9 @@ def test_a_shipped_preset_is_named_by_the_key_chummer_looks_it_up_by() -> None:
         new_character(None),
         CharacterPatch(settings={"name": "Sum-to-Ten", "books": ["SR5", "RF"]}),
     )
+    # built the way the preset builds: one of another build method is
+    # pointed at that method's own preset (the test below)
+    state.build_method = "SumtoTen"
     root = _export(state)
     assert root.findtext("settings") == "3509a807-68ee-4c18-b7d5-b130313b4b77"
     assert root.findtext("gameplayoption") == "Sum-to-Ten"
@@ -97,6 +100,21 @@ def test_a_shipped_preset_is_named_by_the_key_chummer_looks_it_up_by() -> None:
 
     back = chum5_to_state(state_to_chum5(state))[0]
     assert back["settings"] == {"name": "Sum-to-Ten", "books": ["SR5", "RF"]}
+
+
+def test_a_preset_named_for_another_build_method_gives_way_to_its_own() -> None:
+    """A save calls its settings Standard whichever way it was built
+    (Gangerbean, Sum to Ten), but Chummer's Standard is a Priority preset, and
+    a key whose build method differs stops the load: "has a different build
+    method (Priority) than what the character was saved with (Sum to Ten)"."""
+    state = new_character(None)
+    state.settings.name = "Standard"
+    state.build_method = "SumtoTen"
+    root = _export(state)
+    assert root.findtext("settings") == "3509a807-68ee-4c18-b7d5-b130313b4b77"  # Sum-to-Ten
+    assert root.findtext("gameplayoption") == "Standard"
+    state.build_method = "Karma"
+    assert _export(state).findtext("settings") == "fe7bb0d9-3cd9-4a75-825e-135b95a4f3ef"  # Point Buy
 
 
 def test_the_books_come_from_the_save_and_not_from_the_named_preset() -> None:

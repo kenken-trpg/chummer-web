@@ -61,6 +61,22 @@ def _export_settings_key(root: ET.Element, state: CharacterState) -> None:
     # Standard, the shipped preset it builds by, with its books in `<sources>`.
     wanted = "Standard" if settings.name == ja_default.NAME else settings.name
     preset = next((p for p in presets if p.get("name") == wanted), None)
+    method = (state.build_method or "").lower()
+    if preset and str(preset.get("build_method") or "").lower() != method:
+        # A save calls its settings Standard whichever way it was built
+        # (Gangerbean, Sum to Ten), but Chummer's Standard is a Priority
+        # preset, and a build method that differs stops the load to ask.
+        # The first preset of that build method with the same sum is the
+        # shipped one for it (Sum-to-Ten, Point Buy).
+        preset = next(
+            (
+                p
+                for p in presets
+                if str(p.get("build_method") or "").lower() == method
+                and (method != "sumtoten" or p.get("sum_to_ten") == (settings.sum_to_ten or 10))
+            ),
+            None,
+        )
     # A settings file of the player's own is keyed by its file name, which a
     # .chum5 never carried and this app therefore does not hold. The name it
     # was saved under is the best guess available, and the scoring below is
