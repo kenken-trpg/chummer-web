@@ -26,6 +26,7 @@ from ..engine.priority import talent_options
 from ..engine.qualities import _quality_needs_spell_category, has_extra_per_take
 from ..models import CharacterState
 from ._common import _Ctx, _Names, _sub, improvements_of
+from .data_fields import _from_data
 from .improvements import _bonus_improvements, _Imp, _text, _with_rows, _write_improvements
 from .life_modules import export_life_modules
 from .metatype import export_metatype_powers, export_metatype_qualities
@@ -65,6 +66,16 @@ def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ct
             _sub(q, "guid", qid)
         _sub(q, "extra", extra)
         _sub(q, "qualitysource", "Selected")
+        # Chummer reads the karma paid and the type from the save alone: with
+        # neither, every quality costs nothing and a negative one counts as positive.
+        _from_data(q, "quality", qid)
+        data = bonuses.get(qid)
+        _sub(
+            q, "qualitytype", "Negative" if data is not None and data.findtext("category") == "Negative" else "Positive"
+        )
+        # a discount (Dedicated Spellslinger's) is read from the save too
+        if data is not None and (discount := data.find("costdiscount")) is not None:
+            q.append(deepcopy(discount))
         # what its `<bonus>` made, which Chummer keeps instead of running the
         # bonus again on load: an Adept's tab and skills, a Wanted's text
         definition = bonuses.get(qid)

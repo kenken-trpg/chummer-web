@@ -107,6 +107,22 @@ _FROM_DATA: dict[str, tuple[str, str, tuple[str, ...]]] = {
         ),
     ),
     "mod": ("vehicles.xml", "./mods/mod", ("category", "slots", "capacity", "avail", "cost", "source", "page")),
+    "quality": (
+        "qualities.xml",
+        "./qualities/quality",
+        (
+            "contributetolimit",
+            "contributetobp",
+            "doublecareer",
+            "canbuywithspellpoints",
+            "metagenic",
+            "mutant",
+            "implemented",
+            "stagedpurchase",
+            "source",
+            "page",
+        ),
+    ),
     "lifestyle": (
         "lifestyles.xml",
         "./lifestyles/lifestyle",
@@ -127,11 +143,13 @@ _FROM_DATA: dict[str, tuple[str, str, tuple[str, ...]]] = {
 #: A vehicle's off-road stats are the same field: Chummer splits `3/2` itself,
 #: but reads a plain `3` off road from `<offroadspeed>` and the like, saved at
 #: the same value, and takes a missing one for 0. A lifestyle quality's
-#: `<multiplierbaseonly>` (Extra Secure's 20%) is saved as `<basemultiplier>`.
+#: `<multiplierbaseonly>` (Extra Secure's 20%) is saved as `<basemultiplier>`,
+#: and a quality's `<karma>` as `<bp>`.
 _SAVED_AS: dict[str, dict[str, str]] = {
     **{kind: {"maxrating": "rating"} for kind in ("gear", "armor", "cyberware", "bioware", "mod")},
     "vehicle": {"offroadhandling": "handling", "offroadaccel": "accel", "offroadspeed": "speed"},
     "lifestylequality": {"basemultiplier": "multiplierbaseonly"},
+    "quality": {"bp": "karma"},
 }
 
 
