@@ -195,6 +195,14 @@ def test_a_price_the_player_set_and_a_piece_that_came_with_its_parent_keep_their
     assert jacket.findtext("./armormods/armormod/cost") == "0"
 
 
+def test_the_save_says_which_chummer_it_was_written_for() -> None:
+    """Chummer reads `<appversion>` as a version and took "Chummer Web" for
+    0.0.0, running every shim for old saves on the file."""
+    root = ET.fromstring(state_to_chum5(_rich_state()))
+    assert root.findtext("appversion") == "5.226.0"
+    assert root.findtext("createdversion") == "Chummer Web"
+
+
 def test_round_trip_preserves_the_core() -> None:
     src = _rich_state()
     st, warnings = chum5_to_state(state_to_chum5(src))
