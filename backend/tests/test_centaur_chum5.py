@@ -40,6 +40,9 @@ def test_chum5_writes_metatype_owned_qualities_powers_and_one_linked_kick() -> N
     assert kick.findtext("accuracy") == "Physical"
     assert kick.findtext("ap") == "+1" and kick.findtext("reach") == "1"
     assert kick.findtext("cost") == "0" and kick.findtext("allowaccessory") == "False"
+    # and the rest Chummer reads from the save alone, from the data file
+    assert (kick.findtext("source"), kick.findtext("conceal")) == ("RF", "0")
+    assert [c.text for c in kick.findall("cost")] == ["0"]
     powers = root.findall("./critterpowers/critterpower")
     assert [p.findtext("sourceid") for p in powers] == [SEARCH_ID, NATURAL_WEAPON_ID]
     assert powers[1].findtext("extra") == KICK_SELECT

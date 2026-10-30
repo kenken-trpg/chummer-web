@@ -116,6 +116,20 @@ def test_items_carry_what_chummer_reads_from_the_save_alone() -> None:
     assert medkit.findtext("cost") == "Rating * 250"
 
 
+def test_a_ware_weapon_carries_its_data_too() -> None:
+    """The weapon an implant grants (Spurs) was written from a short list of
+    the catalogue's keys, without its availability, concealability or book."""
+    spurs = next(r["id"] for r in catalog()["cyberware"]["items"] if r["name"] == "Spurs")
+    state = _rich_state()
+    state.cyberware = [CyberwareInstall(id="c", ware_id=spurs)]
+    root = ET.fromstring(state_to_chum5(compute_state(state)))
+    weapon = next(w for w in root.findall("./weapons/weapon") if w.findtext("cyberware") == "True")
+    assert weapon.findtext("name") == "Spurs"
+    assert all(weapon.findtext(tag) for tag in ("source", "page", "avail", "conceal", "damage"))
+    # the implant paid for it
+    assert [c.text for c in weapon.findall("cost")] == ["0"]
+
+
 def test_a_price_the_player_set_and_a_piece_that_came_with_its_parent_keep_theirs() -> None:
     state = _rich_state()
     state.armor[0].cost = 777
