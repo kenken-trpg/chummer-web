@@ -52,10 +52,13 @@ def _pick_nodes(parent: ET.Element, skills: list[str]) -> None:
         _e(pick, "skill", skill)
 
 
-def _ware_nodes(parent: ET.Element, item_tag: str, rows: list[dict[str, Any]]) -> None:
+def _ware_nodes(parent: ET.Element, source: str, rows: list[dict[str, Any]]) -> None:
+    """Chummer keeps bioware as a `<cyberware>` too, told apart by its
+    `<improvementsource>`."""
     for row in rows:
-        w = _e(parent, item_tag)
+        w = _e(parent, "cyberware")
         _e(w, "name", row["name"])
+        _e(w, "improvementsource", source)
         _e(w, "rating", row.get("rating", 1))
         _e(w, "grade", row.get("grade", "Standard"))
         if row.get("side"):
@@ -67,7 +70,7 @@ def _ware_nodes(parent: ET.Element, item_tag: str, rows: list[dict[str, Any]]) -
         _pick_nodes(w, row.get("skill_picks") or [])
         kids = row.get("children") or []
         if kids:
-            _ware_nodes(_e(w, "children"), item_tag, kids)
+            _ware_nodes(_e(w, "children"), source, kids)
 
 
 def _gear_nodes(parent: ET.Element, rows: list[dict[str, Any]]) -> None:
@@ -285,8 +288,9 @@ def build_chum5(  # noqa: C901 — one keyword per save section, written out in 
         if row.get("metamagic"):
             _e(_e(metamagics, "metamagic"), "name", row["metamagic"])
 
-    _ware_nodes(_e(root, "cyberwares"), "cyberware", cyberware or [])
-    _ware_nodes(_e(root, "biowares"), "bioware", bioware or [])
+    wares = _e(root, "cyberwares")
+    _ware_nodes(wares, "Cyberware", cyberware or [])
+    _ware_nodes(wares, "Bioware", bioware or [])
 
     armors = _e(root, "armors")
     for row in armor or []:

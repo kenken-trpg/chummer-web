@@ -116,6 +116,25 @@ def test_items_carry_what_chummer_reads_from_the_save_alone() -> None:
     assert medkit.findtext("cost") == "Rating * 250"
 
 
+def test_bioware_goes_where_chummer_reads_it() -> None:
+    """Chummer has no `<biowares>`: its bioware is a `<cyberware>` with
+    `<improvementsource>Bioware</improvementsource>`. Written apart, every
+    piece was lost on opening, with its price and its essence."""
+    orthoskin = next(r["id"] for r in catalog()["bioware"]["items"] if r["name"] == "Orthoskin")
+    state = _rich_state()
+    state.bioware = [CyberwareInstall(ware_id=orthoskin, rating=2)]
+    root = ET.fromstring(state_to_chum5(state))
+    assert root.find("biowares") is None
+    sources = {w.findtext("name"): w.findtext("improvementsource") for w in root.findall("./cyberwares/cyberware")}
+    assert sources == {"Wired Reflexes": "Cyberware", "Orthoskin": "Bioware"}
+    assert (
+        next(w for w in root.findall("./cyberwares/cyberware") if w.findtext("name") == "Orthoskin").findtext("ess")
+        == "Rating * 0.25"
+    )
+    st, _ = chum5_to_state(ET.tostring(root))
+    assert [w["ware_id"] for w in st["bioware"]] == [orthoskin]
+
+
 def test_a_ware_weapon_carries_its_data_too() -> None:
     """The weapon an implant grants (Spurs) was written from a short list of
     the catalogue's keys, without its availability, concealability or book."""
