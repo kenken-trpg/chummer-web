@@ -1368,6 +1368,21 @@ def test_raised_lifestyle_points_round_trip() -> None:
     assert (back["comforts"], back["area"], back["security"]) == (1, 1, 0)
 
 
+def test_quality_carries_its_karma_and_type() -> None:
+    """Chummer reads what a quality cost and whether it is negative from the
+    save alone: without them, every quality is free and counts as positive."""
+    by_name = {row["name"]: str(row["id"]) for row in catalog()["qualities"]}
+    picks = [by_name["College Education"], by_name["Vendetta"]]
+    state = CharacterState(
+        id="q", name="q", priorities=Priorities(), metatype="Human", attributes={}, quality_ids=picks
+    )
+    quals = ET.fromstring(state_to_chum5(state)).findall("./qualities/quality[qualitysource='Selected']")
+    assert [(q.findtext("name"), q.findtext("bp"), q.findtext("qualitytype")) for q in quals] == [
+        ("College Education", "4", "Positive"),
+        ("Vendetta", "-7", "Negative"),
+    ]
+
+
 def test_lifestyle_carries_its_price_and_multipliers() -> None:
     """Chummer reads a lifestyle's price and a quality's multipliers from the
     save alone; saved as a current version, it no longer fills them in."""
