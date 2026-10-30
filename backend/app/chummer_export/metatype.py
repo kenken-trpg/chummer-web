@@ -18,6 +18,7 @@ from ..data_loader._xml import parse_data
 from ..models import CharacterState
 from ._common import _Ctx, _sub, improvements_of
 from .data_fields import _from_data
+from .improvements import _bonus_improvements, _write_improvements
 
 
 def _grant_guid(state: CharacterState, grant: dict[str, Any], index: int, kind: str) -> str:
@@ -26,6 +27,26 @@ def _grant_guid(state: CharacterState, grant: dict[str, Any], index: int, kind: 
 
 def _definitions(filename: str, path: str) -> dict[str, ET.Element]:
     return {node.findtext("id") or "": node for node in parse_data(filename).findall(path)}
+
+
+def export_metatype_bonus(root: ET.Element, state: CharacterState) -> None:
+    """Write what the `<bonus>` Chummer's `Character.Create` runs once for the
+    metatype made: the metavariant's when one is picked, else the metatype's
+    (a Dwarf's lifestyle +20%, a Troll's reach, an A.I.'s tabs). Chummer keeps
+    those improvements, owned by the metatype's id, and never runs the bonus
+    again on load."""
+    for filename in ("metatypes.xml", "critters.xml"):
+        for node in parse_data(filename).findall("./metatypes/metatype"):
+            if node.findtext("name") != state.metatype:
+                continue
+            variant = next(
+                (v for v in node.findall("./metavariants/metavariant") if v.findtext("name") == state.metavariant),
+                None,
+            )
+            bonus = (variant if state.metavariant and variant is not None else node).find("bonus")
+            if bonus is not None:
+                _write_improvements(root, _bonus_improvements(bonus, 1, None), node.findtext("id") or "", "Metatype")
+            return
 
 
 def export_metatype_qualities(

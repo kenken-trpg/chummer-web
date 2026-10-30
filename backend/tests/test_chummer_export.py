@@ -1368,6 +1368,20 @@ def test_raised_lifestyle_points_round_trip() -> None:
     assert (back["comforts"], back["area"], back["security"]) == (1, 1, 0)
 
 
+def test_metatype_bonus_is_written_as_improvements() -> None:
+    """Chummer runs a metatype's `<bonus>` once, when the character is made,
+    and keeps what it made: a Dwarf's lifestyle +20%, a Troll's reach."""
+
+    def made(metatype: str) -> set[tuple[str, str]]:
+        state = CharacterState(id="m", name="m", priorities=Priorities(), metatype=metatype, attributes={})
+        imps = ET.fromstring(state_to_chum5(state)).findall("./improvements/improvement[improvementsource='Metatype']")
+        return {(i.findtext("improvementttype") or "", i.findtext("val") or "") for i in imps}
+
+    assert ("LifestyleCost", "20") in made("Dwarf")
+    assert ("Reach", "1") in made("Troll")
+    assert made("Human") == set()
+
+
 def test_quality_carries_its_karma_and_type() -> None:
     """Chummer reads what a quality cost and whether it is negative from the
     save alone: without them, every quality is free and counts as positive."""
