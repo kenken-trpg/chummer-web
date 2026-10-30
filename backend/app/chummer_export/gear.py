@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import uuid
 import xml.etree.ElementTree as ET
+from functools import cache
 from typing import Any
 
 from ..data_loader import catalog, catalog_list
@@ -19,6 +20,128 @@ from ..models import CharacterState, FocusInstall, GearInstall
 from ._common import _Ctx, _Names, _sub
 from .improvements import _bonus_improvements, _Imp, _text, _with_rows, _write_improvements
 from .metatype import export_metatype_weapons
+
+#: What Chummer's `Load` of each kind of item reads from the save alone: the
+#: fields its own save copies from the data file when the item is made. With
+#: no `<cost>`, `<armor>` or `<damage>` in the save, Chummer opens the item at
+#: 0 nuyen, no armor and no damage. Each list is what the 34 test saves carry
+#: verbatim from the data, in at least three saves.
+_FROM_DATA: dict[str, tuple[str, str, tuple[str, ...]]] = {
+    "gear": (
+        "gear.xml",
+        "./gears/gear",
+        (
+            "category",
+            "minrating",
+            "capacity",
+            "armorcapacity",
+            "avail",
+            "cost",
+            "costfor",
+            "devicerating",
+            "attack",
+            "sleaze",
+            "dataprocessing",
+            "firewall",
+            "canformpersona",
+            "source",
+            "page",
+        ),
+    ),
+    "weapon": (
+        "weapons.xml",
+        "./weapons/weapon",
+        (
+            "category",
+            "type",
+            "spec",
+            "reach",
+            "accuracy",
+            "damage",
+            "ap",
+            "mode",
+            "rc",
+            "ammo",
+            "ammocategory",
+            "conceal",
+            "range",
+            "useskill",
+            "allowaccessory",
+            "avail",
+            "cost",
+            "source",
+            "page",
+        ),
+    ),
+    "accessory": (
+        "weapons.xml",
+        "./accessories/accessory",
+        ("accuracy", "rc", "rcgroup", "rcdeployable", "ammoslots", "conceal", "avail", "cost", "source", "page"),
+    ),
+    "armor": (
+        "armor.xml",
+        "./armors/armor",
+        ("category", "armor", "armoroverride", "armorcapacity", "avail", "cost", "source", "page"),
+    ),
+    "armormod": (
+        "armor.xml",
+        "./mods/mod",
+        ("category", "armor", "armorcapacity", "maxrating", "avail", "cost", "source", "page"),
+    ),
+    "cyberware": (
+        "cyberware.xml",
+        "./cyberwares/cyberware",
+        ("category", "minrating", "ess", "capacity", "avail", "cost", "source", "page"),
+    ),
+    "bioware": (
+        "bioware.xml",
+        "./biowares/bioware",
+        ("category", "minrating", "ess", "capacity", "avail", "cost", "source", "page"),
+    ),
+    "vehicle": (
+        "vehicles.xml",
+        "./vehicles/vehicle",
+        (
+            "category",
+            "handling",
+            "accel",
+            "speed",
+            "pilot",
+            "body",
+            "armor",
+            "sensor",
+            "seats",
+            "modslots",
+            "avail",
+            "cost",
+            "source",
+            "page",
+        ),
+    ),
+    "mod": ("vehicles.xml", "./mods/mod", ("category", "slots", "capacity", "avail", "cost", "source", "page")),
+}
+
+
+@cache
+def _definitions(kind: str) -> dict[str, ET.Element]:
+    file, path, _ = _FROM_DATA[kind]
+    return {node.findtext("id") or "": node for node in parse_data(file).findall(path)}
+
+
+def _from_data(el: ET.Element, kind: str, source_id: str, *, included: bool = False) -> None:
+    """Copy onto `el` what Chummer reads of the item from the save only, as
+    its own save has it: the data file's text. What `el` already says (a
+    price the player set) stays. Chummer saves a piece that came with its
+    parent at `<cost>0`."""
+    if included and el.find("cost") is None:
+        _sub(el, "cost", 0)
+    definition = _definitions(kind).get(source_id)
+    if definition is None:
+        return
+    for tag in _FROM_DATA[kind][2]:
+        node = definition.find(tag)
+        if el.find(tag) is None and node is not None and not len(node) and (node.text or "").strip():
+            _sub(el, tag, node.text)
 
 
 def _ware_writer(state: CharacterState, names: _Names) -> Any:
@@ -83,6 +206,8 @@ def _ware_writer(state: CharacterState, names: _Names) -> Any:
             _sub(w, "parentid", r.parent_id if r.parent_id and getattr(r, "included", False) else "")
             _sub(w, "discountedcost", "True" if getattr(r, "discounted", False) else "False")
             _sub(w, "essdiscount", getattr(r, "ess_discount", 0) or 0)
+            kind = "cyberware" if r.ware_id in _definitions("cyberware") else "bioware"
+            _from_data(w, kind, r.ware_id, included=bool(getattr(r, "included", False)))
             picks = _picks_of(r.id)
             if picks:
                 picks_el = _sub(w, "skillpicks")
@@ -164,6 +289,7 @@ def _export_armor(root: ET.Element, state: CharacterState, names: _Names, ctx: _
         _sub(el, "rating", a.rating)
         _sub(el, "equipped", "True" if a.equipped else "False")
         _sub(el, "discountedcost", "True" if a.discounted else "False")
+        _from_data(el, "armor", a.armor_id)
         mods = _sub(el, "armormods")
         for mrow in amods_by_parent.get(a.id, []):
             mm = _sub(mods, "armormod")
@@ -174,6 +300,7 @@ def _export_armor(root: ET.Element, state: CharacterState, names: _Names, ctx: _
             _sub(mm, "included", "True" if mrow.included else "False")
             if mrow.stack_with:
                 _sub(mm, "extra", mrow.stack_with)
+            _from_data(mm, "armormod", mrow.mod_id, included=bool(mrow.included))
         # the gear it carries (a Holster, a Medkit), as Chummer keeps it
         carried = gear_by_parent.get(a.id)
         if carried:
@@ -250,6 +377,7 @@ def _export_weapons(root: ET.Element, state: CharacterState, names: _Names, ctx:
         if w.included:
             _sub(el, "parentid", host_of.get(w.id, ""))
         _sub(el, "discountedcost", "True" if w.discounted else "False")
+        _from_data(el, "weapon", w.weapon_id, included=bool(w.included))
         emit_contents(el, w.id, w.loaded_ammo_id)
         _emit_accessories(el, w.id, wacc_by_parent, names, mountless)
 
@@ -283,6 +411,7 @@ def _emit_accessories(
         _sub(ac, "mount", arow.mount or ("None" if arow.accessory_id in mountless else ""))
         _sub(ac, "rating", arow.rating)
         _sub(ac, "included", "True" if arow.included else "False")
+        _from_data(ac, "accessory", arow.accessory_id)
 
 
 def _gear_writer(state: CharacterState, names: _Names) -> tuple[dict[str | None, list[Any]], Any]:
@@ -373,6 +502,7 @@ def _gear_writer(state: CharacterState, names: _Names) -> tuple[dict[str | None,
                 _sub(el, "cost", g.cost)
             if getattr(g, "parent_id", None):
                 _sub(el, "included", "True" if getattr(g, "included", False) else "False")
+            _from_data(el, "gear", gid, included=bool(getattr(g, "parent_id", None) and getattr(g, "included", False)))
             kids = by_parent_g.get(g.id)
             if kids:
                 emit_gear(_sub(el, "children"), kids)
@@ -550,6 +680,7 @@ def _export_vehicles(root: ET.Element, state: CharacterState, names: _Names, ctx
         if v.id == state.home_node:
             # an A.I. living in it (`Vehicle.IsHomeNode`)
             _sub(el, "homenode", "True")
+        _from_data(el, "vehicle", v.gear_id)
         mods = _sub(el, "mods")
         for vrow in vmod_by_parent.get(v.id, []):
             mm = _sub(mods, "mod")
@@ -560,6 +691,7 @@ def _export_vehicles(root: ET.Element, state: CharacterState, names: _Names, ctx
             if vrow.free:
                 # Chummer's "free item" tick is a `<cost>` of 0
                 _sub(mm, "cost", 0)
+            _from_data(mm, "mod", vrow.mod_id)
             # the implants in it (a drone arm's Shock Hand)
             ware = ware_by_parent.get(vrow.id)
             if ware:
