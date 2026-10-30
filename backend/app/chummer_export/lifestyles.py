@@ -12,12 +12,22 @@ from ..data_loader import catalog
 from ..data_loader._xml import parse_data
 from ..models import CharacterState
 from ._common import _Ctx, _id_name, _Names, _sub
+from .data_fields import _from_data
 from .improvements import _bonus_improvements, _write_improvements
+
+#: Chummer's `ConvertToLifestyleQualityType`: the categories that are a type
+#: of their own; every other one (the entertainment assets) is Entertainment.
+_QUALITY_TYPES = {"Negative": "Negative", "Positive": "Positive", "Contracts": "Contracts"}
 
 
 def _export_lifestyles(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
     """Write lifestyles and the qualities picked for them (the built-in free
-    ones Chummer derives again, as this app does)."""
+    ones Chummer derives again, as this app does).
+
+    Chummer reads a lifestyle's price, dice and multipliers from the save
+    alone. Before 5.197 it filled them from the data on load, which is why an
+    export without a version came out priced; one saved as 5.226 without them
+    costs nothing."""
     lq_names = _id_name(catalog().get("lifestyle_qualities") or [])
     bonuses = {
         node.findtext("id") or "": node.find("bonus")
@@ -27,11 +37,13 @@ def _export_lifestyles(root: ET.Element, state: CharacterState, names: _Names, c
     for lrow in state.lifestyles:
         base = names["lifestyle"].get(lrow.lifestyle_id, "")
         el = _sub(ls, "lifestyle")
+        _sub(el, "sourceid", lrow.lifestyle_id)
         _sub(el, "baselifestyle", base)
         _sub(el, "name", base)
         _sub(el, "months", lrow.months)
         for key in ("comforts", "area", "security"):
             _sub(el, key, getattr(lrow, key))
+        _from_data(el, "lifestyle", lrow.lifestyle_id)
         if lrow.quality_ids:
             quals = _sub(el, "lifestylequalities")
             for index, qid in enumerate(lrow.quality_ids):
@@ -41,6 +53,10 @@ def _export_lifestyles(root: ET.Element, state: CharacterState, names: _Names, c
                 extra = lrow.quality_extras.get(qid, "")
                 _sub(q, "extra", extra)
                 _sub(q, "lifestylequalitysource", "Selected")
+                _from_data(q, "lifestylequality", qid)
+                category = q.findtext("category") or ""
+                # Chummer reads the type from its own field, not the category.
+                _sub(q, "lifestylequalitytype", _QUALITY_TYPES.get(category, "Entertainment"))
                 bonus = bonuses.get(qid)
                 # Chummer also uses <extra> for a formatted price label (for
                 # example "Special Work Area [1,000¥]"). That is no text pick

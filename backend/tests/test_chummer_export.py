@@ -1368,6 +1368,36 @@ def test_raised_lifestyle_points_round_trip() -> None:
     assert (back["comforts"], back["area"], back["security"]) == (1, 1, 0)
 
 
+def test_lifestyle_carries_its_price_and_multipliers() -> None:
+    """Chummer reads a lifestyle's price and a quality's multipliers from the
+    save alone; saved as a current version, it no longer fills them in."""
+    low = next(row["id"] for row in catalog()["lifestyles"] if row["name"] == "Low")
+    secure = next(row["id"] for row in catalog()["lifestyle_qualities"] if row["name"] == "Extra Secure")
+    state = CharacterState(
+        id="ls",
+        name="ls",
+        priorities=Priorities(),
+        metatype="Human",
+        attributes={},
+        lifestyles=[LifestyleInstall(lifestyle_id=low, quality_ids=[secure])],
+    )
+    el = ET.fromstring(state_to_chum5(state)).find("./lifestyles/lifestyle")
+    assert [el.findtext(tag) for tag in ("sourceid", "cost", "dice", "lp", "multiplier")] == [
+        low,
+        "2000",
+        "3",
+        "3",
+        "60",
+    ]
+    q = el.find("./lifestylequalities/lifestylequality")
+    assert [q.findtext(tag) for tag in ("category", "lp", "basemultiplier", "lifestylequalitytype")] == [
+        "Positive",
+        "1",
+        "20",
+        "Positive",
+    ]
+
+
 def test_chummer_lifestyle_quality_text_improvement_round_trip() -> None:
     """Chummer's Public Transportation save owns Text by the quality guid.
 
