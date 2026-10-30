@@ -452,6 +452,10 @@ def _emit_focus_gear(gears: ET.Element, state: CharacterState, names: _Names) ->
     The gear's `<guid>` is the focus row's own id, which is what `_export_foci`
     writes as the `<gearid>` on the other side of that pointer.
     """
+    # Chummer has no crafted focus: one made here goes out at what it cost here
+    crafted_cost = {
+        str(row.get("id")): row.get("nuyen") for row in (state.derived or {}).get("foci") or [] if row.get("crafted")
+    }
     for frow in state.foci:
         el = _sub(gears, "gear")
         _sub(el, "guid", frow.id)
@@ -466,6 +470,9 @@ def _emit_focus_gear(gears: ET.Element, state: CharacterState, names: _Names) ->
             _sub(el, "extra", tradition)
         _sub(el, "qty", 1)
         _sub(el, "bonded", "True" if frow.bonded else "False")
+        if crafted_cost.get(frow.id) is not None:
+            _sub(el, "cost", crafted_cost[frow.id])
+        _from_data(el, "gear", frow.gear_id)
     for qrow in state.qi_foci:
         el = _sub(gears, "gear")
         _sub(el, "guid", qrow.id)
@@ -475,6 +482,7 @@ def _emit_focus_gear(gears: ET.Element, state: CharacterState, names: _Names) ->
         _sub(el, "rating", qrow.rating)
         _sub(el, "qty", 1)
         _sub(el, "bonded", "True" if qrow.bonded else "False")
+        _from_data(el, "gear", names["qifocus"].get("id", ""))
         # Which power the Qi focus carries — Chummer's own `<extra>` on the
         # gear, the same field its `<selectpower>` bonus fills in.
         _sub(el, "extra", names["power"].get(qrow.power_id, ""))
