@@ -212,6 +212,13 @@ def _lifestylecost(node: ET.Element, rating: int) -> list[_Imp]:
     ]
 
 
+def _reach(node: ET.Element, rating: int) -> list[_Imp]:
+    """A Troll's reach: on the weapon `name` names, else on every one."""
+    if not _is_int(_text(node)):
+        return []
+    return [_Imp("Reach", node.get("name") or "", val=int(_text(node)))]
+
+
 def _skillcategory(node: ET.Element, rating: int) -> list[_Imp]:
     """`skillcategory`, `skillgroup`: a bonus to every skill of the name."""
     if not _text(node, "name") or not _is_int(_text(node, "bonus")):
@@ -453,6 +460,7 @@ _READERS: dict[str, Callable[[ET.Element, int], list[_Imp]]] = {
     "enableattribute": _enableattribute,
     "sociallimit": _limit,
     "lifestylecost": _lifestylecost,
+    "reach": _reach,
     "skillcategory": _skillcategory,
     "skillgroup": _skillcategory,
     "restrictedgear": _restrictedgear,

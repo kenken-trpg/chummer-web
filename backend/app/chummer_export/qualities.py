@@ -29,7 +29,7 @@ from ._common import _Ctx, _Names, _sub, improvements_of
 from .data_fields import _from_data
 from .improvements import _bonus_improvements, _Imp, _text, _with_rows, _write_improvements
 from .life_modules import export_life_modules
-from .metatype import export_metatype_powers, export_metatype_qualities
+from .metatype import export_metatype_bonus, export_metatype_powers, export_metatype_qualities
 from .skills import spec_guid
 
 
@@ -135,6 +135,7 @@ def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ct
 
     for guid, bonus, extra in export_metatype_qualities(quals, state, ctx):
         effects.append((guid, _bonus_improvements(bonus, 0, extra, state.mentor_id or "")))
+    export_metatype_bonus(root, state)
     _export_talent_quality(quals, state, bonuses, effects)
     # Chummer keeps life modules here too, as a quality type of their own.
     export_life_modules(quals, state)
