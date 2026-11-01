@@ -390,4 +390,8 @@ export const EN_SHEET = {
   "udo.castBinding": "Binding",
   "udo.castBanishing": "Banishing",
   "udo.assensing": "Assensing (limit: the higher of INT and CHA)",
+  "coco.vehicleAutosoft": "Autonomous test (loaded autosoft)",
+  "coco.vehicleNote":
+    "Choose the Pilot skill and autosoft appropriate to this vehicle and test. Adjust RCC sharing, specializations, rigging and situational modifiers, and initiative at the table.",
+  "coco.vehicleNoAutosofts": "No active onboard autosoft; autonomous tests are omitted.",
 };

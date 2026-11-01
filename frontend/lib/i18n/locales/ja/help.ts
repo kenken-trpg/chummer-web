@@ -495,4 +495,6 @@ export const JA_HELP = {
   "help.toolbar.sheetUrl":
     "シャドウラン5th 日本版非公式wiki で紹介されている、音の兔（ねのうさ）様の「［SR5］キャラシテンプレート」 を、Google スプレッドシートの URL から直接読み込みます。読めるのはこのテンプレートのシートだけで、他のスプレッドシートや他サイトの URL は読めません",
   "help.settings.booksBulkLabel": "まとめて切り替え",
+  "help.toolbar.vehiclePiece":
+    "この機体1体のコマをコピーします。ココフォリアの卓に貼り付けてください。",
 } as const;
