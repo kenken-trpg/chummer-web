@@ -180,7 +180,7 @@ export const EN_APP = {
   "toolbar.cocofolia": "Cocofolia",
   "toolbar.chatPalette": "Chat palette",
   "toolbar.cocoUntrained": "Unlearned skills too",
-  "toolbar.conjured": "Spirit pieces",
+  "toolbar.conjured": "Spirit piece: {name}",
   "toolbar.career": "In career",
   "toolbar.toCareer": "Finish chargen (career)",
   "toolbar.careerConfirm": "There are still creation errors. Continue into career mode anyway?",

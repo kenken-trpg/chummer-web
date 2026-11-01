@@ -551,7 +551,7 @@ export const EN_HELP = {
   "help.toolbar.cocoUntrained":
     "Add the unlearned skills you can default on (attribute − 1) and the knowledge skills you have to the Cocofolia piece and chat palette",
   "help.toolbar.conjured":
-    "Export each bound spirit / registered sprite as its own Cocofolia piece (a JSON array)",
+    "Copy this bound spirit / registered sprite as a Cocofolia piece. Cocofolia takes one piece per paste, so copy and paste them one at a time",
   "help.toolbar.udonariumConjured":
     "Download every bound spirit, registered sprite, vehicle and drone as a piece, one .zip per kind. Udonarium reads every xml an archive holds, so each kind lands on the table in one drop.",
   "help.toolbar.career": "Go back to character creation",

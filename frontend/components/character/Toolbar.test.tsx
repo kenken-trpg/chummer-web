@@ -332,7 +332,7 @@ describe("<Toolbar>", () => {
     );
     const bare = within(plain.container);
     openFormats(bare);
-    expect(bare.queryByRole("button", { name: "精霊コマ" })).toBeNull();
+    expect(bare.queryByRole("button", { name: /^精霊コマ/ })).toBeNull();
     expect(bare.queryByRole("button", { name: "ユドナリウム（お供のコマ）" })).toBeNull();
     plain.unmount();
 
@@ -355,6 +355,16 @@ describe("<Toolbar>", () => {
                 nuyen: 0,
                 bound: true,
               },
+              {
+                id: "sp2",
+                spirit_id: "air",
+                name: "Air",
+                force: 4,
+                force_max: 6,
+                services: 2,
+                nuyen: 0,
+                bound: true,
+              },
             ],
           },
         })}
@@ -363,8 +373,11 @@ describe("<Toolbar>", () => {
       />,
     );
     openFormats();
-    fireEvent.click(screen.getByRole("button", { name: "精霊コマ" }));
-    expect(ed.copyText).toHaveBeenCalledWith(expect.any(String), "cs");
+    fireEvent.click(screen.getByRole("button", { name: "精霊コマ：Air F4" }));
+    // one piece per button: Cocofolia refuses anything but a single object
+    const [payload, tag] = vi.mocked(ed.copyText).mock.calls[0];
+    expect(JSON.parse(payload)).toMatchObject({ kind: "character", data: { name: "Air F4" } });
+    expect(tag).toBe("cs1");
     openFormats();
     // the Udonarium one writes a file instead of copying, and needs the
     // catalog and the translator to build it

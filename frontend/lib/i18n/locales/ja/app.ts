@@ -187,7 +187,7 @@ export const JA_APP = {
   "toolbar.cocofolia": "ココフォリア",
   "toolbar.chatPalette": "チャットパレット",
   "toolbar.cocoUntrained": "未修得技能も",
-  "toolbar.conjured": "精霊コマ",
+  "toolbar.conjured": "精霊コマ：{name}",
   "toolbar.career": "キャリア中",
   "toolbar.toCareer": "作成完了（キャリア）",
   "toolbar.careerConfirm": "作成エラーが残っています。このままキャリアに進みますか？",

@@ -361,9 +361,10 @@ describe("the export follows the UI locale", () => {
     expect(piece.data.memo).toContain("Armor");
     expect(piece.data.status.map((s: { label: string }) => s.label)).toContain("Stun CM");
 
-    const spirits = JSON.parse(buildCocofoliaConjured(ch, pistolsCatalog, identityTr, "en"));
-    expect(spirits[0].data.memo).toContain("Bound");
-    expect(spirits[0].data.commands).toContain("Powers: Accident, Confusion");
+    const [spirit] = buildCocofoliaConjured(ch, pistolsCatalog, identityTr, "en");
+    const piece0 = JSON.parse(spirit.payload);
+    expect(piece0.data.memo).toContain("Bound");
+    expect(piece0.data.commands).toContain("Powers: Accident, Confusion");
   });
 });
 
@@ -494,8 +495,8 @@ const sprite = (over: Record<string, unknown> = {}) =>
   }) as never;
 
 const conjure = (derived: Record<string, unknown>) =>
-  JSON.parse(
-    buildCocofoliaConjured(makeCharacter({ derived }) as never, makeCatalog(), identityTr),
+  buildCocofoliaConjured(makeCharacter({ derived }) as never, makeCatalog(), identityTr).map(
+    ({ payload }) => JSON.parse(payload),
   );
 
 describe("buildSpiritPieces", () => {
@@ -643,8 +644,23 @@ describe("buildSpritePieces", () => {
 });
 
 describe("buildCocofoliaConjured", () => {
-  it("returns an empty string when there is nothing to conjure", () => {
-    expect(buildCocofoliaConjured(makeCharacter(), makeCatalog(), identityTr)).toBe("");
+  // Cocofolia reads `kind` off the pasted JSON, so an array is refused outright.
+  it("gives each spirit and sprite a payload of its own", () => {
+    const pieces = buildCocofoliaConjured(
+      makeCharacter({
+        derived: { spirits: [spirit(), spirit({ id: "sp2", force: 5 })], sprites: [sprite()] },
+      }) as never,
+      makeCatalog(),
+      identityTr,
+    );
+    expect(pieces).toHaveLength(3);
+    for (const { name, payload } of pieces) {
+      expect(JSON.parse(payload)).toMatchObject({ kind: "character", data: { name } });
+    }
+  });
+
+  it("returns nothing when there is nothing to conjure", () => {
+    expect(buildCocofoliaConjured(makeCharacter(), makeCatalog(), identityTr)).toEqual([]);
     expect(
       buildCocofoliaConjured(
         makeCharacter({
@@ -656,7 +672,7 @@ describe("buildCocofoliaConjured", () => {
         makeCatalog(),
         identityTr,
       ),
-    ).toBe("");
+    ).toEqual([]);
   });
 
   it("is a JSON array of spirits then sprites", () => {
