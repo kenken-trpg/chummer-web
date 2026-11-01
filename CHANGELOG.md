@@ -3,6 +3,144 @@
 Notable changes. Format follows [Keep a Changelog](https://keepachangelog.com/);
 self-hosters can pin to a tag instead of tracking `main`.
 
+## [0.5.18] — 2026-11-01
+
+### Added
+
+- **A focus can be made for a tradition.** Power, Spellcasting, Counterspelling,
+  Sustaining and the other foci Chummer asks a tradition for on bonding get a
+  tradition box on the Foci tab. The pick is kept, written to Chummer as it
+  writes it (the focus's extra and a Tradition improvement), and read back on
+  import. It changes no number, in Chummer either.
+
+- **Qi foci, enhancements and the Black Market Pipeline get a '?'.** The Qi
+  focus one gives the price, the binding karma and how much power a Force
+  holds; the enhancement one, its karma and the Way and power it needs; the
+  pipeline one, the Availability bonus, the per-item discount and that both
+  picks are needed. Until both are picked, the pipeline says so.
+
+- **Powers that name a sense, an element or a toxin take it.** Improved Sense,
+  Toxic Strike, Elemental Strike, Elemental Weapon and Elemental Body get a
+  text box on their row (the elements are offered as suggestions); the word
+  is kept on the sheet and written to Chummer. A mentor that gives one free
+  (Dog, Raccoon, Pollution) no longer has nowhere to put it asked for.
+
+### Changed
+
+- **The manual covers mentor spirits.** The section on qualities says where the
+  mentor spirit (or paragon) picker appears, which of its effects count, and why
+  it gives the page instead of the advantage and disadvantage text.
+
+### Fixed
+
+- **Bioware is no longer lost when an exported character is opened in
+  Chummer.** Chummer keeps bioware among the cyberware, marked as bioware,
+  and has no separate list for it. The export wrote one, so in Chummer every
+  piece of bioware was gone, with its price and its essence.
+
+- **精霊コマをココフォリアに貼り付けられるようにしました。** 束縛済み精霊と登録
+  スプライトを 1 つの JSON 配列でコピーしていましたが、ココフォリアは 1 回の貼り付けで
+  1 コマしか受け取らず、配列は 1 体でも拒否します。書き出しメニューに 1 体につき
+  1 つ `精霊コマ：<名前>` のボタンを出し、1 体ずつコピーするようにしました。
+
+- **Critical Strike works.** The power now asks for its melee skill (Astral
+  Combat, Blades, Clubs, Exotic Melee Weapon or Unarmed Combat) and adds 1 to
+  the DV of that skill's weapons. It used to offer no pick and add nothing.
+  With Death Dealer (Adept) on the same skill the two add up, as in Chummer.
+
+- **Enhanced Accuracy (skill) works.** The power now asks for its combat
+  skill (Unarmed Combat excluded, as in the data) and adds 1 to the accuracy
+  of that skill's weapons. It used to offer no pick and add nothing, whether
+  bought or given free by a mentor (Dragonslayer); the mentor's choice now
+  offers the skills too.
+
+- **Chummer no longer treats an exported character as an old save.** The
+  export wrote "Chummer Web" as the Chummer version, which Chummer reads as
+  0.0.0, so it ran every fix-up meant for old saves on the file. It now writes
+  the Chummer version the export is made for (5.226.0).
+
+- **Gear, weapons, armor, ware and vehicles open in Chummer with their prices
+  and numbers.** Chummer reads an item's price, availability, essence, armor,
+  damage, AP, accuracy and vehicle stats from the save only, never from its
+  data, and the export did not write them. They are now written as Chummer's
+  own saves have them, from the data. A price you set yourself is kept, and a
+  piece that came with its parent is written free, as Chummer writes it.
+
+- **An exported lifestyle keeps its price in Chummer.** Chummer reads a
+  lifestyle's cost, dice and multipliers, and a lifestyle quality's
+  multipliers, from the save alone. It filled them in from its data only for
+  saves older than 5.197, so once the export said 5.226 its lifestyles opened
+  at 0 nuyen. The export now writes them as Chummer's own save does.
+
+- **Rated gear, ware and vehicle mods keep their price and essence in
+  Chummer.** Chummer saves an item's highest rating as `maxrating`, which its
+  data calls `rating`, and caps the chosen rating at it. The export did not
+  write it, so in Chummer an Orthoskin R2 came out at rating 0, free and with
+  no essence cost. A vehicle's off-road handling, acceleration and speed are
+  written too.
+
+- **An exported metatype keeps its own bonus in Chummer.** Chummer runs a
+  metatype's bonus once, when the character is made, and keeps what it made
+  instead of running it again on load. The export wrote none of it, so a Dwarf
+  opened without its +20% lifestyle cost (Rez0luti0n paid 317 nuyen less in
+  Chummer than here) and a Troll without its reach. It now writes those
+  improvements as Chummer's own save has them.
+
+- **More adept powers work when the export is opened in Chummer.** A power's
+  effects are written at its levels bought plus its free ones, as Chummer
+  makes them, and a power a mentor gives free (Berserker's Pain Resistance,
+  Shark's Killing Hands) gets its effects too, not only its row. Master
+  Archer's dice for bows and Critical Strike's DV for the picked skill are
+  written as well. Chummer's test saves: 69 of 75 power effects, up from 62.
+
+- **An exported quality keeps its karma in Chummer.** Chummer reads what a
+  quality cost and whether it is negative from the save alone, so the export's
+  qualities opened free and all positive (Soma came out 8 karma short). The
+  export now writes the karma, the type and a quality's discount the way
+  Chummer's own save does.
+
+- **A style's free specialization stays free in Chummer.** With "free
+  martial art specialization" on, the specialization a style offers is
+  written free and tied to the style, so Chummer neither charges for it nor
+  keeps it once the style is removed. Styles that offer theirs for several
+  skills (Firefight, Gun Kata, The Cowboy Way, Kreussler Fencing) now make
+  it free on each of them, and list it in the martial arts picker.
+
+- **A vehicle mod Chummer was told is free stays free**: Chummer's "free item" tick saves a mod at a
+  cost of 0, and the `.chum5` import charged the catalogue price for it instead (a GridLink, 750¥).
+  It is read as free, shown as free on the vehicle, and written back the same way.
+
+- **Gear inside an optic is kept**: a Polychromic Lens in Contacts, or other gear that names an optic as
+  its host, stays there on import, is charged for and shows under the optic, where it can be added and
+  removed. It used to vanish without a word. Gear that does not go in an optic is carried on its own,
+  and the import says so.
+
+- **The Qi focus note gives the right binding karma**, Force × 2 — the number
+  the engine charges and Chummer's default. It still said Force × 1.
+
+- **A character built by Sum to Ten or Point Buy no longer stops Chummer with
+  a settings question.** A save often names its settings Standard whichever
+  way it was built, and the export pointed Chummer at its Standard preset,
+  which is for Priority. It now points at the preset for the character's own
+  build method (Sum-to-Ten, Point Buy).
+
+- **A focus bought but not bonded is no longer lost on import.** Chummer
+  keeps such a focus in the gear list with no bonding, and the import dropped
+  it with its price and said nothing. It now comes in as a focus not bonded:
+  its price is counted, but it costs no bonding karma, gives no bonus and does
+  not count against Magic. A "Bonded" tick on the Foci tab (and on a Qi focus
+  that carries a power) bonds it, and the export writes it back unbonded.
+
+- **The gear a vehicle comes with reaches Chummer.** The Medkit in a
+  Shiawase Caduceus or a CrashCart Medicart, and the autosofts a drone is
+  sold with, now leave in the `.chum5` the improvements Chummer makes when it
+  buys the vehicle. Gear put in a vehicle afterwards still leaves none, as in
+  Chummer.
+
+- **A weapon an implant or a metatype grants carries its data in the export
+  too.** Spurs, claws and a centaur's kick now go to Chummer with their
+  availability, concealability and book, from the data file, still at no cost.
+
 ## [0.5.17] — 2026-10-26
 
 ### Added
@@ -2716,7 +2854,8 @@ First tagged release.
 - One-container Docker image (Caddy + uvicorn + Next standalone) published to
   GHCR; `make up` / `compose.yaml` for local self-hosting.
 
-[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.17...HEAD
+[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.18...HEAD
+[0.5.18]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.17...v0.5.18
 [0.5.17]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.16...v0.5.17
 [0.5.16]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.15...v0.5.16
 [0.5.15]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.14...v0.5.15
