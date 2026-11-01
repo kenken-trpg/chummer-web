@@ -398,4 +398,6 @@ export const EN_APP = {
   // pre-resolved through `tr`, so the item names read in the current locale.
 
   "check.unimplementedBonus": "Bonus not implemented yet: {source} ({tag})",
+  "toolbar.dronePiece": "Drone piece: {name}",
+  "toolbar.vehiclePiece": "Vehicle piece: {name}",
 };

@@ -166,6 +166,59 @@ describe("<Toolbar>", () => {
   // builders in `lib/cocofolia` have tests of their own — what was untested is
   // the wiring, which is where a swapped argument or a wrong `copied` key
   // would sit while the builders stayed green.
+  it("copies each drone and vehicle independently and shows its copied state", () => {
+    const ch = makeCharacter({
+      derived: {
+        drones: [
+          {
+            id: "drone",
+            name: "Fly",
+            category: "Drones: Small",
+            body: "1",
+            pilot: "2",
+            sensor: "2",
+            handling: "3",
+          },
+        ] as never,
+        vehicles: [
+          {
+            id: "van",
+            name: "Van",
+            category: "Vans",
+            body: "10",
+            pilot: "3",
+            sensor: "2",
+            handling: "4/2",
+          },
+        ] as never,
+      },
+    });
+    const ed = makeEd();
+    const view = render(
+      <Toolbar ed={ed} {...base} ch={ch} tab="priority" sheetLayout="standard" />,
+    );
+    openFormats();
+    fireEvent.click(screen.getByRole("button", { name: "ドローンコマ：Fly" }));
+    expect(ed.copyText).toHaveBeenLastCalledWith(expect.any(String), "cv:drones:drone");
+    expect(JSON.parse((ed.copyText as Mock).mock.calls.at(-1)![0]).data.name).toBe("Fly");
+    openFormats();
+    fireEvent.click(screen.getByRole("button", { name: "ヴィークルコマ：Van" }));
+    expect(ed.copyText).toHaveBeenLastCalledWith(expect.any(String), "cv:vehicles:van");
+    expect(JSON.parse((ed.copyText as Mock).mock.calls.at(-1)![0]).data.name).toBe("Van");
+    view.rerender(
+      <Toolbar
+        ed={makeEd({ copied: "cv:drones:drone" })}
+        {...base}
+        ch={ch}
+        tab="priority"
+        sheetLayout="standard"
+      />,
+    );
+    openFormats();
+    expect(screen.getByRole("button", { name: "コピー ✓" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "ヴィークルコマ：Van" })).toBeTruthy();
+  });
+
   it("hands the roster picker's choice to openCharacter, and __new__ to newCharacter", () => {
     const ed = makeEd({
       roster: [{ id: "other", name: "Kira", metatype: "Elf", career: true }],

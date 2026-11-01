@@ -5,6 +5,7 @@ import type { SheetLayout } from "@/components/CharacterSheet";
 import type { Catalog, Character } from "@/lib/types";
 import type { CharacterEditor } from "@/lib/character/useCharacterEditor";
 import { buildChatPalette, buildCocofolia, buildCocofoliaConjured } from "@/lib/cocofolia";
+import { buildCocofoliaVehicles } from "@/lib/cocofolia-vehicles";
 import { Menu } from "@/components/character/Menu";
 import { usePrintSheet } from "@/lib/character/usePrintSheet";
 import { useWareCompact } from "@/lib/character/useWareCompact";
@@ -222,6 +223,27 @@ export function Toolbar({
               >
                 <button className="btn" onClick={() => copyText(payload, `cs${i}`)}>
                   {copied === `cs${i}` ? ui("share.copied") : ui("toolbar.conjured", { name })}
+                </button>
+              </HelpTip>
+            ))
+          : null}
+        {catalog
+          ? buildCocofoliaVehicles(ch, catalog, tr, locale).map(({ id, name, kind, payload }) => (
+              <HelpTip
+                key={`${kind}:${id}`}
+                label={ui("help.open", {
+                  label: ui(kind === "drones" ? "toolbar.dronePiece" : "toolbar.vehiclePiece", {
+                    name,
+                  }),
+                })}
+                lines={[{ label: ui("help.toolbar.vehiclePiece") }]}
+              >
+                <button className="btn" onClick={() => copyText(payload, `cv:${kind}:${id}`)}>
+                  {copied === `cv:${kind}:${id}`
+                    ? ui("share.copied")
+                    : ui(kind === "drones" ? "toolbar.dronePiece" : "toolbar.vehiclePiece", {
+                        name,
+                      })}
                 </button>
               </HelpTip>
             ))

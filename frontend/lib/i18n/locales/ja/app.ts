@@ -411,4 +411,6 @@ export const JA_APP = {
   // pre-resolved through `tr`, so the item names read in the current locale.
 
   "check.unimplementedBonus": "未実装のボーナス: {source}（{tag}）",
+  "toolbar.dronePiece": "ドローンコマ：{name}",
+  "toolbar.vehiclePiece": "ヴィークルコマ：{name}",
 } as const;

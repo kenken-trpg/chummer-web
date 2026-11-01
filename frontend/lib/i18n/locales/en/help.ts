@@ -573,4 +573,6 @@ export const EN_HELP = {
   "help.toolbar.sheetUrl":
     "Read the 「［SR5］キャラシテンプレート」 Google Sheet by 音の兔 (Nenousa), the one the Japanese Shadowrun 5th unofficial wiki links to straight from its Google Sheets URL. Only that template\u2019s sheet can be read \u2014 no other spreadsheet and no other site.",
   "help.settings.booksBulkLabel": "Switching them all",
+  "help.toolbar.vehiclePiece":
+    "Copy this vehicle as one piece, then paste it into your Cocofolia room.",
 } as const;

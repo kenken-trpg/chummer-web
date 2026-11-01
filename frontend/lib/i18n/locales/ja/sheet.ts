@@ -395,4 +395,8 @@ export const JA_SHEET = {
   "udo.castBinding": "精霊束縛",
   "udo.castBanishing": "精霊追放",
   "udo.assensing": "霊視（リミットは直観力か魅力の高い方）",
+  "coco.vehicleAutosoft": "自律テスト（搭載オートソフト）",
+  "coco.vehicleNote":
+    "操縦は機体に合った技能の行を使用。自律は対象に合うオートソフトの行を使用。RCC共有・専門化・リグや状況の修正、イニシアティブは卓で調整してください。",
+  "coco.vehicleNoAutosofts": "稼働中の搭載オートソフトがないため、自律テストは未収録。",
 } as const;
