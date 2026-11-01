@@ -466,18 +466,18 @@ export function buildSpritePieces(
 }
 
 /**
- * Cocofolia clipboard payload for every bound spirit + registered sprite,
- * as a JSON array of pieces. Returns "" when the character has none.
+ * One Cocofolia clipboard payload per bound spirit / registered sprite. A paste
+ * takes a single `{kind, data}` object and refuses an array, so these cannot
+ * travel together: each one is copied and pasted on its own.
  */
 export function buildCocofoliaConjured(
   ch: Character,
   catalog: Catalog,
   tr: (n: string) => string,
   locale: Locale = "ja",
-): string {
-  const pieces = [
+): { name: string; payload: string }[] {
+  return [
     ...buildSpiritPieces(ch, catalog, tr, locale),
     ...buildSpritePieces(ch, catalog, tr, locale),
-  ];
-  return pieces.length ? JSON.stringify(pieces) : "";
+  ].map((piece) => ({ name: piece.data.name, payload: JSON.stringify(piece) }));
 }

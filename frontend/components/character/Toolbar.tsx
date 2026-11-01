@@ -213,21 +213,19 @@ export function Toolbar({
             {ui("toolbar.cocoUntrained")}
           </label>
         </HelpTip>
-        {d.spirits?.some((s) => s.bound) || d.sprites?.some((s) => s.registered) ? (
-          <HelpTip
-            label={ui("help.open", { label: ui("toolbar.conjured") })}
-            lines={[{ label: ui("help.toolbar.conjured") }]}
-          >
-            <button
-              className="btn"
-              onClick={() =>
-                catalog && copyText(buildCocofoliaConjured(ch, catalog, tr, locale), "cs")
-              }
-            >
-              {copied === "cs" ? ui("share.copied") : ui("toolbar.conjured")}
-            </button>
-          </HelpTip>
-        ) : null}
+        {catalog
+          ? buildCocofoliaConjured(ch, catalog, tr, locale).map(({ name, payload }, i) => (
+              <HelpTip
+                key={i}
+                label={ui("help.open", { label: ui("toolbar.conjured", { name }) })}
+                lines={[{ label: ui("help.toolbar.conjured") }]}
+              >
+                <button className="btn" onClick={() => copyText(payload, `cs${i}`)}>
+                  {copied === `cs${i}` ? ui("share.copied") : ui("toolbar.conjured", { name })}
+                </button>
+              </HelpTip>
+            ))
+          : null}
         {/* one button for everything the runner brings along — spirits, sprites,
             vehicles and drones — each kind as its own zip */}
         {d.spirits?.some((s) => s.bound) ||

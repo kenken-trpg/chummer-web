@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { openExportMenu, waitForEditor } from "./helpers";
+import { freshCharacter, openExportMenu, waitForEditor } from "./helpers";
 
 /**
  * The three things this app hands over by copying rather than by downloading:
@@ -54,4 +54,61 @@ test("the share link, the Cocofolia piece and the palette reach the clipboard", 
   expect(palette.split("\n").length).toBeGreaterThan(3);
   expect(palette).toMatch(/^\dD6\+\d+ /m); // the initiative line
   expect(palette).toContain(piece.data.commands);
+});
+
+/**
+ * Cocofolia reads `kind` off what is pasted, so an array of pieces is refused
+ * however few it holds: every spirit has to reach the clipboard on its own.
+ */
+test("each bound spirit reaches the clipboard as a piece of its own", async ({
+  page,
+  context,
+  request,
+}) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"], {
+    origin: "http://127.0.0.1:3100",
+  });
+  const catalog = (await (await request.get("/api/catalog")).json()) as {
+    spirits: { id: string; name: string }[];
+    traditions: { id: string; name: string }[];
+  };
+  const spirit = (name: RegExp) => catalog.spirits.find((s) => name.test(s.name))!.id;
+  const character = {
+    ...(await freshCharacter(request, "Conjurer")),
+    priorities: { Heritage: "C", Attributes: "B", Talent: "A", Skills: "D", Resources: "E" },
+    talent: "Magician",
+    tradition_id: catalog.traditions.find((t) => t.name === "Hermetic")!.id,
+    spirits: [
+      { spirit_id: spirit(/Fire/), force: 3, services: 1, bound: true },
+      { spirit_id: spirit(/Air/), force: 4, services: 2, bound: true },
+    ],
+  };
+  await page.goto("/");
+  await waitForEditor(page);
+  await page.getByLabel("読込 (JSON/.chum5/.xlsx)", { exact: true }).setInputFiles({
+    name: "conjurer.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(character)),
+  });
+  await expect(page.getByRole("textbox", { name: "キャラクター名" })).toHaveValue("Conjurer");
+
+  const names: string[] = [];
+  for (const index of [0, 1]) {
+    await openExportMenu(page);
+    const buttons = page.locator("button.btn", { hasText: /^精霊コマ：/ });
+    await expect(buttons).toHaveCount(2);
+    await buttons.nth(index).click();
+    await expect
+      .poll(() => page.evaluate(() => navigator.clipboard.readText()))
+      .toContain(`"kind":"character"`);
+    const piece = JSON.parse(await page.evaluate(() => navigator.clipboard.readText())) as {
+      kind: string;
+      data: { name: string };
+    };
+    expect(piece.kind).toBe("character");
+    names.push(piece.data.name);
+    await page.evaluate(() => navigator.clipboard.writeText(""));
+  }
+  expect(names[0]).toMatch(/F3$/);
+  expect(names[1]).toMatch(/F4$/);
 });
