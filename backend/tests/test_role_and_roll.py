@@ -89,6 +89,7 @@ def test_stamp_adds_the_issue_beside_the_codex():
     for row in _find(catalog, WANTED):
         assert row["also_in"] == [
             {"source": "SRCX", "page": "200"},
+            {"source": "RR214", "page": ""},
             {"source": "RR215", "page": "88"},
         ]
     # the issue's name is per book: the global table still has the Codex's
@@ -184,6 +185,41 @@ def test_metamagic_takes_the_arts_too():
     # Chummer keeps the arts in metamagic.xml; the magazine prints them alongside
     art = _entry(source="SG", category="メタマジック", english="Invocation", ids=())
     assert [row["id"] for _, row in rr.candidates(art, public_catalog())] == [INVOCATION]
+
+
+@pytest.mark.parametrize(
+    ("vol", "english", "japanese"),
+    [
+        (210, "Personalized Grip", "カスタム・グリップ"),
+        (211, "Arrow: Monotip Head", "アレス・モノチップ・アロー"),
+        (212, "Fight or Flight Filter", "FFF"),
+        (220, "Task Spirit", "労役の精霊"),
+        (225, "Healthy Glow", "健康美"),
+        (226, "Mass Astral Disruption", "集団アストラル撹乱"),
+        (227, "MCT Blue Defender", "MCT ブルー・ディフェンダー"),
+        (229, "Celerity", "俊足"),
+        (230, "Antennae", "アンテナ"),
+        (231, "Ammo: Zapper", "ザッパー弾"),
+        (231, "Fuchi Cyber-N", "フチ・サイバーN"),
+        (231, "Fuchi Cyber-Ex", "フチ・サイバーEX"),
+    ],
+)
+def test_article_entries_are_available_with_the_issue_and_translated(vol, english, japanese):
+    catalog = public_catalog()
+    entry = next(e for e in rr.load() if e.vol == vol and e.english == english)
+    assert entry.ja == japanese and entry.ids
+    for id_ in entry.ids:
+        assert all({"source": rr.code(vol), "page": ""} in row["also_in"] for row in _find(catalog, id_))
+    assert rr.stamp(catalog, [entry])[rr.code(vol)][english] == japanese
+
+
+def test_all_issues_in_the_article_have_resolved_data():
+    assert {book["code"] for book in rr.books()} == {rr.code(vol) for vol in range(210, 232) if vol not in (215, 216)}
+
+
+def test_spirit_category_resolves_the_article_spirits():
+    entry = _entry(source="SG", category="精霊", english="Task Spirit", ids=())
+    assert [section for section, _ in rr.candidates(entry, public_catalog())] == ["spirits"]
 
 
 def test_resolve_finds_the_source_when_it_is_empty(tmp_path: Path, capsys):
