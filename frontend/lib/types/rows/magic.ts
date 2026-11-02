@@ -1,5 +1,6 @@
 // Magic and resonance: row shapes listed in `Derived` (../derived.ts).
 
+import type { AlsoIn } from "../catalog";
 import type { MentorChoice } from "../installs";
 import type { Notice } from "@/lib/engine-notices";
 
@@ -102,6 +103,7 @@ export interface InstalledSprite {
 }
 
 export interface TraditionInfo {
+  also_in?: AlsoIn[];
   id: string;
   name: string;
   drain: string;

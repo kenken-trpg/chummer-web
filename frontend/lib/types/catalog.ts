@@ -84,6 +84,7 @@ export interface ArmorCatalogItem {
 }
 
 export interface ArmorModCatalogItem {
+  also_in?: AlsoIn[];
   id: string;
   name: string;
   category: string;
@@ -103,6 +104,7 @@ export interface ArmorModCatalogItem {
 }
 
 export interface WeaponCatalogItem {
+  also_in?: AlsoIn[];
   id: string;
   name: string;
   category: string;
@@ -176,6 +178,7 @@ export interface WeaponAccessoryCatalogItem {
 }
 
 export interface CommlinkCatalogItem {
+  also_in?: AlsoIn[];
   id: string;
   name: string;
   category?: string;
@@ -199,6 +202,7 @@ export interface MatrixDeviceCatalogItem extends CommlinkCatalogItem {
 }
 
 export interface ProgramCatalogItem {
+  also_in?: AlsoIn[];
   id: string;
   name: string;
   category: string;
@@ -283,6 +287,7 @@ export interface LifestyleCatalogItem {
 }
 
 export interface DroneCatalogItem {
+  also_in?: AlsoIn[];
   id: string;
   name: string;
   category: string;
@@ -353,6 +358,7 @@ export interface WeaponMountCatalogItem {
 }
 
 export interface SpiritCatalogItem {
+  also_in?: AlsoIn[];
   id: string;
   name: string;
   attributes?: Record<string, string>;
@@ -379,6 +385,7 @@ export interface FocusCatalogItem {
 }
 
 export interface PowerCatalogItem {
+  also_in?: AlsoIn[];
   id: string;
   name: string;
   points: number;
@@ -787,6 +794,7 @@ export interface DrugComponentGradeCatalogItem {
 
 /** One power the Critter Powers tab sells (`critterpowers.xml`). */
 export interface BuyableCritterPower {
+  also_in?: AlsoIn[];
   id: string;
   name: string;
   category: string;

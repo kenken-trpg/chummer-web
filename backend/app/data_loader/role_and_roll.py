@@ -3,14 +3,14 @@
 Some issues carry, under an official licence, Japanese translations of parts
 of SR5 supplements that have no Japanese edition. Like the Shadowrun Codex
 (codex.py) that makes an issue a second place an item Chummer already has is
-printed, so each issue is a book of its own (`RR213` …) that names its page in
+printed, so each issue is a book of its own (`RR210` …) that names its page in
 `also_in`.
 
 One difference from the Codex: an issue's Japanese names apply only while
 that issue is ticked. `stamp` therefore returns them per book instead of
 folding them into the global `translations`.
 
-The data is typed in by hand from the magazine, into one TSV
+The data is entered from the magazine or its published translation index, into one TSV
 (`backend/data/role_and_roll/entries.tsv`, columns `COLUMNS`). The English
 name is often not printed, so a row may start with only its Japanese name and
 original book, or with neither; `scripts/rr_resolve.py` lists the candidates
@@ -35,13 +35,13 @@ from typing import Any
 from ._xml import _BACKEND
 
 PREFIX = "RR"
-FIRST_ISSUE = 213
+FIRST_ISSUE = 210
 #: The latest issue (2026-10). Raise it when a new one comes out.
 LAST_ISSUE = 241
 
 DATA = _BACKEND / "data" / "role_and_roll" / "entries.tsv"
 
-#: The TSV header, in order. All but `id` are read off the magazine.
+#: The TSV header, in order. All but `id` come from the magazine or its index.
 COLUMNS = ("URL", "vol.", "頁", "出典原書", "分類", "和訳名", "英語（わかれば）", "備考", "id")
 
 #: 分類 -> the catalog sections it searches. Only narrows the candidates: an
@@ -69,6 +69,7 @@ CATEGORIES: dict[str, tuple[str, ...]] = {
     "ライフスタイル": ("lifestyles", "lifestyle_qualities"),
     "メタタイプ": ("metatypes",),
     "クリッターパワー": ("buyable_critter_powers",),
+    "精霊": ("spirits",),
 }
 
 #: Not rows: walking into these would match their keys as names.
