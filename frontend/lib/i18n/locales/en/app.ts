@@ -400,4 +400,5 @@ export const EN_APP = {
   "check.unimplementedBonus": "Bonus not implemented yet: {source} ({tag})",
   "toolbar.dronePiece": "Drone piece: {name}",
   "toolbar.vehiclePiece": "Vehicle piece: {name}",
+  "toolbar.matrixDetails": "Detailed Matrix chat palette",
 };

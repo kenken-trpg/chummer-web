@@ -413,4 +413,5 @@ export const JA_APP = {
   "check.unimplementedBonus": "未実装のボーナス: {source}（{tag}）",
   "toolbar.dronePiece": "ドローンコマ：{name}",
   "toolbar.vehiclePiece": "ヴィークルコマ：{name}",
+  "toolbar.matrixDetails": "マトリックス系詳細チャットパレット",
 } as const;

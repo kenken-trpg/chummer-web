@@ -1,5 +1,6 @@
+import { MATRIX_ACTIONS } from "@/lib/matrix-actions";
 import type { Catalog, Character } from "@/lib/types";
-import { attrShort, makeT, specTr } from "@/lib/ui-strings";
+import { attrName, attrShort, makeT, specTr } from "@/lib/ui-strings";
 import { spellLabel } from "@/lib/spell-terms";
 import { type Locale, type MsgKey, type UiFn, translate } from "@/lib/i18n";
 import { renderNotice } from "@/lib/engine-notices";
@@ -47,6 +48,7 @@ export type CocofoliaOptions = {
   /** Also list every active skill the runner can default on (SR5 p.130),
    *  plus the knowledge skills they actually have. */
   untrained?: boolean;
+  matrixDetails?: boolean;
 };
 
 /** Newline-separated BCDice ShadowRun5 chat-palette commands. */
@@ -71,8 +73,25 @@ export function buildChatPalette(
   const tabs = d.enabled_tabs || [];
   const out: string[] = [];
 
-  const roll = (pool: number, label: string, l: LimitKind = null) =>
-    out.push(`${Math.max(pool, 0)}B6${l ? `@${lim(l)}` : ""} ${label}`);
+  const breakdown = (pool: number, expression: string) =>
+    expression ? ` ［${expression}＝${Math.max(pool, 0)}］` : "";
+  const skillFormula = (name: string, attr: string, extra = 0) => {
+    const rating = d.skill_totals?.[name] || 0;
+    const bonus = d.skill_bonus?.[name] || 0;
+    return (
+      `${skillLabel(name, tr)}${rating}＋${attrName(attr, t)}${at(attr)}` +
+      (bonus ? `${bonus > 0 ? "＋" : "−"}${ui("coco.poolModifier")}${Math.abs(bonus)}` : "") +
+      (extra ? `＋${ui("coco.poolSpecialization")}${extra}` : "")
+    );
+  };
+  const attrFormula = (...keys: string[]) =>
+    keys.map((key) => `${attrName(key, t)}${at(key)}`).join("＋");
+  const modifier = (value: number) =>
+    value ? `${value > 0 ? "＋" : "−"}${ui("coco.poolModifier")}${Math.abs(value)}` : "";
+  const roll = (pool: number, label: string, l: LimitKind = null, expression = "") =>
+    out.push(
+      `${Math.max(pool, 0)}B6${l ? `@${lim(l)}` : ""} ${label}${breakdown(pool, expression)}`,
+    );
 
   out.push(`${init.dice}D6+${init.value} ${ui("coco.initiative")}`);
 
@@ -85,7 +104,7 @@ export function buildChatPalette(
       const limit = ATTR_LIMIT[attr] ?? null;
       const bonus = d.skill_bonus?.[name] || 0;
       const pool = rating + at(attr) + bonus;
-      roll(pool, skillLabel(name, tr), limit);
+      roll(pool, skillLabel(name, tr), limit, skillFormula(name, attr));
       const sp = specs[name];
       const specBonus = specializationBonus(d, name);
       if (sp && specBonus > 0) {
@@ -97,6 +116,7 @@ export function buildChatPalette(
           rating + at(specAttr) + bonus + specBonus,
           `${tr(name)}：${specTr(tr, name, sp)}`,
           swapped ? (ATTR_LIMIT[specAttr] ?? null) : limit,
+          skillFormula(name, specAttr, specBonus),
         );
       }
     });
@@ -113,7 +133,13 @@ export function buildChatPalette(
       .sort((a, b) => tr(a.s.name).localeCompare(tr(b.s.name), locale));
     if (untrained.length) out.push(ui("coco.secUntrained"));
     untrained.forEach(({ s, attr, def }) => {
-      if (!def.blocked) roll(def.pool, tr(s.name), ATTR_LIMIT[attr] ?? null);
+      if (!def.blocked)
+        roll(
+          def.pool,
+          tr(s.name),
+          ATTR_LIMIT[attr] ?? null,
+          attrFormula(attr) + modifier(d.skill_bonus?.[s.name] || 0) + (def.free ? "" : "−1"),
+        );
     });
     // knowledge: only the ones taken — there is no defaulting on knowledge
     const known = (d.knowledge_skills || [])
@@ -122,8 +148,14 @@ export function buildChatPalette(
     if (known.length) out.push(ui("coco.secKnowledge"));
     known.forEach((k) => {
       const pool = k.rating + at(k.attribute);
-      roll(pool, tr(k.name), "mental");
-      if (k.spec) roll(pool + 2, `${tr(k.name)}：${specTr(tr, k.name, k.spec)}`, "mental");
+      roll(pool, tr(k.name), "mental", `${tr(k.name)}${k.rating}＋${attrFormula(k.attribute)}`);
+      if (k.spec)
+        roll(
+          pool + 2,
+          `${tr(k.name)}：${specTr(tr, k.name, k.spec)}`,
+          "mental",
+          `${tr(k.name)}${k.rating}＋${attrFormula(k.attribute)}＋${ui("coco.poolSpecialization")}2`,
+        );
     });
   }
 
@@ -139,7 +171,12 @@ export function buildChatPalette(
     const info = [`DV${dv}S`, `AP${ap === 0 ? "-" : ap}`, reach ? ui("coco.reach", { reach }) : ""]
       .filter(Boolean)
       .join(" ");
-    roll(unarmedSkill + at("AGI"), `${ui("coco.unarmed")} ［${info}］`, "physical");
+    roll(
+      unarmedSkill + at("AGI"),
+      `${ui("coco.unarmed")} ［${info}］`,
+      "physical",
+      skillFormula("Unarmed Combat", "AGI"),
+    );
   }
 
   // --- weapons: attack test = skill + AGI, limit = weapon Accuracy ---------
@@ -156,7 +193,7 @@ export function buildChatPalette(
       .filter(Boolean)
       .join(" ");
     out.push(
-      `${Math.max(pool, 0)}B6${accCap} ${ui("coco.attack", { name: tr(w.name) })}${dmg ? ` ［${dmg}］` : ""}`,
+      `${Math.max(pool, 0)}B6${accCap} ${ui("coco.attack", { name: tr(w.name) })}${dmg ? ` ［${dmg}］` : ""}${breakdown(pool, skillFormula(sk, "AGI"))}`,
     );
   });
 
@@ -166,7 +203,9 @@ export function buildChatPalette(
   spells.forEach((s) => {
     const sk = s.useskill || "Spellcasting";
     const pool = skillPool(sk) + at("MAG");
-    out.push(`${Math.max(pool, 0)}B6 ${spellLabel(s, tr, t)}${s.dv ? ` ［DV${s.dv}］` : ""}`);
+    out.push(
+      `${Math.max(pool, 0)}B6 ${spellLabel(s, tr, t)}${s.dv ? ` ［DV${s.dv}］` : ""}${breakdown(pool, skillFormula(sk, "MAG"))}`,
+    );
   });
 
   // --- conjuring: skill + MAG (limit = Force, variable) --------------------
@@ -178,13 +217,23 @@ export function buildChatPalette(
     ];
     const have = conj.filter(([s]) => skillPool(s) > 0);
     if (have.length) out.push(ui("coco.secConjuring"));
-    have.forEach(([s, label]) => out.push(`${skillPool(s) + at("MAG")}B6 ${ui(label)}`));
+    have.forEach(([s, label]) =>
+      out.push(
+        `${skillPool(s) + at("MAG")}B6 ${ui(label)}${breakdown(skillPool(s) + at("MAG"), skillFormula(s, "MAG"))}`,
+      ),
+    );
   }
 
   // --- matrix basic actions (limit = the relevant Matrix attribute) --------
   // a commlink with a dongle can hack too (DT p.61) — after a deck or a living persona
   const donglelink = d.commlink && (d.commlink.attack || d.commlink.sleaze) ? d.commlink : null;
-  const persona = d.cyberdeck || d.living_persona || donglelink;
+  const persona =
+    d.cyberdeck ||
+    d.living_persona ||
+    donglelink ||
+    (opts.matrixDetails
+      ? d.commlink || { attack: 0, sleaze: 0, dataprocessing: 0, firewall: 0 }
+      : null);
   if (persona) {
     const A = persona.attack ?? 0;
     const S = persona.sleaze ?? 0;
@@ -197,25 +246,69 @@ export function buildChatPalette(
       out.push(`${mi.cold_dice}D6+${mi.value} ${ui("coco.matrixInitCold")}`);
       out.push(`${mi.hot_dice}D6+${mi.value} ${ui("coco.matrixInitHot")}`);
     }
-    out.push(`${skillPool("Hacking") + at("LOG")}B6@${S} ${ui("coco.hackOnTheFly")}`);
-    out.push(`${skillPool("Cybercombat") + at("LOG")}B6@${A} ${ui("coco.bruteForce")}`);
-    out.push(`${skillPool("Cybercombat") + at("LOG")}B6@${A} ${ui("coco.dataSpike")}`);
-    out.push(`${skillPool("Computer") + at("INT")}B6@${DP} ${ui("coco.matrixPerception")}`);
-    out.push(`${at("WIL") + FW}B6 ${ui("coco.matrixDefense", { int: at("INT") })}`);
+    if (opts.matrixDetails) {
+      for (const row of MATRIX_ACTIONS) {
+        const pool = Math.max(0, skillPool(row.skill) + at(row.attribute));
+        out.push(
+          `${pool}B6${row.limit ? `@${persona[row.limit] ?? 0}` : ""} ${ui(row.label)}${breakdown(pool, skillFormula(row.skill, row.attribute))}`,
+        );
+      }
+    } else {
+      out.push(
+        `${skillPool("Hacking") + at("LOG")}B6@${S} ${ui("coco.hackOnTheFly")}${breakdown(skillPool("Hacking") + at("LOG"), skillFormula("Hacking", "LOG"))}`,
+      );
+      out.push(
+        `${skillPool("Cybercombat") + at("LOG")}B6@${A} ${ui("coco.bruteForce")}${breakdown(skillPool("Cybercombat") + at("LOG"), skillFormula("Cybercombat", "LOG"))}`,
+      );
+      out.push(
+        `${skillPool("Cybercombat") + at("LOG")}B6@${A} ${ui("coco.dataSpike")}${breakdown(skillPool("Cybercombat") + at("LOG"), skillFormula("Cybercombat", "LOG"))}`,
+      );
+      out.push(
+        `${skillPool("Computer") + at("INT")}B6@${DP} ${ui("coco.matrixPerception")}${breakdown(skillPool("Computer") + at("INT"), skillFormula("Computer", "INT"))}`,
+      );
+    }
+    out.push(
+      `${at("WIL") + FW}B6 ${ui("coco.matrixDefense", { int: at("INT") })}${breakdown(at("WIL") + FW, `${attrFormula("WIL")}＋${ui("udo.varFirewall")}${FW}`)}`,
+    );
   }
 
   if (weapons.length || spells.length || persona || tabs.includes("spirits"))
     out.push(ui("coco.secTests"));
-  roll(at("REA") + at("INT") + (tm.dodge || 0), ui("coco.defense"));
+  roll(
+    at("REA") + at("INT") + (tm.dodge || 0),
+    ui("coco.defense"),
+    null,
+    attrFormula("REA", "INT") + modifier(tm.dodge || 0),
+  );
   const meleeDef = Math.max(skillPool("Unarmed Combat"), skillPool("Blades"), skillPool("Clubs"));
   roll(at("REA") + at("INT") + meleeDef + (tm.dodge || 0), ui("coco.meleeDefense"), "physical");
-  roll(at("REA") + at("INT") + at("WIL") + (tm.dodge || 0), ui("coco.fullDefense"));
+  roll(
+    at("REA") + at("INT") + at("WIL") + (tm.dodge || 0),
+    ui("coco.fullDefense"),
+    null,
+    attrFormula("REA", "INT", "WIL") + modifier(tm.dodge || 0),
+  );
   out.push(`2D6 ${ui("coco.scatterThrown")}`);
   out.push(`4D6 ${ui("coco.scatterLaunched")}`);
-  roll(at("WIL") + at("CHA") + (tm.composure || 0), ui("coco.composure"), "social");
-  roll(at("INT") + at("CHA") + (tm.judge_intentions || 0), ui("coco.judge"), "social");
-  roll(at("LOG") + at("WIL") + (tm.memory || 0), ui("coco.memory"), "mental");
-  roll(at("STR") + at("BOD"), ui("coco.lifting"), "physical");
+  roll(
+    at("WIL") + at("CHA") + (tm.composure || 0),
+    ui("coco.composure"),
+    "social",
+    attrFormula("WIL", "CHA") + modifier(tm.composure || 0),
+  );
+  roll(
+    at("INT") + at("CHA") + (tm.judge_intentions || 0),
+    ui("coco.judge"),
+    "social",
+    attrFormula("INT", "CHA") + modifier(tm.judge_intentions || 0),
+  );
+  roll(
+    at("LOG") + at("WIL") + (tm.memory || 0),
+    ui("coco.memory"),
+    "mental",
+    attrFormula("LOG", "WIL") + modifier(tm.memory || 0),
+  );
+  roll(at("STR") + at("BOD"), ui("coco.lifting"), "physical", attrFormula("STR", "BOD"));
   // the armor is added at the table; an A.I.'s body is its vehicle node's or 0
   const soak = d.damage_resist;
   roll(soak ? soak.body + soak.bonus : at("BOD"), ui("coco.damageResist"));

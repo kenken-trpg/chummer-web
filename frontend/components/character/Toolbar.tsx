@@ -59,6 +59,7 @@ export function Toolbar({
   const printSheet = usePrintSheet(sheetLayout, setSheetLayout);
   const inCareer = ch.career || d.career;
   // a local switch, the same as the sheet's names-only one
+  const [matrixDetails, setMatrixDetails] = useWareCompact("matrixDetails");
   const [untrained, setUntrained] = useWareCompact("cocoUntrained");
   return (
     <div className="toolbar">
@@ -171,7 +172,8 @@ export function Toolbar({
           <button
             className="btn"
             onClick={() =>
-              catalog && copyText(buildCocofolia(ch, catalog, tr, locale, { untrained }), "cc")
+              catalog &&
+              copyText(buildCocofolia(ch, catalog, tr, locale, { untrained, matrixDetails }), "cc")
             }
           >
             {copied === "cc" ? ui("share.copied") : ui("toolbar.cocofolia")}
@@ -183,7 +185,9 @@ export function Toolbar({
         >
           <button
             className="btn"
-            onClick={() => catalog && void downloadUdonarium(catalog, tr, { untrained })}
+            onClick={() =>
+              catalog && void downloadUdonarium(catalog, tr, { untrained, matrixDetails })
+            }
           >
             {ui("toolbar.udonarium")}
           </button>
@@ -195,7 +199,11 @@ export function Toolbar({
           <button
             className="btn"
             onClick={() =>
-              catalog && copyText(buildChatPalette(ch, catalog, tr, locale, { untrained }), "cp")
+              catalog &&
+              copyText(
+                buildChatPalette(ch, catalog, tr, locale, { untrained, matrixDetails }),
+                "cp",
+              )
             }
           >
             {copied === "cp" ? ui("share.copied") : ui("toolbar.chatPalette")}
@@ -214,6 +222,14 @@ export function Toolbar({
             {ui("toolbar.cocoUntrained")}
           </label>
         </HelpTip>
+        <label className="btn">
+          <input
+            type="checkbox"
+            checked={matrixDetails}
+            onChange={(e) => setMatrixDetails(e.target.checked)}
+          />
+          {ui("toolbar.matrixDetails")}
+        </label>
         {catalog
           ? buildCocofoliaConjured(ch, catalog, tr, locale).map(({ name, payload }, i) => (
               <HelpTip
