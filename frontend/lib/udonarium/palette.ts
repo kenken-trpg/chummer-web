@@ -1,3 +1,4 @@
+import { MATRIX_ACTIONS, type MatrixLimit } from "@/lib/matrix-actions";
 /** The chat palette: the rolls a piece carries, and the variables they read. */
 import type { Catalog, Character, Derived, InstalledWeapon } from "@/lib/types";
 import { attrName, makeT, specTr } from "@/lib/ui-strings";
@@ -268,7 +269,13 @@ export function buildUdonariumPalette(
   // --- the Matrix: the template's デッカー用 block ------------------------
   // a commlink with a dongle can hack too (DT p.61) — after a deck or a living persona
   const donglelink = d.commlink && (d.commlink.attack || d.commlink.sleaze) ? d.commlink : null;
-  const persona = d.cyberdeck || d.living_persona || donglelink;
+  const persona =
+    d.cyberdeck ||
+    d.living_persona ||
+    donglelink ||
+    (opts.matrixDetails
+      ? d.commlink || { attack: 0, sleaze: 0, dataprocessing: 0, firewall: 0 }
+      : null);
   if (persona) {
     const mx = new Section();
     const vAtk = varName(ui("udo.varAttack"));
@@ -283,10 +290,28 @@ export function buildUdonariumPalette(
       mx.roll(`${mi.cold_dice}D6+${mi.value}`, ui("coco.matrixInitCold"));
       mx.roll(`${mi.hot_dice}D6+${mi.value}`, ui("coco.matrixInitHot"));
     }
-    mx.roll(`({${A("LOG")}}+{${vHack}}+0)B6@{${vSlz}}`, ui("coco.hackOnTheFly"));
-    mx.roll(`({${A("LOG")}}+{${vCyb}}+0)B6@{${vAtk}}`, ui("coco.bruteForce"));
-    mx.roll(`({${A("LOG")}}+{${vCyb}}+0)B6@{${vAtk}}`, ui("coco.dataSpike"));
-    mx.roll(`({${A("INT")}}+{${vComp}}+0)B6@{${vDp}}`, ui("coco.matrixPerception"));
+    if (opts.matrixDetails) {
+      const limits: Record<MatrixLimit, string> = {
+        attack: vAtk,
+        sleaze: vSlz,
+        dataprocessing: vDp,
+        firewall: vFw,
+      };
+      for (const row of MATRIX_ACTIONS) {
+        const skill = varName(tr(row.skill));
+        mx.roll(
+          `({${A(row.attribute)}}+{${skill}}+0)B6${row.limit ? `@{${limits[row.limit]}}` : ""}`,
+          ui(row.label),
+        );
+      }
+      for (const skill of new Set(MATRIX_ACTIONS.map((row) => row.skill)))
+        mx.def(varName(tr(skill)), skillPool(skill));
+    } else {
+      mx.roll(`({${A("LOG")}}+{${vHack}}+0)B6@{${vSlz}}`, ui("coco.hackOnTheFly"));
+      mx.roll(`({${A("LOG")}}+{${vCyb}}+0)B6@{${vAtk}}`, ui("coco.bruteForce"));
+      mx.roll(`({${A("LOG")}}+{${vCyb}}+0)B6@{${vAtk}}`, ui("coco.dataSpike"));
+      mx.roll(`({${A("INT")}}+{${vComp}}+0)B6@{${vDp}}`, ui("coco.matrixPerception"));
+    }
     mx.roll(`({${A("WIL")}}+{${vFw}}+0)B6`, ui("coco.matrixDefense", { int: at("INT") }));
     if (d.fade_resist && tabs.includes("complexforms"))
       mx.roll(
@@ -297,9 +322,11 @@ export function buildUdonariumPalette(
     mx.def(vSlz, persona.sleaze ?? 0);
     mx.def(vDp, persona.dataprocessing ?? 0);
     mx.def(vFw, persona.firewall ?? 0);
-    mx.def(vHack, skillPool("Hacking"));
-    mx.def(vCyb, skillPool("Cybercombat"));
-    mx.def(vComp, skillPool("Computer"));
+    if (!opts.matrixDetails) {
+      mx.def(vHack, skillPool("Hacking"));
+      mx.def(vCyb, skillPool("Cybercombat"));
+      mx.def(vComp, skillPool("Computer"));
+    }
     blocks.push(mx.text(ui("udo.secMatrix")));
   }
 

@@ -304,7 +304,9 @@ describe("buildChatPalette with unlearned skills", () => {
     expect(out).not.toContain("Spellcasting");
     expect(out).not.toContain("Flight");
     // Pistols is learned, so it shows once
-    expect(out.match(/Pistols/g)).toHaveLength(1);
+    expect(out.split("\n").filter((line) => /B6(?:@\d+)? Pistols(?: |$)/.test(line))).toHaveLength(
+      1,
+    );
   });
 
   it("lists only the knowledge skills taken, with their spec", () => {

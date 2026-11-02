@@ -31,6 +31,7 @@ export type UdonariumOptions = {
   /** Also list every active skill the runner can default on (SR5 p.130),
    *  plus the knowledge skills they actually have. */
   untrained?: boolean;
+  matrixDetails?: boolean;
   /** The piece's picture, as {@link portraitEntry} resolved it. Without one
    *  the piece gets Udonarium's blank silhouette. */
   image?: PortraitEntry | null;

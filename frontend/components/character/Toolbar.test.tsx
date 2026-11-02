@@ -318,16 +318,23 @@ describe("<Toolbar>", () => {
     // the panel is unmounted while closed, so every item is re-queried after
     // re-opening rather than held from the first pass
     openFormats();
-    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByRole("checkbox", { name: "未修得技能も" }));
     fireEvent.click(screen.getByRole("button", { name: "ユドナリウム" }));
 
     const calls = (ed.downloadUdonarium as Mock).mock.calls;
     expect(calls).toHaveLength(2);
-    expect(calls[0]).toEqual([base.catalog, ed.tr, { untrained: false }]);
-    expect(calls[1]).toEqual([base.catalog, ed.tr, { untrained: true }]);
+    expect(calls[0]).toEqual([base.catalog, ed.tr, { untrained: false, matrixDetails: false }]);
+    expect(calls[1]).toEqual([base.catalog, ed.tr, { untrained: true, matrixDetails: false }]);
+    openFormats();
+    fireEvent.click(screen.getByRole("checkbox", { name: "マトリックス系詳細チャットパレット" }));
+    fireEvent.click(screen.getByRole("button", { name: "ユドナリウム" }));
+    expect(calls[2]).toEqual([base.catalog, ed.tr, { untrained: true, matrixDetails: true }]);
+    openFormats();
+    fireEvent.click(screen.getByRole("checkbox", { name: "マトリックス系詳細チャットパレット" }));
+    fireEvent.click(screen.getByRole("button", { name: "ユドナリウム" }));
     // the switch is remembered in localStorage, which outlives this test
     openFormats();
-    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByRole("checkbox", { name: "未修得技能も" }));
   });
 
   it("shows コピー ✓ on whichever button was copied, and no other", () => {
@@ -368,7 +375,7 @@ describe("<Toolbar>", () => {
     openFormats();
     fireEvent.click(screen.getByRole("button", { name: "ココフォリア" }));
     openFormats();
-    const box = screen.getByRole("checkbox");
+    const box = screen.getByRole("checkbox", { name: "未修得技能も" });
     fireEvent.click(box);
     expect(box).toHaveProperty("checked", true);
     fireEvent.click(screen.getByRole("button", { name: "ココフォリア" }));
