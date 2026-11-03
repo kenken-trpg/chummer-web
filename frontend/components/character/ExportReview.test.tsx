@@ -97,30 +97,20 @@ describe("<ExportReview>", () => {
     expect(text).toContain(".xlsxへの書き出し・再読込で失われます");
   });
 
-  it("names Foundry and shows the omitted power with its fixed selection and reference", () => {
+  it("names Foundry and shows what it leaves out", () => {
     render(
       <ExportReview
         ed={makeEd({
           exportReviewFormat: "fvtt",
           exportReview: [
-            {
-              key: "engine.export.fvttInnatePower",
-              params: {
-                name: { tr: "Natural Weapon" },
-                selection: "Kick: DV ({STR} + 2)P, AP +1, +1 Reach",
-                source: "SR5",
-                page: "399",
-              },
-            },
+            { key: "engine.export.fvttAIProgram", params: { name: { tr: "Browse" } } },
           ],
         })}
       />,
     );
     const text = screen.getByRole("alertdialog").textContent;
     expect(text).toContain("Foundry向けJSONに含まれない");
-    expect(text).toContain("Natural Weapon");
-    expect(text).toContain("Kick: DV ({STR} + 2)P, AP +1, +1 Reach");
-    expect(text).toContain("SR5 p.399");
+    expect(text).toContain("Browse");
     expect(text).toContain("別途追加");
   });
 

@@ -1175,15 +1175,13 @@ describe("useCharacterEditor file exports", () => {
     expect(result.current.error).toBeNull();
   });
 
-  it("reviews omitted innate powers before Foundry export and confirms the right format", async () => {
+  it("reviews what Foundry leaves out before export and confirms the right format", async () => {
     const differences = [
-      { key: "engine.export.fvttInnatePower", params: { name: { tr: "Search" } } },
+      { key: "engine.export.fvttAIProgram", params: { name: { tr: "Browse" } } },
     ];
     api.checkFvttExport.mockResolvedValue(differences);
     api.exportFvtt.mockResolvedValue(new Blob(["{}"]));
-    const { result } = await booted(
-      makeCharacter({ id: "c1", name: "Centaur", metatype: "Centaur" }),
-    );
+    const { result } = await booted(makeCharacter({ id: "c1", name: "E-Ghost", metatype: "A.I." }));
     await act(async () => {
       await result.current.downloadFvtt();
     });
@@ -1197,11 +1195,11 @@ describe("useCharacterEditor file exports", () => {
     });
     expect(api.exportFvtt).toHaveBeenCalledWith(result.current.ch, "ja");
     expect(api.exportChummer).not.toHaveBeenCalled();
-    expect(clicks[0].download).toMatch(/^Centaur-fvtt_.*\.json$/);
+    expect(clicks[0].download).toMatch(/^E-Ghost-fvtt_.*\.json$/);
   });
 
   it("cancels a Foundry omission review without writing a file", async () => {
-    api.checkFvttExport.mockResolvedValue([{ key: "engine.export.fvttInnatePower", params: {} }]);
+    api.checkFvttExport.mockResolvedValue([{ key: "engine.export.fvttAIProgram", params: {} }]);
     const { result } = await booted(makeCharacter({ id: "c1" }));
     await act(async () => {
       await result.current.downloadFvtt();
