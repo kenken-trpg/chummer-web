@@ -13,6 +13,7 @@ from ..engine import find_metatype
 from ..models import MAX_PORTRAITS, clean_portrait
 from ..notices import Notice, NoticeError, notice
 from ..rules import DEFAULT_RULES
+from .rtf import rtf_to_text
 
 _BUILD_METHODS = {
     "priority": "Priority",
@@ -138,12 +139,13 @@ def _import_identity(root: ET.Element, cat: CatalogDict, st: dict[str, Any], war
     st["settings"] = _import_settings(root, cat)
     created = _text(root.find("created")).lower() == "true"
     st["career"] = created
-    st["notes"] = _text(root.find("notes"))
+    # These five are rich text in Chummer (see `rtf`); the rest is plain.
+    st["notes"] = rtf_to_text(_text(root.find("notes")))
     # Chummer's own two out-of-character fields: whose character it is and the
     # GM's notes on it. Both are read back by `Character.Load`, so dropping
     # them loses text the player typed.
     st["player_name"] = _text(root.find("playername"))
-    st["game_notes"] = _text(root.find("gamenotes"))
+    st["game_notes"] = rtf_to_text(_text(root.find("gamenotes")))
     for field, tag in (
         ("age", "age"),
         ("sex", "sex"),
@@ -157,6 +159,8 @@ def _import_identity(root: ET.Element, cat: CatalogDict, st: dict[str, Any], war
         ("concept", "concept"),
     ):
         val = _text(root.find(tag))
+        if field in ("appearance", "background", "concept"):
+            val = rtf_to_text(val)
         if val:
             st[field] = val
     mugs = _read_mugshots(root)
