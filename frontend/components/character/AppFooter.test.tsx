@@ -18,4 +18,16 @@ describe("<AppFooter>", () => {
     expect(link.getAttribute("href")).toBe(MANUAL_URL);
     expect(link.getAttribute("rel")).toBe("noopener noreferrer");
   });
+
+  it("shows the version it was built with, linked to its release", () => {
+    render(<AppFooter version="0.5.19" />);
+    const link = screen.getByRole("link", { name: "v0.5.19" });
+    expect(link.getAttribute("href")).toBe(`${REPO_URL}/releases/tag/v0.5.19`);
+    expect(link.getAttribute("rel")).toBe("noopener noreferrer");
+  });
+
+  it("shows no version when the build had none", () => {
+    render(<AppFooter version="" />);
+    expect(screen.queryByRole("link", { name: /^v\d/ })).toBeNull();
+  });
 });

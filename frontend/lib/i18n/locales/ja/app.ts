@@ -7,6 +7,7 @@ export const JA_APP = {
   "app.footer.author": "制作: {author}",
   "app.footer.repo": "GitHub リポジトリ",
   "app.footer.manual": "使い方",
+  "app.footer.version": "v{version}",
 
   // accessible names for landmarks — announced by screen readers, never drawn
   "app.footer.license": "GPL-3.0",
