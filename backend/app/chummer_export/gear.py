@@ -20,6 +20,7 @@ from ._common import _Ctx, _Names, _sub
 from .data_fields import _definitions, _from_data
 from .improvements import _bonus_improvements, _Imp, _text, _with_rows, _write_improvements
 from .metatype import export_metatype_weapons
+from .natural_weapons import weapons_of
 
 
 def _ware_writer(state: CharacterState, names: _Names) -> Any:
@@ -218,7 +219,8 @@ def _ware_weapon_guid(install_id: str) -> str:
 
 def _export_weapons(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
     """Write weapons and their accessories."""
-    weapons = _sub(root, "weapons")
+    # the natural weapons the qualities wrote are already in it
+    weapons = weapons_of(root)
     wacc_by_parent: dict[str | None, list[Any]] = {}
     for arow in state.weapon_accessories:
         wacc_by_parent.setdefault(arow.parent_id, []).append(arow)

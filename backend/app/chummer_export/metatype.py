@@ -19,6 +19,7 @@ from ..models import CharacterState
 from ._common import _Ctx, _sub, improvements_of
 from .data_fields import _from_data
 from .improvements import _bonus_improvements, _write_improvements
+from .natural_weapons import write_natural_weapons
 
 
 def _grant_guid(state: CharacterState, grant: dict[str, Any], index: int, kind: str) -> str:
@@ -46,11 +47,13 @@ def export_metatype_bonus(root: ET.Element, state: CharacterState) -> None:
             bonus = (variant if state.metavariant and variant is not None else node).find("bonus")
             if bonus is not None:
                 _write_improvements(root, _bonus_improvements(bonus, 1, None), node.findtext("id") or "", "Metatype")
+                # a Shapeshifter's bite and claws, on the animal form's bonus
+                write_natural_weapons(root, bonus, node.findtext("id") or "", "Metatype")
             return
 
 
 def export_metatype_qualities(
-    qualities: ET.Element, state: CharacterState, ctx: _Ctx
+    root: ET.Element, qualities: ET.Element, state: CharacterState, ctx: _Ctx
 ) -> list[tuple[str, ET.Element, str]]:
     """Returns (guid, bonus, extra) for each grant written with a `<bonus>` or
     `<firstlevelbonus>`, whose improvements the caller writes."""
@@ -98,6 +101,8 @@ def export_metatype_qualities(
                     quality.append(deepcopy(node))
                     if tag != "naturalweapons":
                         bonuses.append((fields["guid"], node, fields["extra"]))
+                    if tag != "firstlevelbonus":
+                        write_natural_weapons(root, node, fields["guid"], "Quality")
     return bonuses
 
 
@@ -156,6 +161,7 @@ def export_metatype_powers(root: ET.Element, state: CharacterState, ctx: _Ctx) -
         bonus = definition.find("bonus") if definition is not None else None
         if bonus is not None:
             power.append(deepcopy(bonus))
+            write_natural_weapons(root, bonus, _grant_guid(state, grant, index, "power"), "CritterPower")
         # Character.Create links the power's instance to a Metatype
         # improvement; RemoveImprovements follows this link on species changes.
         improvement = _sub(improvements_of(root), "improvement")
