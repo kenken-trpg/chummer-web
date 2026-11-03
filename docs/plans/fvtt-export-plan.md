@@ -77,7 +77,7 @@ chum5（保存形式）は通らない。完成値（`total` など）が必要�
 | ライフスタイル `lifestyles.lifestyle` | `baselifestyle`, `totalmonthlycost`, `purchased` | derived `lifestyles` |
 | 防具 `armors.armor` / `otherarmors.otherarmor` | `armor`（`+` 付きは追加分）, `improvesource` | derived `armor_items` / `armor_mods` |
 | ウェア `cyberwares.cyberware` | `ess`, `grade`, `capacity` | state `cyberware`/`bioware` ＋ derived 精神力 |
-| 武器 `weapons.weapon` | `category_english`, `type`, `skill`, `rawaccuracy`, `rawap`, `rawrc`, `rawreach`, `damage_noammo_english`, `mode_english_noammo`, `ammo_english`, `ranges`, `clips.clip`, `currentammo`, `accessories.accessory`（`mount`, `rc`, `accuracy`, `conceal`） | derived `weapons` / `weapon_accessories` |
+| 武器 `weapons.weapon` | `category_english`, `type`, `skill`, `rawaccuracy`, `rawap`, `rawrc`, `rawreach`, `damage_noammo_english`（0.36.0 まで）／`rawdamage`→`damage_english`（0.36.3 から）, `mode_english_noammo`, `ammo_english`, `ranges`, `clips.clip`, `currentammo`, `accessories.accessory`（`mount`, `rc`, `accuracy`, `conceal`） | derived `weapons` / `weapon_accessories`。素手（Unarmed Attack）は derived `unarmed_*` から組み立てる |
 | 装備 `gears.gear` | `iscommlink`, `issin`, `isammo`, `category_english`; 機器は `devicerating`, `attack`, `sleaze`, `dataprocessing`, `firewall`; 弾は `weaponbonus*_english` | derived `gear` / `commlinks` / `cyberdecks` / `rccs` / `programs`。収束具は derived `foci` / `qi_foci` をカテゴリ `Foci` で（取り込みは装備として扱う） |
 | 呪文 `spells.spell` | `category_english`, `type_english`, `range_english`, `duration_english`, `damage_english`, `dv_english`, `descriptors_english` | state `spells` ＋ 呪文データ |
 | 儀式 | `type_english`, `descriptors` | 同上（呪文のうち Ritual） |
