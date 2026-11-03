@@ -3,7 +3,6 @@ the importer matches it to and the clips it carries."""
 
 from __future__ import annotations
 
-import re
 from typing import Any
 
 from ..data_loader import catalog
@@ -276,12 +275,23 @@ def _str_formula(row: dict[str, Any], derived: dict[str, Any]) -> str | None:
     Strength: n is what the finished figure holds over the character's STR,
     so the bonuses on it stay. None when the attack does not run on STR, or
     the figure is not a plain number and type."""
+    # string tests rather than a regex: the figure comes from the state, and
+    # CodeQL counts `\d+` against a long run of digits as a slow pattern
     formula = str(row.get("damage_formula") or "").replace(" ", "")
-    finished = re.fullmatch(r"(\d+)([PSM])", str(_noammo(row, "damage") or ""))
-    if not finished or not re.fullmatch(r"\(\{STR\}(?:[+-]\d+)?\)[PSM]", formula):
+    finished = str(_noammo(row, "damage") or "")
+    kind = finished[-1:]
+    if kind not in ("P", "S", "M") or not finished[:-1].isdigit() or not _is_str_formula(formula):
         return None
-    extra = int(finished.group(1)) - int((derived.get("totals") or {}).get("STR") or 0)
-    return f"({{STR}}{extra:+d}){finished.group(2)}" if extra else f"({{STR}}){finished.group(2)}"
+    extra = int(finished[:-1]) - int((derived.get("totals") or {}).get("STR") or 0)
+    return f"({{STR}}{extra:+d}){kind}" if extra else f"({{STR}}){kind}"
+
+
+def _is_str_formula(formula: str) -> bool:
+    """`({STR})P`, `({STR}+1)P` or `({STR}-1)S`: Strength and a whole number."""
+    if not formula.startswith("({STR}") or formula[-2:-1] != ")" or formula[-1:] not in ("P", "S", "M"):
+        return False
+    offset = formula[len("({STR}") : -2]
+    return not offset or (offset[0] in "+-" and offset[1:].isdigit())
 
 
 def _noammo(row: dict[str, Any], key: str) -> Any:

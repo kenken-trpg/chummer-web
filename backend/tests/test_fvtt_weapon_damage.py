@@ -59,3 +59,12 @@ def test_a_natural_weapon_runs_on_strength_and_keeps_what_is_added() -> None:
     rows = state.derived["weapons"]
     state.derived = {**state.derived, "weapons": [{**rows[0], "damage": "7P"}]}
     assert _weapons(state)["Infected Bite"]["rawdamage"] == "({STR}+3)P"
+
+
+def test_only_a_plain_strength_formula_becomes_rawdamage() -> None:
+    from app.fvtt_export.combat import _str_formula
+
+    derived = {"totals": {"STR": 4}}
+    for formula, damage in (("({STR}*2)P", "8P"), ("6P", "6P"), ("({STR}+1)P", "5P(f)"), ("({STR}+1)P", "9" * 5000)):
+        assert _str_formula({"damage_formula": formula, "damage": damage}, derived) is None
+    assert _str_formula({"damage_formula": "({STR}-1)S", "damage": "3S"}, derived) == "({STR}-1)S"
