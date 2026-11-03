@@ -283,16 +283,15 @@ try {
   await shot("tab-sheet-body");
   await page.evaluate(() => window.scrollBy(0, 850));
   await shot("tab-sheet-body2");
-  await page.evaluate(() => window.scrollTo(0, 0));
+  // On a tab with the sidebar: in the sheet's full-width toolbar 書き出し sits
+  // at the right edge, and its panel runs off the screen.
+  await tab("能力値");
   await page.getByRole("button", { name: "書き出し ▾" }).click();
   await shot("ui-export-menu");
   await page.keyboard.press("Escape");
 
   // 2. A copy from the export menu. Picking an item closes the menu, so the
   // コピー ✓ beside 書き出し is the only sign it worked — the clip ends on it.
-  // On a tab with the sidebar: in the sheet's full-width toolbar 書き出し sits
-  // at the right edge, and its panel runs off the screen.
-  await tab("能力値");
   {
     const clip = motion({ x: 0, y: 0, width: 1440, height: 560 });
     await clip.frame(1200);
