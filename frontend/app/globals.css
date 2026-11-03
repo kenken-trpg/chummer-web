@@ -658,18 +658,25 @@ input[type="search"] {
    and it sits above the sticky tab bar (z-index 5) it hangs over. */
 .menu {
   position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
 }
-/* コピー ✓ for an item copied from inside the panel, which has closed by then */
+/* コピー ✓ for an item copied from inside the panel, which has closed by then.
+   It hangs under the button, out of the flow: beside it, it pushed every
+   button to its right along for the two seconds it showed. */
 .menu-note:empty {
   display: none;
 }
 .menu-note {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 10;
+  padding: 2px 8px;
   color: var(--accent);
   font-size: 0.9em;
   white-space: nowrap;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
 }
 .menu-body {
   position: absolute;
@@ -685,6 +692,11 @@ input[type="search"] {
   border: 1px solid var(--line);
   border-radius: 8px;
   box-shadow: 0 6px 20px rgb(0 0 0 / 35%);
+}
+/* set by Menu.tsx when a panel hung from the left would leave the window */
+.menu-body-end {
+  right: 0;
+  left: auto;
 }
 /* Each item fills the panel rather than centring on its own width, so the
    column reads as a list. */

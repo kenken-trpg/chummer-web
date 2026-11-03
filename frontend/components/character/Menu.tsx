@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 
 /**
  * A button that drops a column of other buttons under it.
@@ -22,8 +22,23 @@ export function Menu({
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  // Which edge of the button the panel hangs from. 書き出し sits at the right
+  // end of the toolbar on a wide tab (the sheet), where a panel hung from its
+  // left edge runs off the window and cuts the last item in half.
+  const [alignEnd, setAlignEnd] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   const body = useRef<HTMLDivElement>(null);
+
+  // Before paint, so the panel never shows on the wrong side for a frame.
+  // Reset to the left edge on each open (the button's click), not here: the
+  // toolbar may have wrapped since, and the button left the edge.
+  useLayoutEffect(() => {
+    if (!open) return;
+    const panel = body.current;
+    if (!panel || alignEnd) return;
+    const room = document.documentElement.clientWidth;
+    if (panel.getBoundingClientRect().right > room) setAlignEnd(true);
+  }, [open, alignEnd]);
 
   useEffect(() => {
     if (!open) return;
@@ -57,7 +72,14 @@ export function Menu({
 
   return (
     <div className="menu" ref={box}>
-      <button className="btn" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+      <button
+        className="btn"
+        aria-expanded={open}
+        onClick={() => {
+          if (!open) setAlignEnd(false);
+          setOpen(!open);
+        }}
+      >
         {label} ▾
       </button>
       {/* always mounted: a live region only announces changes to itself */}
@@ -65,7 +87,7 @@ export function Menu({
         {note}
       </span>
       {open ? (
-        <div className="menu-body" ref={body}>
+        <div className={alignEnd ? "menu-body menu-body-end" : "menu-body"} ref={body}>
           {children}
         </div>
       ) : null}
