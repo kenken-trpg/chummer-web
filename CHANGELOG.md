@@ -3,6 +3,53 @@
 Notable changes. Format follows [Keep a Changelog](https://keepachangelog.com/);
 self-hosters can pin to a tag instead of tracking `main`.
 
+## [0.5.19] — 2026-11-03
+
+### Added
+
+- **ココフォリアのチャットパレットにDPの計算式を追加しました。** マトリックス動作、技能・専門化、武器攻撃、呪文・召喚などに技能と能力値の値、修正、合計を添え、計算済みDPの内訳を確認できます。
+
+- **ココフォリア用のドローン・ヴィークルコマ書き出し**：所有する機体ごとにコマをコピーできます。能力値、身体・マトリックスCM、操縦・搭載武器・搭載オートソフトの判定を含みます。
+
+- **FVTT 書き出しに収束具・クリッターパワー・秘術を追加しました**：収束具（気の収束具を含む）は装備として、感染者・クリッター・ケンタウロスなどのパワーはクリッターパワーとして、秘術とエコーはそれぞれの項目として書き出します。これまでは FVTT に取り込むと、どれも入っていませんでした。生得パワーが書き出されるようになったため、書き出し前の確認画面で「生得パワーが含まれない」とは表示しなくなりました。
+
+- **使い方のページに操作の動画**：作り始めの流れ（優先度・メタタイプ・能力値）、書き出しメニューからのコピー、キャリアモードの報酬と成長を、短い動画で載せました。動きを抑える設定のブラウザでは最後の場面だけを表示します。動画は `scripts/capture-manual.mjs` が写真と一緒に撮り直します。
+
+- マニュアルに、書き出した .chum5 を「読込」で戻す操作の短い動画を足しました。
+
+- **マトリックス系詳細チャットパレットを選べるようにしました。** 書き出しメニューのチェックをONにすると、ココフォリア・ユドナリウム・チャットパレットコピーに21種類の動作を、DP・リミット・動作種別・日本語版参照ページ付きで出力します。既定はOFFで、設定はブラウザーに保存します。
+
+- **Role&Roll Vol.210–229 translation coverage.** Add the available catalog
+  entries and issue-specific Japanese names from Masaki Nishigami’s published
+  list for Vol.210–214 and 217–229, including weapon modifications, echoes,
+  adept powers, spirits, spells, and Matrix equipment. Preserve previously
+  entered magazine pages and names; record the 38 headings, rules, and items
+  without a catalog counterpart as unresolved rather than inventing game data.
+
+- **Role&Roll Vol.230–231 translations.** Add Chrome Flesh’s eight implants
+  from Vol.230 and Kill Code’s eight listed items from Vol.231, including both
+  Fuchi Cyber N/EX models and the grenade’s gear and weapon records. Keep the
+  source article’s planned-publication status for Vol.231 in the data notes
+  and leave unreported magazine pages blank.
+
+### Fixed
+
+- **Critter Powers タブで買ったパワーの効果を .chum5 に書き出すようにしました**：これまでは Chummer で開いても、買ったパワーが効いていませんでした（Bandersnatch の Evolved Reflexes でイニシアティブのダイスが増えない、など）。Chummer は開くときにパワーの効果を作り直さないため、資質が付けるパワーと同じく、効果そのものを書き出すようにしました。
+
+- **.chum5 を Chummer で開いたときの「Orphaned Improvements」を直しました**：ドワーフの生活費やシェイプシフターの能力値など、種族そのものが持つ効果の持ち主（種族の id）を書き出していませんでした。そのため Chummer が開くときに、これらを孤立した改良として消すかどうか尋ねていました。
+
+- **.chum5 の書き出しに生来の武器を含めるようにしました**：感染者の牙と爪、シェイプシフターの噛みつき、クリッターパワーの爪などを、Chummer が自分で作るときと同じ形（武器と、その持ち主を指す改良）で書き出します。これまでは Chummer で開くと、これらの武器がありませんでした。
+
+- **Chummer の .chum5 にある説明欄の文字化けを直しました**：Chummer では描写・背景・コンセプト・メモ・GM メモを RTF 形式で保存します。これまではその RTF をそのまま読み込んでいたため、画面と FVTT 書き出しに `{\rtf1…` のような文字列が出ていました。読み込み時に平文へ変換するようにしました。すでに読み込んだキャラクターは、.chum5 を読み込み直すと直ります。
+
+- **書き出しメニューからのコピーが見えるように**：ココフォリア・チャットパレット・召喚体やドローンのコマをコピーすると、「書き出し ▾」ボタン自体に 2 秒ほど「コピー ✓」が出ます。これまでは押した項目の上に出ていましたが、メニューがすぐ閉じるので見えませんでした。ボタンの幅は変わらないので、周りのボタンもずれません。
+
+- シートタブで「書き出し ▾」を開くと、メニューが画面の右からはみ出して最後の項目が切れていたのを直しました。はみ出すときはボタンの右端に揃えて開きます。
+
+- **FVTT 0.36.3 以降で武器のダメージが 0 になるのを直し、素手攻撃を追加しました**：FVTT の取り込み処理は 0.36.3 からダメージを読む項目を変えたため、こちらが書き出した武器はダメージ 0 で入っていました。新旧どちらの項目にも書き出すようにしました。あわせて、Chummer と同じく素手攻撃（Unarmed Attack）を武器として書き出します。素手と生来の武器は、FVTT 側で筋力が変わるとダメージも追従します。
+
+- **感染者の牙と爪が武器タブに出るようにしました**：ヴァンパイアの噛みつきやグールの爪など、感染者の資質（30 件）が持つ生来の武器を読んでいませんでした。資質を取ると武器タブに並び、FVTT 書き出しにも含まれます。
+
 ## [0.5.18] — 2026-11-01
 
 ### Added
@@ -2854,7 +2901,8 @@ First tagged release.
 - One-container Docker image (Caddy + uvicorn + Next standalone) published to
   GHCR; `make up` / `compose.yaml` for local self-hosting.
 
-[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.18...HEAD
+[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.19...HEAD
+[0.5.19]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.18...v0.5.19
 [0.5.18]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.17...v0.5.18
 [0.5.17]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.16...v0.5.17
 [0.5.16]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.15...v0.5.16
