@@ -8,7 +8,9 @@ from __future__ import annotations
 
 import xml.etree.ElementTree as ET
 
+from ..engine import find_metatype
 from ..models import CharacterState
+from ..notices import NoticeError
 from ._common import _Ctx, _Names, _sub
 from .build import _export_reward_log, _export_settings_key
 
@@ -23,13 +25,35 @@ _ATTR_ORDER = ("BOD", "AGI", "REA", "STR", "CHA", "INT", "LOG", "WIL", "EDG", "M
 _BUILD_METHOD_OUT = {"Priority": "Priority", "SumToTen": "SumtoTen", "Karma": "Karma", "LifeModule": "LifeModule"}
 
 
+_EMPTY_GUID = "00000000-0000-0000-0000-000000000000"
+
+
+def _metatype_ids(state: CharacterState) -> tuple[str, str]:
+    """The metatype's and metavariant's data ids, as `Character.Save` writes
+    them. Chummer's orphan check on load looks for an improvement's owner
+    among the save's `<guid>`, `<metatypeid>` and `<metavariantid>`; a
+    metatype's own bonus (a Dwarf's lifestyle cost) is owned by the
+    metatype's id, so without these Chummer offers to delete it."""
+    try:
+        base = find_metatype(state.metatype, None)
+    except NoticeError:  # not in this data: Chummer finds it by name instead
+        return "", ""
+    variant = next((v for v in base.get("metavariants") or [] if v.get("name") == state.metavariant), None)
+    return str(base.get("id") or ""), str(variant.get("id") or "") if variant else ""
+
+
 def _export_identity(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
     """Write name, metatype, build method, the bio fields, portrait and career totals."""
     _sub(root, "appversion", CHUMMER_VERSION)
     _sub(root, "name", "")
     _sub(root, "alias", state.name)
+    metatype_id, metavariant_id = _metatype_ids(state)
     _sub(root, "metatype", state.metatype)
+    if metatype_id:
+        _sub(root, "metatypeid", metatype_id)
     _sub(root, "metavariant", state.metavariant or "")
+    if metatype_id:
+        _sub(root, "metavariantid", metavariant_id or _EMPTY_GUID)
     _sub(root, "buildmethod", _BUILD_METHOD_OUT.get(state.build_method, "Priority"))
     _export_settings_key(root, state)
     # the creation availability limit does travel in the save — see the note in
