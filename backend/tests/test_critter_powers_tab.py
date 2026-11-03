@@ -112,3 +112,31 @@ def test_a_career_purchase_costs_the_same_karma_as_in_creation() -> None:
     out = compute(bought).derived
     assert out["karma"]["remaining"] == before - 12 - 9
     assert not [e for e in out["errors"] if e["key"].startswith("engine.critterPowers")]
+
+
+def _owned_improvements(root: ET.Element, guid: str) -> list[tuple[str, str, str]]:
+    return [
+        (imp.findtext("improvementttype") or "", imp.findtext("val") or "", imp.findtext("improvementsource") or "")
+        for imp in root.iter("improvement")
+        if imp.findtext("sourcename") == guid
+    ]
+
+
+def test_a_bought_power_saves_what_its_bonus_made() -> None:
+    """Chummer keeps a power's improvements as saved and never runs its
+    bonus again on load: without them a bought Evolved Reflexes adds no
+    initiative die there."""
+    state = _infected("Infected: Bandersnatch", "Evolved Reflexes")
+    state.critter_powers[0].id = "reflexes"
+    root = ET.fromstring(state_to_chum5(compute(state)))
+    assert _owned_improvements(root, "reflexes") == [("InitiativeDice", "1", "CritterPower")]
+    # bought, not granted: no CritterPower improvement names it as the thing made
+    assert not [i for i in root.iter("improvement") if i.findtext("improvedname") == "reflexes"]
+
+
+def test_a_bought_power_round_trips_without_doubling_its_effect() -> None:
+    state = compute(_infected("Infected: Bandersnatch", "Evolved Reflexes"))
+    st, _ = chum5_to_state(state_to_chum5(state))
+    back = compute(CharacterState(**st))
+    assert [p.power_id for p in back.critter_powers] == [p.power_id for p in state.critter_powers]
+    assert back.derived["initiative"]["dice"] == state.derived["initiative"]["dice"]

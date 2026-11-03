@@ -324,7 +324,8 @@ def _export_power_improvements(root: ET.Element, bonus: ET.Element, guid: str, r
     and never runs a bonus again, so a power without them does nothing there
     (a drake's Hardened Armor added no armor). Covers the tags the powers a
     quality grants carry; Innate Spell's `enabletab` / `selectspell` waits on
-    a spell to pick, which the quality does not give."""
+    a spell to pick, which the quality does not give. The powers bought on the
+    Critter Powers tab go through here too."""
     write_natural_weapons(root, bonus, guid, "CritterPower")
     if bonus.find("selectspell") is not None:
         return
@@ -342,8 +343,11 @@ def _attribute_picks(qid: str, state: CharacterState) -> list[str]:
 def _export_bought_critter_powers(root: ET.Element, state: CharacterState) -> None:
     """The powers bought on the Critter Powers tab, as CharacterCreate adds
     them: made from the definition at the picked rating, `grade` 0, its
-    `<karma>` kept (the create form sums it), and no improvement — nothing
-    granted it, so nothing takes it away."""
+    `<karma>` kept (the create form sums it), and what its `<bonus>` made
+    (`CritterPower.Create` runs it; Chummer never runs it again on load, so
+    without these a bought Evolved Reflexes adds no initiative die there).
+    No CritterPower improvement ties it to an owner: nothing granted it, so
+    nothing takes it away."""
     if not state.critter_powers:
         return
     stock = {str(row["id"]): row for row in catalog().get("buyable_critter_powers") or []}
@@ -372,8 +376,7 @@ def _export_bought_critter_powers(root: ET.Element, state: CharacterState) -> No
         bonus = definition.find("bonus") if definition is not None else None
         if bonus is not None:
             el.append(deepcopy(bonus))
-            # a bought Natural Weapon (Bite) still makes its weapon
-            write_natural_weapons(root, bonus, inst.id, "CritterPower")
+            _export_power_improvements(root, bonus, inst.id, int(inst.rating or 0), inst.extra or "")
 
 
 def _quality_extra_out(
