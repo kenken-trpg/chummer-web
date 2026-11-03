@@ -7,7 +7,20 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
  * the e2e suite click the items inside, and a native `<summary>` toggle is not
  * something every DOM implementation we test against performs.
  */
-export function Menu({ label, children }: { label: string; children: ReactNode }) {
+export function Menu({
+  label,
+  note,
+  children,
+}: {
+  label: string;
+  /**
+   * A word beside the button that outlives the panel. Picking an item closes
+   * the menu, so an item that reports on itself (コピー ✓ on its own label)
+   * reports to nobody — the panel is gone before anyone reads it.
+   */
+  note?: ReactNode;
+  children: ReactNode;
+}) {
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   const body = useRef<HTMLDivElement>(null);
@@ -47,6 +60,10 @@ export function Menu({ label, children }: { label: string; children: ReactNode }
       <button className="btn" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
         {label} ▾
       </button>
+      {/* always mounted: a live region only announces changes to itself */}
+      <span className="menu-note" role="status">
+        {note}
+      </span>
       {open ? (
         <div className="menu-body" ref={body}>
           {children}
