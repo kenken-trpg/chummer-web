@@ -30,6 +30,7 @@ from .data_fields import _from_data
 from .improvements import _bonus_improvements, _Imp, _text, _with_rows, _write_improvements
 from .life_modules import export_life_modules
 from .metatype import export_metatype_bonus, export_metatype_powers, export_metatype_qualities
+from .natural_weapons import write_natural_weapons
 from .skills import spec_guid
 
 
@@ -104,6 +105,8 @@ def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ct
                 # a second take needs a guid of its own to own its improvements
                 _sub(q, "guid", str(uuid.uuid5(uuid.NAMESPACE_URL, f"{qid}:take:{take}")) if take else qid)
             effects.append((q.findtext("guid") or "", rows))
+        # run once, however many takes (as `<firstlevelbonus>`)
+        _export_natural_weapons(root, q, qid, definition if not take else None)
         # A quality with a `<selectskill>` bonus carries the skill picked for
         # it. Unlike the implant picks in `_export_ware`, these are keyed by
         # the quality's catalog id, which survives an import unchanged.
@@ -133,7 +136,7 @@ def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ct
         if (spec.get("critter_powers") or spec.get("optional_powers")) and q.find("guid") is None:
             _sub(q, "guid", qid)
 
-    for guid, bonus, extra in export_metatype_qualities(quals, state, ctx):
+    for guid, bonus, extra in export_metatype_qualities(root, quals, state, ctx):
         effects.append((guid, _bonus_improvements(bonus, 0, extra, state.mentor_id or "")))
     export_metatype_bonus(root, state)
     _export_talent_quality(quals, state, bonuses, effects)
@@ -249,6 +252,18 @@ def _export_talent_quality(
         effects.append((guid, _bonus_improvements(bonus, 0, None)))
 
 
+def _export_natural_weapons(root: ET.Element, q: ET.Element, qid: str, definition: ET.Element | None) -> None:
+    """An Infected's bite and claws: `<naturalweapons>` beside the bonus,
+    which Chummer saves on the quality and runs once, as one more bonus."""
+    natural = definition.find("naturalweapons") if definition is not None else None
+    if natural is None or natural.find("naturalweapon") is None:
+        return
+    q.append(deepcopy(natural))
+    if q.find("guid") is None:
+        _sub(q, "guid", qid)
+    write_natural_weapons(root, natural, q.findtext("guid") or "", "Quality")
+
+
 def _export_quality_critter_powers(root: ET.Element, state: CharacterState) -> list[tuple[str, str]]:
     """`<critterpowers>`: what a quality grants (an Infected's, a drake's, a
     free insect spirit's), plus its one optional power — where Chummer's
@@ -310,6 +325,7 @@ def _export_power_improvements(root: ET.Element, bonus: ET.Element, guid: str, r
     (a drake's Hardened Armor added no armor). Covers the tags the powers a
     quality grants carry; Innate Spell's `enabletab` / `selectspell` waits on
     a spell to pick, which the quality does not give."""
+    write_natural_weapons(root, bonus, guid, "CritterPower")
     if bonus.find("selectspell") is not None:
         return
     _write_improvements(root, _bonus_improvements(bonus, rating, pick or None), guid, "CritterPower")
@@ -356,6 +372,8 @@ def _export_bought_critter_powers(root: ET.Element, state: CharacterState) -> No
         bonus = definition.find("bonus") if definition is not None else None
         if bonus is not None:
             el.append(deepcopy(bonus))
+            # a bought Natural Weapon (Bite) still makes its weapon
+            write_natural_weapons(root, bonus, inst.id, "CritterPower")
 
 
 def _quality_extra_out(
