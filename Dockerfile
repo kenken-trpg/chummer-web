@@ -32,6 +32,8 @@ COPY scripts/retry.sh /usr/local/bin/retry
 # comment in scripts/retry.sh.
 RUN retry npm ci --ignore-scripts
 COPY frontend/ ./
+# next.config.ts reads the version for the footer from here (../backend)
+COPY backend/pyproject.toml /app/backend/pyproject.toml
 RUN mkdir -p public && npm run build
 # -> .next/standalone (server.js + traced node_modules), .next/static, public
 

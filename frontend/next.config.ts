@@ -1,9 +1,21 @@
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import type { NextConfig } from "next";
+import { projectVersion } from "./lib/app-version";
 
 // The browser calls the API at a relative /api/*; Next proxies it to the
 // FastAPI backend. Override the target for a split deploy (frontend and
 // backend on different hosts) with BACKEND_ORIGIN.
 const BACKEND_ORIGIN = process.env.BACKEND_ORIGIN ?? "http://127.0.0.1:8000";
+
+// The footer's version. `backend/pyproject.toml` sits beside `frontend/` in
+// the repository and in the Dockerfile's frontend stage, which copies it in
+// for this. A build without it (a split deploy built from `frontend/` alone)
+// shows no version rather than a wrong one.
+const PYPROJECT = resolve(__dirname, "../backend/pyproject.toml");
+const APP_VERSION = existsSync(PYPROJECT)
+  ? (projectVersion(readFileSync(PYPROJECT, "utf8")) ?? "")
+  : "";
 
 // Every powerful browser feature this app never uses, switched off. Kept
 // identical to the backend's `_PERMISSIONS_POLICY`; see the note below.
@@ -46,6 +58,8 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   // self-contained server bundle for the container (`node server.js`)
   output: "standalone",
+  // inlined into the bundle at build time; read by `AppFooter`
+  env: { APP_VERSION },
   // `next dev` only trusts the hostname it was started with plus `localhost`,
   // and it answers everything else with `Unauthorized` — including the HMR
   // websocket, without which the dev bundle never mounts the app, so the page

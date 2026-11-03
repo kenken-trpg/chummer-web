@@ -1,3 +1,4 @@
+import { releaseUrl } from "@/lib/app-version";
 import { useUiText } from "@/lib/i18n";
 
 /** Where the code lives and who wrote it. The sheet has carried a footer all
@@ -8,7 +9,11 @@ export const AUTHOR = "kenken-trpg";
 /** `public/manual/index.html`, reached through the rewrite in `next.config.ts`. */
 export const MANUAL_URL = "/manual";
 
-export function AppFooter() {
+/** Inlined at build time from `backend/pyproject.toml` (`next.config.ts`);
+ *  empty when the build had no such file. */
+export const APP_VERSION = process.env.APP_VERSION ?? "";
+
+export function AppFooter({ version = APP_VERSION }: { version?: string } = {}) {
   const { ui } = useUiText();
   return (
     <footer className="app-footer no-print">
@@ -23,6 +28,14 @@ export function AppFooter() {
       </a>
       <span aria-hidden="true">・</span>
       <span>{ui("app.footer.license")}</span>
+      {version && (
+        <>
+          <span aria-hidden="true">・</span>
+          <a href={releaseUrl(REPO_URL, version)} target="_blank" rel="noopener noreferrer">
+            {ui("app.footer.version", { version })}
+          </a>
+        </>
+      )}
     </footer>
   );
 }
