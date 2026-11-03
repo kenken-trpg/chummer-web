@@ -160,6 +160,7 @@ def gather(ctx: Ctx) -> None:
     ctx.warnings.extend(_clamp_ware_grades("cyberware", ctx.state.cyberware, disabled_cyber_grades))
     ctx.warnings.extend(_clamp_ware_grades("bioware", ctx.state.bioware, disabled_bio_grades))
     first_levels: set[str] = set()
+    natural_weapons: set[str] = set()
     for q in ctx.qualities:
         ctx.sources.append((q["name"], q.get("bonus") or []))
         # a leveled quality is listed once per level; `<firstlevelbonus>`
@@ -167,6 +168,9 @@ def gather(ctx: Ctx) -> None:
         if q.get("firstlevelbonus") and q["id"] not in first_levels:
             first_levels.add(q["id"])
             ctx.sources.append((q["name"], q["firstlevelbonus"]))
+        if q.get("naturalweapons") and q["id"] not in natural_weapons:
+            natural_weapons.add(q["id"])
+            ctx.sources.append((q["name"], q["naturalweapons"]))
         ctx.sources.extend(_critter_power_sources(q, ctx.state.quality_extras))
     ctx.needs_mentor = any(q["id"] == MENTOR_SPIRIT_ID for q in ctx.qualities)
     # Paragon is Mentor Spirit for a technomancer and shares `mentor_id`; the

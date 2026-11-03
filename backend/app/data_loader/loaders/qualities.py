@@ -71,6 +71,9 @@ def load_qualities(*, include_hidden: bool = False) -> list[dict[str, Any]]:
                 "bonus": bonus,
                 # applied once, however many levels are taken (Gremlins: +1 Notoriety)
                 "firstlevelbonus": parse_bonus(el.find("firstlevelbonus")),
+                # the attacks it grants (Infected: Vampire's bite, RF p.137), outside
+                # `<bonus>`; Chummer runs the node as one more bonus (`Quality.Create`)
+                "naturalweapons": parse_bonus(el.find("naturalweapons")),
                 # counted together toward the limit (Indomitable: three kinds, 3 in all)
                 "includeinlimit": [_text(n) for n in el.findall("./includeinlimit/name") if _text(n)],
                 # the shared cap when it differs from `limit` (Tough as Nails: 4)
