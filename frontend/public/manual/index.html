@@ -233,6 +233,8 @@
         魔法・共振・A.I.・クリッターのタブだけは、そのタブが出る別のサンプル（アヤ・レン・ゴースト・ジャック）で撮っています。
         本文と画面は v0.5.13 の後の開発版（2026年10月23日撮影）の表記に合わせています。
         数値は操作説明用のサンプルで、作成完了済みのキャラクターではありません。
+        動きのある図（動画）は
+        2026年11月3日の開発版で撮っています。動きを抑える設定のブラウザでは最後の場面だけを表示します。
       </p>
 
       <section id="overview">
@@ -270,6 +272,19 @@
           人できています。次からは最後に開いていた
           キャラクターが開きます。データは<strong>ブラウザ内（IndexedDB）</strong>に保存され、サーバーには残りません。
         </div>
+
+        <figure>
+          <picture>
+            <source srcset="img/anim-create-still.webp" media="(prefers-reduced-motion: reduce)" />
+            <img
+              src="img/anim-create.webp"
+              alt="操作の動画。優先度表で能力値の B を押して技能と入れ替え、メタタイプタブでオークを選び、能力値タブで BOD を 3 上げる。そのたびにサイドバーの残り点数が変わる"
+            />
+          </picture>
+          <figcaption>
+            作り始めの流れ（動画）。優先度表のセルを押すと同じ列の行と入れ替わり、メタタイプを選び、能力値を上げると、そのたびにサイドバーの残り点数が変わります。押す直前のボタンを黄色い枠で示しています。
+          </figcaption>
+        </figure>
       </section>
 
       <section id="priority">
@@ -827,6 +842,18 @@
             残りはサイドバーの「カルマ」と「新円」です。
           </li>
         </ol>
+        <figure>
+          <picture>
+            <source srcset="img/anim-career-still.webp" media="(prefers-reduced-motion: reduce)" />
+            <img
+              src="img/anim-career.webp"
+              alt="操作の動画。作成完了（キャリア）を押してキャリア中になり、サイドバーで報酬「港の倉庫」12 カルマと 6,000 新円を追加し、AGI を 1 上げ、成長／買い物の内訳を開いてカルマ消費を確かめる"
+            />
+          </picture>
+          <figcaption>
+            キャリアの流れ（動画）。作成完了 → 報酬を追加 → 能力値を上げる → 内訳を開く。
+          </figcaption>
+        </figure>
         <ul>
           <li>
             <strong>資質</strong>: キャリアで取る有利な資質は 2
@@ -864,6 +891,22 @@
           <figcaption>
             「書き出し
             ▾」の中身。JSON（バックアップ）はツールバーの「JSON保存」、そのほかはここから。
+          </figcaption>
+        </figure>
+        <figure>
+          <picture>
+            <source
+              srcset="img/anim-export-copy-still.webp"
+              media="(prefers-reduced-motion: reduce)"
+            />
+            <img
+              src="img/anim-export-copy.webp"
+              alt="操作の動画。書き出しメニューを開いてココフォリアを押すと、メニューが閉じて「書き出し ▾」の横に「コピー ✓」が出る"
+            />
+          </picture>
+          <figcaption>
+            ココフォリア・チャットパレットなどのコピーは、メニューが閉じたあと「書き出し
+            ▾」の横に「コピー ✓」が出れば完了です（動画）。そのまま VTT に貼り付けます。
           </figcaption>
         </figure>
         <ul>

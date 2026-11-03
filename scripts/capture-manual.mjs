@@ -139,6 +139,113 @@ try {
     await page.evaluate(() => document.fonts.ready);
     await expect(page.getByText("読み込み中…", { exact: true })).toHaveCount(0);
   };
+  // Short animations for the steps a still cannot show: the order of the
+  // clicks, and what changes after each. Playwright's screenshots carry no
+  // cursor, so the control about to be pressed gets an outline for one frame
+  // instead. Each clip is written twice: the animation, and its last frame as
+  // `-still` for readers who ask for reduced motion (the manual's <picture>).
+  const MARK = "data-manual-mark";
+  const motion = (region) => {
+    const frames = [];
+    const frame = async (hold = 1000) => {
+      await page.mouse.move(0, 0);
+      const png = await page.screenshot({
+        animations: "disabled",
+        ...(region ? { clip: region } : {}),
+      });
+      frames.push({ png, hold });
+    };
+    return {
+      frame,
+      // outline the control, hold on it, then press it
+      async press(locator, hold = 900) {
+        await locator.scrollIntoViewIfNeeded();
+        await page.evaluate((mark) => {
+          if (document.getElementById(mark)) return;
+          const style = document.createElement("style");
+          style.id = mark;
+          style.textContent = `[${mark}]{outline:3px solid #ffb020 !important;outline-offset:2px}`;
+          document.head.append(style);
+        }, MARK);
+        await locator.evaluate((el, mark) => el.setAttribute(mark, ""), MARK);
+        await frame(hold);
+        await locator.evaluate((el, mark) => el.removeAttribute(mark), MARK);
+        await locator.click();
+        // the press is a round trip to the engine; let the result land
+        await page.waitForTimeout(500);
+        await expect(
+          page.getByText("読み込み中…", { exact: true }),
+        ).toHaveCount(0);
+      },
+      async save(name) {
+        const scaled = await Promise.all(
+          frames.map(({ png }) =>
+            sharp(png).resize({ width: 960 }).png().toBuffer(),
+          ),
+        );
+        await sharp(scaled, { join: { animated: true } })
+          .webp({
+            quality: 75,
+            effort: 6,
+            loop: 0,
+            delay: frames.map(({ hold }) => hold),
+          })
+          .toFile(`${output}${name}.webp`);
+        await sharp(scaled.at(-1))
+          .webp({ quality: 85 })
+          .toFile(`${output}${name}-still.webp`);
+        console.log(`Captured ${name} (${frames.length} frames)`);
+      },
+    };
+  };
+
+  // 1. The first three steps of a build, on a fresh character: a priority
+  // swap, a metatype, a raised attribute — and the sidebar's points following.
+  await open(
+    await api("characters/new", { name: "カイト", metatype: "Human" }),
+  );
+  await tab("優先度");
+  {
+    const clip = motion();
+    const table = page.locator("table").filter({ hasText: "魔力/共振力" });
+    await table.scrollIntoViewIfNeeded();
+    await clip.frame(1400);
+    // the attributes row's B: attributes and skills trade places
+    await clip.press(
+      table
+        .locator("tr")
+        .filter({ hasText: "能力値" })
+        .locator("td")
+        .nth(2)
+        .getByRole("button"),
+    );
+    await clip.frame(1400);
+    await clip.press(
+      page
+        .locator("nav.tabs")
+        .getByRole("button", { name: "メタタイプ", exact: true }),
+    );
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await clip.press(page.getByRole("button", { name: /^オーク/ }));
+    await clip.frame(1400);
+    await clip.press(
+      page
+        .locator("nav.tabs")
+        .getByRole("button", { name: "能力値", exact: true }),
+    );
+    await page.evaluate(() => window.scrollTo(0, 0));
+    const bod = page.getByRole("slider").first();
+    await bod.focus();
+    for (let i = 0; i < 3; i++) {
+      await page.keyboard.press("ArrowRight");
+      await page.waitForTimeout(400);
+      await clip.frame(600);
+    }
+    await clip.frame(2000);
+    await clip.save("anim-create");
+  }
+  await open(character);
+
   await shot("ui-toolbar", page.locator(".toolbar"));
   await shot("ui-sidebar", page.locator("aside.side"));
   for (const [key, label] of Object.entries({
@@ -181,26 +288,55 @@ try {
   await shot("ui-export-menu");
   await page.keyboard.press("Escape");
 
+  // 2. A copy from the export menu. Picking an item closes the menu, so the
+  // コピー ✓ beside 書き出し is the only sign it worked — the clip ends on it.
+  // On a tab with the sidebar: in the sheet's full-width toolbar 書き出し sits
+  // at the right edge, and its panel runs off the screen.
+  await tab("能力値");
+  {
+    const clip = motion({ x: 0, y: 0, width: 1440, height: 560 });
+    await clip.frame(1200);
+    await clip.press(page.getByRole("button", { name: "書き出し ▾" }));
+    await clip.press(
+      page.getByRole("button", { name: "ココフォリア", exact: true }),
+    );
+    await expect(page.locator(".menu-note")).toHaveText("コピー ✓");
+    await clip.frame(2400);
+    await clip.save("anim-export-copy");
+  }
+
   // Career mode: one reward, one raise, and the breakdown that prices it. The
-  // sample still has creation errors, so the switch asks first.
+  // sample still has creation errors, so the switch asks first. Recorded as
+  // the third clip; the career still below is taken from where it ends.
+  const career = motion();
+  // the sheet tab is full width; the sidebar comes back on any other tab
+  await tab("能力値");
+  // the copy above leaves コピー ✓ up for two seconds
+  await expect(page.locator(".menu-note")).toBeEmpty();
+  await career.frame(1200);
   page.once("dialog", (dialog) => void dialog.accept());
-  await page
-    .getByRole("button", { name: "作成完了（キャリア）", exact: true })
-    .click();
+  await career.press(
+    page.getByRole("button", { name: "作成完了（キャリア）", exact: true }),
+  );
   await expect(
     page.getByRole("button", { name: "キャリア中", exact: true }),
   ).toBeVisible();
-  // the sheet tab is full width; the sidebar comes back on any other tab
-  await tab("能力値");
+  await page.evaluate(() => window.scrollTo(0, 0));
   await page.getByPlaceholder("Run 名など").fill("港の倉庫");
   await page.getByRole("spinbutton", { name: "カルマ" }).fill("12");
   await page.getByRole("spinbutton", { name: "新円" }).fill("6000");
-  await page.getByRole("button", { name: "報酬を追加" }).click();
+  await career.press(page.getByRole("button", { name: "報酬を追加" }), 1400);
   await expect(page.getByText("港の倉庫 · 12K")).toBeVisible();
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await career.frame(1400);
   const agi = page.getByRole("slider").nth(1);
   await agi.focus();
   await page.keyboard.press("ArrowRight");
-  await page.getByRole("button", { name: "成長／買い物の内訳" }).click();
+  await page.waitForTimeout(500);
+  await career.frame(1400);
+  await career.press(page.getByRole("button", { name: "成長／買い物の内訳" }));
+  await career.frame(2600);
+  await career.save("anim-career");
   await expect(page.locator(".career-breakdown .stat").first()).toContainText(
     "AGI",
   );
