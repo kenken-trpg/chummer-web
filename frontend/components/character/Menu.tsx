@@ -30,11 +30,10 @@ export function Menu({
   const body = useRef<HTMLDivElement>(null);
 
   // Before paint, so the panel never shows on the wrong side for a frame.
+  // Reset to the left edge on each open (the button's click), not here: the
+  // toolbar may have wrapped since, and the button left the edge.
   useLayoutEffect(() => {
-    if (!open) {
-      setAlignEnd(false);
-      return;
-    }
+    if (!open) return;
     const panel = body.current;
     if (!panel || alignEnd) return;
     const room = document.documentElement.clientWidth;
@@ -73,7 +72,14 @@ export function Menu({
 
   return (
     <div className="menu" ref={box}>
-      <button className="btn" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+      <button
+        className="btn"
+        aria-expanded={open}
+        onClick={() => {
+          if (!open) setAlignEnd(false);
+          setOpen(!open);
+        }}
+      >
         {label} ▾
       </button>
       {/* always mounted: a live region only announces changes to itself */}
