@@ -140,7 +140,10 @@ export function Toolbar({
           share, print. The conversions below are a handful of buttons each
           used once in a while, and as a flat row they were most of the
           toolbar — so they live one click away instead. */}
-      <Menu label={ui("toolbar.exportMenu")}>
+      <Menu
+        label={ui("toolbar.exportMenu")}
+        note={copied && copied !== "share" ? ui("share.copied") : null}
+      >
         <HelpTip
           label={ui("help.open", { label: ui("toolbar.exportChum5") })}
           lines={[{ label: ui("help.toolbar.exportChum5") }]}

@@ -658,6 +658,18 @@ input[type="search"] {
    and it sits above the sticky tab bar (z-index 5) it hangs over. */
 .menu {
   position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+/* コピー ✓ for an item copied from inside the panel, which has closed by then */
+.menu-note:empty {
+  display: none;
+}
+.menu-note {
+  color: var(--accent);
+  font-size: 0.9em;
+  white-space: nowrap;
 }
 .menu-body {
   position: absolute;

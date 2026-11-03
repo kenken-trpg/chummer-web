@@ -347,6 +347,27 @@ describe("<Toolbar>", () => {
     expect(screen.getByRole("button", { name: "共有リンク" })).toBeDefined();
   });
 
+  // Picking an item closes the menu, so コピー ✓ on the item's own label is
+  // gone before anyone sees it. The menu says so beside its button instead.
+  it("says コピー ✓ beside 書き出し once an item in it is copied, with the menu closed", () => {
+    const view = render(
+      <Toolbar ed={makeEd({ copied: "cc" })} {...base} tab={"priority"} sheetLayout={"standard"} />,
+    );
+    expect(screen.queryByRole("button", { name: "ココフォリア" })).toBeNull();
+    expect(screen.getByRole("status").textContent).toBe("コピー ✓");
+
+    // the share link sits outside the menu and already shows it on itself
+    view.rerender(
+      <Toolbar
+        ed={makeEd({ copied: "share" })}
+        {...base}
+        tab={"priority"}
+        sheetLayout={"standard"}
+      />,
+    );
+    expect(screen.getByRole("status").textContent).toBe("");
+  });
+
   // The untrained switch changes what the copied block holds, so it has to
   // reach the builder — not only flip the checkbox.
   it("feeds the untrained switch into the copied block", () => {
