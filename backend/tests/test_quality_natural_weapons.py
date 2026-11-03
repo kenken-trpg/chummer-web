@@ -56,7 +56,8 @@ def test_the_fvtt_export_carries_the_bite() -> None:
     char = state_to_fvtt(_infected("Infected: Vampire (Non-Human)"))["characters"]["character"]
     weapons = char["weapons"]["weapon"]
     assert [(w["name_english"], w["category_english"], w["damage_noammo_english"]) for w in weapons] == [
-        ("Infected Bite", "Unarmed", "5P")
+        ("Infected Bite", "Unarmed", "5P"),
+        ("Unarmed Attack", "Unarmed", "4S"),
     ]
 
 

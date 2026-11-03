@@ -411,7 +411,7 @@ def test_ammo_with_a_gun_goes_as_its_clips_and_the_figures_leave_the_loaded_roun
     # the sheet has the APDS in it; Foundry adds the equipped clip itself
     assert state.derived["weapons"][0]["ap"] == "-5"
     char = _char(state, "en")
-    (row,) = char["weapons"]["weapon"]
+    (row, _unarmed) = char["weapons"]["weapon"]
     assert (row["damage_noammo_english"], row["rawap"]) == ("8P", "-1")
     clips = {c["english_name"]: c for c in row["clips"]["clip"]}
     assert clips["Ammo: Regular Ammo"]["count"] == "20"
@@ -471,7 +471,7 @@ def test_vehicles_carry_their_stats_mods_stowed_gear_and_mounted_guns() -> None:
     assert [w["name_english"] for w in lynx["weapons"]["weapon"]] == ["FN HAR"]
     # what sits in a vehicle is on the vehicle's actor, not the character's
     assert [(g["name_english"], g["rating"]) for g in char["gears"]["gear"]] == [("Medkit", "6")]
-    assert [w["name_english"] for w in char["weapons"]["weapon"]] == ["Ares Predator V"]
+    assert [w["name_english"] for w in char["weapons"]["weapon"]] == ["Ares Predator V", "Unarmed Attack"]
 
 
 def test_ware_in_a_drone_arm_goes_with_the_drone_and_into_the_mod_description() -> None:

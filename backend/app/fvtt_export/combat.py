@@ -183,9 +183,13 @@ def _weapons(derived: dict[str, Any], tr: Any, owners: dict[str, str], owner: st
                 "category_english": category,
                 "type": str(row.get("type") or ""),
                 "skill": _weapon_skill(row),
-                "rawaccuracy": str(row.get("accuracy") or "0"),
+                "rawaccuracy": _accuracy(row, derived),
                 "rawap": str(_noammo(row, "ap") or "0"),
+                # 0.34.5 reads the first, 0.36.3 on `rawdamage` and then the
+                # second (WeaponParser): the finished figure goes in both
                 "damage_noammo_english": str(_noammo(row, "damage") or ""),
+                "damage_english": str(_noammo(row, "damage") or ""),
+                "rawdamage": _str_formula(row, derived) if row.get("natural") else None,
                 "rawrc": str(row.get("rc") or "0"),
                 "rawreach": str(row.get("reach") or "0"),
                 "mode": mode,
@@ -204,7 +208,90 @@ def _weapons(derived: dict[str, Any], tr: Any, owners: dict[str, str], owner: st
                 "page": str(row.get("page") or ""),
             }
         )
+    if not owner:
+        # Chummer gives every character this one (`Character.Load` adds it
+        # when the save lacks it); this app keeps only its modifiers
+        out.append(_unarmed(derived, tr))
     return out
+
+
+#: Unarmed Attack in weapons.xml (hidden: Chummer adds it, nobody buys it)
+_UNARMED_ID = "63dcfdb6-bbd9-4a58-bbf4-cd35f7614fdc"
+
+
+def _unarmed(derived: dict[str, Any], tr: Any) -> dict[str, Any]:
+    """Unarmed Attack as Chummer prints it: ({STR})S, Physical accuracy, with
+    what the character's bonuses add (Critical Strike's DV, Killing Hands'
+    physical damage, a troll's reach)."""
+    strength = int((derived.get("totals") or {}).get("STR") or 0)
+    dv = int(derived.get("unarmed_dv") or 0)
+    kind = "P" if derived.get("unarmed_physical") else "S"
+    ap = int(derived.get("unarmed_ap") or 0)
+    return {
+        "guid": "unarmed-attack",
+        "sourceid": _UNARMED_ID,
+        "name": tr("Unarmed Attack"),
+        "name_english": "Unarmed Attack",
+        "category": tr("Unarmed"),
+        "category_english": "Unarmed",
+        "type": "Melee",
+        "skill": "Unarmed Combat",
+        "rawaccuracy": "Physical",
+        "rawap": str(ap) if ap else "-",
+        "damage_noammo_english": f"{strength + dv}{kind}",
+        "damage_english": f"{strength + dv}{kind}",
+        "rawdamage": f"({{STR}}{dv:+d}){kind}" if dv else f"({{STR}}){kind}",
+        "rawrc": "0",
+        "rawreach": str(int(derived.get("unarmed_reach") or 0)),
+        "mode": None,
+        "mode_noammo": None,
+        "mode_english_noammo": None,
+        "ammo_english": "0",
+        "ranges": None,
+        "conceal": "0",
+        "qty": "1",
+        "avail": "0",
+        "owncost": "0",
+        "equipped": "True",
+        "accessories": {"accessory": []},
+        "source": "SR5",
+        "page": "132",
+    }
+
+
+def _accuracy(row: dict[str, Any], derived: dict[str, Any]) -> str:
+    """The finished accuracy, or "Physical" for a natural weapon at the
+    physical limit, which the importer ties to the limit (as Chummer's
+    `rawaccuracy` does) so it follows the attributes in Foundry."""
+    accuracy = str(row.get("accuracy") or "0")
+    physical = str((derived.get("limits") or {}).get("physical") or "")
+    if row.get("natural") and row.get("accuracy_formula") == "Physical" and accuracy == physical:
+        return "Physical"
+    return accuracy
+
+
+def _str_formula(row: dict[str, Any], derived: dict[str, Any]) -> str | None:
+    """A natural weapon's damage as `({STR}+n)T`, which the importer ties to
+    Strength: n is what the finished figure holds over the character's STR,
+    so the bonuses on it stay. None when the attack does not run on STR, or
+    the figure is not a plain number and type."""
+    # string tests rather than a regex: the figure comes from the state, and
+    # CodeQL counts `\d+` against a long run of digits as a slow pattern
+    formula = str(row.get("damage_formula") or "").replace(" ", "")
+    finished = str(_noammo(row, "damage") or "")
+    kind = finished[-1:]
+    if kind not in ("P", "S", "M") or not finished[:-1].isdigit() or not _is_str_formula(formula):
+        return None
+    extra = int(finished[:-1]) - int((derived.get("totals") or {}).get("STR") or 0)
+    return f"({{STR}}{extra:+d}){kind}" if extra else f"({{STR}}){kind}"
+
+
+def _is_str_formula(formula: str) -> bool:
+    """`({STR})P`, `({STR}+1)P` or `({STR}-1)S`: Strength and a whole number."""
+    if not formula.startswith("({STR}") or formula[-2:-1] != ")" or formula[-1:] not in ("P", "S", "M"):
+        return False
+    offset = formula[len("({STR}") : -2]
+    return not offset or (offset[0] in "+-" and offset[1:].isdigit())
 
 
 def _noammo(row: dict[str, Any], key: str) -> Any:
