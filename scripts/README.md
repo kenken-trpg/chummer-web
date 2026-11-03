@@ -21,6 +21,28 @@ reading the sample's own `.chum5` back in. Review the images and update the manu
 captions, and sample description together. Check image loading with
 `cd frontend && npm run test:e2e -- e2e/manual.spec.ts --workers=1`.
 
+## YouTube walkthrough
+
+`scripts/record-walkthrough.mjs` records a narrated walkthrough of character
+creation (about 90 seconds, 1920×1080): Playwright plays the steps, macOS `say`
+(Kyoko) reads one line per scene, and ffmpeg puts the frames and the voice
+together. The subtitles, a cursor and the title/end cards are drawn into the
+page, so nothing has to be added afterwards. With the same servers as the
+manual screenshots running:
+
+```sh
+node scripts/record-walkthrough.mjs                       # walkthrough.mp4
+node scripts/record-walkthrough.mjs --build-only --bgm music.mp3  # walkthrough-bgm.mp4
+```
+
+The output goes to `chummer-walkthrough` in the OS temp directory (`--out` to
+change it). `--build-only` re-mixes the last recording without playing it
+again; `--bgm` loops the music under the narration, fades it in and out, and
+ducks it while the voice speaks. It needs macOS, ffmpeg (`brew install
+ffmpeg`), and Playwright Chromium. The script's `scenes` list holds the spoken
+line (kana for English words `say` misreads) and the subtitle apart. Credit the
+music in the video description as its licence asks.
+
 ## Application publishing
 
 `publish.sh` pushes a feature branch, creates or reuses its PR, waits for checks,
