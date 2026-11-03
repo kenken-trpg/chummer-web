@@ -14,9 +14,10 @@ node scripts/capture-manual.mjs
 The script requires Playwright Chromium (`npx playwright install chromium`).
 `MANUAL_ORIGIN` can override the frontend URL. It uses an isolated browser
 context, creates the sample through the real API, and replaces the WebP images
-in `public/manual/img/`. It also records three short animations (`anim-*.webp`,
+in `public/manual/img/`. It also records four short animations (`anim-*.webp`,
 each with a `-still.webp` last frame the manual shows under reduced motion):
-a build's first steps, a copy from the export menu, and career mode. Review the images and update the manual's capture date,
+a build's first steps, a copy from the export menu, career mode, and
+reading the sample's own `.chum5` back in. Review the images and update the manual's capture date,
 captions, and sample description together. Check image loading with
 `cd frontend && npm run test:e2e -- e2e/manual.spec.ts --workers=1`.
 

@@ -304,6 +304,20 @@ try {
     await clip.save("anim-export-copy");
   }
 
+  // The sample as Chummer would save it, for the import clip further down —
+  // written now, before the career clip changes it. What the .chum5書出 button
+  // fetches, without the browser's download in between.
+  const saved = mkdtempSync(join(tmpdir(), "manual-chum5-"));
+  const chum5 = join(saved, "カイト.chum5");
+  {
+    const response = await page.request.post(
+      `${origin}/api/characters/chummer`,
+      { data: { state: character } },
+    );
+    if (!response.ok()) throw new Error(`chum5 export: ${response.status()}`);
+    writeFileSync(chum5, await response.body());
+  }
+
   // Career mode: one reward, one raise, and the breakdown that prices it. The
   // sample still has creation errors, so the switch asks first. Recorded as
   // the third clip; the career still below is taken from where it ends.
@@ -343,6 +357,38 @@ try {
     "ui-career-sidebar",
     page.locator(".career-panel").filter({ hasText: "報酬合計" }),
   );
+
+  // 4. Reading a .chum5 back in: a blank runner, 読込, and カイト opens in its
+  // place — name, metatype and sidebar all change. The file picker is the browser's
+  // own window and never in a screenshot; the outline on 読込 stands in for it.
+  {
+    await open(
+      await api("characters/new", { name: "Runner", metatype: "Human" }),
+    );
+    const clip = motion();
+    await clip.frame(1200);
+    const chooser = page.waitForEvent("filechooser");
+    await clip.press(
+      page.getByRole("button", {
+        name: "読込 (JSON/.chum5/.xlsx)",
+        exact: true,
+      }),
+      1400,
+    );
+    await (await chooser).setFiles(chum5);
+    await expect(
+      page.getByRole("textbox", { name: "キャラクター名" }),
+    ).toHaveValue("カイト");
+    await expect(page.getByText("読み込み中…", { exact: true })).toHaveCount(0);
+    // focus stays on 読込 after the picker closes, and its help opens on focus
+    await page.evaluate(() => {
+      document.activeElement?.blur();
+      window.scrollTo(0, 0);
+    });
+    await clip.frame(3000);
+    await clip.save("anim-import");
+  }
+  rmSync(saved, { recursive: true, force: true });
 
   // The tabs a mundane orc never shows: one sample per kind of character that
   // opens them. Each is a starting point for the screenshot, not a finished
