@@ -306,7 +306,7 @@ describe("api.exportFvtt", () => {
   it("checks known omissions without changing local storage", async () => {
     const state = makeCharacter({ id: "a" });
     const differences = [
-      { key: "engine.export.fvttInnatePower", params: { name: { tr: "Search" } } },
+      { key: "engine.export.fvttAIProgram", params: { name: { tr: "Browse" } } },
     ];
     respond = () => json({ differences });
     expect(await api.checkFvttExport(state)).toEqual(differences);

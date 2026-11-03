@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from ..data_loader import catalog_list
+from ..data_loader import catalog, catalog_list
 from ._common import _flag, _fullname, _money
 
 #: this app's grade -> the Foundry grade key (the importer lower-cases
@@ -164,3 +164,47 @@ def _gears(derived: dict[str, Any], tr: Any, owners: dict[str, str], owner: str 
         if item["guid"] in licenses:
             item["children"] = {"gear": licenses[item["guid"]]}
     return out
+
+
+def _foci(derived: dict[str, Any], tr: Any) -> list[dict[str, Any]]:
+    """Foci, and qi foci, as the print sheet lists them: gear of category
+    `Foci` at their force. The importer has no focus item and makes each one
+    equipment; `bonded` rides along as Chummer prints it."""
+    out = []
+    for row in derived.get("foci") or []:
+        name = str(row.get("name") or "")
+        if name:
+            out.append(_focus(row, tr, row.get("gear_id"), name, str(row.get("weapon_name") or ""), row.get("force")))
+    # a qi focus's row is named after the power it holds; Chummer's gear is
+    # the Qi Focus, with the power as its pick
+    qi = catalog().get("qi_focus") or {}
+    for row in derived.get("qi_foci") or []:
+        power = " ".join(str(x) for x in (row.get("name"), row.get("extra")) if x)
+        spec = {"source": qi.get("source"), "page": qi.get("page"), **row, "avail": ""}
+        out.append(_focus(spec, tr, qi.get("id"), str(qi.get("name") or "Qi Focus"), power, row.get("rating")))
+    return out
+
+
+def _focus(row: dict[str, Any], tr: Any, gear_id: Any, name: str, extra: str, force: Any) -> dict[str, Any]:
+    return {
+        "guid": str(row.get("id") or ""),
+        "sourceid": str(gear_id or ""),
+        "name": tr(name, "gear"),
+        "name_english": name,
+        "fullname": _fullname(tr(name, "gear"), tr(extra) if extra else ""),
+        "fullname_english": _fullname(name, extra),
+        "extra": extra or None,
+        "category": tr("Foci"),
+        "category_english": "Foci",
+        "rating": str(int(force or 0)),
+        "qty": "1",
+        "avail": str(row.get("avail") or ""),
+        "owncost": _money(row.get("nuyen")),
+        "bonded": _flag(row.get("bonded", True)),
+        "equipped": "True",
+        "iscommlink": "False",
+        "issin": "False",
+        "isammo": "False",
+        "source": str(row.get("source") or ""),
+        "page": str(row.get("page") or ""),
+    }

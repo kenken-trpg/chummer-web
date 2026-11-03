@@ -13,9 +13,10 @@ the chum5 export writes. Values are strings and flags are "True" / "False",
 as Chummer prints them. The field map is `docs/plans/fvtt-export-plan.md`.
 
 Covered so far: the character itself, skills, qualities, contacts,
-lifestyles, spells, adept powers, complex forms, armor, cyberware and
-bioware, gear, weapons, vehicles and drones (with their mods, what is
-stowed in them and the guns on their mounts) and the portraits.
+lifestyles, spells, adept powers, complex forms, metamagics and echoes,
+critter powers, armor, cyberware and bioware, gear and foci, weapons,
+vehicles and drones (with their mods, what is stowed in them and the guns
+on their mounts) and the portraits.
 
 This module holds the entry point and the character block it fills; each
 section lives beside it, as on the import side: `skills`, `life`
@@ -32,9 +33,9 @@ from ..models import CharacterState
 from ..rules import rules_for, using_rules
 from ._common import _flag, _html, _translator
 from .combat import _armors, _weapons
-from .gear import _gears, _wares
+from .gear import _foci, _gears, _wares
 from .life import _contacts, _lifestyles, _qualities
-from .magic import _complex_forms, _initiation, _powers, _spells, _tradition
+from .magic import _complex_forms, _critter_powers, _initiation, _metamagics, _powers, _spells, _tradition
 from .skills import _skills
 from .vehicles import _vehicle_owners, _vehicles
 
@@ -113,9 +114,11 @@ def _character(state: CharacterState, derived: dict[str, Any], tr: Any) -> dict[
         "spells": {"spell": _spells(derived, tr)},
         "powers": {"power": _powers(derived, tr)},
         "complexforms": {"complexform": _complex_forms(derived, tr)},
+        "metamagics": {"metamagic": _metamagics(derived, tr)},
+        "critterpowers": {"critterpower": _critter_powers(state, derived, tr)},
         "armors": {"armor": _armors(derived, tr)},
         "cyberwares": {"cyberware": _wares(derived, tr)},
-        "gears": {"gear": _gears(derived, tr, owners)},
+        "gears": {"gear": [*_gears(derived, tr, owners), *_foci(derived, tr)]},
         "weapons": {"weapon": _weapons(derived, tr, owners)},
         "vehicles": {"vehicle": _vehicles(derived, tr, owners)},
         **_mugshots(state),

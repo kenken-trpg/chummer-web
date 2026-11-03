@@ -78,13 +78,13 @@ chum5（保存形式）は通らない。完成値（`total` など）が必要�
 | 防具 `armors.armor` / `otherarmors.otherarmor` | `armor`（`+` 付きは追加分）, `improvesource` | derived `armor_items` / `armor_mods` |
 | ウェア `cyberwares.cyberware` | `ess`, `grade`, `capacity` | state `cyberware`/`bioware` ＋ derived 精神力 |
 | 武器 `weapons.weapon` | `category_english`, `type`, `skill`, `rawaccuracy`, `rawap`, `rawrc`, `rawreach`, `damage_noammo_english`, `mode_english_noammo`, `ammo_english`, `ranges`, `clips.clip`, `currentammo`, `accessories.accessory`（`mount`, `rc`, `accuracy`, `conceal`） | derived `weapons` / `weapon_accessories` |
-| 装備 `gears.gear` | `iscommlink`, `issin`, `isammo`, `category_english`; 機器は `devicerating`, `attack`, `sleaze`, `dataprocessing`, `firewall`; 弾は `weaponbonus*_english` | derived `gear` / `commlinks` / `cyberdecks` / `rccs` / `programs` |
+| 装備 `gears.gear` | `iscommlink`, `issin`, `isammo`, `category_english`; 機器は `devicerating`, `attack`, `sleaze`, `dataprocessing`, `firewall`; 弾は `weaponbonus*_english` | derived `gear` / `commlinks` / `cyberdecks` / `rccs` / `programs`。収束具は derived `foci` / `qi_foci` をカテゴリ `Foci` で（取り込みは装備として扱う） |
 | 呪文 `spells.spell` | `category_english`, `type_english`, `range_english`, `duration_english`, `damage_english`, `dv_english`, `descriptors_english` | state `spells` ＋ 呪文データ |
 | 儀式 | `type_english`, `descriptors` | 同上（呪文のうち Ritual） |
 | アデプトパワー `powers.power` | `rating`, `totalpoints` | derived `adept_powers` |
 | 複合体 `complexforms.complexform` | `target_english`, `duration_english`, `fv_english` | state `complex_forms` |
-| メタマジック／エコー `metamagics.metamagic` | 共通のみ | derived `initiation.metamagics` / `submersion.echoes` |
-| クリッターパワー `critterpowers.critterpower` | `type_english`, `range_english`, `duration_english`, `extra_english` | メタタイプ由来のパワー |
+| メタマジック／エコー `metamagics.metamagic` | 共通のみ（`improvementsource` が `Metamagic` か `Echo`） | derived `initiation.metamagics` / `submersion.echoes` |
+| クリッターパワー `critterpowers.critterpower` | `type_english`, `range_english`, `duration_english`（I/S/P の 1 文字だけ読む）, `extra_english`（`parseFloat` でレーティングにするので、選択肢は入れない） | 種族の `metatype_info.powers`、資質が付けるもの（選んだ追加のパワーを含む）、derived `critter_powers`（買ったもの） |
 | ヴィークル `vehicles.vehicle` | `handling`, `accel`, `speed`, `pilot`, `body`, `armor`, `sensor`, `seats`, `isdrone`, `mods.mod`（`weapons.weapon`）, `gears.gear` | derived `vehicles` / `drones` / `vehicle_mods` / `weapon_mounts` |
 
 `_english` 付きのフィールドはシステム側がキーワードを解析するので、**必ず英語の原文**（Chummer データの値）を入れる。日本語は `name` など表示用だけに使う。

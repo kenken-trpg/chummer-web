@@ -556,8 +556,6 @@ export const EN_ENGINE = {
     "When the .chum5 is read back, the previous {amount}K advancement cost becomes a balance adjustment, keeping the remaining karma. Future advancement is priced from the ratings at import",
   "engine.export.fvttAIProgram":
     "A.I. program {name} is not included in the Foundry JSON (Foundry's import does not read it). Add it separately in Foundry",
-  "engine.export.fvttInnatePower":
-    "Innate power {name} {selection} ({source} p.{page}) is not included in the Foundry JSON. Add it separately in Foundry",
   "engine.export.gained": "{count} extra {kind} entries appear",
   "engine.export.changed": "{kind} entries change",
   "engine.export.karma": "karma left goes {before} → {after}",
