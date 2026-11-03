@@ -61,4 +61,24 @@ describe("Menu", () => {
     fireEvent.click(toggle);
     expect(panel().classList.contains("menu-body-end")).toBe(false);
   });
+
+  it("shows the note on the button itself and keeps the button's name", () => {
+    const { rerender } = render(
+      <Menu label="書き出し" note={null}>
+        <button className="btn">item</button>
+      </Menu>,
+    );
+    const toggle = screen.getByRole("button", { name: "書き出し ▾" });
+    expect(toggle.querySelector(".menu-face")?.hasAttribute("data-note")).toBe(false);
+    rerender(
+      <Menu label="書き出し" note="コピー ✓">
+        <button className="btn">item</button>
+      </Menu>,
+    );
+    // same button, same name: tests and screen readers still find it by 書き出し
+    expect(screen.getByRole("button", { name: "書き出し ▾" })).toBe(toggle);
+    expect(toggle.querySelector(".menu-face")?.hasAttribute("data-note")).toBe(true);
+    expect(toggle.querySelector(".menu-face-note")?.textContent).toBe("コピー ✓");
+    expect(screen.getByRole("status").textContent).toBe("コピー ✓");
+  });
 });
