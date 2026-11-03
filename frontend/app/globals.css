@@ -660,23 +660,33 @@ input[type="search"] {
   position: relative;
 }
 /* コピー ✓ for an item copied from inside the panel, which has closed by then.
-   It hangs under the button, out of the flow: beside it, it pushed every
-   button to its right along for the two seconds it showed. */
-.menu-note:empty {
-  display: none;
+   It takes the button's own face for its two seconds (Menu.tsx says why);
+   `.menu-note` is only the screen-reader announcement of it. */
+.menu-face {
+  display: inline-grid;
+}
+.menu-face > * {
+  grid-area: 1 / 1;
+  text-align: center;
+  white-space: nowrap;
+}
+.menu-face-note {
+  visibility: hidden;
+  color: var(--accent);
+}
+.menu-face[data-note] .menu-face-label {
+  visibility: hidden;
+}
+.menu-face[data-note] .menu-face-note {
+  visibility: visible;
 }
 .menu-note {
   position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  z-index: 10;
-  padding: 2px 8px;
-  color: var(--accent);
-  font-size: 0.9em;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
   white-space: nowrap;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 6px;
 }
 .menu-body {
   position: absolute;

@@ -14,7 +14,7 @@ export function Menu({
 }: {
   label: string;
   /**
-   * A word beside the button that outlives the panel. Picking an item closes
+   * A word shown on the button in place of its label, outliving the panel. Picking an item closes
    * the menu, so an item that reports on itself (コピー ✓ on its own label)
    * reports to nobody — the panel is gone before anyone reads it.
    */
@@ -74,13 +74,24 @@ export function Menu({
     <div className="menu" ref={box}>
       <button
         className="btn"
+        // the name stays put while the face below says コピー ✓
+        aria-label={`${label} ▾`}
         aria-expanded={open}
         onClick={() => {
           if (!open) setAlignEnd(false);
           setOpen(!open);
         }}
       >
-        {label} ▾
+        {/* Both faces share one grid cell and the hidden one keeps its room,
+            so the button is as wide as the wider of the two either way: the
+            note neither pushes the toolbar along (beside the button) nor
+            covers the row under it (hung below). */}
+        <span className="menu-face" data-note={note ? "" : undefined}>
+          <span className="menu-face-label">{label} ▾</span>
+          <span className="menu-face-note" aria-hidden="true">
+            {note}
+          </span>
+        </span>
       </button>
       {/* always mounted: a live region only announces changes to itself */}
       <span className="menu-note" role="status">

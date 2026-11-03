@@ -291,7 +291,7 @@ try {
   await page.keyboard.press("Escape");
 
   // 2. A copy from the export menu. Picking an item closes the menu, so the
-  // コピー ✓ under 書き出し is the only sign it worked — the clip ends on it.
+  // 書き出し turning into コピー ✓ is the only sign it worked — the clip ends on it.
   {
     const clip = motion({ x: 0, y: 0, width: 1440, height: 560 });
     await clip.frame(1200);
