@@ -169,6 +169,10 @@ def _import_identity(root: ET.Element, cat: CatalogDict, st: dict[str, Any], war
         ("concept", "concept"),
     ):
         val = _text(root.find(tag))
+        if field == "sex":
+            # `<gender>` is what a current Chummer saves, and what
+            # `Character.Load` reads first; `<sex>` only when it is missing.
+            val = _text(root.find("gender")) or val
         if field in ("appearance", "background", "concept"):
             val = rtf_to_text(val)
         if val:
