@@ -1305,6 +1305,24 @@ def test_the_talent_quality_opens_its_tab_and_skills() -> None:
     assert chum5_to_state(xml)[0]["quality_ids"] == []
 
 
+def test_prototype_transhuman_marks_the_bioware_its_allowance_covers() -> None:
+    """`Cyberware.Load` reads `<prototypetranshuman>` off the save alone and
+    counts a marked piece's essence as 0. Chummer waives whole pieces: of the
+    point the quality allows, Enhanced Articulation (0.3) and Synaptic
+    Booster 1 (0.5) are covered, and Muscle Toner 4 (0.8), which the engine
+    waives only 0.2 of, is left unmarked."""
+    state, _ = _with_quality("Prototype Transhuman", {})
+    state.bioware = [
+        CyberwareInstall(id="ea", ware_id="dfada66f-73f7-4648-aff4-6b6bce25f84c"),
+        CyberwareInstall(id="sb", ware_id="4a4e1079-5872-4f3f-a450-48c30a5504f3"),
+        CyberwareInstall(id="mt", ware_id="69ab0255-a76b-4190-a8be-0473fed231ef", rating=4),
+    ]
+    root = ET.fromstring(state_to_chum5(state))
+    marks = {w.findtext("guid"): w.findtext("prototypetranshuman") for w in root.findall("./cyberwares/cyberware")}
+    assert marks == {"ea": "True", "sb": "True", "mt": None}
+    assert root.findtext("prototypetranshuman") == "1"
+
+
 def test_a_prototype_transhuman_file_from_before_keeps_its_pick() -> None:
     """This app used to write the pick into the granting quality's `<extra>`."""
     state, qid = _with_quality("Prototype Transhuman", {})
