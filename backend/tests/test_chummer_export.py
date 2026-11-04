@@ -1322,6 +1322,30 @@ def test_prototype_transhuman_marks_the_bioware_its_allowance_covers() -> None:
     assert root.findtext("prototypetranshuman") == "1"
 
 
+def test_the_device_the_matrix_initiative_runs_is_the_active_commlink() -> None:
+    """`Gear.Load` reads `<active>` into `ActiveCommlink`, and Chummer never
+    picks one on load: without it the Matrix initiative has no Data
+    Processing. The one marked is the one this app's initiative runs — the
+    best commlink here, and a technomancer's Living Persona over it once
+    their Logic outdoes its Data Processing."""
+    links = {r["name"]: r["id"] for r in catalog_list("commlinks")}
+    state, _ = _with_quality("Impassive", {})
+    state.commlinks = [
+        CommlinkInstall(id="meta", gear_id=links["Meta Link"]),
+        CommlinkInstall(id="ikon", gear_id=links["Hermes Ikon"]),
+    ]
+    root = ET.fromstring(state_to_chum5(state))
+    assert {g.findtext("name"): g.findtext("active") for g in root.iter("gear")} == {
+        "Meta Link": None,
+        "Hermes Ikon": "True",
+    }
+    state.talent = "Technomancer"
+    state.priorities = Priorities(Talent="A", Heritage="E")
+    state.attributes = {"LOG": 5}
+    active = [g.findtext("name") for g in ET.fromstring(state_to_chum5(state)).iter("gear") if g.findtext("active")]
+    assert active == ["Living Persona"]
+
+
 def test_what_gear_armor_and_a_quality_bring_is_a_weapon_of_its_own() -> None:
     """`<addweapon>`: Chummer adds the weapon a grenade, a shield or Fangs
     brings as a row of its own with the owner's guid in `<parentid>`, and the

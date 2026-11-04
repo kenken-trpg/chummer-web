@@ -240,7 +240,8 @@ def test_a_known_row_gap_is_named_as_one() -> None:
     """A gap that is known and not fixed is listed so that the next one
     still fails the run — and it says so, rather than passing for a field
     Chummer does not read."""
-    assert (_accepted_drop("gear/active") or "").startswith("not written yet")
+    assert (_accepted_drop("accessory/equipped") or "").startswith("not written yet")
+    assert not (_accepted_drop("gear/active") or "").startswith("not written yet")
     assert _accepted_drop("spell/dv") is None
     assert _accepted_drop("quality/qualitytype") is None
 
