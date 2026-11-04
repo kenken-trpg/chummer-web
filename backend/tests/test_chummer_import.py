@@ -1309,3 +1309,22 @@ def test_the_sex_comes_from_gender_as_a_current_chummer_saves_it() -> None:
     assert sex("<sex>Male</sex>") == "Male"
     assert sex("<gender>Female</gender><sex>Male</sex>") == "Female"
     assert sex("<gender></gender><sex>Male</sex>") == "Male"
+
+
+def test_a_bought_focus_reads_back_without_a_formula() -> None:
+    """`<crafted>` and `<formulabought>` are this app's; a file Chummer saved
+    has neither. A focus that was bought has no formula, which is how the
+    engine holds it, so a missing `<formulabought>` must not read as True —
+    it flipped every bought focus on a trip through Chummer (2026-11-04)."""
+    state, _ = chum5_to_state(_with_unbonded_foci())
+    assert [(f["crafted"], f["formula_bought"]) for f in state["foci"]] == [(False, False)]
+    assert import_character(state).foci[0].formula_bought is False
+
+    # a crafted focus still reads its own flag, and a missing one is bought
+    made = import_character(state)
+    made.foci[0].bonded, made.foci[0].crafted, made.foci[0].formula_bought = True, True, False
+    xml = state_to_chum5(import_character(made.model_dump()))
+    assert b"<formulabought>False</formulabought>" in xml
+    assert [f["formula_bought"] for f in chum5_to_state(xml)[0]["foci"]] == [False]
+    missing = re.sub(rb"<formulabought>[^<]*</formulabought>", b"", xml)
+    assert [(f["crafted"], f["formula_bought"]) for f in chum5_to_state(missing)[0]["foci"]] == [(True, True)]
