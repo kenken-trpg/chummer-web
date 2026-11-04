@@ -43,6 +43,7 @@ _FROM_DATA: dict[str, tuple[str, str, tuple[str, ...]]] = {
             "category",
             "type",
             "spec",
+            "sizecategory",
             "reach",
             "accuracy",
             "damage",

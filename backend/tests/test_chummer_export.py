@@ -7,7 +7,7 @@ import xml.etree.ElementTree as ET
 from app.characters import compute_state, import_character
 from app.chummer_export import state_to_chum5
 from app.chummer_import import chum5_to_state
-from app.data_loader import catalog
+from app.data_loader import catalog, catalog_list
 from app.engine.constants import (
     MENTOR_SPIRIT_ID,
     PARAGON_ID,
@@ -1320,6 +1320,32 @@ def test_prototype_transhuman_marks_the_bioware_its_allowance_covers() -> None:
     marks = {w.findtext("guid"): w.findtext("prototypetranshuman") for w in root.findall("./cyberwares/cyberware")}
     assert marks == {"ea": "True", "sb": "True", "mt": None}
     assert root.findtext("prototypetranshuman") == "1"
+
+
+def test_what_gear_armor_and_a_quality_bring_is_a_weapon_of_its_own() -> None:
+    """`<addweapon>`: Chummer adds the weapon a grenade, a shield or Fangs
+    brings as a row of its own with the owner's guid in `<parentid>`, and the
+    owner names it in `<weaponguid>`. Chummer never makes it again on load,
+    so without it the grenade could not be thrown. The import skips it — the
+    engine makes it from the same owner — so nothing is bought twice."""
+
+    def named(bucket: str, name: str) -> str:
+        return next(str(row["id"]) for row in catalog_list(bucket) if row["name"] == name)
+
+    state, qid = _with_quality("Fangs", {})
+    state.gear = [GearInstall(id="g1", gear_id=named("gear", "Grenade: High Explosive"), qty=6)]
+    state.armor = [ArmorInstall(id="a1", armor_id=named("armor", "Ballistic Shield"))]
+    xml = state_to_chum5(state)
+    root = ET.fromstring(xml)
+    weapons = {w.findtext("parentid"): w for w in root.findall("./weapons/weapon")}
+    owners = {el.findtext("guid"): el for tag in ("gear", "armor", "quality") for el in root.iter(tag)}
+    for owner, name in (("g1", "Grenade: High Explosive"), ("a1", "Ballistic Shield"), (qid, "Fangs")):
+        weapon = weapons[owner]
+        assert (weapon.findtext("name"), weapon.findtext("cost")) == (name, "0")
+        assert owners[owner].findtext("weaponguid") == weapon.findtext("guid")
+    assert weapons["g1"].findtext("damage") == "16P (-2/m)"
+    back = chum5_to_state(xml)[0]
+    assert back["weapons"] == []
 
 
 def test_a_prototype_transhuman_file_from_before_keeps_its_pick() -> None:

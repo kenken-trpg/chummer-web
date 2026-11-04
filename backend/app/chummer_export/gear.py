@@ -20,7 +20,7 @@ from ._common import _Ctx, _Names, _sub
 from .data_fields import _definitions, _from_data
 from .improvements import _bonus_improvements, _Imp, _text, _with_rows, _write_improvements
 from .metatype import export_metatype_weapons
-from .natural_weapons import weapons_of
+from .natural_weapons import weapons_of, write_added_weapon
 
 
 def _ware_writer(state: CharacterState, names: _Names) -> Any:
@@ -303,6 +303,30 @@ def _export_weapons(root: ET.Element, state: CharacterState, names: _Names, ctx:
     export_metatype_weapons(weapons, state, ctx)
 
 
+def _export_added_weapons(root: ET.Element, state: CharacterState) -> None:
+    """The weapon each piece of carried gear (a grenade, a Survival Kit) and
+    armor (a shield) brings with it (`<addweapon>`), tied back by the
+    owner's `<weaponguid>` — Chummer looks the weapon up by it."""
+    gear_specs = {str(row["id"]): row for row in catalog_list("gear")}
+    armor_specs = {str(row["id"]): row for row in catalog_list("armor")}
+    carried = {g.id for g in state.gear}
+    owners = [
+        *(
+            (g.id, str((gear_specs.get(g.gear_id) or {}).get("add_weapon_id") or ""))
+            for g in state.gear
+            if not g.parent_id or g.parent_id in carried
+        ),
+        *((a.id, str((armor_specs.get(a.armor_id) or {}).get("add_weapon_id") or "")) for a in state.armor),
+    ]
+    elements = {el.findtext("guid"): el for tag in ("gear", "armor") for el in root.iter(tag)}
+    for owner, weapon_id in owners:
+        if not weapon_id or (el := elements.get(owner)) is None:
+            continue
+        guid = write_added_weapon(root, owner, weapon_id)
+        if guid:
+            _sub(el, "weaponguid", guid)
+
+
 def _emit_accessories(
     el: ET.Element, inst_id: str, by_parent: dict[str | None, list[Any]], names: _Names, mountless: set[str]
 ) -> None:
@@ -423,6 +447,8 @@ def _export_gear(root: ET.Element, state: CharacterState, names: _Names, ctx: _C
     emit_gear(gears, by_parent_g.get(None, []))
     _emit_focus_gear(gears, state, names)
     _export_gear_improvements(root, state, by_parent_g)
+    # after the gear and armor are written, which get the `<weaponguid>`
+    _export_added_weapons(root, state)
 
 
 def _export_gear_improvements(root: ET.Element, state: CharacterState, by_parent: dict[str | None, list[Any]]) -> None:
