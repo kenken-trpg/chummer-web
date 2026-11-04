@@ -11,11 +11,11 @@ import xml.etree.ElementTree as ET
 from collections.abc import Callable
 
 from ._imp import _Imp, _is_int, _precedence, _text
-from .tables import _ARMORS, _COSTS, _FLAGS, _PERSONA, _SEEKER, _TABS, _WEAPON_CATEGORY
+from .tables import ARMORS, COSTS, FLAGS, PERSONA, SEEKER, TABS, WEAPON_CATEGORY
 
 
 def _cost(node: ET.Element) -> list[_Imp]:
-    kind, named = _COSTS[node.tag]
+    kind, named = COSTS[node.tag]
     numbers = [_text(node, field) or "0" for field in ("val", "min", "max")]
     if not all(_is_int(number) for number in numbers):
         return []
@@ -39,7 +39,7 @@ def _weapon_category(node: ET.Element, pick: str | None) -> list[_Imp]:
     else:
         name = _text(node, "name")
     value = (_text(select, "value") if select is not None else "") or _text(node, "bonus")
-    return [_Imp(_WEAPON_CATEGORY[node.tag], name, val=int(value))] if name and _is_int(value) else []
+    return [_Imp(WEAPON_CATEGORY[node.tag], name, val=int(value))] if name and _is_int(value) else []
 
 
 def _unlockskills(node: ET.Element, rating: int) -> list[_Imp]:
@@ -47,7 +47,7 @@ def _unlockskills(node: ET.Element, rating: int) -> list[_Imp]:
 
 
 def _enabletab(node: ET.Element, rating: int) -> list[_Imp]:
-    tabs = (_TABS.get(_text(name).upper()) for name in node.findall("name"))
+    tabs = (TABS.get(_text(name).upper()) for name in node.findall("name"))
     return [_Imp("SpecialTab", tab, unique="enabletab") for tab in tabs if tab]
 
 
@@ -61,7 +61,7 @@ def _armor(node: ET.Element, rating: int) -> list[_Imp]:
         return []
     precedence, group = node.get("precedence"), node.get("group")
     unique = f"precedence{precedence}" if precedence else f"group{group}" if group else ""
-    return [_Imp(_ARMORS[node.tag], val=int(text), unique=unique)]
+    return [_Imp(ARMORS[node.tag], val=int(text), unique=unique)]
 
 
 def _disablegrade(node: ET.Element, rating: int) -> list[_Imp]:
@@ -112,7 +112,7 @@ def _selectskill(node: ET.Element, name: str) -> list[_Imp]:
 
 
 def _flag(node: ET.Element, rating: int) -> list[_Imp]:
-    kind, unique = _FLAGS[node.tag]
+    kind, unique = FLAGS[node.tag]
     return [_Imp(kind, unique=unique)]
 
 
@@ -274,7 +274,7 @@ def _addlimb(node: ET.Element, rating: int) -> list[_Imp]:
 
 
 def _cyberseeker(node: ET.Element, rating: int) -> list[_Imp]:
-    return [_Imp("Seeker", _text(node))] if _text(node) in _SEEKER else []
+    return [_Imp("Seeker", _text(node))] if _text(node) in SEEKER else []
 
 
 def _livingpersona(node: ET.Element, rating: int) -> list[_Imp]:
@@ -282,8 +282,8 @@ def _livingpersona(node: ET.Element, rating: int) -> list[_Imp]:
     rows = []
     for child in node:
         amount = _text(child).replace("Rating", str(rating))
-        if child.tag in _PERSONA and amount:
-            rows.append(_Imp(_PERSONA[child.tag], f"+{amount}" if _is_int(amount) and int(amount) > 0 else amount))
+        if child.tag in PERSONA and amount:
+            rows.append(_Imp(PERSONA[child.tag], f"+{amount}" if _is_int(amount) and int(amount) > 0 else amount))
     return rows
 
 
@@ -334,7 +334,7 @@ def _selectattributes(node: ET.Element, attributes: list[str]) -> list[_Imp]:
     picked for it (Exceptional Attribute's one, an Infected's four)."""
     rows = []
     for choice, picked in zip(node.findall("selectattribute"), attributes, strict=False):
-        if picked in _SEEKER - {"BOX", "ESS"}:
+        if picked in SEEKER - {"BOX", "ESS"}:
             rows += _attribute(choice, picked)
     return rows
 
@@ -436,11 +436,11 @@ _READERS: dict[str, Callable[[ET.Element, int], list[_Imp]]] = {
     "addgear": _addgear,
     "unlockskills": _unlockskills,
     "enabletab": _enabletab,
-    **dict.fromkeys(_ARMORS, _armor),
+    **dict.fromkeys(ARMORS, _armor),
     "disablebiowaregrade": _disablegrade,
     "disablecyberwaregrade": _disablegrade,
     "specificskill": _specificskill,
-    **dict.fromkeys(_FLAGS, _flag),
+    **dict.fromkeys(FLAGS, _flag),
     "physicallimit": _limit,
     "mentallimit": _limit,
     "smartlink": _smartlink,
