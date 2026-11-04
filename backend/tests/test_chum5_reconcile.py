@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import xml.etree.ElementTree as ET
 
-from scripts.reconcile.fidelity import _accepted_drop, _leaves
+from scripts.reconcile.fidelity import _accepted_drop, _leaves, _row_drops
 from scripts.reconcile.prices import _at_rating, _stored_prices, _stored_rating_prices
 
 
@@ -189,6 +189,60 @@ def test_the_fields_chummer_recomputes_are_named_with_their_reason() -> None:
         assert "legacy" in (_accepted_drop(tag) or "")
     # Initiative was an attribute of its own before it was derived
     assert _accepted_drop("INI/metatypemin") is not None
+
+
+def test_a_row_field_the_export_leaves_out_is_a_gap() -> None:
+    """The header comparison never looked inside a row, so powers went out
+    without their levels and spells without their drain while every save
+    came back faithful. A row is matched by name and extra, and a field
+    Chummer would read otherwise is reported under its kind."""
+    theirs = _save("""
+        <spells><spell><name>Manabolt</name><extra /><dv>F-3</dv><range>LOS</range>
+          <limited>False</limited></spell></spells>""")
+    ours = _save("<spells><spell><name>Manabolt</name><extra /><range>LOS</range></spell></spells>")
+    assert _row_drops(theirs, ours) == ["spell/dv"]  # `limited` False is what Chummer reads anyway
+
+
+def test_a_row_field_at_chummers_default_is_not_a_gap() -> None:
+    """Chummer writes every field. One the export leaves out is read at its
+    class's initial value, so `<equipped>True` says nothing; `False` does."""
+    ours = _save("<gears><gear><name>Medkit</name><extra /></gear></gears>")
+    equipped = _save("<gears><gear><name>Medkit</name><extra /><equipped>True</equipped></gear></gears>")
+    taken_off = _save("<gears><gear><name>Medkit</name><extra /><equipped>False</equipped></gear></gears>")
+    assert _row_drops(equipped, ours) == []
+    assert _row_drops(taken_off, ours) == ["gear/equipped"]
+    # `2` is `2.0`
+    limb = _save(
+        "<cyberwares><cyberware><name>Arm</name><extra /><extraessmultiplicativemultiplier>1.0"
+        "</extraessmultiplicativemultiplier></cyberware></cyberwares>"
+    )
+    assert _row_drops(limb, _save("<cyberwares><cyberware><name>Arm</name><extra /></cyberware></cyberwares>")) == []
+
+
+def test_a_row_only_one_side_has_is_not_compared() -> None:
+    """The lists are rebuilt from the catalogue: what each holds is
+    `--roundtrip`'s question. A second take is matched to the second."""
+    theirs = _save("""
+        <qualities>
+          <quality><name>Shiva Arms (Pair)</name><extra /><bp>8</bp></quality>
+          <quality><name>Shiva Arms (Pair)</name><extra /><bp>8</bp><source>RF</source></quality>
+          <quality><name>Ambidextrous</name><extra /><bp>4</bp></quality>
+        </qualities>""")
+    ours = _save("""
+        <qualities>
+          <quality><name>Shiva Arms (Pair)</name><extra /><bp>8</bp></quality>
+          <quality><name>Shiva Arms (Pair)</name><extra /><bp>8</bp></quality>
+        </qualities>""")
+    assert _row_drops(theirs, ours) == ["quality/source"]
+
+
+def test_a_known_row_gap_is_named_as_one() -> None:
+    """A gap that is known and not fixed is listed so that the next one
+    still fails the run — and it says so, rather than passing for a field
+    Chummer does not read."""
+    assert (_accepted_drop("gear/active") or "").startswith("not written yet")
+    assert _accepted_drop("spell/dv") is None
+    assert _accepted_drop("quality/qualitytype") is None
 
 
 def test_a_quality_improvement_is_matched_by_names_not_guids() -> None:
