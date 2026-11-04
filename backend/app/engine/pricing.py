@@ -41,22 +41,41 @@ def apply_ware_essence_multipliers(
                 item["essence"] = _floor_tenth(ess * bmult / 100.0)
     free_bio = max(0.0, float(effects.get("prototype_transhuman_ess") or 0))
     if free_bio > 0:
-        remaining = free_bio
-        # Prefer waiving smaller essence pieces first so more items can be covered.
-        ordered = sorted(bio, key=lambda row: float(row.get("essence") or 0))
-        for item in ordered:
-            ess = float(item.get("essence") or 0)
-            if ess <= 0 or remaining <= 0:
-                continue
-            take = min(ess, remaining)
-            item["essence"] = round(ess - take, 4)
+        for item in _prototype_transhuman_pieces(bio, free_bio):
+            item["essence"] = 0.0
             item["prototype_transhuman"] = True
-            remaining = round(remaining - take, 4)
     cyber_lost = round(sum(float(item.get("essence") or 0) for item in cyber), 4)
     bio_lost = round(sum(float(item.get("essence") or 0) for item in bio), 4)
     if tmult != 100 and cyber_lost > 0:
         cyber_lost = round(_floor_tenth(cyber_lost * tmult / 100.0), 4)
     return cyber_lost, bio_lost
+
+
+def _prototype_transhuman_pieces(bio: list[dict[str, Any]], allowance: float) -> list[dict[str, Any]]:
+    """The bioware Prototype Transhuman's allowance waives.
+
+    Chummer waives whole pieces: the player ticks a piece, and a ticked one
+    counts no essence at all (`Cyberware.CalculatedESS`), so long as the
+    ticked ones add up to no more than the allowance. A piece cannot be
+    waived in part — that was this app's old reading, which let the
+    allowance run into the last piece it reached. The player picks; this app
+    picks the set a player would, the one that waives the most essence,
+    smaller pieces first among equals. Thousandths, as essence is never finer.
+    """
+    pieces = sorted(
+        (item for item in bio if float(item.get("essence") or 0) > 0),
+        key=lambda item: float(item.get("essence") or 0),
+    )
+    budget = round(allowance * 1000)
+    # best[w]: the pieces first reaching a waived total of exactly w
+    best: dict[int, list[int]] = {0: []}
+    for index, item in enumerate(pieces):
+        cost = round(float(item.get("essence") or 0) * 1000)
+        for total, chosen in sorted(best.items(), reverse=True):
+            reached = total + cost
+            if reached <= budget and reached not in best:
+                best[reached] = [*chosen, index]
+    return [pieces[index] for index in best[max(best)]]
 
 
 def _dealer_matches(category: str, dealer_cats: list[str]) -> bool:

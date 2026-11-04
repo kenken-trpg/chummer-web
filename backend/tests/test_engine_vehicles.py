@@ -754,6 +754,30 @@ def test_prototype_transhuman_waives_bioware_essence_and_forced_quality() -> Non
     assert any(q["name"] == "Astral Beacon" and q["karma"] == 0 for q in free)
 
 
+def test_prototype_transhuman_waives_whole_pieces_the_most_it_can() -> None:
+    """Chummer waives a ticked piece whole, so long as the ticked pieces fit
+    the allowance; a piece is never waived in part. Of one point, Muscle
+    Toner 4 (0.8) and Enhanced Articulation (0.3) cannot both go: Muscle
+    Toner 1 (0.2) and Muscle Toner 4 can, which waives the most."""
+    toner = "69ab0255-a76b-4190-a8be-0473fed231ef"
+    articulation = "dfada66f-73f7-4648-aff4-6b6bce25f84c"
+    out = compute(
+        _mundane(
+            "proto-whole",
+            quality_ids=[PROTOTYPE_TRANSHUMAN],
+            quality_extras={PROTOTYPE_TRANSHUMAN: "Astral Beacon"},
+            bioware=[
+                CyberwareInstall(id="art", ware_id=articulation),
+                CyberwareInstall(id="t4", ware_id=toner, rating=4),
+                CyberwareInstall(id="t1", ware_id=toner, rating=1),
+            ],
+        )
+    )
+    rows = {row["id"]: (row["essence"], bool(row.get("prototype_transhuman"))) for row in out.derived["bioware"]}
+    assert rows == {"art": (0.3, False), "t4": (0.0, True), "t1": (0.0, True)}
+    assert out.derived["essence_lost_bio"] == 0.3
+
+
 def test_prototype_transhuman_requires_forced_quality_choice() -> None:
     out = compute(_mundane("proto-empty", quality_ids=[PROTOTYPE_TRANSHUMAN]))
     assert has(out.derived["errors"], "engine.qualities.pickExtra")
