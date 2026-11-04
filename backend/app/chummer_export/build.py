@@ -10,6 +10,7 @@ from __future__ import annotations
 import uuid
 import xml.etree.ElementTree as ET
 from datetime import datetime
+from typing import Any
 
 from .. import ja_default
 from ..data_loader import catalog
@@ -56,6 +57,35 @@ def _export_settings_key(root: ET.Element, state: CharacterState) -> None:
         return
     if not settings.name:
         return
+    preset = chummer_settings_preset(state)
+    # A settings file of the player's own is keyed by its file name, which a
+    # .chum5 never carried and this app therefore does not hold. The name it
+    # was saved under is the best guess available, and the scoring below is
+    # what makes a miss land somewhere sensible.
+    _sub(root, "settings", str(preset["id"]) if preset else f"{settings.name}.xml")
+    _sub(root, "gameplayoption", settings.name)
+    if settings.books:
+        sources = _sub(root, "sources")
+        for code in settings.books:
+            _sub(sources, "source", code)
+    if settings.customdata:
+        directories = _sub(root, "customdatadirectorynames")
+        for name in settings.customdata:
+            _sub(directories, "directoryname", name)
+
+
+def chummer_settings_preset(state: CharacterState) -> dict[str, Any] | None:
+    """The shipped preset whose id `<settings>` names, which is the settings
+    Chummer opens the character under. None for a settings file of the
+    player's own, or no settings at all.
+
+    Not always the preset the character was built under: a preset of another
+    build method is swapped for the build method's own (see below), and
+    Chummer then holds the character to that preset's rules and books.
+    """
+    settings = state.settings
+    if not settings.name or state.build_method == "LifeModule":
+        return None
     presets = catalog().get("settings_presets") or []
     # 日本語環境 is this app's own preset, which no Chummer has: point it at
     # Standard, the shipped preset it builds by, with its books in `<sources>`.
@@ -77,20 +107,7 @@ def _export_settings_key(root: ET.Element, state: CharacterState) -> None:
             ),
             None,
         )
-    # A settings file of the player's own is keyed by its file name, which a
-    # .chum5 never carried and this app therefore does not hold. The name it
-    # was saved under is the best guess available, and the scoring below is
-    # what makes a miss land somewhere sensible.
-    _sub(root, "settings", str(preset["id"]) if preset else f"{settings.name}.xml")
-    _sub(root, "gameplayoption", settings.name)
-    if settings.books:
-        sources = _sub(root, "sources")
-        for code in settings.books:
-            _sub(sources, "source", code)
-    if settings.customdata:
-        directories = _sub(root, "customdatadirectorynames")
-        for name in settings.customdata:
-            _sub(directories, "directoryname", name)
+    return preset
 
 
 def _export_reward_log(root: ET.Element, state: CharacterState) -> None:
