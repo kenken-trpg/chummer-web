@@ -428,6 +428,8 @@ export interface SettingsPreset {
   priority_table?: string;
   /** `<nuyenmaxbp>`: karma a Priority build may turn into nuyen. */
   nuyen_max_bp?: number;
+  /** `<availability>`: the creation availability limit (Prime Runner 15). */
+  avail_max?: number;
 }
 
 export type PriorityCell = {

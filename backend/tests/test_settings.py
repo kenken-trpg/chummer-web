@@ -576,6 +576,53 @@ def test_a_prime_runner_is_judged_by_prime_runner_rules() -> None:
     assert settings["quality_karma_limit"] == 35
 
 
+def test_a_save_chummer_wrote_names_its_preset_by_id() -> None:
+    """A current Chummer saves a shipped preset as its `<id>` in `<settings>`
+    and drops `<gameplayoption>` and `<maxavail>`. Matching on the name alone
+    found nothing, so a Prime Runner opened from Chummer came back unnamed and
+    judged by Standard's rules; the id finds the preset, and the preset gives
+    back the availability limit the save no longer carries."""
+    from app.data_loader import catalog
+
+    prime = next(row for row in catalog()["settings_presets"] if row["name"] == "Prime Runner")
+    raw = f"""<?xml version="1.0" encoding="utf-8"?><character>
+      <settings>{prime["id"]}</settings>
+      <metatype>Human</metatype>
+    </character>""".encode()
+    settings = chum5_to_state(raw)[0]["settings"]
+    assert settings["name"] == "Prime Runner"
+    assert settings["books"] == prime["books"]
+    assert (settings["quality_karma_limit"], settings["chargen_avail_max"]) == (35, 15)
+
+    # the save's own limit still wins over the preset's
+    own = raw.replace(b"<metatype>", b"<maxavail>18</maxavail><metatype>")
+    assert chum5_to_state(own)[0]["settings"]["chargen_avail_max"] == 18
+
+
+def test_an_exported_preset_survives_chummer_dropping_its_name() -> None:
+    """The export writes the preset's id and its name; Chummer keeps only the
+    id. Both files come back as the same preset."""
+    from app.chummer_export import state_to_chum5
+
+    prime = next(row for row in catalog()["settings_presets"] if row["name"] == "Prime Runner")
+    state = CharacterState(
+        id="p",
+        name="P",
+        metatype="Human",
+        priorities=Priorities(),
+        attributes={},
+        build_method=prime["build_method"],
+        settings=SettingsState(name="Prime Runner"),
+    )
+    root = ET.fromstring(state_to_chum5(state))
+    for tag in ("gameplayoption", "maxavail"):
+        node = root.find(tag)
+        if node is not None:
+            root.remove(node)
+    settings = chum5_to_state(ET.tostring(root))[0]["settings"]
+    assert (settings["name"], settings["chargen_avail_max"]) == ("Prime Runner", 15)
+
+
 def test_the_standard_preset_leaves_the_printed_cap_unset() -> None:
     """A settings state says what it changes. Standard does not move the cap,
     so it must not come back as "set to 25" — that is a different thing."""

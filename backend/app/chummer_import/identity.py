@@ -87,9 +87,14 @@ def _import_settings(root: ET.Element, cat: CatalogDict) -> dict[str, Any]:
     # Some builds write `<settings>` as a container of house-rule elements
     # rather than a name; there is nothing to take from that.
     name = _text(root.find("gameplayoption")).strip()
+    # What a current Chummer writes for one of its own presets: the preset's
+    # `<id>` in `<settings>`, and no `<gameplayoption>` or `<maxavail>` at all
+    # (5.226 saves this app's own export back that way). The id is the key
+    # `Character.Load` looks the settings up by, so it names the preset as
+    # surely as the name did.
+    key = (_text(el) if el is not None and len(el) == 0 else "").strip()
     if not name:
-        name = _text(el) if el is not None and len(el) == 0 else ""
-    name = name.removesuffix(".xml").strip()
+        name = key.removesuffix(".xml").strip()
     extra: dict[str, Any] = {}
     max_avail = _text(root.find("maxavail"))
     if max_avail:
@@ -103,8 +108,9 @@ def _import_settings(root: ET.Element, cat: CatalogDict) -> dict[str, Any]:
         return extra
     # 日本語環境 is this app's preset, not in Chummer's list (app/ja_default.py)
     for preset in [ja_default.PRESET, *(cat.get("settings_presets") or [])]:
-        if preset.get("name") != name:
+        if preset.get("name") != name and not (key and preset.get("id") == key):
             continue
+        name = str(preset.get("name") or name)
         found: dict[str, Any] = {"name": name, "books": list(preset.get("books") or [])}
         # Only when the preset moves it. A settings state says what it changes,
         # not everything (`rules_for`), so writing the printed 25 back would
@@ -118,6 +124,10 @@ def _import_settings(root: ET.Element, cat: CatalogDict) -> dict[str, Any]:
         nuyen_max = preset.get("nuyen_max_bp")
         if nuyen_max is not None and int(nuyen_max) != DEFAULT_RULES.priority_karma_nuyen_base:
             found["priority_karma_nuyen_base"] = int(nuyen_max)
+        # `<maxavail>` in the save, read above, is the character's own and wins.
+        avail = preset.get("avail_max")
+        if avail is not None and int(avail) != DEFAULT_RULES.chargen_avail_max:
+            found["chargen_avail_max"] = int(avail)
         return {**found, **extra}
     return {"name": name, "books": [], **extra}
 
