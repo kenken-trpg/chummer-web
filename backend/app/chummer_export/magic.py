@@ -59,6 +59,9 @@ def _export_spell_lists(root: ET.Element, state: CharacterState, names: _Names, 
             "extra": lambda r: r.extra or "",
         },
     )
+    spell_definitions = _definitions("spells.xml", "./spells/spell")
+    for el, spell in zip(root.findall("./spells/spell"), state.spells, strict=True):
+        _write_spell_definition_fields(el, spell_definitions.get(spell.spell_id))
     _export_spell_improvements(root, state)
     powers = _named_list(
         "powers",
@@ -151,8 +154,52 @@ def _write_power_definition_fields(el: ET.Element, definition: ET.Element | None
             _sub(el, tag, "")
 
 
+def _write_spell_definition_fields(el: ET.Element, definition: ET.Element | None) -> None:
+    """The fields `Spell.Create` copies off the `spells.xml` row, written the
+    way `Spell.Save` writes them.
+
+    `Spell.Load` does not look the row up again: it reads the category, type,
+    range, damage, duration, drain and descriptors off the save, and only the
+    elements fall back to the catalogue. With only the name and id written,
+    Chummer opened every spell with no drain, range or duration. `limited`
+    and `extended` are Chummer's own checkboxes (the Extended one is shown
+    only under an optional rule); this app has neither, so they are off — the
+    catalogue's own ", Extended" spells say so in their descriptors.
+    """
+    if definition is None:
+        return
+
+    def text(tag: str, default: str = "") -> str:
+        return (definition.findtext(tag) or "").strip() or default
+
+    # `Spell.Create` reads the catalogue's `<descriptor>` into `<descriptors>`
+    for tag, value in (
+        ("descriptors", text("descriptor")),
+        ("category", text("category")),
+        ("type", text("type")),
+        ("range", text("range")),
+        ("damage", text("damage")),
+        ("elements", text("elements")),
+        ("duration", text("duration")),
+        ("dv", text("dv")),
+        ("useskill", text("useskill")),
+        ("limited", "False"),
+        ("extended", "False"),
+        ("source", text("source")),
+        ("page", text("page")),
+        ("improvementsource", "Spell"),
+        ("grade", "0"),
+    ):
+        _sub(el, tag, value)
+
+
+def _definitions(file: str, path: str) -> dict[str, ET.Element]:
+    """A catalogue file's rows by id."""
+    return {node.findtext("id") or "": node for node in parse_data(file).findall(path)}
+
+
 def _power_definitions() -> dict[str, ET.Element]:
-    return {node.findtext("id") or "": node for node in parse_data("powers.xml").findall("./powers/power")}
+    return _definitions("powers.xml", "./powers/power")
 
 
 def _export_spell_improvements(root: ET.Element, state: CharacterState) -> None:

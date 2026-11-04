@@ -1195,6 +1195,31 @@ def test_a_power_carries_the_fields_chummer_does_not_look_up_again() -> None:
     assert {p["power_id"]: p["discounted"] for p in st["adept_powers"]} == {sense: True, reflexes: False}
 
 
+def test_a_spell_carries_the_fields_chummer_does_not_look_up_again() -> None:
+    """`Spell.Load` reads the category, type, range, damage, duration, drain
+    and descriptors off the save and never from `spells.xml`; without them
+    every spell opened in Chummer with no drain, range or duration."""
+    manabolt = next(s["id"] for s in catalog()["spells"] if s["name"] == "Manabolt")
+    state = CharacterState(
+        id="mb",
+        name="Mage",
+        priorities=Priorities(Heritage="D", Attributes="B", Talent="A", Skills="C", Resources="E"),
+        metatype="Human",
+        attributes={},
+        talent="Magician",
+        spells=[SpellInstall(spell_id=manabolt)],
+    )
+    spell = ET.fromstring(state_to_chum5(state)).find("./spells/spell")
+    assert spell is not None
+    fields = ("descriptors", "category", "type", "range", "damage", "duration", "dv", "source", "page")
+    assert tuple(spell.findtext(f) for f in fields) == ("Direct", "Combat", "M", "LOS", "P", "I", "F-3", "SR5", "284")
+    assert (spell.findtext("limited"), spell.findtext("extended"), spell.findtext("improvementsource")) == (
+        "False",
+        "False",
+        "Spell",
+    )
+
+
 def test_a_power_and_a_mentor_leave_what_their_bonus_made() -> None:
     """An adept power's improvements sit under its guid at its rating; the
     mentor's own bonus and each picked choice's sit under the mentor's guid,
