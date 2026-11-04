@@ -560,6 +560,21 @@ export const EN_ENGINE = {
   "engine.export.changed": "{kind} entries change",
   "engine.export.karma": "karma left goes {before} → {after}",
   "engine.export.nuyen": "nuyen left goes {before} → {after}",
+  "engine.export.chum5SettingsAs":
+    "Saved again by Chummer, settings “{before}” become “{after}”, which changes the rules below",
+  "engine.export.chum5QualityCap":
+    "Saved again by Chummer, the quality karma cap goes {before} → {after}",
+  "engine.export.chum5AvailMax":
+    "Saved again by Chummer, the creation availability limit goes {before} → {after}",
+  "engine.export.chum5NuyenCap":
+    "Saved again by Chummer, karma spent on nuyen is capped at {after} instead of {before}",
+  "engine.export.chum5PriorityTable":
+    "Saved again by Chummer, the priority table goes “{before}” → “{after}”",
+  "engine.export.chum5Books":
+    "Chummer saves only the books its settings enable ({books}), so {lost} are dropped",
+  "engine.export.chum5BooksAll":
+    "Chummer saves only the books its settings enable ({books}), so every other book is dropped",
+  "engine.export.chum5Nuyen": "Saved again by Chummer, nuyen left goes {before} → {after}",
   "engine.export.xlsxNoRoom": "the sheet has room for {room} {kind} rows, so {dropped} do not fit",
   "engine.export.xlsxNoCell":
     "the sheet has no \u201c{name}\u201d to pick, so the {kind} is written as \u201c{instead}\u201d",

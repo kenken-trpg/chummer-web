@@ -1143,6 +1143,26 @@ describe("useCharacterEditor file exports", () => {
     expect(result.current.error).toBeNull();
   });
 
+  it("downloadChum5() does not stop for the books Chummer's settings drop alone", async () => {
+    api.exportChummer.mockResolvedValue(new Blob(["<character/>"]));
+    const books = { key: "engine.export.chum5Books", params: { lost: "RG", books: "SR5" } };
+    api.checkChummerExport.mockResolvedValue([books]);
+    const { result } = await booted(makeCharacter({ id: "c1", name: "Vex" }));
+    await act(async () => {
+      await result.current.downloadChum5();
+    });
+    expect(result.current.exportReview).toBeNull();
+    expect(clicks[0].download).toMatch(/^Vex_\d{8}-\d{6}\.chum5$/);
+
+    // with a rule that moves, the review comes up and says the books too
+    const cap = { key: "engine.export.chum5QualityCap", params: { before: 35, after: 25 } };
+    api.checkChummerExport.mockResolvedValue([cap, books]);
+    await act(async () => {
+      await result.current.downloadChum5();
+    });
+    expect(result.current.exportReview).toEqual([cap, books]);
+  });
+
   it("LifeModule export reviews setup requirements and saves the bundle as ZIP", async () => {
     api.exportChummer.mockResolvedValue(new Blob(["zip"], { type: "application/zip" }));
     api.checkChummerExport.mockResolvedValue([{ key: "engine.export.chum5LifeModuleSetup" }]);

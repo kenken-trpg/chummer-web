@@ -557,6 +557,21 @@ export const JA_ENGINE = {
   "engine.export.changed": "{kind}の内容が変わります",
   "engine.export.karma": "残りカルマが {before} → {after} になります",
   "engine.export.nuyen": "残り新円が {before} → {after} になります",
+  "engine.export.chum5SettingsAs":
+    "Chummer で保存し直すと、設定「{before}」は「{after}」になり、以下のルールが変わります",
+  "engine.export.chum5QualityCap":
+    "Chummer で保存し直すと、資質のカルマ上限が {before} → {after} になります",
+  "engine.export.chum5AvailMax":
+    "Chummer で保存し直すと、作成時の入手値上限が {before} → {after} になります",
+  "engine.export.chum5NuyenCap":
+    "Chummer で保存し直すと、カルマで買える新円が {before} → {after} カルマまでになります",
+  "engine.export.chum5PriorityTable":
+    "Chummer で保存し直すと、プライオリティ表が「{before}」→「{after}」になります",
+  "engine.export.chum5Books":
+    "Chummer は設定にある使用ルールブック（{books}）だけを保存するので、{lost} が外れます",
+  "engine.export.chum5BooksAll":
+    "Chummer は設定にある使用ルールブック（{books}）だけを保存するので、それ以外のルールブックが外れます",
+  "engine.export.chum5Nuyen": "Chummer で保存し直すと、残り新円が {before} → {after} になります",
   "engine.export.xlsxNoRoom":
     "キャラシの{kind}欄は {room} 行までなので、{dropped} 件が書き切れません",
   "engine.export.xlsxNoCell":

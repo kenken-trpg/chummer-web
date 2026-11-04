@@ -20,6 +20,14 @@ import type { Locale } from "@/lib/i18n/messages";
 /** The export formats the character is checked before being written to. */
 export type ExportFormat = "chum5" | "xlsx" | "fvtt";
 
+/**
+ * Losses that do not stop an export on their own. Chummer saves every
+ * character back with its settings' books (`Settings.Books`), so nearly every
+ * .chum5 would say so — a review on every export is one players learn to
+ * click past. Said alongside anything that does stop it.
+ */
+const QUIET = new Set(["engine.export.chum5Books", "engine.export.chum5BooksAll"]);
+
 /** Hand the browser a file. The three download paths differed only in what
  *  they put in the blob and what they called it. */
 function offer(blob: Blob, filename: string) {
@@ -127,7 +135,7 @@ export function useCharacterExport(opts: {
     // round trip cannot see them: they are held in this browser and were never
     // sent, so what it checked is a character that does not have them. A file
     // written now leaves them out, which is worth saying before it is written.
-    if (differences.length || pendingGearCount) {
+    if (differences.some((n) => !QUIET.has(n.key)) || pendingGearCount) {
       setExportReview({ of: ch, format, differences });
       return;
     }
