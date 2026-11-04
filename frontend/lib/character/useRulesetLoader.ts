@@ -26,7 +26,8 @@ import type { UiFn } from "@/lib/i18n";
  * The settings a preset changes. Only the knobs it moves off the printed SR5
  * values are written — the same rule the .chum5 import follows — so Standard
  * stays a bare `{name, books}`. Without them, picking Prime Runner kept
- * Standard's priority rows, quality cap and 10-point karma-to-nuyen cap.
+ * Standard's priority rows, quality cap, 10-point karma-to-nuyen cap and
+ * availability limit of 12.
  */
 export function presetSettings(preset: SettingsPreset): CharacterSettings {
   const out: CharacterSettings = { name: preset.name, books: [...preset.books] };
@@ -38,6 +39,9 @@ export function presetSettings(preset: SettingsPreset): CharacterSettings {
   }
   if (preset.nuyen_max_bp != null && preset.nuyen_max_bp !== 10) {
     out.priority_karma_nuyen_base = preset.nuyen_max_bp;
+  }
+  if (preset.avail_max != null && preset.avail_max !== 12) {
+    out.chargen_avail_max = preset.avail_max;
   }
   return out;
 }

@@ -82,6 +82,11 @@ def load_settings_presets() -> list[dict[str, Any]]:
                 # How much chargen karma may buy nuyen: Prime Runner allows 25
                 # points, not Standard's 10.
                 "nuyen_max_bp": _int(el.find("nuyenmaxbp"), 10),
+                # The creation availability limit: Prime Runner's 15, not
+                # Standard's 12. A save Chummer wrote itself drops
+                # `<maxavail>` and keeps only the preset's id, so the preset
+                # is where the limit comes back from.
+                "avail_max": _int(el.find("availability"), 12),
             }
         )
     return presets

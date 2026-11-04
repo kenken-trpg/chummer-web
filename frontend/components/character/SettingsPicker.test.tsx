@@ -31,6 +31,7 @@ const catalog = makeCatalog({
       quality_karma_limit: 35,
       priority_table: "Prime Runner",
       nuyen_max_bp: 25,
+      avail_max: 15,
     },
   ],
 });
@@ -93,6 +94,7 @@ describe("SettingsPicker", () => {
         priority_table: "Prime Runner",
         quality_karma_limit: 35,
         priority_karma_nuyen_base: 25,
+        chargen_avail_max: 15,
       },
     });
   });
