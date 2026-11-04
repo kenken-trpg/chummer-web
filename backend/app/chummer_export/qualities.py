@@ -198,6 +198,15 @@ def _export_granted_qualities(
         _sub(child, "qualitysource", "Improvement")
         _sub(child, "sourcename", names["quality"].get(qid, ""))
         child_definition = bonuses.get(child_id)
+        # Chummer saves a granted quality as free and outside the quality
+        # limits, and reads its type off the save alone: with no
+        # `<qualitytype>` it took a granted Insomnia or Wanted as positive,
+        # and with no `<contributetolimit>` counted it against the limit.
+        negative = child_definition is not None and child_definition.findtext("category") == "Negative"
+        _sub(child, "bp", 0)
+        _sub(child, "qualitytype", "Negative" if negative else "Positive")
+        _sub(child, "contributetolimit", "False")
+        _from_data(child, "quality", child_id)
         child_bonus = child_definition.find("bonus") if child_definition is not None else None
         out.append((child_guid, _bonus_improvements(child_bonus, 0, extra) if child_bonus is not None else []))
     return out
