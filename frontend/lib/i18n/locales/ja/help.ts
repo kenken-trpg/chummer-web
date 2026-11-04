@@ -464,7 +464,7 @@ export const JA_HELP = {
   "help.toolbar.exportXlsx":
     "シャドウラン5th 日本版非公式wiki で紹介されている、音の兔（ねのうさ）様の「［SR5］キャラシテンプレート」 と同じシート構成・同じ入力セルの .xlsx で書き出す（テンプレート自体は同梱していません）",
   "help.toolbar.exportFvtt":
-    "Foundry VTT（shadowrun5e 0.34.5）の Chummer/Data Import で読める JSON で書き出す。アクターはシステム側が組み立てます。メタタイプ固有の生得パワーは品目にならないので、書き出す前に一覧で知らせます",
+    "Foundry VTT（shadowrun5e 0.34.5）の Chummer/Data Import で読める JSON で書き出す。アクターはシステム側が組み立てます。A.I. のプログラムは品目にならないので、書き出す前に一覧で知らせます",
   "help.toolbar.cocofolia":
     "ココフォリアのコマ JSON をコピー（貼り付けで取り込み）。テストは BCDice の ShadowRun5",
   "help.toolbar.udonarium":
