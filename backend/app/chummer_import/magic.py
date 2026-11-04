@@ -141,6 +141,8 @@ def _import_magic(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: 
                     "power_id": pid,
                     "rating": max(1, _int(p.find("rating"), 1)),
                     "extra": _text(p.find("extra")) or None,
+                    # the Adept Way discount (`Power.Save`'s `discounted`)
+                    "discounted": _text(p.find("discounted")).lower() == "true",
                 }
             )
     st["adept_powers"] = powers
