@@ -16,7 +16,7 @@ from .readers import (
     _spirit_pick,
     _weapon_category,
 )
-from .tables import _COSTS, _NUMBERS, _PICKS, _SEEKER, _SPELL_DRAIN, _WEAPON_CATEGORY
+from .tables import COSTS, NUMBERS, PICKS, SEEKER, SPELL_DRAIN, WEAPON_CATEGORY
 
 
 def _bonus_improvements(
@@ -71,15 +71,15 @@ def _bonus_improvements(
             # the weapon picked, by its guid
             value = _text(node)
             rows += [_Imp("WeaponSpecificDice", pick, val=int(value))] if pick and _is_int(value) else []
-        elif node.tag in _WEAPON_CATEGORY:
+        elif node.tag in WEAPON_CATEGORY:
             rows += _weapon_category(node, pick)
-        elif node.tag in _PICKS:
-            rows += [_Imp(_PICKS[node.tag], pick)] if pick else []
+        elif node.tag in PICKS:
+            rows += [_Imp(PICKS[node.tag], pick)] if pick else []
         elif node.tag in ("selectmentorspirit", "selectparagon"):
             kind = "MentorSpirit" if node.tag == "selectmentorspirit" else "Paragon"
             rows += [_Imp(kind, mentor, unique=mentor)] if mentor else []
         elif node.tag == "selectattribute":
-            options = {_text(option) for option in node.findall("attribute")} or _SEEKER - {
+            options = {_text(option) for option in node.findall("attribute")} or SEEKER - {
                 "BOX",
                 "ESS",
                 *(_text(option) for option in node.findall("excludeattribute")),
@@ -89,18 +89,18 @@ def _bonus_improvements(
             rows += _selectattributes(node, attributes or [])
         elif node.tag in ("limitspiritcategory", "addspirit"):
             rows += _spirit_pick(node, spirits)
-        elif node.tag in _SPELL_DRAIN:
-            kind, field = _SPELL_DRAIN[node.tag]
+        elif node.tag in SPELL_DRAIN:
+            kind, field = SPELL_DRAIN[node.tag]
             named = _text(node, field) or (spell_category if node.tag == "spellcategorydrain" else "")
             value = _text(node, "val")
             rows += [_Imp(kind, named, val=int(value))] if named and _is_int(value) else []
         elif node.tag == "addcontact":
             rows += _addcontact(node, contact) if contact else []
-        elif node.tag in _COSTS:
+        elif node.tag in COSTS:
             rows += _cost(node)
-        elif node.tag in _NUMBERS:
+        elif node.tag in NUMBERS:
             text = (node.text or "").strip()
-            rows += [_Imp(_NUMBERS[node.tag], val=int(text))] if _is_int(text) else []
+            rows += [_Imp(NUMBERS[node.tag], val=int(text))] if _is_int(text) else []
         elif node.tag in _READERS:
             rows += _READERS[node.tag](node, rating)
     # `<bonus unique="…">` is the unique name of every improvement the tags

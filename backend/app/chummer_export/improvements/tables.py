@@ -4,7 +4,7 @@ they make."""
 from __future__ import annotations
 
 #: `armor` and the elemental armor tags, as the types they make
-_ARMORS = {
+ARMORS = {
     "armor": "Armor",
     "firearmor": "FireArmor",
     "coldarmor": "ColdArmor",
@@ -14,12 +14,12 @@ _ARMORS = {
 
 #: Tags whose improvement names the owner's pick, as the types they make:
 #: a Fake License's license, the tradition of a magical supply
-_PICKS = {"selectrestricted": "Restricted", "selecttradition": "Tradition"}
+PICKS = {"selectrestricted": "Restricted", "selecttradition": "Tradition"}
 
 
 #: The weapon category tags `CreateWeaponCategoryImprovement` handles, as the
 #: types they make
-_WEAPON_CATEGORY = {
+WEAPON_CATEGORY = {
     "weaponcategorydv": "WeaponCategoryDV",
     "weaponcategorydice": "WeaponCategoryDice",
     "weaponcategoryap": "WeaponCategoryAP",
@@ -29,7 +29,7 @@ _WEAPON_CATEGORY = {
 
 
 #: Tags whose improvement carries no value, as the types they make
-_FLAGS = {
+FLAGS = {
     "ambidextrous": ("Ambidextrous", ""),
     "fame": ("Fame", ""),
     "mademan": ("MadeMan", ""),
@@ -48,7 +48,7 @@ _FLAGS = {
 
 #: (type, the field naming the category or the descriptor) for the tags that
 #: change the drain or the damage of some spells.
-_SPELL_DRAIN = {
+SPELL_DRAIN = {
     "spellcategorydrain": ("SpellCategoryDrain", "category"),
     "spellcategorydamage": ("SpellCategoryDamage", "category"),
     "spelldescriptordrain": ("SpellDescriptorDrain", "descriptor"),
@@ -58,7 +58,7 @@ _SPELL_DRAIN = {
 #: The karma and point cost tags, (type, whether `<name>` is the improved
 #: name): every one of them is a single `CreateImprovement` of its `<name>`,
 #: `<val>`, `<min>`, `<max>` and `<condition>`.
-_COSTS = {
+COSTS = {
     "attributekarmacost": ("AttributeKarmaCost", True),
     "activeskillkarmacost": ("ActiveSkillKarmaCost", True),
     "skillgroupkarmacost": ("SkillGroupKarmaCost", True),
@@ -91,7 +91,7 @@ _COSTS = {
 #: Tags whose improvement is their number and nothing else — every
 #: `AddImprovementCollection` method that is one `CreateImprovement` of the
 #: tag's text as the value.
-_NUMBERS = {
+NUMBERS = {
     "surprise": "Surprise",
     "spellresistance": "SpellResistance",
     "mentalmanipulationresist": "MentalManipulationResist",
@@ -181,7 +181,7 @@ _NUMBERS = {
 }
 
 #: `livingpersona`'s children, as the types they make
-_PERSONA = {
+PERSONA = {
     "devicerating": "LivingPersonaDeviceRating",
     "programlimit": "LivingPersonaProgramLimit",
     "attack": "LivingPersonaAttack",
@@ -191,11 +191,11 @@ _PERSONA = {
 }
 
 #: `AttributeSection.AttributeStrings`, plus the `BOX` `cyberseeker` takes
-_SEEKER = {"BOD", "AGI", "REA", "STR", "CHA", "INT", "LOG", "WIL", "EDG", "MAG", "MAGAdept", "RES", "ESS", "DEP", "BOX"}
+SEEKER = {"BOD", "AGI", "REA", "STR", "CHA", "INT", "LOG", "WIL", "EDG", "MAG", "MAGAdept", "RES", "ESS", "DEP", "BOX"}
 
 
 #: `AddImprovementCollection.enabletab`: the tab names it knows, as it saves them
-_TABS = {
+TABS = {
     "MAGICIAN": "Magician",
     "ADEPT": "Adept",
     "TECHNOMANCER": "Technomancer",
