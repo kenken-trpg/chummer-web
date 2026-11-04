@@ -18,7 +18,7 @@ from fastapi import APIRouter, Request, Response
 
 from ..chummer_export import state_to_chum5
 from ..chummer_export.check import roundtrip_differences
-from ..chummer_export.life_module_settings import life_module_bundle
+from ..chummer_export.life_module_settings import chummer_settings_file, life_module_bundle
 from ..fvtt_export import state_to_fvtt
 from ..fvtt_export.check import export_omissions
 from ..models import FvttExportRequest, StateRequest
@@ -42,19 +42,40 @@ def _content_disposition(name: str, ext: str = "chum5") -> str:
 
 @router.post("/api/characters/chummer")
 @limiter.limit(_IMPORT_RATE_LIMIT)
-def export_chummer(request: Request, req: StateRequest, bundle: bool = False) -> Response:
-    """Download XML, or a LifeModule settings bundle when requested."""
+def export_chummer(request: Request, req: StateRequest, bundle: bool = False, settings_file: bool = False) -> Response:
+    """Download XML, or a LifeModule settings bundle when requested.
+
+    `settings_file` points the save at the settings file
+    `/api/characters/chummer/settings` downloads, instead of a shipped preset."""
     if bundle and req.state.build_method == "LifeModule":
         return Response(
             content=life_module_bundle(req.state),
             media_type="application/zip",
             headers={"Content-Disposition": _content_disposition(req.state.name, "zip")},
         )
-    xml = state_to_chum5(req.state)
+    key = chummer_settings_file(req.state)[0] if settings_file and req.state.build_method != "LifeModule" else None
+    xml = state_to_chum5(req.state, settings_key=key)
     return Response(
         content=xml,
         media_type="application/xml",
         headers={"Content-Disposition": _content_disposition(req.state.name)},
+    )
+
+
+@router.post("/api/characters/chummer/settings")
+@limiter.limit(_IMPORT_RATE_LIMIT)
+def export_chummer_settings(request: Request, req: StateRequest) -> Response:
+    """Download a Chummer settings file holding the character's own settings,
+    under the file name a `settings_file` export names it by. Chummer keeps
+    the books and the preset's rules there, not in the character, so without
+    it they do not survive a save in Chummer."""
+    key, xml = chummer_settings_file(req.state)
+    return Response(
+        content=xml,
+        media_type="application/xml",
+        # the exact file name matters — it is the key the save names the file
+        # by — and a Japanese settings name needs `filename*`
+        headers={"Content-Disposition": _content_disposition(key.removesuffix(".xml"), "xml")},
     )
 
 

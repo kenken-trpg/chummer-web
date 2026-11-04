@@ -38,7 +38,7 @@ from .skills import _export_skills
 __all__ = ["state_to_chum5"]
 
 
-def state_to_chum5(state: CharacterState) -> bytes:
+def state_to_chum5(state: CharacterState, *, settings_key: str | None = None) -> bytes:
     """A computed `CharacterState` out as Chummer5a-compatible XML.
 
     The mirror of `chummer_import.chum5_to_state`, and held to the same
@@ -48,12 +48,16 @@ def state_to_chum5(state: CharacterState) -> bytes:
     Each `_export_*` below writes one top-level element under `<character>`.
     They are independent — none reads what another wrote — so the 322-line
     function they came from split along its own `_sub(root, ...)` boundaries.
+
+    `settings_key` points `<settings>` at a settings file of the player's own
+    — the one `life_module_settings.chummer_settings_file` writes — instead of
+    the shipped preset.
     """
     with using_rules(rules_for(state.settings)):
-        return _write(state)
+        return _write(state, settings_key)
 
 
-def _write(state: CharacterState) -> bytes:
+def _write(state: CharacterState, settings_key: str | None = None) -> bytes:
     """`state_to_chum5` with the character's own settings in scope.
 
     The priority table a letter is read against, and the karma and nuyen
@@ -110,7 +114,7 @@ def _write(state: CharacterState) -> bytes:
 
     root = ET.Element("character")
 
-    ctx: _Ctx = {"meta_attrs": m_attr, "derived": derived, "meta": meta}
+    ctx: _Ctx = {"meta_attrs": m_attr, "derived": derived, "meta": meta, "settings_key": settings_key}
     for section in _SECTIONS:
         if section is _export_skills and state.build_method == "LifeModule" and state.life_module_rules_version == 2:
             projection = state.model_copy(deep=True)

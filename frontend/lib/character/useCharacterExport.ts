@@ -152,6 +152,27 @@ export function useCharacterExport(opts: {
     setExportReview(null);
   }
 
+  /**
+   * The .chum5 pointed at a Chummer settings file of its own, and that file.
+   * Chummer keeps the books and a preset's rules in the settings file, not the
+   * character, so a save it writes back under a shipped preset carries the
+   * preset's; with this file installed in Chummer's settings folder they
+   * survive. Its own button, and in the review, rather than the default: a
+   * save naming a file Chummer does not have asks about it on every open.
+   */
+  async function downloadChum5WithSettings() {
+    setExportReview(null);
+    if (!ch) return;
+    try {
+      const settings = await api.exportChummerSettings(ch);
+      const blob = await api.exportChummer(ch, { settingsFile: true });
+      offer(settings.blob, settings.filename);
+      offer(blob, exportFilename(ch.name, "chum5"));
+    } catch (e) {
+      setError(errorMessage(e, ui, "app.err.export"));
+    }
+  }
+
   async function save(format: ExportFormat) {
     if (!ch) return;
     try {
@@ -278,6 +299,7 @@ export function useCharacterExport(opts: {
     downloadUdonarium,
     downloadUdonariumConjured,
     confirmExport,
+    downloadChum5WithSettings,
     cancelExport,
     copyText,
     copyShareLink,

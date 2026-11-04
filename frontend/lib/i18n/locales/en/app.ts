@@ -167,6 +167,7 @@ export const EN_APP = {
   "toolbar.saveJson": "Save JSON",
   "toolbar.exportMenu": "Export",
   "toolbar.exportChum5": "Export .chum5",
+  "toolbar.exportChum5Settings": "Export .chum5 + settings",
   "toolbar.exportXlsx": "Export .xlsx",
   "toolbar.sheetUrl": "From URL",
   "toolbar.sheetUrlRead": "Read",
@@ -375,6 +376,9 @@ export const EN_APP = {
   "app.exportReview.unsettled":
     "{count} equipment rows are still waiting to be confirmed. They live in this browser only, so exporting now leaves them out of the file (settle them in the equipment panel above).",
   "app.exportReview.confirm": "Export anyway",
+  "app.exportReview.withSettings": "Export with a Chummer settings file",
+  "app.exportReview.withSettingsHint":
+    "Put the settings file (chummer-web-….xml) in Chummer's settings folder before opening the .chum5, and the books and the settings' rules survive a save in Chummer. Opened without it, Chummer asks about the missing settings file",
   "app.exportReview.cancel": "Cancel",
   "check.needsMentor": "No mentor spirit chosen",
   "check.needsParagon": "No paragon chosen",

@@ -55,7 +55,7 @@ def _export_identity(root: ET.Element, state: CharacterState, names: _Names, ctx
     if metatype_id:
         _sub(root, "metavariantid", metavariant_id or _EMPTY_GUID)
     _sub(root, "buildmethod", _BUILD_METHOD_OUT.get(state.build_method, "Priority"))
-    _export_settings_key(root, state)
+    _export_settings_key(root, state, ctx.get("settings_key"))
     # the creation availability limit does travel in the save — see the note in
     # `chummer_import.identity._import_settings`
     if state.settings.chargen_avail_max is not None:

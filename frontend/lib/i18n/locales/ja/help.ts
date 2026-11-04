@@ -461,6 +461,8 @@ export const JA_HELP = {
   "help.toolbar.share":
     "読み取り専用の共有リンクをコピー。キャラは URL に埋め込まれ、サーバーには保存されません（ポートレートは含みません）",
   "help.toolbar.exportChum5": "Chummer5a で開ける .chum5（XML）で書き出す",
+  "help.toolbar.exportChum5Settings":
+    "Chummer 用の設定ファイルと、それを使う .chum5 を書き出す。設定ファイルを Chummer の settings フォルダに入れてから .chum5 を開くと、使用ルールブックと設定のルールが Chummer で保存し直しても残る",
   "help.toolbar.exportXlsx":
     "シャドウラン5th 日本版非公式wiki で紹介されている、音の兔（ねのうさ）様の「［SR5］キャラシテンプレート」 と同じシート構成・同じ入力セルの .xlsx で書き出す（テンプレート自体は同梱していません）",
   "help.toolbar.exportFvtt":

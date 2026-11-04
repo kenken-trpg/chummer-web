@@ -23,6 +23,7 @@ function makeEd(over: Partial<CharacterEditor> = {}): CharacterEditor {
     onImport: vi.fn(),
     download: vi.fn(),
     downloadChum5: vi.fn(),
+    downloadChum5WithSettings: vi.fn().mockResolvedValue(undefined),
     downloadXlsx: vi.fn().mockResolvedValue(undefined),
     downloadFvtt: vi.fn().mockResolvedValue(undefined),
     downloadUdonarium: vi.fn(),
@@ -274,6 +275,9 @@ describe("<Toolbar>", () => {
     fireEvent.click(screen.getByRole("button", { name: ".chum5書出" }));
     expect(ed.downloadChum5).toHaveBeenCalledTimes(1);
     // picking an item closes the menu, so the next one needs it opened again
+    openFormats();
+    fireEvent.click(screen.getByRole("button", { name: ".chum5＋設定ファイル書出" }));
+    expect(ed.downloadChum5WithSettings).toHaveBeenCalledTimes(1);
     openFormats();
     fireEvent.click(screen.getByRole("button", { name: ".xlsx書出" }));
     expect(ed.downloadXlsx).toHaveBeenCalledTimes(1);

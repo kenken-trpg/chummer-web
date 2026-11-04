@@ -46,6 +46,7 @@ export function Toolbar({
     onImport,
     download,
     downloadChum5,
+    downloadChum5WithSettings,
     downloadXlsx,
     downloadFvtt,
     downloadUdonarium,
@@ -152,6 +153,17 @@ export function Toolbar({
             {ui("toolbar.exportChum5")}
           </button>
         </HelpTip>
+        {/* A LifeModule export is a zip that already holds its settings. */}
+        {ch.build_method !== "LifeModule" ? (
+          <HelpTip
+            label={ui("help.open", { label: ui("toolbar.exportChum5Settings") })}
+            lines={[{ label: ui("help.toolbar.exportChum5Settings") }]}
+          >
+            <button className="btn" onClick={() => void downloadChum5WithSettings()}>
+              {ui("toolbar.exportChum5Settings")}
+            </button>
+          </HelpTip>
+        ) : null}
         <HelpTip
           label={ui("help.open", { label: ui("toolbar.exportXlsx") })}
           lines={[{ label: ui("help.toolbar.exportXlsx") }]}
