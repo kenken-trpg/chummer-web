@@ -4,6 +4,7 @@ data file the way Chummer's own save has them."""
 from __future__ import annotations
 
 import xml.etree.ElementTree as ET
+from collections.abc import Callable
 from functools import cache
 
 from ..data_loader._xml import parse_data
@@ -75,7 +76,7 @@ _FROM_DATA: dict[str, tuple[str, str, tuple[str, ...]]] = {
     "armormod": (
         "armor.xml",
         "./mods/mod",
-        ("category", "armor", "armorcapacity", "maxrating", "avail", "cost", "source", "page"),
+        ("category", "armor", "armorcapacity", "gearcapacity", "maxrating", "avail", "cost", "source", "page"),
     ),
     "cyberware": (
         "cyberware.xml",
@@ -101,13 +102,23 @@ _FROM_DATA: dict[str, tuple[str, str, tuple[str, ...]]] = {
             "sensor",
             "seats",
             "modslots",
+            "powertrainmodslots",
+            "protectionmodslots",
+            "weaponmodslots",
+            "bodymodslots",
+            "electromagneticmodslots",
+            "cosmeticmodslots",
             "avail",
             "cost",
             "source",
             "page",
         ),
     ),
-    "mod": ("vehicles.xml", "./mods/mod", ("category", "slots", "capacity", "avail", "cost", "source", "page")),
+    "mod": (
+        "vehicles.xml",
+        "./mods/mod",
+        ("category", "slots", "capacity", "conditionmonitor", "avail", "cost", "source", "page"),
+    ),
     "quality": (
         "qualities.xml",
         "./qualities/quality",
@@ -154,6 +165,31 @@ _SAVED_AS: dict[str, dict[str, str]] = {
 }
 
 
+def _joined(definition: ET.Element, path: str) -> str:
+    return ",".join(t for node in definition.findall(path) if (t := (node.text or "").strip()))
+
+
+def _vehicle_fields(definition: ET.Element) -> dict[str, str]:
+    # `Vehicle.Create` reads the extra mod slots a built-in mod gives from
+    # `<mods><addslots>`, and takes a drone's mod slots for its body when the
+    # data names none (Rigger 5.0's drone mods read them)
+    out = {"addslots": (definition.findtext("mods/addslots") or "").strip()}
+    if definition.find("modslots") is None:
+        out["modslots"] = (definition.findtext("body") or "").strip()
+    return out
+
+
+#: Fields `Create` builds from the data rather than copying one element: the
+#: categories a piece of ware or a vehicle mod lets you add inside it, which
+#: Chummer reads off the save alone — with none, it offers nothing to add.
+_COMPOSED: dict[str, Callable[[ET.Element], dict[str, str]]] = {
+    "cyberware": lambda d: {"subsystems": _joined(d, "allowsubsystems/category")},
+    "bioware": lambda d: {"subsystems": _joined(d, "allowsubsystems/category")},
+    "mod": lambda d: {"subsystems": _joined(d, "subsystems/subsystem")},
+    "vehicle": _vehicle_fields,
+}
+
+
 @cache
 def _definitions(kind: str) -> dict[str, ET.Element]:
     file, path, _ = _FROM_DATA[kind]
@@ -175,3 +211,6 @@ def _from_data(el: ET.Element, kind: str, source_id: str, *, included: bool = Fa
         node = definition.find(renamed.get(tag, tag))
         if el.find(tag) is None and node is not None and not len(node) and (node.text or "").strip():
             _sub(el, tag, node.text)
+    for tag, value in (_COMPOSED[kind](definition) if kind in _COMPOSED else {}).items():
+        if value and el.find(tag) is None:
+            _sub(el, tag, value)
