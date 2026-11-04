@@ -542,7 +542,7 @@ export const EN_HELP = {
   "help.toolbar.exportXlsx":
     "Export an .xlsx with the same sheets and the same input cells as the 「［SR5］キャラシテンプレート」 Google Sheet by 音の兔 (Nenousa), the one the Japanese Shadowrun 5th unofficial wiki links to (the template itself is not bundled)",
   "help.toolbar.exportFvtt":
-    "Export JSON for Foundry VTT's Chummer/Data Import (shadowrun5e 0.34.5) — the system builds the actor. Innate metatype powers do not become items, so they are listed before the file is written",
+    "Export JSON for Foundry VTT's Chummer/Data Import (shadowrun5e 0.34.5) — the system builds the actor. An A.I.'s programs do not become items, so they are listed before the file is written",
   "help.toolbar.cocofolia":
     "Copy a Cocofolia piece as JSON (paste to import). Rolls use BCDice's ShadowRun5.",
   "help.toolbar.udonarium":
