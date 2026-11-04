@@ -10,10 +10,12 @@ from __future__ import annotations
 
 import hashlib
 import io
+import re
 import xml.etree.ElementTree as ET
 import zipfile
 from copy import deepcopy
 
+from .. import ja_default
 from ..data_loader import catalog
 from ..data_loader._xml import DATA_DIR, parse_vendored
 from ..models import CharacterState, SettingsState
@@ -26,11 +28,50 @@ def life_module_settings(state: CharacterState) -> tuple[str, bytes]:
     _set(root, "id", "00000000-0000-0000-0000-000000000000")
     _set(root, "name", "Chummer Web Life Modules")
     _set(root, "buildmethod", "LifeModule")
-    _write_rules(root, state.settings)
+    _write_rules(root, state.settings, life_module=True)
     _write_lists(root, state.settings)
     ET.indent(root, space="  ")
     xml = ET.tostring(root, encoding="utf-8", xml_declaration=True) + b"\n"
     key = "chummer-web-life-module-" + hashlib.sha256(xml).hexdigest()[:16] + ".xml"
+    return key, xml
+
+
+#: This app's build methods as `CharacterBuildMethod` spells them.
+_BUILD_METHODS = {"Priority": "Priority", "SumToTen": "SumtoTen", "Karma": "Karma"}
+
+
+def chummer_settings_file(state: CharacterState) -> tuple[str, bytes]:
+    """A Chummer settings file holding the character's own settings, and the
+    file name `<settings>` names it by.
+
+    Chummer keeps the books, the availability limit and a preset's rules in
+    the settings file, not the character, and saves the character back with
+    the settings' own (`Character.Save` writes `Settings.Books` as
+    `<sources>`). A shipped preset can say neither a book list of the
+    player's own nor Prime Runner built by Sum-to-Ten, which Chummer ships
+    for Priority only. This file can: the preset the settings are named
+    after, built by the character's build method, with the character's
+    books and every rule it moves.
+
+    A zero `<id>` makes it a settings file of the player's own, which Chummer
+    keys by its file name (`CharacterSettings.DictionaryKey`). The name is the
+    settings' name and a hash of the content, so characters with the same
+    settings share one file and a change of settings is a new one.
+    """
+    settings = state.settings
+    root = _preset("Standard" if settings.name == ja_default.NAME else settings.name)
+    _set(root, "id", "00000000-0000-0000-0000-000000000000")
+    _set(root, "name", f"{settings.name or 'Standard'} (Chummer Web)")
+    _set(root, "buildmethod", _BUILD_METHODS.get(state.build_method, "Priority"))
+    _write_rules(root, settings, life_module=False)
+    _write_lists(root, settings)
+    ET.indent(root, space="  ")
+    xml = ET.tostring(root, encoding="utf-8", xml_declaration=True) + b"\n"
+    # The name rides in the file name because the file name is all of it a
+    # save Chummer wrote keeps (no `<gameplayoption>`); the importer reads it
+    # back out (`chummer_import.identity.SETTINGS_FILE_KEY`).
+    label = re.sub(r'[\\/:*?"<>|]', "_", settings.name or "Standard")
+    key = f"chummer-web-{label}-{hashlib.sha256(xml).hexdigest()[:16]}.xml"
     return key, xml
 
 
@@ -52,18 +93,19 @@ def _set(parent: ET.Element, tag: str, value: object) -> None:
     node.text = str(value)
 
 
-def _write_rules(root: ET.Element, settings: SettingsState) -> None:
+def _write_rules(root: ET.Element, settings: SettingsState, *, life_module: bool) -> None:
     """Every rule the character's settings change, over the preset's own values."""
-    # LifeModule has a 750-karma pool and RF caps, independently of Standard.
-    _set(root, "buildpoints", settings.karma_chargen_pool if settings.karma_chargen_pool is not None else 750)
-    _set(root, "maxskillratingcreate", settings.chargen_skill_max if settings.chargen_skill_max is not None else 7)
-    _set(
-        root,
-        "maxknowledgeskillratingcreate",
-        settings.chargen_knowledge_skill_max if settings.chargen_knowledge_skill_max is not None else 9,
-    )
+    if life_module:
+        # LifeModule has a 750-karma pool and RF caps, independently of Standard.
+        _set(root, "buildpoints", settings.karma_chargen_pool if settings.karma_chargen_pool is not None else 750)
+        _set(root, "maxskillratingcreate", settings.chargen_skill_max if settings.chargen_skill_max is not None else 7)
+        _set(
+            root,
+            "maxknowledgeskillratingcreate",
+            settings.chargen_knowledge_skill_max if settings.chargen_knowledge_skill_max is not None else 9,
+        )
     for tag, field in (_INT_FIELDS | _BOOL_FIELDS).items():
-        if field in {"chargen_karma", "chargen_skill_max", "chargen_knowledge_skill_max"}:
+        if life_module and field in {"chargen_karma", "chargen_skill_max", "chargen_knowledge_skill_max"}:
             continue
         value = getattr(settings, field)
         if value is not None:

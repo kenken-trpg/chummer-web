@@ -3,6 +3,7 @@ attributes. Skills are in `skills`, the career balance in `balance`."""
 
 from __future__ import annotations
 
+import re
 import xml.etree.ElementTree as ET  # the Element type only — parsing goes through parse_untrusted
 from typing import Any
 
@@ -54,6 +55,11 @@ def _read_mugshots(root: ET.Element) -> list[str]:
     return [p for p in map(_as_portrait, shots) if p][:MAX_PORTRAITS]
 
 
+#: The file name of a settings file this app writes for Chummer:
+#: `chummer-web-<settings name>-<hash>.xml`.
+SETTINGS_FILE_KEY = re.compile(r"chummer-web-(.+)-[0-9a-f]{16}\.xml")
+
+
 def _import_settings(root: ET.Element, cat: CatalogDict) -> dict[str, Any]:
     """`<settings>` -> `SettingsState`.
 
@@ -94,7 +100,10 @@ def _import_settings(root: ET.Element, cat: CatalogDict) -> dict[str, Any]:
     # surely as the name did.
     key = (_text(el) if el is not None and len(el) == 0 else "").strip()
     if not name:
-        name = key.removesuffix(".xml").strip()
+        # the settings file `chummer_settings_file` wrote, named after the
+        # settings it holds; Chummer keeps only that file name
+        own = SETTINGS_FILE_KEY.fullmatch(key)
+        name = own.group(1) if own else key.removesuffix(".xml").strip()
     extra: dict[str, Any] = {}
     max_avail = _text(root.find("maxavail"))
     if max_avail:

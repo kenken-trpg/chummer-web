@@ -174,6 +174,7 @@ export const JA_APP = {
   "toolbar.saveJson": "JSON保存",
   "toolbar.exportMenu": "書き出し",
   "toolbar.exportChum5": ".chum5書出",
+  "toolbar.exportChum5Settings": ".chum5＋設定ファイル書出",
   "toolbar.exportXlsx": ".xlsx書出",
   "toolbar.sheetUrl": "URLから読込",
   "toolbar.sheetUrlRead": "読み込む",
@@ -387,6 +388,9 @@ export const JA_APP = {
   "app.exportReview.unsettled":
     "確認待ちの装備行が {count} 件あります。この行はこのブラウザにしかないので、いま書き出すとファイルには入りません（上の「装備シート…」のパネルで選ぶか飛ばすと確定します）。",
   "app.exportReview.confirm": "このまま書き出す",
+  "app.exportReview.withSettings": "Chummer 用の設定ファイルと一緒に書き出す",
+  "app.exportReview.withSettingsHint":
+    "書き出した設定ファイル（chummer-web-….xml）を Chummer の settings フォルダに入れてから .chum5 を開くと、使用ルールブックと設定のルールが Chummer で保存し直しても残ります。入れずに開くと、設定ファイルが見つからないという確認が出ます",
   "app.exportReview.cancel": "やめる",
   "check.needsMentor": "導師精霊が未選択です",
   "check.needsParagon": "パラゴンが未選択です",

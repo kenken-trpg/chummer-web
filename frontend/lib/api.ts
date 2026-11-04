@@ -364,12 +364,18 @@ export const api = {
     return res;
   },
 
-  /** Chummer XML, or a LifeModule ZIP including matching desktop settings. */
-  exportChummer: async (state: Character): Promise<Blob> => {
+  /**
+   * Chummer XML, or a LifeModule ZIP including matching desktop settings.
+   * `settingsFile` points the save at the file {@link exportChummerSettings}
+   * downloads instead of at a shipped preset.
+   */
+  exportChummer: async (state: Character, opts: { settingsFile?: boolean } = {}): Promise<Blob> => {
     const res = await fetch(
       state.build_method === "LifeModule"
         ? "/api/characters/chummer?bundle=true"
-        : "/api/characters/chummer",
+        : opts.settingsFile
+          ? "/api/characters/chummer?settings_file=true"
+          : "/api/characters/chummer",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -378,6 +384,26 @@ export const api = {
     );
     if (!res.ok) throw new Error(await errorText(res));
     return res.blob();
+  },
+
+  /**
+   * A Chummer settings file holding the character's own books and rules, and
+   * the exact file name to save it under: the name is the key the save looks
+   * it up by, so it comes from the server (`filename*`) rather than from here.
+   */
+  exportChummerSettings: async (state: Character): Promise<{ blob: Blob; filename: string }> => {
+    const res = await fetch("/api/characters/chummer/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ state }),
+    });
+    if (!res.ok) throw new Error(await errorText(res));
+    const header = res.headers.get("Content-Disposition") ?? "";
+    const encoded = /filename\*=UTF-8''([^;]+)/.exec(header)?.[1];
+    return {
+      blob: await res.blob(),
+      filename: encoded ? decodeURIComponent(encoded) : "chummer-web-settings.xml",
+    };
   },
 
   /**

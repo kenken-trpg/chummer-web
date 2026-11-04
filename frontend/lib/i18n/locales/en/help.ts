@@ -539,6 +539,8 @@ export const EN_HELP = {
   "help.toolbar.share":
     "Copy a read-only share link. The character rides in the URL and is never stored on the server (the portrait is left out).",
   "help.toolbar.exportChum5": "Export as .chum5 (XML), which Chummer5a can open",
+  "help.toolbar.exportChum5Settings":
+    "Export a Chummer settings file and a .chum5 that uses it. Put the settings file in Chummer's settings folder before opening the .chum5, and the books and the settings' rules survive a save in Chummer",
   "help.toolbar.exportXlsx":
     "Export an .xlsx with the same sheets and the same input cells as the 「［SR5］キャラシテンプレート」 Google Sheet by 音の兔 (Nenousa), the one the Japanese Shadowrun 5th unofficial wiki links to (the template itself is not bundled)",
   "help.toolbar.exportFvtt":

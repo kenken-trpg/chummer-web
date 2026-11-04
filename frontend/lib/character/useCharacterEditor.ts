@@ -362,6 +362,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     downloadUdonarium: exports.downloadUdonarium,
     downloadUdonariumConjured: exports.downloadUdonariumConjured,
     confirmExport: exports.confirmExport,
+    downloadChum5WithSettings: exports.downloadChum5WithSettings,
     cancelExport: exports.cancelExport,
     copyText: exports.copyText,
     copyShareLink: exports.copyShareLink,

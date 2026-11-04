@@ -22,6 +22,7 @@ const api = vi.hoisted(() => ({
   importXlsx: vi.fn(),
   importSheetUrl: vi.fn(),
   exportChummer: vi.fn(),
+  exportChummerSettings: vi.fn(),
   checkChummerExport: vi.fn(),
   exportXlsx: vi.fn(),
   checkXlsxExport: vi.fn(),
@@ -1178,6 +1179,24 @@ describe("useCharacterEditor file exports", () => {
       await result.current.confirmExport();
     });
     expect(clicks[0].download).toMatch(/^Lifer_\d{8}-\d{6}\.zip$/);
+    expect(result.current.error).toBeNull();
+  });
+
+  it("downloadChum5WithSettings() saves the settings file under its own name and the save pointed at it", async () => {
+    api.exportChummerSettings.mockResolvedValue({
+      blob: new Blob(["<settings/>"]),
+      filename: "chummer-web-日本語環境-0123456789abcdef.xml",
+    });
+    api.exportChummer.mockResolvedValue(new Blob(["<character/>"]));
+    const { result } = await booted(makeCharacter({ id: "c1", name: "Vex" }));
+    await act(async () => {
+      await result.current.downloadChum5WithSettings();
+    });
+    expect(api.exportChummer).toHaveBeenCalledWith(result.current.ch, { settingsFile: true });
+    // the file name is the key the save looks the settings up by: kept exactly
+    expect(clicks[0].download).toBe("chummer-web-日本語環境-0123456789abcdef.xml");
+    expect(clicks[1].download).toMatch(/^Vex_\d{8}-\d{6}\.chum5$/);
+    expect(result.current.exportReview).toBeNull();
     expect(result.current.error).toBeNull();
   });
 

@@ -8,6 +8,7 @@ function makeEd(over: Partial<CharacterEditor> = {}): CharacterEditor {
     tr: identityTr,
     exportReview: null,
     confirmExport: vi.fn().mockResolvedValue(undefined),
+    downloadChum5WithSettings: vi.fn().mockResolvedValue(undefined),
     cancelExport: vi.fn(),
     ...over,
   } as unknown as CharacterEditor;
@@ -33,6 +34,32 @@ describe("<ExportReview>", () => {
     expect(ed.confirmExport).toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "やめる" }));
     expect(ed.cancelExport).toHaveBeenCalled();
+  });
+
+  it("offers the settings file when Chummer's settings would take something", () => {
+    const books = { key: "engine.export.chum5Books", params: { lost: "RG", books: "SR5" } };
+    const ed = makeEd({ exportReview: [books], exportReviewFormat: "chum5" });
+    const { unmount } = render(<ExportReview ed={ed} />);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Chummer 用の設定ファイルと一緒に書き出す" }),
+    );
+    expect(ed.downloadChum5WithSettings).toHaveBeenCalled();
+    unmount();
+
+    // nothing the settings take, or another format: no such button
+    render(
+      <ExportReview
+        ed={makeEd({
+          exportReview: [
+            { key: "engine.export.lost", params: { kind: { ui: "engine.kind.weapon" }, count: 1 } },
+          ],
+          exportReviewFormat: "chum5",
+        })}
+      />,
+    );
+    expect(
+      screen.queryByRole("button", { name: "Chummer 用の設定ファイルと一緒に書き出す" }),
+    ).toBeNull();
   });
 
   it("names the format that was asked for, not whichever came first", () => {

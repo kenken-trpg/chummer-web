@@ -21,7 +21,7 @@ from ..rules import current_rules
 from ._common import _Ctx, _Names, _sub
 
 
-def _export_settings_key(root: ET.Element, state: CharacterState) -> None:
+def _export_settings_key(root: ET.Element, state: CharacterState, key: str | None = None) -> None:
     """Which settings the character was built under, in the terms Chummer
     looks them up by.
 
@@ -55,6 +55,15 @@ def _export_settings_key(root: ET.Element, state: CharacterState) -> None:
         for code in settings.books or [book["code"] for book in catalog()["books"]]:
             _sub(sources, "source", code)
         return
+    if key:
+        # a settings file of the player's own, written alongside the save
+        _sub(root, "settings", key)
+        _sub(root, "gameplayoption", settings.name)
+        sources = _sub(root, "sources")
+        for code in settings.books or [book["code"] for book in catalog()["books"]]:
+            _sub(sources, "source", code)
+        _export_customdata_names(root, settings.customdata)
+        return
     if not settings.name:
         return
     preset = chummer_settings_preset(state)
@@ -68,9 +77,13 @@ def _export_settings_key(root: ET.Element, state: CharacterState) -> None:
         sources = _sub(root, "sources")
         for code in settings.books:
             _sub(sources, "source", code)
-    if settings.customdata:
+    _export_customdata_names(root, settings.customdata)
+
+
+def _export_customdata_names(root: ET.Element, names: list[str]) -> None:
+    if names:
         directories = _sub(root, "customdatadirectorynames")
-        for name in settings.customdata:
+        for name in names:
             _sub(directories, "directoryname", name)
 
 
