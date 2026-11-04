@@ -19,7 +19,7 @@ export interface InstalledWare {
   essence: number;
   /** `<essdiscount>`: percent off the essence (-100..100), already applied */
   ess_discount?: number;
-  /** bioware whose essence Prototype Transhuman waived, wholly or in part (already applied) */
+  /** bioware whose essence Prototype Transhuman waived (whole pieces; already applied) */
   prototype_transhuman?: boolean;
   nuyen: number;
   /** the price picked for a `Variable(lo-hi)` piece; null for a fixed one */

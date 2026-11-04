@@ -126,17 +126,11 @@ def _mark_prototype_transhuman_ware(root: ET.Element, ctx: _Ctx) -> None:
     """`<prototypetranshuman>` on the bioware Prototype Transhuman's allowance
     covers. `Cyberware.Load` reads the mark off the save alone and counts a
     marked piece's essence as 0; with none, Chummer charged every piece in
-    full and opened the character with less Essence than this app gave.
-
-    Chummer marks whole pieces — a piece costs all its essence or none —
-    while the engine lets the allowance run into the last piece it reaches.
-    That last piece, waived only in part, is left unmarked: marking it would
-    give Chummer the rest of its essence for free.
+    full and opened the character with less Essence than this app gave. The
+    engine waives whole pieces, as Chummer does (`pricing.py`).
     """
     waived = {
-        str(row.get("id") or "")
-        for row in ctx["derived"].get("bioware") or []
-        if row.get("prototype_transhuman") and not float(row.get("essence") or 0)
+        str(row.get("id") or "") for row in ctx["derived"].get("bioware") or [] if row.get("prototype_transhuman")
     }
     if not waived:
         return

@@ -1309,8 +1309,7 @@ def test_prototype_transhuman_marks_the_bioware_its_allowance_covers() -> None:
     """`Cyberware.Load` reads `<prototypetranshuman>` off the save alone and
     counts a marked piece's essence as 0. Chummer waives whole pieces: of the
     point the quality allows, Enhanced Articulation (0.3) and Synaptic
-    Booster 1 (0.5) are covered, and Muscle Toner 4 (0.8), which the engine
-    waives only 0.2 of, is left unmarked."""
+    Booster 1 (0.5) are covered, and Muscle Toner 4 (0.8) is not."""
     state, _ = _with_quality("Prototype Transhuman", {})
     state.bioware = [
         CyberwareInstall(id="ea", ware_id="dfada66f-73f7-4648-aff4-6b6bce25f84c"),
