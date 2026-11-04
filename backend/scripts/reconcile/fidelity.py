@@ -8,9 +8,13 @@ the other reader of these files, and the only statement of what it expects is
 the save it wrote — so this compares the original against the export over the
 character's own header (who they are, what they were built with, what the
 build was allowed to spend), plus the two things Chummer keeps exactly one of
-and loads field by field: the tradition and the mentor spirit. Everything
-else a save holds is a list this app rebuilds from its own catalogue, which
-is supposed to differ.
+and loads field by field: the tradition and the mentor spirit — and inside
+each row of the lists (`_ROWS`). Which rows a list holds is rebuilt from this
+app's catalogue and supposed to differ, so a row only one side has is passed
+over; but a row both have is loaded by Chummer field by field, mostly without
+looking the catalogue up again, and a field the export leaves out of it is a
+gap like any other. A row field Chummer would read at its default anyway
+(`_ROW_DEFAULTS`) is not one.
 
 It fails on a field *both* sides state with different text, and on one
 Chummer states and reads back that the export leaves out. A field Chummer
@@ -152,12 +156,228 @@ def _accepted_drop(tag: str) -> str | None:
     """Why this export leaves `tag` out, or `None` if it is a gap."""
     if tag in _ACCEPTED_DROPS:
         return _ACCEPTED_DROPS[tag]
+    if tag in _ACCEPTED_ROW_DROPS:
+        return _ACCEPTED_ROW_DROPS[tag]
     for suffix, reason in _ACCEPTED_DROP_SUFFIXES.items():
         if tag.endswith(suffix):
             return reason
     if tag.startswith(_LEGACY_ATTRIBUTES):
         return "legacy attribute — Initiative is derived now"
     return None
+
+
+#: The lists whose rows `--fidelity` looks inside, by the name a field is
+#: reported under (`spell/dv`). The header comparison above never looked
+#: inside a row, which is how the export wrote powers without their levels,
+#: and spells without their drain, and every save still came back faithful.
+#: A row is matched to the export's by its name and extra (an active skill by
+#: its `<suid>`); a row only one side has is not compared — these lists are
+#: rebuilt from the catalogue, and what each holds is `--roundtrip`'s question.
+_ROWS: tuple[tuple[str, str], ...] = (
+    ("quality", "./qualities/quality"),
+    ("power", "./powers/power"),
+    ("spell", "./spells/spell"),
+    ("complexform", "./complexforms/complexform"),
+    ("martialart", "./martialarts/martialart"),
+    ("metamagic", "./metamagics/metamagic"),
+    ("art", "./arts/art"),
+    ("initiation", "./initiationgrades/initiationgrade"),
+    ("spirit", "./spirits/spirit"),
+    ("focus", "./foci/focus"),
+    ("skill", "./newskills/skills/skill"),
+    ("knowledgeskill", "./newskills/knoskills/skill"),
+    ("contact", "./contacts/contact"),
+    ("cyberware", "./cyberwares/cyberware"),
+    ("armor", "./armors/armor"),
+    ("armormod", "./armors/armor/armormods/armormod"),
+    ("weapon", "./weapons/weapon"),
+    ("accessory", "./weapons/weapon/accessories/accessory"),
+    ("gear", "./gears/gear"),
+    ("vehicle", "./vehicles/vehicle"),
+    ("vehiclemod", "./vehicles/vehicle/mods/mod"),
+    ("lifestyle", "./lifestyles/lifestyle"),
+    ("lifestylequality", "./lifestyles/lifestyle/lifestylequalities/lifestylequality"),
+)
+
+#: What a row's `Load` takes a field to be when the save leaves it out — the
+#: field's initial value in Chummer's class. A field the export leaves out is
+#: only a gap when Chummer's save says something else: Chummer writes
+#: `<equipped>True</equipped>` on every piece of gear, and the export saying
+#: nothing means the same. Where this has no entry, the default is empty
+#: (`_EMPTY_VALUES`).
+_ROW_DEFAULTS: dict[str, str] = {
+    "quality/contributetolimit": "True",
+    "quality/doublecareer": "True",
+    "quality/implemented": "True",
+    "quality/print": "True",
+    "martialart/cost": "7",
+    "contact/groupenabled": "True",
+    "cyberware/extraessmultiplicativemultiplier": "1",
+    "cyberware/limbslotcount": "1",
+    "cyberware/overclocked": "None",
+    "armormod/equipped": "True",
+    "weapon/allowaccessory": "True",
+    "weapon/equipped": "True",
+    "weapon/fullburst": "10",
+    "weapon/installed": "True",
+    "weapon/overclocked": "None",
+    "weapon/rangemultiply": "1",
+    "weapon/requireammo": "True",
+    "weapon/suppressive": "20",
+    "accessory/equipped": "True",
+    "gear/equipped": "True",
+    "gear/overclocked": "None",
+    "vehiclemod/equipped": "True",
+    "lifestylequality/contributetolimit": "True",
+    "lifestylequality/print": "True",
+}
+
+_PLAYERS_TEXT = "the player's own text, which this app does not hold"
+_NEW_ON_LOAD = "a new one is made on load; the export names a row by guid where something points at it"
+_NOT_WRITTEN = "not written yet — "
+
+#: Row fields Chummer states and this export does not, with why — as
+#: `_ACCEPTED_DROPS` is for the header. A reason that starts "not written
+#: yet" is a gap that is known and not fixed: it is listed, so the next one
+#: still fails the run, but it is not counted against the export.
+_ACCEPTED_ROW_DROPS: dict[str, str] = {
+    **{
+        f"{kind}/notes": _PLAYERS_TEXT
+        for kind in (
+            "quality",
+            "power",
+            "spell",
+            "cyberware",
+            "armor",
+            "weapon",
+            "accessory",
+            "gear",
+            "vehicle",
+            "contact",
+        )
+    },
+    **{
+        f"{kind}/guid": _NEW_ON_LOAD
+        for kind in (
+            "quality",
+            "skill",
+            "knowledgeskill",
+            "initiation",
+            "metamagic",
+            "art",
+            "accessory",
+            "vehicle",
+            "vehiclemod",
+            "lifestylequality",
+        )
+    },
+    **{f"{kind}/id": "legacy — <sourceid> says it now" for kind in ("quality", "power", "gear", "vehicle")},
+    **{
+        f"contact/{tag}": _PLAYERS_TEXT
+        for tag in (
+            "location",
+            "metatype",
+            "sex",
+            "age",
+            "hobbiesvice",
+            "personallife",
+            "preferredpayment",
+            "contacttype",
+            "colour",
+            "family",
+            "group",
+        )
+    },
+    "contact/mainmugshotindex": "the portrait shown; this app holds no portraits",
+    "spirit/mainmugshotindex": "the portrait shown; this app holds no portraits",
+    "spirit/crittername": _PLAYERS_TEXT,
+    "armor/armorname": _PLAYERS_TEXT,
+    "gear/gearname": _PLAYERS_TEXT,
+    "vehicle/vehiclename": _PLAYERS_TEXT,
+    "armor/location": "the player's own storage location, which this app does not hold",
+    "gear/location": "the player's own storage location, which this app does not hold",
+    "gear/allowrename": "only lets the player rename the piece in Chummer",
+    "gear/overclocked": "the attribute an Overclocker boosts, which this app does not hold",
+    "gear/conditionmonitor": "output only",
+    "gear/programlimit": "falls back to the catalogue's <programs> when absent",
+    "vehicle/devicerating": "falls back to the catalogue when absent",
+    "weapon/alternaterange": "falls back to the catalogue when absent",
+    "lifestylequality/allowed": "falls back to the catalogue when absent",
+    "vehiclemod/markup": "output only",
+    "weapon/firingmode": "only a weapon mounted on a vehicle reads it",
+    "accessory/extramount": "None — no extra mount, which is what the empty default means",
+    "cyberware/forcegrade": "only Chummer's grade picker reads it",
+    "cyberware/prototypetranshuman": "this app picks the pieces the allowance covers itself, smallest first; "
+    "the player's own pick is not kept",
+    "power/maxlevel": "legacy — <maxlevels> says it now",
+    "quality/metagenetic": "legacy — <metagenic> says it now",
+    "quality/implemented": "copied from the catalogue, which no longer marks a quality unimplemented",
+    "quality/contributetolimit": "a take bought after creation, which Chummer keeps out of the creation limit; "
+    "this app does not tell takes apart by when they were bought",
+    "quality/weaponguid": _NOT_WRITTEN + "the weapon a quality adds (Fangs, a Thagomizer) is not tied to it",
+    "accessory/equipped": _NOT_WRITTEN + "an accessory taken off: this app holds no equipped state for one",
+    "martialart/rating": "output only",
+    "martialart/source": "only shown",
+    "martialart/page": "only shown",
+    "metamagic/source": "only shown",
+    "metamagic/page": "only shown",
+    "art/source": "only shown",
+    "art/page": "only shown",
+    "metamagic/improvementsource": "Metamagic, the default, unless it is an echo — which the row's own name says",
+    "art/improvementsource": "Metamagic, the default",
+    "gear/active": _NOT_WRITTEN + "the active commlink: this app has no notion of one",
+    "gear/weaponguid": _NOT_WRITTEN + "the weapon a grenade or a Survival Kit makes is not exported",
+    "cyberware/subsystems": _NOT_WRITTEN + "the categories Chummer offers to add inside a piece",
+    "vehicle/modslots": _NOT_WRITTEN + "Rigger 5.0's drone mod slots, where the catalogue leaves them to the body",
+    "vehicle/addslots": _NOT_WRITTEN + "a drone's extra mod slots from the catalogue",
+    "vehicle/weaponmodslots": _NOT_WRITTEN + "a drone's extra weapon mod slots from the catalogue",
+    "vehiclemod/subsystems": _NOT_WRITTEN + "the categories Chummer offers to add inside a mod",
+    "vehiclemod/conditionmonitor": _NOT_WRITTEN + "the mod's own damage boxes",
+    "accessory/ammoslots": _NOT_WRITTEN + "an accessory's extra ammo slots from the catalogue",
+    "armormod/gearcapacity": _NOT_WRITTEN + "the gear an armor mod can hold, from the catalogue",
+}
+
+
+def _row_key(el: ET.Element) -> str:
+    if el.tag == "skill" and not el.findtext("name"):
+        return (el.findtext("suid") or "").strip()
+    return f"{(el.findtext('name') or '').strip()}|{(el.findtext('extra') or '').strip()}"
+
+
+def _same(text: str, default: str) -> bool:
+    try:
+        return float(text) == float(default)
+    except ValueError:
+        return text == default
+
+
+def _row_drops(theirs: ET.Element, ours: ET.Element) -> list[str]:
+    """`kind/tag` once for each field a row of Chummer's states that the same
+    row in the export leaves out, where Chummer would read it otherwise."""
+    out: list[str] = []
+    for kind, path in _ROWS:
+        exported: dict[str, list[ET.Element]] = {}
+        for el in ours.findall(path):
+            exported.setdefault(_row_key(el), []).append(el)
+        seen: dict[str, int] = {}
+        for el in theirs.findall(path):
+            key = _row_key(el)
+            index = seen.get(key, 0)
+            seen[key] = index + 1
+            matches = exported.get(key) or []
+            if index >= len(matches):
+                continue
+            mine = matches[index]
+            for leaf in el:
+                if len(leaf) or mine.find(leaf.tag) is not None:
+                    continue
+                tag = f"{kind}/{leaf.tag}"
+                text = (leaf.text or "").strip()
+                default = _ROW_DEFAULTS.get(tag)
+                if (text in _EMPTY_VALUES) if default is None else (not text or _same(text, default)):
+                    continue
+                out.append(tag)
+    return out
 
 
 def fidelity(path: Path) -> tuple[list[str], list[tuple[str, str, str]]]:
@@ -177,10 +397,12 @@ def fidelity(path: Path) -> tuple[list[str], list[tuple[str, str, str]]]:
     from app.chummer_export import state_to_chum5
     from app.chummer_import import chum5_to_state
 
-    theirs = _leaves(ET.fromstring(path.read_bytes()))
+    their_root = ET.fromstring(path.read_bytes())
     exported = state_to_chum5(import_character(chum5_to_state(path.read_bytes())[0]))
-    ours = _leaves(ET.fromstring(exported if isinstance(exported, bytes) else exported.encode()))
+    our_root = ET.fromstring(exported if isinstance(exported, bytes) else exported.encode())
+    theirs, ours = _leaves(their_root), _leaves(our_root)
     dropped = [tag for tag, text in theirs.items() if tag not in ours and text not in _EMPTY_VALUES]
+    dropped += _row_drops(their_root, our_root)
     changed = [
         (tag, theirs[tag], ours[tag])
         for tag in _SAME_VALUE_TAGS

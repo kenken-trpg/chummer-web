@@ -146,16 +146,20 @@ expects is the save it wrote — so this compares the original against the
 export, field by field, over the character's own header (who they are, what
 they were built with, what the build was allowed to spend), plus the two
 things Chummer keeps exactly one of and loads field by field: the tradition
-and the mentor spirit. Everything else a save holds is a list this app
-rebuilds from its own catalogue, which is supposed to differ.
+and the mentor spirit. Inside the lists it compares each row both sides have
+— which rows a list holds is rebuilt from the catalogue and supposed to
+differ, but `Load` reads a row's fields off the save, mostly without looking
+the catalogue up again. A row field at Chummer's own default says nothing.
 
 It fails on a field *both* sides state with different text, and on one
 Chummer states and reads back that the export leaves out. A field Chummer
 writes and never reads back — an attribute's `totalvalue`, recomputed on load
-— is named in `_ACCEPTED_DROPS` with the reason, and printed rather than
-counted against the export. Nothing else is: a field this app has not thought
-about fails the run, which is what makes this a gate (CI's `fidelity` job)
-rather than a reading to work down.
+— is named in `_ACCEPTED_DROPS` (a row's in `_ACCEPTED_ROW_DROPS`) with the
+reason, and printed rather than counted against the export. One whose reason
+starts "not written yet" is a known gap, listed so that the next one still
+fails the run. Nothing else is: a field this app has not thought about fails
+the run, which is what makes this a gate (CI's `fidelity` job) rather than a
+reading to work down.
 
 `--improvements` counts the improvements each save's qualities, implants,
 gear, armor, adept powers and mentor spirit made, and how many of them the
