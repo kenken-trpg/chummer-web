@@ -325,7 +325,8 @@ _ACCEPTED_ROW_DROPS: dict[str, str] = {
     "art/page": "only shown",
     "metamagic/improvementsource": "Metamagic, the default, unless it is an echo — which the row's own name says",
     "art/improvementsource": "Metamagic, the default",
-    "gear/active": _NOT_WRITTEN + "the active commlink: this app has no notion of one",
+    "gear/active": "this app marks the device its Matrix initiative runs, the highest Data Processing; "
+    "a save that ran another keeps that pick only in Chummer",
 }
 
 

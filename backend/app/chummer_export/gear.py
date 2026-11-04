@@ -449,6 +449,33 @@ def _export_gear(root: ET.Element, state: CharacterState, names: _Names, ctx: _C
     _export_gear_improvements(root, state, by_parent_g)
     # after the gear and armor are written, which get the `<weaponguid>`
     _export_added_weapons(root, state)
+    _mark_active_device(root, ctx)
+
+
+def _mark_active_device(root: ET.Element, ctx: _Ctx) -> None:
+    """Make the device this app's Matrix initiative runs on Chummer's active
+    commlink (`<active>`, which `Gear.Load` reads back into `ActiveCommlink`).
+
+    Chummer picks one only when a commlink is bought, never on load, so a
+    character opened without one has no Data Processing in their Matrix
+    initiative and no Matrix attributes on the sheet. This app keeps no pick of
+    its own: it runs the persona with the highest Data Processing — a
+    technomancer's Living Persona, which their quality writes, or the best
+    commlink, deck or RCC — and that is the one marked. An A.I. runs from its
+    home node, which `<homenode>` says already.
+    """
+    derived = ctx.get("derived") or {}
+    device = (derived.get("matrix_initiative") or {}).get("device")
+    gears = list(root.iter("gear"))
+    if device == "living_persona":
+        target = next((el for el in gears if el.findtext("name") == "Living Persona"), None)
+    elif device in ("commlink", "cyberdeck", "rcc"):
+        guid = str((derived.get(device) or {}).get("id") or "")
+        target = next((el for el in gears if guid and el.findtext("guid") == guid), None)
+    else:
+        return
+    if target is not None and target.find("active") is None:
+        _sub(target, "active", "True")
 
 
 def _export_gear_improvements(root: ET.Element, state: CharacterState, by_parent: dict[str | None, list[Any]]) -> None:
