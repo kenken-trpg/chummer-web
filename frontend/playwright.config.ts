@@ -45,7 +45,13 @@ export default defineConfig({
 
   webServer: [
     {
-      command: `${UVICORN} app.main:app --host 127.0.0.1 --port 8100`,
+      // Next proxies /api through Node's global agent, which keeps an idle
+      // socket for 5 s — uvicorn's own keep-alive default. When the two
+      // expire together Node reuses a socket uvicorn has just closed, the
+      // proxied request fails with ECONNRESET, and whichever test's page load
+      // it was times out (cyberdeck.spec.ts on 2026-11-03). Keeping the server
+      // side open longer than the client's lets the client always close first.
+      command: `${UVICORN} app.main:app --host 127.0.0.1 --port 8100 --timeout-keep-alive 30`,
       cwd: "../backend",
       // `IMPORT_RATE_LIMIT` defaults to 20/minute per client IP, which exists
       // to bound what one caller can aim at the XML-handling routes. All four
