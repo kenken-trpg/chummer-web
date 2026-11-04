@@ -1320,6 +1320,8 @@ def test_prototype_transhuman_marks_the_bioware_its_allowance_covers() -> None:
     marks = {w.findtext("guid"): w.findtext("prototypetranshuman") for w in root.findall("./cyberwares/cyberware")}
     assert marks == {"ea": "True", "sb": "True", "mt": None}
     assert root.findtext("prototypetranshuman") == "1"
+
+
 def test_what_gear_armor_and_a_quality_bring_is_a_weapon_of_its_own() -> None:
     """`<addweapon>`: Chummer adds the weapon a grenade, a shield or Fangs
     brings as a row of its own with the owner's guid in `<parentid>`, and the
