@@ -426,6 +426,14 @@ def test_prototype_transhumans_pick_is_a_quality_of_its_own() -> None:
     assert (child.findtext("name"), child.findtext("extra")) == ("Allergy (Common, Mild)", "Soy")
     assert child.findtext("qualitysource") == "Improvement"
     assert child.findtext("sourcename") == "Prototype Transhuman"
+    # Chummer reads the type off the save alone: without it the allergy
+    # opened as a positive quality, and counted against the quality limit
+    assert (child.findtext("qualitytype"), child.findtext("bp"), child.findtext("contributetolimit")) == (
+        "Negative",
+        "0",
+        "False",
+    )
+    assert (child.findtext("source"), child.findtext("page")) == ("SR5", "78")
     imp = root.find("./improvements/improvement")
     assert imp is not None
     assert imp.findtext("improvementttype") == "SpecificQuality"
@@ -714,6 +722,7 @@ def test_a_quality_grants_its_added_quality_and_leaves_its_movement() -> None:
     root = ET.fromstring(xml)
     child = root.findall("./qualities/quality")[1]
     assert (child.findtext("name"), child.findtext("qualitysource")) == ("High Pain Tolerance", "Improvement")
+    assert (child.findtext("qualitytype"), child.findtext("contributetolimit")) == ("Positive", "False")
     assert _quality_improvements(root) == [
         ("Celerity", "RunSpeed", "Ground", ""),
         ("Celerity", "SprintBonus", "Ground", ""),
