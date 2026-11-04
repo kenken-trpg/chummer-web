@@ -1295,3 +1295,17 @@ def test_a_gun_a_drone_came_with_stays_free_across_a_round_trip() -> None:
     assert [(w["name"], w["nuyen"], w["included"]) for w in again.derived["weapons"]] == [("Stoner-Ares M202", 0, True)]
     (mount,) = again.derived["drones"][0]["weapon_mounts"]
     assert mount["weapon_name"] == "Stoner-Ares M202"
+
+
+def test_the_sex_comes_from_gender_as_a_current_chummer_saves_it() -> None:
+    """A current Chummer saves the character's sex as `<gender>`, and reads it
+    before `<sex>`; a file it wrote came back with no sex at all."""
+
+    def sex(tags: str) -> str | None:
+        raw = f'<?xml version="1.0" encoding="utf-8"?><character><metatype>Human</metatype>{tags}</character>'
+        return chum5_to_state(raw.encode())[0].get("sex")
+
+    assert sex("<gender>Female</gender>") == "Female"
+    assert sex("<sex>Male</sex>") == "Male"
+    assert sex("<gender>Female</gender><sex>Male</sex>") == "Female"
+    assert sex("<gender></gender><sex>Male</sex>") == "Male"
