@@ -376,7 +376,12 @@ def _catalog_for(_overlay_key: str) -> CatalogDict:
     _add_drug_grades(gear, drug_grades)
     cyberware = load_cyberware()
     bioware = load_bioware()
-    weapon_ids = {item["name"]: item["id"] for item in weapons}
+    # the first row of a name, as Chummer's `TryGetNodeByNameOrId` takes it:
+    # weapons.xml has two Monofilament Chainsaws, and only the first states
+    # its specialization
+    weapon_ids: dict[str, str] = {}
+    for item in weapons:
+        weapon_ids.setdefault(item["name"], item["id"])
     _link_gear_to_weapons(gear, weapons, weapon_ids)
     _link_added_weapons(list(cyberware.get("items") or []) + list(bioware.get("items") or []), weapon_ids)
     _add_drug_effects(gear)

@@ -30,7 +30,7 @@ from .data_fields import _from_data
 from .improvements import _bonus_improvements, _Imp, _text, _with_rows, _write_improvements
 from .life_modules import export_life_modules
 from .metatype import export_metatype_bonus, export_metatype_powers, export_metatype_qualities
-from .natural_weapons import write_natural_weapons
+from .natural_weapons import write_added_weapon, write_natural_weapons
 from .skills import spec_guid
 
 
@@ -107,6 +107,7 @@ def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ct
             effects.append((q.findtext("guid") or "", rows))
         # run once, however many takes (as `<firstlevelbonus>`)
         _export_natural_weapons(root, q, qid, definition if not take else None)
+        _export_added_weapon(root, q, qid, take, specs.get(qid) or {})
         # A quality with a `<selectskill>` bonus carries the skill picked for
         # it. Unlike the implant picks in `_export_ware`, these are keyed by
         # the quality's catalog id, which survives an import unchanged.
@@ -161,6 +162,18 @@ def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ct
     owners = {q.findtext("guid") or "": q.findtext("name") or "" for q in quals.findall("quality")}
     for guid, rows in effects:
         _write_improvements(root, _with_rows(root, rows, guid, owners.get(guid, "")), guid, "Quality")
+
+
+def _export_added_weapon(root: ET.Element, q: ET.Element, qid: str, take: int, spec: dict[str, Any]) -> None:
+    """`<addweapon>` (Fangs, a Thagomizer): one weapon for each take, which
+    `Quality.Create` ties to the quality by its `<weaponguid>`."""
+    added = str(spec.get("add_weapon_id") or "")
+    if not added:
+        return
+    if q.find("guid") is None:
+        _sub(q, "guid", str(uuid.uuid5(uuid.NAMESPACE_URL, f"{qid}:take:{take}")) if take else qid)
+    if weapon_guid := write_added_weapon(root, q.findtext("guid") or "", added):
+        _sub(q, "weaponguid", weapon_guid)
 
 
 def _export_granted_qualities(

@@ -314,7 +314,6 @@ _ACCEPTED_ROW_DROPS: dict[str, str] = {
     "quality/implemented": "copied from the catalogue, which no longer marks a quality unimplemented",
     "quality/contributetolimit": "a take bought after creation, which Chummer keeps out of the creation limit; "
     "this app does not tell takes apart by when they were bought",
-    "quality/weaponguid": _NOT_WRITTEN + "the weapon a quality adds (Fangs, a Thagomizer) is not tied to it",
     "accessory/equipped": _NOT_WRITTEN + "an accessory taken off: this app holds no equipped state for one",
     "martialart/rating": "output only",
     "martialart/source": "only shown",
@@ -326,7 +325,6 @@ _ACCEPTED_ROW_DROPS: dict[str, str] = {
     "metamagic/improvementsource": "Metamagic, the default, unless it is an echo — which the row's own name says",
     "art/improvementsource": "Metamagic, the default",
     "gear/active": _NOT_WRITTEN + "the active commlink: this app has no notion of one",
-    "gear/weaponguid": _NOT_WRITTEN + "the weapon a grenade or a Survival Kit makes is not exported",
     "cyberware/subsystems": _NOT_WRITTEN + "the categories Chummer offers to add inside a piece",
     "vehicle/modslots": _NOT_WRITTEN + "Rigger 5.0's drone mod slots, where the catalogue leaves them to the body",
     "vehicle/addslots": _NOT_WRITTEN + "a drone's extra mod slots from the catalogue",
