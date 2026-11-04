@@ -95,6 +95,38 @@ def _apply_recoil_totals(weapons: list[dict[str, Any]], attrs: dict[str, int]) -
     return {"str": str_val, "str_rc": str_rc, "free": 1}
 
 
+def _add_accessory_stats(
+    weapon: dict[str, Any], spec: dict[str, Any], rc_groups: dict[tuple[bool, int], int], restrict_recoil: bool
+) -> None:
+    """Add what an accessory on the weapon gives it: Accuracy, Recoil
+    Compensation, Concealability, Damage, AP, Reach and ammo capacity."""
+    acc_bonus = {
+        "accuracy": _leading_int(spec.get("accuracy")) or 0,
+        "rc": _leading_int(spec.get("rc")) or 0,
+        "conceal": _leading_int(spec.get("conceal")) or 0,
+        "damage": _leading_int(spec.get("damage")) or 0,
+        "ap": _leading_int(spec.get("ap")) or 0,
+        "reach": _leading_int(spec.get("reach")) or 0,
+    }
+    # A smartgun system's Accuracy is conditional on a smartlink — held
+    # back here and added by ``apply_smartlink_accuracy`` once the
+    # smartlink improvement (implant or imaging device) is known.
+    if "Smartgun" not in str(spec.get("name") or ""):
+        weapon["accuracy"] = _add_leading_int(str(weapon.get("accuracy") or ""), acc_bonus["accuracy"])
+    group = int(spec.get("rcgroup") or 0)
+    if restrict_recoil and group:
+        key = (bool(spec.get("rcdeployable")), group)
+        rc_groups[key] = max(rc_groups.get(key, 0), acc_bonus["rc"])
+    else:
+        weapon["rc"] = _add_leading_int(str(weapon.get("rc") or "0") or "0", acc_bonus["rc"])
+    weapon["conceal"] = _add_leading_int(str(weapon.get("conceal") or "0") or "0", acc_bonus["conceal"])
+    weapon["damage"] = _add_leading_int(str(weapon.get("damage") or ""), acc_bonus["damage"])
+    weapon["ap"] = _add_leading_int(str(weapon.get("ap") or ""), acc_bonus["ap"])
+    if acc_bonus["reach"]:
+        weapon["reach"] = _add_leading_int(str(weapon.get("reach") or "0") or "0", acc_bonus["reach"])
+    _apply_modify_ammo_capacity(weapon, spec.get("modifyammocapacity"))
+
+
 def _resolve_weapon_accessories(
     state: CharacterState,
     weapons: list[dict[str, Any]],
@@ -186,31 +218,10 @@ def _resolve_weapon_accessories(
             )
             cost *= int(qty_by_id.get(weapon["id"]) or 1)
             nuyen += cost
-            acc_bonus = {
-                "accuracy": _leading_int(spec.get("accuracy")) or 0,
-                "rc": _leading_int(spec.get("rc")) or 0,
-                "conceal": _leading_int(spec.get("conceal")) or 0,
-                "damage": _leading_int(spec.get("damage")) or 0,
-                "ap": _leading_int(spec.get("ap")) or 0,
-                "reach": _leading_int(spec.get("reach")) or 0,
-            }
-            # A smartgun system's Accuracy is conditional on a smartlink — held
-            # back here and added by ``apply_smartlink_accuracy`` once the
-            # smartlink improvement (implant or imaging device) is known.
-            if "Smartgun" not in str(spec.get("name") or ""):
-                weapon["accuracy"] = _add_leading_int(str(weapon.get("accuracy") or ""), acc_bonus["accuracy"])
-            group = int(spec.get("rcgroup") or 0)
-            if restrict_recoil and group:
-                key = (bool(spec.get("rcdeployable")), group)
-                rc_groups[key] = max(rc_groups.get(key, 0), acc_bonus["rc"])
-            else:
-                weapon["rc"] = _add_leading_int(str(weapon.get("rc") or "0") or "0", acc_bonus["rc"])
-            weapon["conceal"] = _add_leading_int(str(weapon.get("conceal") or "0") or "0", acc_bonus["conceal"])
-            weapon["damage"] = _add_leading_int(str(weapon.get("damage") or ""), acc_bonus["damage"])
-            weapon["ap"] = _add_leading_int(str(weapon.get("ap") or ""), acc_bonus["ap"])
-            if acc_bonus["reach"]:
-                weapon["reach"] = _add_leading_int(str(weapon.get("reach") or "0") or "0", acc_bonus["reach"])
-            _apply_modify_ammo_capacity(weapon, spec.get("modifyammocapacity"))
+            # Chummer sums an accessory into the weapon only while it is on
+            # (`WeaponAccessory.Equipped`); its cost and mount stay either way
+            if inst.equipped:
+                _add_accessory_stats(weapon, spec, rc_groups, restrict_recoil)
             if is_special:
                 special_used += special_cost
             weapon["nuyen"] = int(weapon.get("nuyen") or 0) + cost
@@ -222,6 +233,7 @@ def _resolve_weapon_accessories(
                     "name": spec["name"],
                     "parent_id": inst.parent_id,
                     "included": bool(inst.included),
+                    "equipped": bool(inst.equipped),
                     "mount": mount,
                     "rating": rating,
                     "rating_max": int(spec.get("maxrating") or 0),

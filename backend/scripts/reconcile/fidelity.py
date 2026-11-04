@@ -315,7 +315,6 @@ _ACCEPTED_ROW_DROPS: dict[str, str] = {
     "quality/contributetolimit": "a take bought after creation, which Chummer keeps out of the creation limit; "
     "this app does not tell takes apart by when they were bought",
     "accessory/ammoslots": "copied from the catalogue, which no longer gives an Extended Clip an ammo slot",
-    "accessory/equipped": _NOT_WRITTEN + "an accessory taken off: this app holds no equipped state for one",
     "martialart/rating": "output only",
     "martialart/source": "only shown",
     "martialart/page": "only shown",

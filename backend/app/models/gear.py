@@ -100,6 +100,9 @@ class WeaponAccessoryInstall(BaseModel):
     included: bool = False
     rating: int = 1
     mount: str = ""
+    #: on the weapon (Chummer's `<equipped>`): one taken off is still owned
+    #: and paid for, and keeps its mount, but adds nothing to the weapon
+    equipped: bool = True
     #: bought through the Black Market Pipeline: 10% off (Chummer's
     #: `<discountedcost>`, which the quality's categories allow)
     discounted: bool = False

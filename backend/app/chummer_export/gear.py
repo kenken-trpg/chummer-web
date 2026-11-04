@@ -336,6 +336,7 @@ def _emit_accessories(
         _sub(ac, "sourceid", arow.accessory_id)
         _sub(ac, "name", names["wacc"].get(arow.accessory_id, ""))
         _sub(ac, "mount", arow.mount or ("None" if arow.accessory_id in mountless else ""))
+        _sub(ac, "equipped", "True" if arow.equipped else "False")
         _sub(ac, "rating", arow.rating)
         _sub(ac, "included", "True" if arow.included else "False")
         _from_data(ac, "accessory", arow.accessory_id)

@@ -183,7 +183,7 @@ def apply_smartlink_accuracy(weapons: list[dict[str, Any]] | None, effects: Effe
             (
                 _leading_int(acc.get("accuracy")) or 0
                 for acc in weapon.get("accessories") or []
-                if "Smartgun" in str(acc.get("name") or "")
+                if "Smartgun" in str(acc.get("name") or "") and acc.get("equipped", True)
             ),
             default=0,
         )

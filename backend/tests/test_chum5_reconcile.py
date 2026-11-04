@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import xml.etree.ElementTree as ET
 
-from scripts.reconcile.fidelity import _accepted_drop, _leaves, _row_drops
+from scripts.reconcile.fidelity import _ACCEPTED_ROW_DROPS, _accepted_drop, _leaves, _row_drops
 from scripts.reconcile.prices import _at_rating, _stored_prices, _stored_rating_prices
 
 
@@ -236,11 +236,13 @@ def test_a_row_only_one_side_has_is_not_compared() -> None:
     assert _row_drops(theirs, ours) == ["quality/source"]
 
 
-def test_a_known_row_gap_is_named_as_one() -> None:
-    """A gap that is known and not fixed is listed so that the next one
-    still fails the run — and it says so, rather than passing for a field
-    Chummer does not read."""
-    assert (_accepted_drop("accessory/equipped") or "").startswith("not written yet")
+def test_no_row_gap_is_left_unwritten() -> None:
+    """A gap that is known and not fixed would be listed with a reason that
+    starts "not written yet", so that the next one still fails the run. The
+    last two — the active commlink and an accessory taken off — are written
+    now: the one is explained, the other no longer listed."""
+    assert not [tag for tag, reason in _ACCEPTED_ROW_DROPS.items() if reason.startswith("not written yet")]
+    assert _accepted_drop("accessory/equipped") is None
     assert not (_accepted_drop("gear/active") or "").startswith("not written yet")
     assert _accepted_drop("spell/dv") is None
     assert _accepted_drop("quality/qualitytype") is None
