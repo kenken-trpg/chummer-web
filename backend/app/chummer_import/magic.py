@@ -443,13 +443,18 @@ def _import_foci(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
         # the tradition a spellcasting or power focus is made for is the
         # gear's `<extra>`, where Chummer keeps the pick
         tradition = _text(gear.find("extra")) if gid in tradition_foci else ""
+        crafted = _text(f.find("crafted")).lower() == "true"
         foci.append(
             {
                 "id": str(uuid.uuid4()),
                 "gear_id": gid,
                 "force": force,
-                "crafted": _text(f.find("crafted")).lower() == "true",
-                "formula_bought": _text(f.find("formulabought")).lower() != "false",
+                "crafted": crafted,
+                # Only a crafted focus has a formula to buy, and the engine
+                # holds a bought one at False. A file Chummer saved has
+                # neither field (they are this app's), so reading the missing
+                # one as True flipped every bought focus on the way through.
+                "formula_bought": crafted and _text(f.find("formulabought")).lower() != "false",
                 "hits": _int(f.find("hits"), 0) or None,
                 "opposed_hits": _int(f.find("opposedhits"), 0) or None,
                 "extra": weapon_ids.get(weapon_name.lower()) or tradition or None,
