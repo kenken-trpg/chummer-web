@@ -1220,6 +1220,25 @@ def test_a_spell_carries_the_fields_chummer_does_not_look_up_again() -> None:
     )
 
 
+def test_a_complex_form_carries_the_fields_chummer_does_not_look_up_again() -> None:
+    """`ComplexForm.Load` reads the target, duration and fading off the save
+    and never from `complexforms.xml`."""
+    cleaner = next(f["id"] for f in catalog()["complex_forms"] if f["name"] == "Cleaner")
+    state = CharacterState(
+        id="cf",
+        name="Technomancer",
+        priorities=Priorities(Heritage="D", Attributes="B", Talent="A", Skills="C", Resources="E"),
+        metatype="Human",
+        attributes={},
+        talent="Technomancer",
+        complex_forms=[ComplexFormInstall(id="cl", form_id=cleaner)],
+    )
+    form = ET.fromstring(state_to_chum5(state)).find("./complexforms/complexform")
+    assert form is not None
+    fields = ("guid", "target", "duration", "fv", "source", "page")
+    assert tuple(form.findtext(f) for f in fields) == ("cl", "Persona", "P", "L-2", "SR5", "252")
+
+
 def test_a_power_and_a_mentor_leave_what_their_bonus_made() -> None:
     """An adept power's improvements sit under its guid at its rating; the
     mentor's own bonus and each picked choice's sit under the mentor's guid,

@@ -82,8 +82,11 @@ def _export_spell_lists(root: ET.Element, state: CharacterState, names: _Names, 
         state.complex_forms,
         "form_id",
         "complexform",
-        {"rating": lambda r: r.level or 1, "extra": lambda r: r.extra or ""},
+        {"guid": lambda r: r.id, "rating": lambda r: r.level or 1, "extra": lambda r: r.extra or ""},
     )
+    form_definitions = _definitions("complexforms.xml", "./complexforms/complexform")
+    for el, form in zip(root.findall("./complexforms/complexform"), state.complex_forms, strict=True):
+        _write_complex_form_definition_fields(el, form_definitions.get(form.form_id))
 
 
 def _export_power_improvements(root: ET.Element, state: CharacterState, ctx: _Ctx) -> None:
@@ -191,6 +194,20 @@ def _write_spell_definition_fields(el: ET.Element, definition: ET.Element | None
         ("grade", "0"),
     ):
         _sub(el, tag, value)
+
+
+def _write_complex_form_definition_fields(el: ET.Element, definition: ET.Element | None) -> None:
+    """The fields `ComplexForm.Create` copies off the `complexforms.xml` row,
+    written the way `ComplexForm.Save` writes them.
+
+    `ComplexForm.Load` reads the target, duration and fading off the save and
+    never from the catalogue, as `Spell.Load` does for a spell's.
+    """
+    if definition is None:
+        return
+    for tag in ("useskill", "target", "duration", "fv", "source", "page"):
+        _sub(el, tag, (definition.findtext(tag) or "").strip())
+    _sub(el, "grade", "0")
 
 
 def _definitions(file: str, path: str) -> dict[str, ET.Element]:
