@@ -17,7 +17,17 @@
 		request_body {
 			max_size {$MAX_REQUEST_BYTES:12582912}
 		}
-		reverse_proxy 127.0.0.1:8000
+		reverse_proxy 127.0.0.1:8000 {
+			# Both upstreams drop an idle connection after 5 s (uvicorn's
+			# --timeout-keep-alive, Node's server.keepAliveTimeout); Caddy keeps
+			# one for 2 min. Reusing one the upstream has just closed fails the
+			# request - a POST is not retried, so it reaches the visitor as a 502
+			# (`write: broken pipe` to 127.0.0.1:8000, 2026-10-18). Closing ours
+			# first avoids that, and on loopback a new connection costs nothing.
+			transport http {
+				keepalive 2s
+			}
+		}
 	}
 
 	handle {
@@ -30,6 +40,10 @@
 			# rather than left to Caddy's default, which keeps a
 			# client-supplied `X-Forwarded-Host` if one arrived.
 			header_up X-Forwarded-Host {hostport}
+			# idle connections close before Next's do; see /api above
+			transport http {
+				keepalive 2s
+			}
 		}
 	}
 
