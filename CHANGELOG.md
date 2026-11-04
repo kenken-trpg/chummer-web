@@ -3,6 +3,18 @@
 Notable changes. Format follows [Keep a Changelog](https://keepachangelog.com/);
 self-hosters can pin to a tag instead of tracking `main`.
 
+## [0.5.20] — 2026-11-04
+
+### Added
+
+- **フッターに版を表示しました**：画面下のフッターに、動いている chummer-web の版（例: v0.5.19）を出します。押すとその版の GitHub Release（変更点の一覧）が開きます。
+
+### Fixed
+
+- **保存や再計算がまれに 502 で失敗するのを直しました**：サーバー内部の中継が、閉じられたばかりの接続を使い回すことがあり、送信がごくまれに失敗していました（本番では 30 日で約 3,200 件中 1 件）。中継側が先に接続を閉じるようにしました。
+
+- **FVTT 書出のヘルプを今の中身に合わせました**：メタタイプの生得パワーは書き出すようになりましたが、ツールバーのヘルプはまだ「品目にならない」と書いていました。書き出す前に一覧で知らせるのは A.I. のプログラムだけです。
+
 ## [0.5.19] — 2026-11-03
 
 ### Added
@@ -2901,7 +2913,8 @@ First tagged release.
 - One-container Docker image (Caddy + uvicorn + Next standalone) published to
   GHCR; `make up` / `compose.yaml` for local self-hosting.
 
-[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.19...HEAD
+[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.20...HEAD
+[0.5.20]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.19...v0.5.20
 [0.5.19]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.18...v0.5.19
 [0.5.18]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.17...v0.5.18
 [0.5.17]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.16...v0.5.17
