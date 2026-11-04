@@ -38,6 +38,9 @@ def _public_installed(item: dict[str, Any]) -> dict[str, Any]:
         # can label it and leave its controls out.
         "granted_by": str(item.get("granted_by") or ""),
         "essence": item["essence"],
+        # bioware Prototype Transhuman's allowance waived; only when it did, so
+        # every other row stays as it was
+        **({"prototype_transhuman": True} if item.get("prototype_transhuman") else {}),
         "ess_discount": int(item.get("ess_discount") or 0),
         "nuyen": item["nuyen"],
         "capacity_used": item.get("capacity_used") or 0,

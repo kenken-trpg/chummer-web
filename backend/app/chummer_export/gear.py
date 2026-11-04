@@ -118,7 +118,31 @@ def _export_ware(root: ET.Element, state: CharacterState, names: _Names, ctx: _C
     # Chummer has no `<biowares>`: bioware is a `<cyberware>` told apart by its
     # `<improvementsource>`, and one written anywhere else is lost on opening
     emit(_sub(root, "cyberwares"), [r for r in top if r.id in cyber_ids or r.id in bio_ids], "cyberware")
+    _mark_prototype_transhuman_ware(root, ctx)
     _export_ware_improvements(root, state, by_parent, top, cyber_ids)
+
+
+def _mark_prototype_transhuman_ware(root: ET.Element, ctx: _Ctx) -> None:
+    """`<prototypetranshuman>` on the bioware Prototype Transhuman's allowance
+    covers. `Cyberware.Load` reads the mark off the save alone and counts a
+    marked piece's essence as 0; with none, Chummer charged every piece in
+    full and opened the character with less Essence than this app gave.
+
+    Chummer marks whole pieces — a piece costs all its essence or none —
+    while the engine lets the allowance run into the last piece it reaches.
+    That last piece, waived only in part, is left unmarked: marking it would
+    give Chummer the rest of its essence for free.
+    """
+    waived = {
+        str(row.get("id") or "")
+        for row in ctx["derived"].get("bioware") or []
+        if row.get("prototype_transhuman") and not float(row.get("essence") or 0)
+    }
+    if not waived:
+        return
+    for el in root.iter("cyberware"):
+        if el.findtext("guid") in waived and el.findtext("improvementsource") == "Bioware":
+            _sub(el, "prototypetranshuman", "True")
 
 
 def _export_ware_improvements(
