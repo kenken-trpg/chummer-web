@@ -1243,3 +1243,20 @@ def test_recoil_accessories_in_one_group_count_only_the_best() -> None:
 
     restricted = rc(SettingsState())
     assert rc(SettingsState(restrict_recoil=False)) == restricted + 1
+
+
+def test_an_accessory_taken_off_is_paid_for_and_adds_nothing() -> None:
+    """Chummer's `WeaponAccessory.Equipped`: the weapon sums an accessory's
+    Recoil Compensation (and Accuracy, Concealability, ...) only while it is
+    on, and its cost in either case — so does the engine."""
+
+    def row(equipped: bool) -> dict:
+        weapon = WeaponInstall(weapon_id=AK_97)
+        grip = WeaponAccessoryInstall(accessory_id=FOREGRIP, parent_id=weapon.id, mount="None", equipped=equipped)
+        out = compute(_mundane("off", weapons=[weapon], weapon_accessories=[grip]))
+        return next(w for w in out.derived["weapons"] if w["weapon_id"] == AK_97)
+
+    on, off = row(True), row(False)
+    assert int(off["rc_total"]) == int(on["rc_total"]) - 1
+    assert off["nuyen"] == on["nuyen"]
+    assert [a["equipped"] for a in off["accessories"]] == [False]

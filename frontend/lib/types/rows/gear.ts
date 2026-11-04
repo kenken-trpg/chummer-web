@@ -151,6 +151,8 @@ export interface InstalledWeaponAccessory {
   name: string;
   parent_id?: string | null;
   included?: boolean;
+  /** false for one taken off (Chummer `<equipped>`): paid for, adds nothing */
+  equipped?: boolean;
   mount?: string;
   rating?: number;
   rating_max?: number;

@@ -152,6 +152,10 @@ def _read_accessories(
                     "mount": _text(acc.find("mount")),
                     "rating": max(1, _int(acc.find("rating"), 1)),
                     "included": _text(acc.find("included")).lower() == "true",
+                    # `WeaponAccessory.Load`: on unless the save says not,
+                    # and an older save's `<installed>` puts it back on
+                    "equipped": _text(acc.find("equipped")).lower() != "false"
+                    or _text(acc.find("installed")).lower() == "true",
                 }
             )
 

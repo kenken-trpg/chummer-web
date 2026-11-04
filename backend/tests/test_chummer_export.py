@@ -1346,6 +1346,20 @@ def test_the_device_the_matrix_initiative_runs_is_the_active_commlink() -> None:
     assert active == ["Living Persona"]
 
 
+def test_an_accessory_taken_off_stays_off() -> None:
+    """`WeaponAccessory.Load` reads `<equipped>` and is on without it, so the
+    export writes it both ways, and the import reads it back."""
+    ak = next(r["id"] for r in catalog_list("weapons") if r["name"] == "AK-97")
+    grip = next(r["id"] for r in catalog_list("weapon_accessories") if r["name"] == "Foregrip")
+    state, _ = _with_quality("Impassive", {})
+    state.weapons = [WeaponInstall(id="ak", weapon_id=ak)]
+    state.weapon_accessories = [WeaponAccessoryInstall(accessory_id=grip, parent_id="ak", mount="None", equipped=False)]
+    xml = state_to_chum5(state)
+    root = ET.fromstring(xml)
+    assert [a.findtext("equipped") for a in root.iter("accessory")] == ["False"]
+    assert [a["equipped"] for a in chum5_to_state(xml)[0]["weapon_accessories"]] == [False]
+
+
 def test_what_gear_armor_and_a_quality_bring_is_a_weapon_of_its_own() -> None:
     """`<addweapon>`: Chummer adds the weapon a grenade, a shield or Fangs
     brings as a row of its own with the owner's guid in `<parentid>`, and the
