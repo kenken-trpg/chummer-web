@@ -1147,6 +1147,54 @@ def test_a_weapon_category_power_names_its_category() -> None:
     ]
 
 
+def test_a_power_carries_the_fields_chummer_does_not_look_up_again() -> None:
+    """`Power.Load` reads levels, cost per level, bonus, source and page off
+    the save and never from `powers.xml`; without them Combat Sense 4 opened
+    in Chummer as a power without levels at rating 1. The Adept Way discount
+    goes out and comes back."""
+    sense = next(p["id"] for p in catalog()["powers"] if p["name"] == "Combat Sense")
+    reflexes = next(p["id"] for p in catalog()["powers"] if p["name"] == "Improved Reflexes")
+    state = CharacterState(
+        id="cs",
+        name="Adept",
+        priorities=Priorities(Heritage="D", Attributes="A", Talent="B", Skills="C", Resources="E"),
+        metatype="Human",
+        attributes={},
+        talent="Adept",
+        adept_powers=[
+            AdeptPowerInstall(id="cs", power_id=sense, rating=4, discounted=True),
+            AdeptPowerInstall(id="ir", power_id=reflexes, rating=3),
+        ],
+    )
+    root = ET.fromstring(state_to_chum5(state))
+    rows = {p.findtext("name"): p for p in root.findall("./powers/power")}
+    fields = ("rating", "levels", "pointsperlevel", "adeptway", "maxlevels", "discounted", "source", "page")
+    assert tuple(rows["Combat Sense"].findtext(f) for f in fields) == (
+        "4",
+        "True",
+        "0.5",
+        "0.25",
+        "0",
+        "True",
+        "SR5",
+        "309",
+    )
+    assert tuple(rows["Improved Reflexes"].findtext(f) for f in fields) == (
+        "3",
+        "True",
+        "1",
+        "",
+        "3",
+        "False",
+        "SR5",
+        "310",
+    )
+    assert rows["Improved Reflexes"].findtext("extrapointcost") == "0.5"
+    assert rows["Improved Reflexes"].find("bonus") is not None
+    st, _ = chum5_to_state(ET.tostring(root))
+    assert {p["power_id"]: p["discounted"] for p in st["adept_powers"]} == {sense: True, reflexes: False}
+
+
 def test_a_power_and_a_mentor_leave_what_their_bonus_made() -> None:
     """An adept power's improvements sit under its guid at its rating; the
     mentor's own bonus and each picked choice's sit under the mentor's guid,

@@ -6,6 +6,7 @@ The mirror of :mod:`app.chummer_import.magic`.
 
 from __future__ import annotations
 
+import copy
 import uuid
 import xml.etree.ElementTree as ET
 from typing import Any
@@ -59,7 +60,7 @@ def _export_spell_lists(root: ET.Element, state: CharacterState, names: _Names, 
         },
     )
     _export_spell_improvements(root, state)
-    _named_list(
+    powers = _named_list(
         "powers",
         "power",
         state.adept_powers,
@@ -68,6 +69,9 @@ def _export_spell_lists(root: ET.Element, state: CharacterState, names: _Names, 
         # the guid the power's improvements name it by
         {"guid": lambda r: r.id, "rating": lambda r: r.rating, "extra": lambda r: r.extra or ""},
     )
+    definitions = _power_definitions()
+    for el, row in zip(powers.findall("power"), state.adept_powers, strict=True):
+        _write_power_definition_fields(el, definitions.get(row.power_id), discounted=row.discounted)
     _export_power_improvements(root, state, ctx)
     _named_list(
         "complexforms",
@@ -102,6 +106,49 @@ def _write_power_bonus(root: ET.Element, definition: ET.Element | None, guid: st
         return
     rows = _bonus_improvements(bonus, rating, extra)
     _write_improvements(root, _with_rows(root, rows, guid, definition.findtext("name") or ""), guid, "Power")
+
+
+def _write_power_definition_fields(el: ET.Element, definition: ET.Element | None, *, discounted: bool) -> None:
+    """The fields `Power.Create` copies off the `powers.xml` row, written the
+    way `Power.Save` writes them.
+
+    `Power.Load` does not look the row up again: it reads every one of these
+    off the save and fills a missing one with a default. With only the name,
+    id, rating and extra written, Chummer took each power as one without
+    levels (`levels` False, `pointsperlevel` 0) — Combat Sense 4 opened at
+    level 1, costing no power points — with no bonus, source or page.
+    `discounted` is the Adept Way discount, which Chummer otherwise drops.
+    """
+    if definition is None:
+        return
+
+    def text(tag: str, default: str = "") -> str:
+        return (definition.findtext(tag) or "").strip() or default
+
+    # `Power.Create` reads `<points>` into the save's `<pointsperlevel>`, and
+    # `maxlevel` before `maxlevels`.
+    for tag, value in (
+        ("pointsperlevel", text("points", "0")),
+        ("adeptway", text("adeptway")),
+        ("action", text("action")),
+        ("extrapointcost", text("extrapointcost", "0")),
+        ("levels", text("levels", "False")),
+        ("maxlevels", text("maxlevel") or text("maxlevels", "0")),
+        ("discounted", "True" if discounted else "False"),
+        ("discountedgeas", text("discountedgeas", "False")),
+        ("bonussource", text("bonussource")),
+        ("freepoints", text("freepoints", "0")),
+        ("source", text("source")),
+        ("page", text("page")),
+    ):
+        _sub(el, tag, value)
+    # copied whole, as `Power.Save` writes its `Bonus` node back out
+    for tag in ("bonus", "adeptwayrequires"):
+        node = definition.find(tag)
+        if node is not None:
+            el.append(copy.deepcopy(node))
+        else:
+            _sub(el, tag, "")
 
 
 def _power_definitions() -> dict[str, ET.Element]:
@@ -460,8 +507,9 @@ def _export_free_power_rows(root: ET.Element, state: CharacterState, names: _Nam
             ("extra", key[1]),
         ):
             _sub(el, field, value)
+        definitions = definitions or _power_definitions()
+        _write_power_definition_fields(el, definitions.get(ids[key[0]]), discounted=False)
         # the bonus `Power.Create` runs for the row, at the free levels
         if totals.get((ids[key[0]], key[1])):
-            definitions = definitions or _power_definitions()
             rating = totals[(ids[key[0]], key[1])]
             _write_power_bonus(root, definitions.get(ids[key[0]]), el.findtext("guid") or "", rating, key[1])
