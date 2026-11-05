@@ -24,6 +24,7 @@ from ..fvtt_export.check import export_omissions
 from ..models import FvttExportRequest, StateRequest
 from ..xlsx_export import state_to_xlsx
 from ..xlsx_export.check import roundtrip_differences as xlsx_differences
+from .characters import require_dataset
 from .deploy import _IMPORT_RATE_LIMIT, limiter
 
 router = APIRouter()
@@ -47,6 +48,7 @@ def export_chummer(request: Request, req: StateRequest, bundle: bool = False, se
 
     `settings_file` points the save at the settings file
     `/api/characters/chummer/settings` downloads, instead of a shipped preset."""
+    require_dataset(req.state.settings)
     if bundle and req.state.build_method == "LifeModule":
         return Response(
             content=life_module_bundle(req.state),
@@ -69,6 +71,7 @@ def export_chummer_settings(request: Request, req: StateRequest) -> Response:
     under the file name a `settings_file` export names it by. Chummer keeps
     the books and the preset's rules there, not in the character, so without
     it they do not survive a save in Chummer."""
+    require_dataset(req.state.settings)
     key, xml = chummer_settings_file(req.state)
     return Response(
         content=xml,
@@ -86,6 +89,7 @@ def export_fvtt(request: Request, req: FvttExportRequest) -> Response:
 
     Limited like the .chum5 download: it computes the character when the
     state arrives without `derived`."""
+    require_dataset(req.state.settings)
     body = json.dumps(state_to_fvtt(req.state, req.locale), ensure_ascii=False, indent=2)
     return Response(
         content=body.encode("utf-8"),
@@ -98,6 +102,7 @@ def export_fvtt(request: Request, req: FvttExportRequest) -> Response:
 @limiter.limit(_IMPORT_RATE_LIMIT)
 def check_fvtt_export(request: Request, req: StateRequest) -> dict:
     """Known export omissions; does not simulate Foundry's importer."""
+    require_dataset(req.state.settings)
     return {"differences": export_omissions(req.state)}
 
 
@@ -110,6 +115,7 @@ def export_xlsx(request: Request, req: StateRequest) -> Response:
     as has dead Google Sheets formulas throughout — but a workbook with its sheet
     names and its input cells, which this app reads back.
     """
+    require_dataset(req.state.settings)
     body = state_to_xlsx(req.state)
     return Response(
         content=body,
@@ -127,6 +133,7 @@ def check_xlsx_export(request: Request, req: StateRequest) -> dict:
     way: one call writes the file, reads it back and computes the character
     twice over.
     """
+    require_dataset(req.state.settings)
     return {"differences": xlsx_differences(req.state)}
 
 
@@ -140,4 +147,5 @@ def check_chummer_export(request: Request, req: StateRequest) -> dict:
     Limited like the download itself: one call exports, re-imports and
     computes the character, the heaviest thing any route does, and the
     default 120/minute would let one client keep a core busy with it."""
+    require_dataset(req.state.settings)
     return {"differences": roundtrip_differences(req.state)}

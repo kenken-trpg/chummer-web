@@ -419,6 +419,43 @@ describe("the custom-data handshake", () => {
     expect(calls.map((c) => c.path)).toEqual(["/api/characters/patch"]);
   });
 
+  // A download used to be a bare `fetch`: the server, finding no set, read the
+  // vendored data alone and the custom items came out nameless. Now every
+  // route handed a character 409s like `patch`, and every caller retries.
+  it.each([
+    ["exportChummer", "/api/characters/chummer", () => api.exportChummer(state)],
+    [
+      "exportChummerSettings",
+      "/api/characters/chummer/settings",
+      () => api.exportChummerSettings(state),
+    ],
+    ["exportXlsx", "/api/characters/xlsx", () => api.exportXlsx(state)],
+    ["exportFvtt", "/api/characters/fvtt", () => api.exportFvtt(state, "ja")],
+    ["checkChummerExport", "/api/characters/chummer/check", () => api.checkChummerExport(state)],
+    ["checkXlsxExport", "/api/characters/xlsx/check", () => api.checkXlsxExport(state)],
+    ["checkFvttExport", "/api/characters/fvtt/check", () => api.checkFvttExport(state)],
+    ["preview", "/api/characters/import", () => api.preview(state)],
+  ])("%s uploads the set on a 409 and retries", async (_name, path, call) => {
+    await putCustomData("hash1", { "d/custom_x.xml": "<chummer/>" });
+    let served = false;
+    respond = (p) => {
+      if (p === "/api/customdata") return json({ dataset: "hash1", applied: 1, skipped: [] });
+      if (!served) {
+        served = true;
+        return json(
+          { detail: { key: "api.customDataMissing", params: { dataset: "hash1" } } },
+          false,
+          409,
+        );
+      }
+      return json({ ...state, differences: [] });
+    };
+
+    await call();
+    expect(calls.map((c) => c.path)).toEqual([path, "/api/customdata", path]);
+    expect(body(calls[1])).toMatchObject({ customdata: ["g>1"] });
+  });
+
   it("retries at most once, so a server that keeps refusing surfaces the error", async () => {
     await local.putCharacter(state);
     await putCustomData("hash1", { "d/custom_x.xml": "<chummer/>" });

@@ -154,16 +154,35 @@ function noteCustomData(state: Character): void {
   lastCustomData = state.settings?.customdata ?? [];
 }
 
-async function req<T>(path: string, init?: RequestInit, retried = false): Promise<T> {
+/** `fetch`, with the custom-data handshake: on a 409 naming a set we hold,
+ *  upload it and send the same request once more. Throws on any other error,
+ *  so callers get a response that is ok. */
+async function send(path: string, init?: RequestInit, retried = false): Promise<Response> {
   const res = await fetch(path, {
     ...init,
     headers: { "Content-Type": "application/json", ...(init?.headers || {}) },
   });
   if (res.status === 409 && !retried && (await reuploadCustomData(res))) {
-    return req<T>(path, init, true);
+    return send(path, init, true);
   }
   if (!res.ok) throw new Error(await errorText(res));
-  return res.json() as Promise<T>;
+  return res;
+}
+
+async function req<T>(path: string, init?: RequestInit): Promise<T> {
+  return (await send(path, init)).json() as Promise<T>;
+}
+
+/** POST a character for a file or a check. Every such route asks for the
+ *  character's custom data first, as `/patch` does — a download made without
+ *  it would carry the items that data added nameless. */
+function postState(
+  path: string,
+  state: Character,
+  extra: Record<string, unknown> = {},
+): Promise<Response> {
+  noteCustomData(state);
+  return send(path, { method: "POST", body: JSON.stringify({ state, ...extra }) });
 }
 
 /**
@@ -267,8 +286,14 @@ export const api = {
    * the backend reissues the id and returns `derived`, and nothing touches the
    * local roster. `import` is this plus the write.
    */
-  preview: (payload: unknown): Promise<Character> =>
-    req<Character>("/api/characters/import", { method: "POST", body: JSON.stringify(payload) }),
+  preview: (payload: unknown): Promise<Character> => {
+    // a pasted state carries its own settings, and the server asks for its custom data
+    if (payload && typeof payload === "object") noteCustomData(payload as Character);
+    return req<Character>("/api/characters/import", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
 
   import: async (payload: unknown): Promise<Character> => {
     const c = await api.preview(payload);
@@ -370,19 +395,14 @@ export const api = {
    * downloads instead of at a shipped preset.
    */
   exportChummer: async (state: Character, opts: { settingsFile?: boolean } = {}): Promise<Blob> => {
-    const res = await fetch(
+    const res = await postState(
       state.build_method === "LifeModule"
         ? "/api/characters/chummer?bundle=true"
         : opts.settingsFile
           ? "/api/characters/chummer?settings_file=true"
           : "/api/characters/chummer",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ state }),
-      },
+      state,
     );
-    if (!res.ok) throw new Error(await errorText(res));
     return res.blob();
   },
 
@@ -392,12 +412,7 @@ export const api = {
    * it up by, so it comes from the server (`filename*`) rather than from here.
    */
   exportChummerSettings: async (state: Character): Promise<{ blob: Blob; filename: string }> => {
-    const res = await fetch("/api/characters/chummer/settings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ state }),
-    });
-    if (!res.ok) throw new Error(await errorText(res));
+    const res = await postState("/api/characters/chummer/settings", state);
     const header = res.headers.get("Content-Disposition") ?? "";
     const encoded = /filename\*=UTF-8''([^;]+)/.exec(header)?.[1];
     return {
@@ -414,53 +429,37 @@ export const api = {
    * which {@link importXlsx} reads back.
    */
   exportXlsx: async (state: Character): Promise<Blob> => {
-    const res = await fetch("/api/characters/xlsx", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ state }),
-    });
-    if (!res.ok) throw new Error(await errorText(res));
+    const res = await postState("/api/characters/xlsx", state);
     return res.blob();
   },
 
   /** What the character would lose if the exported .xlsx were read back in. */
   checkXlsxExport: async (state: Character): Promise<Notice[]> => {
-    const res = await req<{ differences: Notice[] }>("/api/characters/xlsx/check", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ state }),
-    });
+    const res = (await (await postState("/api/characters/xlsx/check", state)).json()) as {
+      differences: Notice[];
+    };
     return res.differences;
   },
 
   /** Known omissions of the Foundry export, not a simulated Foundry round trip. */
   checkFvttExport: async (state: Character): Promise<Notice[]> => {
-    const res = await req<{ differences: Notice[] }>("/api/characters/fvtt/check", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ state }),
-    });
+    const res = (await (await postState("/api/characters/fvtt/check", state)).json()) as {
+      differences: Notice[];
+    };
     return res.differences;
   },
 
   /** JSON for Foundry VTT shadowrun5e's Chummer importer, names in `locale`. */
   exportFvtt: async (state: Character, locale: Locale): Promise<Blob> => {
-    const res = await fetch("/api/characters/fvtt", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ state, locale }),
-    });
-    if (!res.ok) throw new Error(await errorText(res));
+    const res = await postState("/api/characters/fvtt", state, { locale });
     return res.blob();
   },
 
   /** What the character would lose if the exported `.chum5` were read back in. */
   checkChummerExport: async (state: Character): Promise<Notice[]> => {
-    const res = await req<{ differences: Notice[] }>("/api/characters/chummer/check", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ state }),
-    });
+    const res = (await (await postState("/api/characters/chummer/check", state)).json()) as {
+      differences: Notice[];
+    };
     return res.differences;
   },
 };
