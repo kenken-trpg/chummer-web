@@ -26,19 +26,34 @@ test("the share link, the Cocofolia piece and the palette reach the clipboard", 
   await name.fill("Clipboard Runner");
   await name.blur();
   const read = () => page.evaluate(() => navigator.clipboard.readText());
+  // Each copy is async, so read only once the clipboard holds what this step
+  // copies, emptying it before each step so the last step's text cannot pass.
+  // Waiting on the button's "コピー ✓" instead — gone again after 2 s — failed
+  // 2 CI runs in ~35 (the retry passed); Toolbar.test.tsx covers the ✓.
+  const copied = async (click: () => Promise<void>, shape: RegExp) => {
+    await page.evaluate(() => navigator.clipboard.writeText(""));
+    await click();
+    await expect.poll(read).toMatch(shape);
+    return read();
+  };
 
   // 1. the share link: the character travels in the fragment, so the copied
   // text has to carry one — an empty `#c=` would look fine on the button
-  await page.getByRole("button", { name: "共有リンク", exact: true }).click();
-  await expect(page.getByRole("button", { name: "コピー ✓" })).toBeVisible();
-  const link = await read();
+  const link = await copied(
+    () => page.getByRole("button", { name: "共有リンク", exact: true }).click(),
+    /\/share#c=/,
+  );
   expect(link).toContain("/share#c=");
   expect(link.split("#c=")[1].length).toBeGreaterThan(20);
 
   // 2. the Cocofolia piece: pasted into Cocofolia as JSON, so it has to parse
   await openExportMenu(page);
-  await page.getByRole("button", { name: "ココフォリア", exact: true }).click();
-  const piece = JSON.parse(await read()) as {
+  const piece = JSON.parse(
+    await copied(
+      () => page.getByRole("button", { name: "ココフォリア", exact: true }).click(),
+      /"kind":"character"/,
+    ),
+  ) as {
     kind: string;
     data: { name: string; commands: string };
   };
@@ -49,8 +64,10 @@ test("the share link, the Cocofolia piece and the palette reach the clipboard", 
 
   // 3. the palette on its own: BCDice ShadowRun5 commands, one per line
   await openExportMenu(page);
-  await page.getByRole("button", { name: "チャットパレット", exact: true }).click();
-  const palette = await read();
+  const palette = await copied(
+    () => page.getByRole("button", { name: "チャットパレット", exact: true }).click(),
+    /^\dD6\+\d+ /m,
+  );
   expect(palette.split("\n").length).toBeGreaterThan(3);
   expect(palette).toMatch(/^\dD6\+\d+ /m); // the initiative line
   expect(palette).toContain(piece.data.commands);

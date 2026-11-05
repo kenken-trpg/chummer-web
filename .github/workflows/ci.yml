@@ -456,11 +456,23 @@ jobs:
       - working-directory: frontend
         run: npm run test:e2e
 
-      - if: failure()
+      # The trace of every failed attempt, flaky ones included: a test that
+      # failed once and passed on the retry leaves the job green, and that is
+      # the case with nothing else to go on. `failure()` skipped exactly those,
+      # and `playwright-report/` was empty besides: the CI reporter is
+      # `github`, which writes no HTML report. Traces and screenshots are
+      # under test-results/ (playwright.config.ts: retain-on-failure); named
+      # file by file, since `.last-run.json` is there after a clean run too
+      # and would upload an artifact every time.
+      - if: ${{ !cancelled() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: playwright-report
-          path: frontend/playwright-report/
+          name: playwright-traces
+          path: |
+            frontend/test-results/**/trace.zip
+            frontend/test-results/**/*.png
+            frontend/test-results/**/error-context.md
+          if-no-files-found: ignore
           retention-days: 7
 
   # Builds the runtime image on every push/PR, one job per architecture, and
