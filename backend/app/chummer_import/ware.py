@@ -69,6 +69,12 @@ def _import_ware(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
                 "discounted": _discounted(w),
                 "ess_discount": max(-100, min(100, _int(w.find("essdiscount"), 0))),
             }
+            # Prototype Transhuman's tick (`Cyberware.Save` writes it on every
+            # piece, False on the unticked): what the player chose, not the
+            # set the engine would pick
+            ticked = w.find("prototypetranshuman")
+            if ticked is not None and _text(ticked):
+                row["prototype_transhuman"] = _text(ticked).lower() == "true"
             if (ware_by_id.get(wid) or {}).get("cost_range"):
                 row["cost"] = _picked_cost(w)
             out.append(row)

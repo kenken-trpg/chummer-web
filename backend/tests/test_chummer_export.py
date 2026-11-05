@@ -1318,7 +1318,7 @@ def test_prototype_transhuman_marks_the_bioware_its_allowance_covers() -> None:
     ]
     root = ET.fromstring(state_to_chum5(state))
     marks = {w.findtext("guid"): w.findtext("prototypetranshuman") for w in root.findall("./cyberwares/cyberware")}
-    assert marks == {"ea": "True", "sb": "True", "mt": None}
+    assert marks == {"ea": "True", "sb": "True", "mt": "False"}
     assert root.findtext("prototypetranshuman") == "1"
 
 
@@ -1384,6 +1384,20 @@ def test_what_gear_armor_and_a_quality_bring_is_a_weapon_of_its_own() -> None:
     assert weapons["g1"].findtext("damage") == "16P (-2/m)"
     back = chum5_to_state(xml)[0]
     assert back["weapons"] == []
+
+
+def test_prototype_transhumans_ticks_come_back_as_the_players_choice() -> None:
+    """Read back, the unticked stay unticked: the engine does not pick again."""
+    state, _ = _with_quality("Prototype Transhuman", {})
+    state.bioware = [
+        CyberwareInstall(id="ea", ware_id="dfada66f-73f7-4648-aff4-6b6bce25f84c", prototype_transhuman=False),
+        CyberwareInstall(id="mt", ware_id="69ab0255-a76b-4190-a8be-0473fed231ef", rating=4, prototype_transhuman=True),
+    ]
+    back = chum5_to_state(state_to_chum5(state))[0]
+    assert {row["ware_id"][:4]: row.get("prototype_transhuman") for row in back["bioware"]} == {
+        "dfad": False,
+        "69ab": True,
+    }
 
 
 def test_a_prototype_transhuman_file_from_before_keeps_its_pick() -> None:

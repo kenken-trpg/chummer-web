@@ -398,6 +398,8 @@ export const JA_ENGINE = {
   "engine.ware.exconRestricted": "Ex-Con は制限ウェアを装着できません（{name}）",
   "engine.ware.gradeBanned": "{name} は {grade} 等級を使えません（{fallback} に変更）",
   "engine.ware.metatypeOnly": "{name} は {needed} 専用です",
+  "engine.ware.prototypeOver":
+    "Prototype Transhuman で無料にしたバイオウェアのエッセンスが上限を超えています（{used} / {limit}）",
   "engine.ware.modularMountMismatch":
     "{name} の接続先 {parent} には {mount} モジュラーマウントが必要です",
   "engine.ware.modularGradeMismatch":

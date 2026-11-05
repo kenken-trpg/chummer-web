@@ -50,6 +50,27 @@ export function BioTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPro
       .filter((w) => bioCat === "all" || w.category === bioCat)
       .filter((w) => !q || w.name.toLowerCase().includes(q) || tr(w.name).includes(bioSearch));
   }, [catalog, bioSearch, bioCat, tr]);
+  // Prototype Transhuman (RF p.159) is a creation allowance: the tick is
+  // offered while the character is being built, as Chummer's is
+  const prototypeAllowance = ch.career ? 0 : d.prototype_transhuman_ess || 0;
+  /** Tick or untick one piece. The first tick takes the set the engine
+   *  picked as the player's own, so the others do not move. */
+  const tickPrototype = (id: string, waived: boolean) => {
+    const picked = new Set(
+      (d.bioware || []).filter((row) => row.prototype_transhuman).map((row) => row.id),
+    );
+    patch({
+      bioware: (ch.bioware || []).map((row) =>
+        row.parent_id
+          ? row
+          : {
+              ...row,
+              prototype_transhuman:
+                row.id === id ? waived : (row.prototype_transhuman ?? picked.has(row.id ?? "")),
+            },
+      ),
+    });
+  };
   const disabledCoreGrades = (d.disabled_bioware_grades || []).filter((g) =>
     (catalog.bioware?.grades || []).some((row) => row.name === g),
   );
@@ -77,6 +98,14 @@ export function BioTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPro
           spent: (d.nuyen_spent ?? 0).toLocaleString(),
         })}
       </p>
+      {prototypeAllowance > 0 ? (
+        <p className={(d.prototype_transhuman_used ?? 0) > prototypeAllowance ? "error" : "muted"}>
+          {ui("bio.prototype", {
+            used: d.prototype_transhuman_used ?? 0,
+            limit: prototypeAllowance,
+          })}
+        </p>
+      ) : null}
       {disabledCoreGrades.length > 0 ? (
         <p className="muted">
           {ui("ware.disabledGrades", { list: disabledCoreGrades.join(ui("common.listSep")) })}
@@ -111,6 +140,9 @@ export function BioTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPro
             slotValue={slotPick[item.id] || ""}
             wareRanges={d.ware_ranges}
             essDiscountAllowed={Boolean(d.allow_ess_discounts)}
+            onPrototypeTranshuman={
+              prototypeAllowance > 0 ? (waived) => tickPrototype(item.id, waived) : null
+            }
             discounted={
               d.black_market_discount && d.black_market_category === "Bioware"
                 ? !!(ch.bioware || []).find((row) => row.id === item.id)?.discounted

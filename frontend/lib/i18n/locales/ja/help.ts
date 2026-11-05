@@ -441,6 +441,8 @@ export const JA_HELP = {
     "1 段ごとに LP 1 と、基本額の 10%（その段に価格があれば、それも）がかかる（RF p.219）",
   "help.prio.nuyenRate": "カルマ 1 点＝{rate}¥",
   "help.prio.nuyenOneWay": "作成中だけ交換できる。新円をカルマに戻すことはできない",
+  "help.ware.prototypeTranshuman":
+    "チェックしたバイオウェアは、中に入れたものごとエッセンスが 0 になる。合計は Prototype Transhuman の上限まで。何もチェックしていなければ、いちばん多く無料になる組み合わせを自動で選ぶ",
   "help.ware.essDiscount": "GM が認めたエッセンスの割引。マイナスにすると割増になる",
   "help.ware.essDiscountWhen": "設定ファイルが ESS 割引を許しているときだけ出る",
   "help.side.chummerAdjust": "Chummer のセーブの残高と、この app が構成と報酬から出す残りとの差",

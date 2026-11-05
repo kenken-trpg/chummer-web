@@ -156,14 +156,20 @@
   - テスト用セーブ 34 件で、保存された残りエッセンス（`<totaless>`）と合わなかった 13 件のうち 10 件が一致した。残りの 3 件：
     - Blindfire・Bastion：Prototype Transhuman で無料にするバイオウェアを、Chummer はプレイヤーが選んで品目ごとに保存する
       （`<prototypetranshuman>True`）。このアプリは取り込みでこれを読まず、無料にする組み合わせを自分で選ぶ
-      （Blindfire では Chummer が Tailored Pheromones、このアプリは Tail を無料にして 0.4 ずれる）。下の候補。
+      （Blindfire では Chummer が Tailored Pheromones、このアプリは Tail を無料にして 0.4 ずれる）。
+      → 2026-11-06 に直した（下）。Blindfire は一致し、Bastion は Adapsin の 0.04 だけ。
     - Bastion は、さらに 5.202 の Adapsin（合計の倍率 90 の改善効果）。今のデータでは Adapsin はグレード（Used (Adapsin) など）で、
       このアプリはそちらで計算するので 0.04 ずれる。
     - Fuzzy-chargen：保存値が 1.74500 で、エッセンスを丸めない Chummer で保存されている。丸めれば 1.74 で正しい。
-- [ ] **Prototype Transhuman で無料にするバイオウェアを選ぶ**
-  - Chummer はプレイヤーが品目ごとに選び（`<prototypetranshuman>`）、このアプリは一番多く無料になる組み合わせを自分で選ぶ
-    （`pricing.py` の `_prototype_transhuman_pieces`）。取り込みでも保存された選択を読まない。
-  - 選択を状態に持てば、取り込み・書き出し・画面の選ぶ操作が要る。規模の目安：中。
+- [x] **Prototype Transhuman で無料にするバイオウェアを選ぶ**（2026-11-06）
+  - バイオウェアの行に `prototype_transhuman`（True / False / None）を持つ。どの行も None なら、今までどおりいちばん多く
+    無料になる組み合わせをエンジンが選ぶ（`pricing.py` の `_prototype_transhuman_pieces`）。どれかが決まっていれば、
+    True の親の無い行と、その中のものを無料にする（Chummer の setter が子にも付ける）。
+  - 上限を超えて選ぶと、作成中はエラー（Chummer の `Message_OverPrototypeLimit`）。超えても選んだ分は無料のまま。
+  - 取り込みは `<prototypetranshuman>` を品目ごとに読み、書き出しは Prototype Transhuman を持つときにバイオウェアすべてに
+    True / False を書く（`Cyberware.Save` と同じ）。
+  - 画面：作成中のバイオウェアのタブで、親の無い行にチェック。最初のチェックで、エンジンが選んでいた組み合わせをそのまま
+    プレイヤーの選択にする。上には「無料にした分 / 上限」。
 - [ ] **A.I. の実セーブとの照合**
   - Chummer で作成した A.I. の実セーブを検証資料にする。
   - Depth・Home Node・プログラム・主要計算値と入出力を照合する。

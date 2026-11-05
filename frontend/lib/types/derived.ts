@@ -364,6 +364,8 @@ export interface Derived {
   }[];
   native_language_limit?: number;
   prototype_transhuman_ess?: number;
+  /** the essence the waived bioware adds up to, against that allowance */
+  prototype_transhuman_used?: number;
   burnout_way?: boolean;
   initiate_grade?: number;
   initiation?: {

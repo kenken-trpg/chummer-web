@@ -129,14 +129,16 @@ def _mark_prototype_transhuman_ware(root: ET.Element, ctx: _Ctx) -> None:
     full and opened the character with less Essence than this app gave. The
     engine waives whole pieces, as Chummer does (`pricing.py`).
     """
+    if not float(ctx["derived"].get("prototype_transhuman_ess") or 0):
+        return
     waived = {
         str(row.get("id") or "") for row in ctx["derived"].get("bioware") or [] if row.get("prototype_transhuman")
     }
-    if not waived:
-        return
+    # False on the rest, as `Cyberware.Save` writes it: read back, the
+    # unticked stay unticked rather than leaving the engine to pick again
     for el in root.iter("cyberware"):
-        if el.findtext("guid") in waived and el.findtext("improvementsource") == "Bioware":
-            _sub(el, "prototypetranshuman", "True")
+        if el.findtext("improvementsource") == "Bioware":
+            _sub(el, "prototypetranshuman", "True" if el.findtext("guid") in waived else "False")
 
 
 def _export_ware_improvements(

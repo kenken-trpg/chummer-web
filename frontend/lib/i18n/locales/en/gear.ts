@@ -230,6 +230,7 @@ export const EN_GEAR = {
 
   "deck.arrayNote":
     "At creation the four array values are assigned to ATK / SLZ / DP / FW. Picking a value swaps it with whichever attribute held it.",
+  "bio.prototype": "Prototype Transhuman: bioware waived {used} / allowance {limit} Essence",
   "bio.summary": "Installed {count} · Essence {essence} (bio −{lost}) · spent {spent}¥",
 
   "bio.search": "Search bioware",

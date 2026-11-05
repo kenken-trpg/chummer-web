@@ -232,6 +232,7 @@ export const JA_GEAR = {
 
   "deck.arrayNote":
     "作成時に配列の4数を ATK / SLZ / DP / FW へ割り当てます。値を選ぶと、その数値を持っていた項目と入れ替わります。",
+  "bio.prototype": "Prototype Transhuman：無料にしたバイオウェア {used} / 上限 {limit} Essence",
   "bio.summary": "装着中 {count} ・ Essence {essence}（バイオ −{lost}） ・ 消費 {spent}¥",
 
   "bio.search": "バイオウェアを検索",

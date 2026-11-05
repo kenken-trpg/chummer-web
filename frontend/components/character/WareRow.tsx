@@ -34,6 +34,9 @@ export function WareRow(props: {
   discounted?: boolean | null;
   /** `<allowcyberwareessdiscounts>`: offer a percent off this piece's essence. */
   essDiscountAllowed?: boolean;
+  /** Prototype Transhuman: tick this bioware as one its allowance waives
+   *  (Chummer's own tick; only a piece with no parent has one). */
+  onPrototypeTranshuman?: ((waived: boolean) => void) | null;
   pickSlots?: SkillPickSlot[];
   onSkillPick?: (key: string, skill: string) => void;
   nested?: boolean;
@@ -59,6 +62,7 @@ export function WareRow(props: {
     onAddChild,
     discounted,
     essDiscountAllowed,
+    onPrototypeTranshuman,
     pickSlots,
     onSkillPick,
     nested,
@@ -186,6 +190,21 @@ export function WareRow(props: {
                 {ui("gear.blackMarket")}
               </label>
             </BlackMarketTip>
+          ) : null}
+          {onPrototypeTranshuman && !item.parent_id ? (
+            <HelpTip
+              label={ui("help.open", { label: `${tr(item.name)}: Prototype Transhuman` })}
+              lines={[{ label: ui("help.ware.prototypeTranshuman") }]}
+            >
+              <label>
+                <input
+                  type="checkbox"
+                  checked={Boolean(item.prototype_transhuman)}
+                  onChange={(e) => onPrototypeTranshuman(e.target.checked)}
+                />
+                Prototype Transhuman
+              </label>
+            </HelpTip>
           ) : null}
           {essDiscountAllowed && !locked ? (
             <HelpTip

@@ -403,6 +403,8 @@ export const EN_ENGINE = {
   "engine.ware.exconRestricted": "Ex-Con cannot have restricted ware ({name})",
   "engine.ware.gradeBanned": "{name} cannot use the {grade} grade (switched to {fallback})",
   "engine.ware.metatypeOnly": "{name} is only for {needed}",
+  "engine.ware.prototypeOver":
+    "The bioware ticked for Prototype Transhuman is over its essence allowance ({used} / {limit})",
   "engine.ware.modularMountMismatch": "{name} requires a {mount} modular mount on {parent}",
   "engine.ware.modularMountBlocked":
     "{name}: {side} {mount} modular mount is blocked by installed parts ({used}/{max})",
