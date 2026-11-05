@@ -399,6 +399,63 @@ def _gear_id(name: str) -> str:
     return next(row["id"] for row in catalog()["gear"] if row["name"] == name)
 
 
+def _house_save(client: TestClient) -> tuple[bytes, str]:
+    """A .chum5 with the custom Widget in it, naming its settings file the way
+    Chummer names a player's own one: by file name, with nothing about the
+    custom data that file enables."""
+    up = client.post("/api/customdata", json={"files": _GEAR_FILES, "customdata": ["g>1"]}).json()
+    state = client.post("/api/characters/new").json()
+    state["settings"] = {**state["settings"], "customdata": ["g>1"], "dataset": up["dataset"]}
+    state["gear"] = [{"gear_id": _WIDGET}]
+    state = client.post("/api/characters/patch", json={"state": state}).json()
+    root = ET.fromstring(client.post("/api/characters/chummer", json={"state": state}).content)
+    for tag in ("settings", "gameplayoption"):
+        for node in root.findall(tag):
+            root.remove(node)
+    ET.SubElement(root, "settings").text = "House.xml"
+    return ET.tostring(root), up["dataset"]
+
+
+def _import(client: TestClient, xml: bytes, query: str = "") -> object:
+    return client.post(
+        f"/api/characters/import-chummer{query}", content=xml, headers={"Content-Type": "application/octet-stream"}
+    )
+
+
+def test_a_save_read_without_its_custom_data_says_which_settings_to_load(client: TestClient) -> None:
+    xml, _ = _house_save(client)
+    body = _import(client, xml).json()  # type: ignore[attr-defined]
+    assert _WIDGET not in [g["gear_id"] for g in body["character"]["gear"]]
+    assert {"key": "engine.import.customDataHint", "params": {"name": "House"}} in body["warnings"]
+
+
+def test_a_save_read_under_its_custom_data_keeps_what_that_data_added(client: TestClient) -> None:
+    """What the browser does when it holds the settings file the save names:
+    the same import, with the set that file enables."""
+    xml, dataset = _house_save(client)
+    body = _import(client, xml, f"?dataset={dataset}&customdata=g%3E1").json()  # type: ignore[attr-defined]
+    assert [g["gear_id"] for g in body["character"]["gear"]] == [_WIDGET]
+    assert body["character"]["derived"]["nuyen_spent"] == 1234
+    assert (body["character"]["settings"]["customdata"], body["character"]["settings"]["dataset"]) == (["g>1"], dataset)
+    assert all(w["key"] != "engine.import.customDataHint" for w in body["warnings"])
+
+
+def test_a_save_asked_to_be_read_under_a_set_the_server_lacks_gets_409(client: TestClient) -> None:
+    xml, _ = _house_save(client)
+    res = _import(client, xml, "?dataset=nope&customdata=g%3E1")
+    assert res.status_code == 409  # type: ignore[attr-defined]
+
+
+def test_a_skip_under_a_shipped_preset_is_not_blamed_on_custom_data(client: TestClient) -> None:
+    """Chummer's own presets enable no custom data, so an unknown item there
+    is something else (a newer Chummer's data) and the hint would mislead."""
+    xml, _ = _house_save(client)
+    xml = xml.replace(b"<settings>House.xml</settings>", b"<gameplayoption>Standard</gameplayoption>")
+    body = _import(client, xml).json()  # type: ignore[attr-defined]
+    assert any(w["key"] == "engine.import.skippedUnknown" for w in body["warnings"])
+    assert all(w["key"] != "engine.import.customDataHint" for w in body["warnings"])
+
+
 # --- the catalog the pick lists are built from --------------------------- #
 
 

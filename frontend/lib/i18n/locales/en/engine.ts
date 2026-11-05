@@ -486,6 +486,8 @@ export const EN_ENGINE = {
   "engine.import.portraitDropped":
     "The portrait was not imported: it is over 3 MB or not a PNG / JPEG / GIF / WebP image",
   "engine.import.skippedUnknown": "Skipped {kind} “{name}”: not in the catalog",
+  "engine.import.customDataHint":
+    "This save was built with the ruleset “{name}”. What was skipped as not in the catalog may come from its custom data: load the folder holding settings and customdata once with “Load a ruleset folder”, then import again",
 
   "engine.import.xlsxPlayLevel":
     'The character sheet was set to the "{level}" play level, which uses a different priority table — pick it again in the creation settings.',

@@ -484,6 +484,8 @@ export const JA_ENGINE = {
   "engine.import.portraitDropped":
     "ポートレート画像は取り込めませんでした（3 MB を超えるか、PNG / JPEG / GIF / WebP ではありません）",
   "engine.import.skippedUnknown": "{kind}「{name}」はカタログに無いためスキップしました",
+  "engine.import.customDataHint":
+    "このセーブはセッティング「{name}」で作られています。カタログに無くて飛ばした品目は、そのセッティングのカスタムデータのものかもしれません。「スタイル一式を読み込む」で settings と customdata が入ったフォルダを一度読み込んでから、もう一度取り込んでください",
 
   "engine.import.xlsxPlayLevel":
     "キャラシテンプレートのプレイレベルが「{level}」でした。優先度表が異なるので、作成設定で選び直してください",
