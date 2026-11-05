@@ -24,11 +24,12 @@ from ..chummer_import import chum5_to_state
 from ..customdata import dataset_hash
 from ..dataset_store import MAX_UPLOAD_BYTES, remember
 from ..fvtt_import import fvtt_to_state
-from ..models import CustomDataUpload, SheetUrlRequest
+from ..models import CustomDataUpload, SettingsState, SheetUrlRequest
 from ..notices import NoticeError, notice
 from ..settings_file import parse_settings_upload
 from ..sheets_url import fetch_sheet
 from ..xlsx_import import xlsx_to_state
+from .characters import require_dataset
 from .deploy import _IMPORT_RATE_LIMIT, _SHEET_URL_RATE_LIMIT, _SHEET_URL_TOTAL_RATE_LIMIT, limiter
 
 _log = logging.getLogger("chummer_web")
@@ -99,6 +100,18 @@ def parse_settings(request: Request, body: bytes = Body(..., media_type="applica
 @router.post("/api/characters/import")
 @limiter.limit(_IMPORT_RATE_LIMIT)
 def import_json(request: Request, payload: dict) -> dict:
+    """A character's own JSON (a backup, a share link, a pasted state). It
+    carries its settings, custom data included, so it waits for that data
+    the way `patch` does — otherwise the items it added are dropped as
+    unknown."""
+    settings = payload.get("settings")
+    if isinstance(settings, dict):
+        try:
+            wanted = SettingsState.model_validate(settings)
+        except ValueError:
+            wanted = None  # import_character reports a malformed state itself
+        if wanted is not None:
+            require_dataset(wanted)
     try:
         return import_character(payload).model_dump()
     except NoticeError:

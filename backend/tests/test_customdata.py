@@ -363,6 +363,38 @@ def test_an_item_the_custom_data_added_is_exported_to_chummer_whole(client: Test
     assert (gear.findtext("name"), gear.findtext("cost"), gear.findtext("avail")) == ("Custom Widget", "1234", "4R")
 
 
+@pytest.mark.parametrize(
+    "path",
+    [
+        "/api/characters/import",
+        "/api/characters/chummer",
+        "/api/characters/chummer/settings",
+        "/api/characters/chummer/check",
+        "/api/characters/xlsx",
+        "/api/characters/xlsx/check",
+        "/api/characters/fvtt",
+        "/api/characters/fvtt/check",
+    ],
+)
+def test_every_route_handed_a_character_asks_for_its_custom_data(client: TestClient, path: str) -> None:
+    """Not only `patch`: run without the set, an import drops the items the
+    custom data added as unknown and an export writes them nameless, both
+    with a 200. The 409 is what makes the browser upload the set first."""
+    state = client.post("/api/characters/new").json()
+    state["settings"] = {**state["settings"], "customdata": ["g>1"], "dataset": "nope"}
+    res = client.post(path, json=state if path.endswith("/import") else {"state": state})
+    assert res.status_code == 409
+    assert res.json()["detail"] == {"key": "api.customDataMissing", "params": {"dataset": "nope"}}
+
+
+def test_a_json_import_with_settings_it_cannot_read_is_not_a_409(client: TestClient) -> None:
+    """The handshake check reads the settings before the import does; a shape
+    it cannot read is the import's to report, not a missing data set."""
+    state = client.post("/api/characters/new").json()
+    state["settings"] = {"customdata": "not a list", "dataset": "nope"}
+    assert client.post("/api/characters/import", json=state).status_code != 409
+
+
 def _gear_id(name: str) -> str:
     return next(row["id"] for row in catalog()["gear"] if row["name"] == name)
 
