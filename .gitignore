@@ -1,4 +1,6 @@
-.venv/
+# no trailing slash on these three: a worktree links them to the main tree's
+# (scripts/merge_chain.sh does), and a symlink is a file, not a directory
+.venv
 __pycache__/
 *.pyc
 .pytest_cache/
@@ -6,8 +8,7 @@ __pycache__/
 .hypothesis/
 .coverage
 htmlcov/
-backend/vendor/
-# no trailing slash: a worktree's node_modules symlink is a file, not a directory
+backend/vendor
 node_modules
 frontend/.next/
 frontend/out/
