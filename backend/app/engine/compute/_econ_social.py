@@ -45,6 +45,30 @@ def _martial_rows(arts: list[dict]) -> list[tuple[str, int, int]]:
     return rows
 
 
+def _show_kept_martial_karma(ctx: Ctx) -> None:
+    """The style and technique rows priced as the record keeps them.
+
+    A style's first technique comes with it: drop that one in career and the
+    next moves into its place, priced 0 on a fresh count, though chargen paid
+    5 for it and the total still holds that 5. The rows the record holds show
+    what was paid, so the tab adds up to the total less what was dropped.
+    """
+    baseline = ctx.state.career_baseline if ctx.career else None
+    recorded = ((baseline.chargen_karma or {}).get("martial_arts") if baseline is not None else None) or {}
+    if not recorded:
+        return
+    for art in ctx.martial.get("public") or []:
+        art_id = str(art["id"])
+        if art_id in recorded:
+            art["style_karma"] = int(recorded[art_id])
+        for tech in art.get("techniques") or []:
+            key = f"{art_id}/{tech['name']}"
+            if key in recorded:
+                tech["karma"] = int(recorded[key])
+                tech["free"] = tech["karma"] == 0
+        art["karma"] = int(art["style_karma"]) + sum(int(t["karma"]) for t in art.get("techniques") or [])
+
+
 def _social_pass(ctx: Ctx) -> None:
     """Phase 15 — contacts and martial arts (both karma, so after the ledger
     opens), the spend breakdowns, and notoriety / street cred / public
@@ -90,6 +114,7 @@ def _social_pass(ctx: Ctx) -> None:
     # A style, technique or program costs the same bought in career as at
     # chargen; what the record keeps is that deleting one gives nothing back.
     ctx.martial["karma"] = kept_karma(ctx, "martial_arts", _martial_rows(ctx.martial.get("public") or []))
+    _show_kept_martial_karma(ctx)
     ctx.karma_spent += int(ctx.martial.get("karma") or 0)
     ctx.ai_programs = resolve_ai_programs(ctx.state, ctx.enabled, ctx.qualities, career=ctx.career)
     ctx.warnings.extend(ctx.ai_programs["warnings"])

@@ -5,6 +5,22 @@ import { makeCharacter, panelProps } from "@/tests/fixtures";
 import { blades, exoticSkill, skillsCatalog, renderTab, renderStateful } from "./SkillsTab.helpers";
 
 describe("<SkillsTab> specialisations", () => {
+  it("in career, a specialization held on entering career cannot be cleared or swapped", () => {
+    // chargen paid for it, and Chummer has no way to give that back
+    renderTab({
+      character: {
+        career: true,
+        skills: { Blades: 4 },
+        skill_specializations: { Blades: "Swords" },
+        career_baseline: { skills: { Blades: 4 }, skill_specializations: ["Blades"] },
+        derived: { skill_totals: { Blades: 4 } },
+      } as never,
+    });
+    const picker = screen.getAllByRole("combobox")[0] as HTMLSelectElement;
+    expect(picker.value).toBe("Swords");
+    expect(picker.disabled).toBe(true);
+  });
+
   it.each([2, 3])(
     "suppresses a +%i specialization without removing it and restores it afterwards",
     (bonus) => {

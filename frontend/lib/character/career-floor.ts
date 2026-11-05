@@ -13,6 +13,15 @@ type RatedField = "attributes" | "skills" | "skill_groups" | "knowledge_skills" 
  * (a skill first learned in career, an older save without a baseline).
  * Exotic skills are keyed by row id, as the baseline records them.
  */
+/**
+ * Whether a skill's specialization was held on entering career, and so may
+ * not be cleared or swapped: chargen paid for it, and Chummer offers no way
+ * to give that back. False outside career and for one bought in career.
+ */
+export function careerSpecLocked(ch: Character, name: string): boolean {
+  return Boolean(ch.career && ch.career_baseline?.skill_specializations?.includes(name));
+}
+
 export function careerFloor(ch: Character, field: RatedField, key: string): number {
   if (!ch.career) return 0;
   return Math.max(0, ch.career_baseline?.[field]?.[key] ?? 0);
