@@ -5,7 +5,8 @@ import { api } from "@/lib/api";
 import * as local from "@/lib/character/local-store";
 import { MessageError } from "@/lib/errors";
 import { onNotice } from "@/lib/notices";
-import { putCustomData } from "@/lib/character/customdata-store";
+import { putCustomData, rememberFolder } from "@/lib/character/customdata-store";
+import { saveSettingsFile } from "@/lib/character/settings-store";
 
 /**
  * `api.ts` is the whole client/server boundary now that the backend keeps
@@ -470,5 +471,79 @@ describe("the custom-data handshake", () => {
 
     await expect(api.patch("c1", { name: "x" })).rejects.toThrow();
     expect(calls.filter((c) => c.path === "/api/customdata")).toHaveLength(1);
+  });
+});
+
+describe("api.importChummer and the custom data a save does not name", () => {
+  /**
+   * A Chummer save names its settings file and nothing about the custom data
+   * that file enables, so the server skips what the data added and says which
+   * settings to load. When that settings file and its folder are already in
+   * this browser, the import does that itself and reads the save again.
+   */
+  const hint = { key: "engine.import.customDataHint", params: { name: "House" } };
+  const first = {
+    character: makeCharacter({ id: "c1", settings: { name: "House", books: [] } }),
+    warnings: [hint],
+  };
+  const second = {
+    character: makeCharacter({
+      id: "c1",
+      name: "Kept",
+      settings: { name: "House", books: [], customdata: ["g>1"], dataset: "hash1" },
+    }),
+    warnings: [],
+  };
+
+  beforeEach(async () => {
+    // this file runs under node, which has no localStorage; the settings
+    // files live there, so give the store a fresh one per test
+    const items = new Map<string, string>();
+    vi.stubGlobal("localStorage", {
+      getItem: (k: string) => items.get(k) ?? null,
+      setItem: (k: string, v: string) => void items.set(k, v),
+      removeItem: (k: string) => void items.delete(k),
+    });
+    await rememberFolder({}); // and no folder from an earlier test
+  });
+
+  it("reads the save again under the settings file of that name, when its folder is here", async () => {
+    saveSettingsFile({ name: "House", books: [], customdata: ["g>1"] });
+    await rememberFolder({ "g/custom_gear.xml": "<chummer/>" });
+    respond = (path) => {
+      if (path === "/api/customdata") return json({ dataset: "hash1", applied: 1, skipped: [] });
+      return json(path.includes("?") ? second : first);
+    };
+
+    const res = await api.importChummer(new ArrayBuffer(1));
+    expect(res.character.name).toBe("Kept");
+    expect(calls.map((c) => c.path)).toEqual([
+      "/api/characters/import-chummer",
+      "/api/customdata",
+      "/api/characters/import-chummer?dataset=hash1&customdata=g%3E1",
+    ]);
+    expect(body(calls[1])).toEqual({
+      files: { "g/custom_gear.xml": "<chummer/>" },
+      customdata: ["g>1"],
+    });
+    expect((await local.getCharacter("c1"))?.name).toBe("Kept");
+  });
+
+  it.each([
+    [
+      "no settings file of that name",
+      () => saveSettingsFile({ name: "Other", books: [], customdata: ["g>1"] }),
+    ],
+    ["a settings file with no custom data", () => saveSettingsFile({ name: "House", books: [] })],
+    [
+      "no folder in this browser",
+      () => saveSettingsFile({ name: "House", books: [], customdata: ["g>1"] }),
+    ],
+  ])("keeps the first import, hint and all, with %s", async (_case, setup) => {
+    setup();
+    respond = () => json(first);
+    const res = await api.importChummer(new ArrayBuffer(1));
+    expect(res.warnings).toEqual([hint]);
+    expect(calls.map((c) => c.path)).toEqual(["/api/characters/import-chummer"]);
   });
 });

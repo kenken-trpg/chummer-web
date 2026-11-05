@@ -15,14 +15,17 @@ answer goes back to the browser, which owns the character.
 from __future__ import annotations
 
 import logging
+from typing import Annotated, Any
 
-from fastapi import APIRouter, Body, HTTPException, Request
+from fastapi import APIRouter, Body, HTTPException, Query, Request
 from limits import parse
 
+from .. import ja_default
 from ..characters import import_character
 from ..chummer_import import chum5_to_state
 from ..customdata import dataset_hash
-from ..dataset_store import MAX_UPLOAD_BYTES, remember
+from ..data_loader import catalog, using_customdata
+from ..dataset_store import MAX_UPLOAD_BYTES, lookup, remember
 from ..fvtt_import import fvtt_to_state
 from ..models import CustomDataUpload, SettingsState, SheetUrlRequest
 from ..notices import NoticeError, notice
@@ -123,12 +126,36 @@ def import_json(request: Request, payload: dict) -> dict:
 
 @router.post("/api/characters/import-chummer")
 @limiter.limit(_IMPORT_RATE_LIMIT)
-def import_chummer(request: Request, body: bytes = Body(..., media_type="application/octet-stream")) -> dict:
+def import_chummer(
+    request: Request,
+    body: bytes = Body(..., media_type="application/octet-stream"),
+    dataset: str = "",
+    customdata: Annotated[list[str], Query()] = [],  # noqa: B006  (FastAPI reads the default)
+) -> dict:
     """Import a Chummer5a .chum5 / .chum5lz save. Returns the character plus a
-    list of things that could not be mapped."""
+    list of things that could not be mapped.
+
+    A save does not say which custom data it was built with — Chummer keeps
+    that in the settings file it names — so an item the custom data added is
+    unknown here and skipped. The browser, which may hold that settings file
+    and its folder, can send the set as `dataset` + `customdata` (the same
+    pair `/api/catalog` takes) and import again: the save is then read under
+    it, and the character keeps it. Without one, a skip on a save that names
+    a settings file of its own gets a line saying what to load."""
+    overlay = None
+    if dataset and customdata:
+        found = lookup(dataset, list(customdata))
+        if found is None:
+            raise HTTPException(status_code=409, detail=notice("api.customDataMissing", dataset=dataset))
+        overlay = found[0]
     try:
-        state, warnings = chum5_to_state(body)
+        with using_customdata(overlay):
+            state, warnings = chum5_to_state(body)
         state.pop("_warnings", None)
+        if overlay is not None:
+            state.setdefault("settings", {}).update(customdata=list(customdata), dataset=dataset)
+        elif _skipped_under_own_settings(state, warnings):
+            warnings.append(notice("engine.import.customDataHint", name=state["settings"]["name"]))
         char = import_character(state)
         return {"character": char.model_dump(), "warnings": warnings}
     except NoticeError as exc:
@@ -137,6 +164,17 @@ def import_chummer(request: Request, body: bytes = Body(..., media_type="applica
     except Exception as exc:  # noqa: BLE001
         _log.exception("chum5 import failed")
         raise HTTPException(status_code=400, detail=notice("api.importChummerFailed")) from exc
+
+
+def _skipped_under_own_settings(state: dict[str, Any], warnings: list[Any]) -> bool:
+    """Something was skipped as unknown, and the save names a settings file
+    that is not one Chummer ships — the case where the missing items most
+    likely came from that file's custom data."""
+    if not any(isinstance(w, dict) and w.get("key") == "engine.import.skippedUnknown" for w in warnings):
+        return False
+    name = str((state.get("settings") or {}).get("name") or "")
+    shipped = {ja_default.PRESET["name"], *(str(p.get("name")) for p in catalog().get("settings_presets") or [])}
+    return bool(name) and name not in shipped
 
 
 @router.post("/api/characters/import-xlsx")

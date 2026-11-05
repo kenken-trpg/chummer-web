@@ -6,7 +6,9 @@ import {
   type CustomDataFiles,
   getCustomData,
   putCustomData,
+  recallFolder,
 } from "@/lib/character/customdata-store";
+import { loadSettingsFiles } from "@/lib/character/settings-store";
 import { notify } from "@/lib/notices";
 import { MessageError } from "@/lib/errors";
 
@@ -217,6 +219,41 @@ async function computeRemote(
  * call that is still a plain GET; the rest read/write local storage and post
  * the state to the compute service.
  */
+/**
+ * The custom data a .chum5 import should be read again under, if this browser
+ * has it.
+ *
+ * A Chummer save names its settings file but not the custom data that file
+ * enables, so the server skips what that data added and says so
+ * (`engine.import.customDataHint`). If the settings file of that name was
+ * loaded here, with custom data, and the folder is still here, merge it and
+ * hand back the set to import under. Otherwise the hint stays, telling the
+ * player what to load.
+ */
+async function customDataFor(res: {
+  character: Character;
+  warnings: Notice[];
+}): Promise<{ dataset: string; customdata: string[] } | null> {
+  if (!res.warnings.some((w) => w.key === "engine.import.customDataHint")) return null;
+  const name = res.character.settings?.name;
+  const file = loadSettingsFiles().find((f) => f.name === name && (f.customdata?.length ?? 0) > 0);
+  if (!file?.customdata) return null;
+  const folder = await recallFolder();
+  if (!folder) return null;
+  try {
+    const merged = await api.uploadCustomData(folder, file.customdata);
+    return { dataset: merged.dataset, customdata: file.customdata };
+  } catch {
+    return null; // the first import stands, hint and all
+  }
+}
+
+function datasetQuery(dataset: string, customdata: string[]): string {
+  const query = new URLSearchParams({ dataset });
+  for (const dir of customdata) query.append("customdata", dir);
+  return query.toString();
+}
+
 export const api = {
   /**
    * The options catalog, as the character's custom data sees it.
@@ -232,11 +269,7 @@ export const api = {
     const wanted = settings?.customdata ?? [];
     if (!settings?.dataset || wanted.length === 0) return req<Catalog>("/api/catalog");
     lastCustomData = wanted;
-    const query = new URLSearchParams([
-      ["dataset", settings.dataset],
-      ...wanted.map((name) => ["customdata", name] as [string, string]),
-    ]);
-    return req<Catalog>(`/api/catalog?${query}`);
+    return req<Catalog>(`/api/catalog?${datasetQuery(settings.dataset, wanted)}`);
   },
 
   list: () => local.listCharacters(),
@@ -304,10 +337,18 @@ export const api = {
   importChummer: async (
     bytes: ArrayBuffer,
   ): Promise<{ character: Character; warnings: Notice[] }> => {
-    const res = await req<{ character: Character; warnings: Notice[] }>(
-      "/api/characters/import-chummer",
-      { method: "POST", headers: { "Content-Type": "application/octet-stream" }, body: bytes },
-    );
+    const read = (query = "") =>
+      req<{ character: Character; warnings: Notice[] }>(`/api/characters/import-chummer${query}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/octet-stream" },
+        body: bytes,
+      });
+    let res = await read();
+    const again = await customDataFor(res);
+    if (again) {
+      lastCustomData = again.customdata;
+      res = await read(`?${datasetQuery(again.dataset, again.customdata)}`);
+    }
     await local.putCharacter(res.character);
     return res;
   },
