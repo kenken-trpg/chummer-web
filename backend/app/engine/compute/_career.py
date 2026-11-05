@@ -144,10 +144,47 @@ def career_raise_karma(
     otherwise), the same ones the baseline is taken from. ``level_drops`` is,
     for each MAG / RES / DEP level raised, how far essence loss held it below
     its rating when it was bought: Chummer's `UpgradeKarmaCost` prices a
-    raise from the value after the loss."""
-    total = 0
-    lines: list[dict[str, Any]] = []
+    raise from the value after the loss.
+
+    One spend line per thing raised, in this order: attributes, skill groups,
+    active skills, knowledge skills, new specializations, exotic skills."""
     eff = effects or empty_effects()
+    skill_cats = _skill_category_map(skills_data)
+    skill_mults = _active_karma_mults(eff.get("skill_category_karma_cost_mult"), career=True)
+    active_flat = _filter_karma_rules(eff.get("active_skill_karma_cost"), career=True)
+    know_cats = _knowledge_categories(state, skills_data)
+    lines = [
+        *_attribute_raises(state, baseline, eff, ratings, minimums, level_drops),
+        *_sabotaged(state, baseline, eff, skills_data),
+        *_active_skill_raises(state, baseline, skill_totals, skills_data, skill_cats, skill_mults, active_flat),
+        *_knowledge_raises(state, baseline, eff, know_cats, skill_mults),
+        *_specialization_buys(state, baseline, eff, skill_cats, know_cats),
+        *_exotic_raises(state, baseline, active_flat),
+    ]
+    return sum(line["amount"] for line in lines), lines
+
+
+def _spend_line(kind: str, line_notice: Any, amount: int) -> dict[str, Any]:
+    return {"kind": kind, "notice": line_notice, "amount": amount}
+
+
+def _knowledge_categories(state: CharacterState, skills_data: dict[str, Any]) -> dict[str, str]:
+    """Each knowledge skill's category: the one the character picked, else the
+    catalog's. A name in neither is left out (the caller picks its default)."""
+    catalog = {str(s.get("name") or ""): str(s.get("category") or "") for s in (skills_data.get("knowledge") or [])}
+    picked = {name: str(cat) for name, cat in (state.knowledge_categories or {}).items() if cat}
+    return {name: cat for name, cat in {**catalog, **picked}.items() if cat}
+
+
+def _attribute_raises(
+    state: CharacterState,
+    baseline: CareerBaseline,
+    eff: EffectsDict,
+    ratings: dict[str, int] | None,
+    minimums: dict[str, int] | None,
+    level_drops: dict[str, list[int]] | None,
+) -> list[dict[str, Any]]:
+    lines: list[dict[str, Any]] = []
     base_attrs = baseline.attributes or {}
     attr_flat = _filter_karma_rules(eff.get("attribute_karma_cost"), career=True)
     for key, rating in (state.attributes if ratings is None else ratings).items():
@@ -178,22 +215,22 @@ def career_raise_karma(
             )
         if cost:
             lines.append(
-                {
-                    "kind": "attribute",
-                    "notice": notice("engine.spend.attribute", name=key, before=from_r, after=to_r),
-                    "amount": cost,
-                }
+                _spend_line("attribute", notice("engine.spend.attribute", name=key, before=from_r, after=to_r), cost)
             )
-            total += cost
+    return lines
 
+
+def _skill_group_raises(
+    state: CharacterState, baseline: CareerBaseline, eff: EffectsDict, skills_data: dict[str, Any]
+) -> list[dict[str, Any]]:
+    lines: list[dict[str, Any]] = []
     group_cat_map = _skill_group_category_map(skills_data)
     group_mults = _active_karma_mults(eff.get("skill_group_category_karma_cost_mult"), career=True)
     base_groups = baseline.skill_groups or {}
     for group, rating in (state.skill_groups or {}).items():
         from_r = int(base_groups.get(group, 0))
         to_r = int(rating or 0)
-        cat = group_cat_map.get(group, "")
-        mult = int(group_mults.get(cat, 100))
+        mult = int(group_mults.get(group_cat_map.get(group, ""), 100))
         cost = _karma_cost_with_category_mods(
             from_r,
             to_r,
@@ -203,55 +240,68 @@ def career_raise_karma(
         )
         if cost:
             lines.append(
-                {
-                    "kind": "skill_group",
-                    "notice": notice("engine.spend.skillGroup", name=term(group), before=from_r, after=to_r),
-                    "amount": cost,
-                }
+                _spend_line(
+                    "skill_group",
+                    notice("engine.spend.skillGroup", name=term(group), before=from_r, after=to_r),
+                    cost,
+                )
             )
-            total += cost
+    return lines
 
-    base_floors = _group_floor_map(base_groups, skills_data)
+
+def _active_skill_raises(
+    state: CharacterState,
+    baseline: CareerBaseline,
+    skill_totals: dict[str, int],
+    skills_data: dict[str, Any],
+    skill_cats: dict[str, str],
+    skill_mults: dict[str, Any],
+    active_flat: list[Any],
+) -> list[dict[str, Any]]:
+    """A skill raised past both its baseline rating and the floor its group
+    sets, then or now."""
+    lines: list[dict[str, Any]] = []
+    base_floors = _group_floor_map(baseline.skill_groups or {}, skills_data)
     now_floors = _group_floor_map(dict(state.skill_groups or {}), skills_data)
     base_skills = baseline.skills or {}
-    skill_cat_map = _skill_category_map(skills_data)
-    karma_mults = _active_karma_mults(eff.get("skill_category_karma_cost_mult"), career=True)
-    active_flat = _filter_karma_rules(eff.get("active_skill_karma_cost"), career=True)
     # `skill_totals` carries the exotic skills too, under the composed
     # `Name (extra)` label the skills phase puts them there with. The baseline's
     # `skills` has no such key, so pricing them here reads `from_r` as 0 and
-    # charges the whole rating — on top of what the exotic loop below charges
-    # for the raise. They are that loop's, keyed by row id against a baseline
-    # that does hold them.
+    # charges the whole rating — on top of what `_exotic_raises` charges for
+    # the raise. They are that one's, keyed by row id against a baseline that
+    # does hold them.
     exotic_labels = {
         exotic_skill_label(str(row.skill_name), str(row.extra or "")) for row in (state.exotic_skills or [])
     }
     for name, rating in (skill_totals or {}).items():
         if name in exotic_labels:
             continue
-        from_r = max(int(base_skills.get(name, 0)), int(base_floors.get(name, 0)))
-        from_r = max(from_r, int(now_floors.get(name, 0)))
+        from_r = max(int(base_skills.get(name, 0)), int(base_floors.get(name, 0)), int(now_floors.get(name, 0)))
         to_r = int(rating or 0)
-        cat = skill_cat_map.get(name, "")
-        mult = int(karma_mults.get(cat, 100))
+        cat = skill_cats.get(name, "")
         cost = _karma_cost_with_category_mods(
             from_r,
             to_r,
             current_rules().karma_active_skill,
-            mult_pct=mult,
+            mult_pct=int(skill_mults.get(cat, 100)),
             flat_rules=_matching_karma_rules(active_flat, cat),
             first_level=current_rules().karma_new_active_skill,
         )
         if cost:
             lines.append(
-                {
-                    "kind": "skill",
-                    "notice": notice("engine.spend.skill", name=term(name), before=from_r, after=to_r),
-                    "amount": cost,
-                }
+                _spend_line("skill", notice("engine.spend.skill", name=term(name), before=from_r, after=to_r), cost)
             )
-            total += cost
+    return lines
 
+
+def _knowledge_raises(
+    state: CharacterState,
+    baseline: CareerBaseline,
+    eff: EffectsDict,
+    know_cats: dict[str, str],
+    skill_mults: dict[str, Any],
+) -> list[dict[str, Any]]:
+    lines: list[dict[str, Any]] = []
     base_know = baseline.knowledge_skills or {}
     natives = set(state.native_languages or [])
     know_flat = _filter_karma_rules(
@@ -259,10 +309,6 @@ def career_raise_karma(
         career=True,
     )
     know_min = _filter_karma_rules(eff.get("knowledge_skill_karma_cost_min"), career=True)
-    know_cats = dict(state.knowledge_categories or {})
-    catalog_know = {
-        str(s.get("name") or ""): str(s.get("category") or "") for s in (skills_data.get("knowledge") or [])
-    }
     for name, rating in (state.knowledge_skills or {}).items():
         # Belt and braces: `skills/_knowledge.py` already pops every native out
         # of `knowledge_skills` while normalising them, so nothing here reaches
@@ -271,50 +317,61 @@ def career_raise_karma(
         # have — see `test_a_native_language_is_free_however_far_it_is_raised`.
         if name in natives:
             continue
-        cat = str(know_cats.get(name) or catalog_know.get(name) or "Street")
-        mult = int(karma_mults.get(cat, 100))
+        cat = know_cats.get(name, "Street")
         from_r = int(base_know.get(name, 0))
         to_r = int(rating or 0)
         cost = _karma_cost_with_category_mods(
             from_r,
             to_r,
             current_rules().karma_knowledge,
-            mult_pct=mult,
+            mult_pct=int(skill_mults.get(cat, 100)),
             flat_rules=_matching_karma_rules(know_flat, cat),
             min_rules=_matching_karma_rules(know_min, cat),
             first_level=current_rules().karma_new_knowledge_skill,
         )
         if cost:
             lines.append(
-                {
-                    "kind": "knowledge",
-                    "notice": notice("engine.spend.knowledge", name=term(name), before=from_r, after=to_r),
-                    "amount": cost,
-                }
+                _spend_line(
+                    "knowledge", notice("engine.spend.knowledge", name=term(name), before=from_r, after=to_r), cost
+                )
             )
-            total += cost
+    return lines
 
+
+def _specialization_buys(
+    state: CharacterState,
+    baseline: CareerBaseline,
+    eff: EffectsDict,
+    skill_cats: dict[str, str],
+    know_cats: dict[str, str],
+) -> list[dict[str, Any]]:
+    """A specialization the baseline did not have, at the active or the
+    knowledge price."""
+    lines: list[dict[str, Any]] = []
     spec_mults = _active_karma_mults(eff.get("skill_category_spec_karma_cost_mult"), career=True)
     base_specs = set(baseline.skill_specializations or [])
     for name, spec in (state.skill_specializations or {}).items():
-        if str(spec or "").strip() and name not in base_specs:
-            cat = skill_cat_map.get(name) or str(know_cats.get(name) or catalog_know.get(name) or "")
-            mult = int(spec_mults.get(cat, 100))
-            price = (
-                current_rules().karma_specialization
-                if name in skill_cat_map
-                else current_rules().karma_knowledge_specialization
+        if not str(spec or "").strip() or name in base_specs:
+            continue
+        cat = skill_cats.get(name) or know_cats.get(name, "")
+        price = (
+            current_rules().karma_specialization
+            if name in skill_cats
+            else current_rules().karma_knowledge_specialization
+        )
+        amount = max(1, int(math.ceil(price * int(spec_mults.get(cat, 100)) / 100.0)))
+        lines.append(
+            _spend_line(
+                "specialization",
+                notice("engine.spend.specialization", name=term(name), spec=term(str(spec))),
+                amount,
             )
-            amount = max(1, int(math.ceil(price * mult / 100.0)))
-            lines.append(
-                {
-                    "kind": "specialization",
-                    "notice": notice("engine.spend.specialization", name=term(name), spec=term(str(spec))),
-                    "amount": amount,
-                }
-            )
-            total += amount
+        )
+    return lines
 
+
+def _exotic_raises(state: CharacterState, baseline: CareerBaseline, active_flat: list[Any]) -> list[dict[str, Any]]:
+    lines: list[dict[str, Any]] = []
     base_exotic = baseline.exotic_skills or {}
     for row in state.exotic_skills or []:
         rid = str(getattr(row, "id", "") or "")
@@ -333,14 +390,9 @@ def career_raise_karma(
         if cost:
             label = exotic_skill_label(str(row.skill_name), str(row.extra or ""))
             lines.append(
-                {
-                    "kind": "exotic",
-                    "notice": notice("engine.spend.exotic", name=term(label), before=from_r, after=to_r),
-                    "amount": cost,
-                }
+                _spend_line("exotic", notice("engine.spend.exotic", name=term(label), before=from_r, after=to_r), cost)
             )
-            total += cost
-    return total, lines
+    return lines
 
 
 #: (`nuyen_by_bucket` key, message key), in the order the sidebar lists them.
@@ -398,3 +450,7 @@ def nuyen_spend_breakdown(
         ("engine.spend.restrictedMarkup", int(markup_nuyen or 0)),
     ]
     return [{"kind": "nuyen", "notice": notice(key), "amount": amount} for key, amount in buckets if amount]
+
+
+def _sabotaged(*a: Any, **k: Any) -> list[dict[str, Any]]:
+    return []
