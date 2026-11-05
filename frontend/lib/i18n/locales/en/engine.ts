@@ -229,6 +229,7 @@ export const EN_ENGINE = {
   "engine.spend.spells": "Spells / complex forms",
   "engine.spend.spirits": "Spirits",
   "engine.spend.restrictedMarkup": "Restricted / Forbidden markup",
+  "engine.spend.debtPayments": "In Debt payments",
   "engine.spend.submersion": "Submersion",
   "engine.spend.vehicleMods": "Vehicle mods",
   "engine.spend.vehicles": "Vehicles",

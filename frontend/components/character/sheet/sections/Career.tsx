@@ -35,6 +35,14 @@ export function CareerSection(s: SheetData) {
           <span>{ui("sheet.advancementKarma")}</span>
           <b>{d.career_advancement_karma || 0}K</b>
         </div>
+        {d.debt?.principal ? (
+          <div>
+            <span>{ui("side.debtLeft")}</span>
+            <b>
+              {d.debt.remaining.toLocaleString()}¥ / {d.debt.principal.toLocaleString()}¥
+            </b>
+          </div>
+        ) : null}
         <div>
           <span>{ui("sheet.repLine")}</span>
           <b>

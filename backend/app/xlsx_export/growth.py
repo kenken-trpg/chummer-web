@@ -14,7 +14,8 @@ from __future__ import annotations
 
 import re
 
-from ..models import CharacterState
+from ..models import CharacterState, RewardEntry
+from ..models.career import DEBT_PAYMENT_REASON
 from ..notices import ui
 from ..xlsx_import.growth import (
     LOG_FIRST_ROW,
@@ -32,9 +33,18 @@ _DATED = re.compile(r"^(\d{4}-\d{2}-\d{2})(?:\s+(.*))?$")
 
 
 def growth_sheet(state: CharacterState, limits: Limits) -> Cells:
-    """The 成長ログ sheet for `state`, earnings first and write-offs after."""
+    """The 成長ログ sheet for `state`, earnings first and write-offs after.
+
+    A payment towards In Debt is a write-off too, named as it is to Chummer
+    so the import can tell it from the rest.
+    """
     cells: Cells = {}
-    rows = [*(state.reward_log or []), *(state.expense_log or [])]
+    payments = [
+        RewardEntry(id=row.id, label=DEBT_PAYMENT_REASON, nuyen=-row.nuyen)
+        for row in (state.debt_payments or [])
+        if row.nuyen > 0
+    ]
+    rows = [*(state.reward_log or []), *(state.expense_log or []), *payments]
     if not rows:
         return cells
     room = LOG_LAST_ROW - LOG_FIRST_ROW + 1

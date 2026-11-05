@@ -584,6 +584,9 @@ def test_in_debt_payments_are_spent_and_taken_off_the_debt() -> None:
     paid = compute(state)
     assert paid.derived["debt"] == {"principal": 15000, "paid": 4000, "remaining": 11000}
     assert paid.derived["nuyen"] == owing - 4000
+    lines = {row["notice"]["key"]: row["amount"] for row in paid.derived["nuyen_spend_breakdown"]}
+    assert lines["engine.spend.debtPayments"] == 4000
+    assert sum(lines.values()) == paid.derived["nuyen_spent"]
     # paid past the loan: spent all the same, and nothing left owing
     state.debt_payments = [DebtPayment(nuyen=20000)]
     assert compute(state).derived["debt"]["remaining"] == 0

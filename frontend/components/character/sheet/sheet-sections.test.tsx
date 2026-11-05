@@ -594,6 +594,18 @@ describe("no English left on the sheet where a translation exists", () => {
     expect(career).toContain("Run: Fortune Cookie");
   });
 
+  it("shows what is left of In Debt, and nothing when there is none", () => {
+    const owing = sheet(
+      { debt: { principal: 15000, paid: 4000, remaining: 11000 } },
+      { career: true },
+    );
+    const career = render(<CareerSection {...owing} />).container.textContent;
+    expect(career).toContain("借金の残り");
+    expect(career).toContain("11,000¥ / 15,000¥");
+    const clear = sheet({ debt: { principal: 0, paid: 0, remaining: 0 } }, { career: true });
+    expect(render(<CareerSection {...clear} />).container.textContent).not.toContain("借金");
+  });
+
   it("a lifestyle quality's pick reads in Japanese, as its name does", () => {
     const tr = (name: string) =>
       ({ "Grid Subscription": "グリッド契約", "Public Grid": "公共グリッド" })[name] ?? name;

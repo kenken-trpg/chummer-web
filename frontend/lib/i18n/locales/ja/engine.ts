@@ -223,6 +223,7 @@ export const JA_ENGINE = {
   "engine.spend.spells": "呪文／複合体",
   "engine.spend.spirits": "精霊",
   "engine.spend.restrictedMarkup": "制限品・禁止品の割増",
+  "engine.spend.debtPayments": "借金の返済",
   "engine.spend.submersion": "サブマージョン",
   "engine.spend.vehicleMods": "ヴィークル改造",
   "engine.spend.vehicles": "ヴィークル",

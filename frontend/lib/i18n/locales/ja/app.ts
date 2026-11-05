@@ -356,6 +356,7 @@ export const JA_APP = {
   // `lib/api` and `lib/character/quality` have no locale and no React, so they
   // raise a `MessageError` carrying one of these keys; the editor renders it.
   "txt.money": "新円 {nuyen}¥  カルマ残 {remaining}/{pool}",
+  "txt.debt": "借金の残り {remaining}¥ / {principal}¥",
   "app.err.boot": "起動に失敗しました",
   "app.err.catalogReload":
     "カスタムデータを反映した項目一覧を取得できませんでした。購入一覧は読み込み前のままです。",

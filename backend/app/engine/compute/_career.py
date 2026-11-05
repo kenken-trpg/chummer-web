@@ -430,6 +430,7 @@ def nuyen_spend_breakdown(
     foci_nuyen: int = 0,
     spirits_nuyen: int = 0,
     markup_nuyen: int = 0,
+    debt_nuyen: int = 0,
 ) -> list[dict[str, Any]]:
     """The sidebar's "where the nuyen went", as lines that add up to what was
     spent.
@@ -448,5 +449,6 @@ def nuyen_spend_breakdown(
         ("engine.spend.foci", int(foci_nuyen or 0)),
         ("engine.spend.spirits", int(spirits_nuyen or 0)),
         ("engine.spend.restrictedMarkup", int(markup_nuyen or 0)),
+        ("engine.spend.debtPayments", int(debt_nuyen or 0)),
     ]
     return [{"kind": "nuyen", "notice": notice(key), "amount": amount} for key, amount in buckets if amount]
