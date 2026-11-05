@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import contextlib
+import functools
 import logging
 import math
 import xml.etree.ElementTree as ET
@@ -85,6 +86,29 @@ def parse_vendored(path: Path) -> ET.Element:
     return root
 
 
+def _vendored_data(path: Path) -> ET.Element:
+    """`parse_vendored`, parsed once per version of the file.
+
+    The exporter looks up a dozen data files on every save it writes, and
+    re-parsing them each time made one export cost ~0.24 s, almost all of it
+    in expat (2026-11-05). The whole data directory is ~5 MB of XML and ~40 MB
+    parsed, so keeping every file is cheap; the lang files, which are larger
+    and read once into the catalog, do not come through here.
+
+    The tree is shared by every caller, so it is read-only: whatever wants to
+    change one (custom data, a bonus copied into a save) takes a `deepcopy`
+    first, as all of them already did. Keyed on the file's mtime and size, so
+    a `make data` under a running server is picked up on the next read.
+    """
+    stat = path.stat()
+    return _parsed(path, stat.st_mtime_ns, stat.st_size)
+
+
+@functools.lru_cache(maxsize=256)
+def _parsed(path: Path, _mtime_ns: int, _size: int) -> ET.Element:
+    return parse_vendored(path)
+
+
 def parse_data(name: str) -> ET.Element:
     """The root of one vendored data file, with custom data folded in.
 
@@ -94,12 +118,13 @@ def parse_data(name: str) -> ET.Element:
     that shipped.
 
     The overlay holds only the files custom data touched; everything else is
-    read from disk as before.
+    the vendored file, parsed once (`_vendored_data`) and shared — so read it,
+    and `deepcopy` whatever you mean to change.
     """
     overlay = _overlay.get()
     if overlay is not None and name in overlay.trees:
         return overlay.trees[name]
-    return parse_vendored(DATA_DIR / name)
+    return _vendored_data(DATA_DIR / name)
 
 
 def data_root(name: str) -> ET.Element | None:
@@ -116,7 +141,7 @@ def data_root(name: str) -> ET.Element | None:
     if not path.exists():
         return None
     try:
-        return parse_vendored(path)
+        return _vendored_data(path)
     except ET.ParseError as exc:
         # A truncated download, or a hand-edited vendor file. One unreadable
         # data file should cost its own section, not the whole catalog.
