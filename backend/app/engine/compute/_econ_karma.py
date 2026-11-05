@@ -21,6 +21,7 @@ from ._career import (
     career_raise_karma,
     snapshot_career_baseline,
 )
+from ._career_items import kept_karma
 from ._life_modules import price as life_price
 from ._quality_ctx import quality_req_ctx
 from .context import Ctx
@@ -260,9 +261,11 @@ def _spirit_karma(ctx: Ctx) -> int:
     """
     baseline = ctx.state.career_baseline if ctx.career else None
     known = set(baseline.item_ids) if baseline is not None and baseline.item_ids is not None else None
-    services = 0
+    per_service = current_rules().karma_spirit
+    rows = []
     for row in list(ctx.spirits.get("public") or []) + list(ctx.techno_sprites.get("public") or []):
-        if known is not None and str(row.get("id") or "") not in known:
-            continue
-        services += max(0, int(row.get("services") or 0))
-    return services * current_rules().karma_spirit
+        row_id = str(row.get("id") or "")
+        paid = known is None or row_id in known
+        rows.append((row_id, max(0, int(row.get("services") or 0)) * per_service if paid else 0, 0))
+    # A service used up in play, or a spirit sent away, gives nothing back.
+    return kept_karma(ctx, "spirits", rows)
