@@ -140,6 +140,7 @@ export const EN_HELP = {
   "help.weapon.ammo":
     "How many rounds it holds and how it reloads: (c) clip, (m) magazine, (b) break action, (d) drum, (ml) muzzle",
   "help.weapon.reach": "Reach: in melee, the difference over your opponent is a dice bonus",
+  "help.weapon.formula": "{name}\u2019s {stat} is the data\u2019s formula {formula}, worked out",
   "help.armor.statsLabel": "Armor",
   "help.armor.value": "Armor adds to the dice you resist damage with (SR5 p.169)",
   "help.armor.stack":
@@ -277,6 +278,8 @@ export const EN_HELP = {
   "help.matrix.statsLabel": "Matrix",
   "help.matrix.deviceRating":
     "DR is the device\u2019s own rating \u2014 what it rolls when nobody is driving it",
+  "help.matrix.cm":
+    "CM (Matrix Condition Monitor): 8 + DR \u00f7 2 (round up) boxes; when it fills, the device is bricked (SR5 p.229)",
   "help.matrixmod.statsLabel": "Electronic modification",
   "help.matrixmod.what":
     "Electronic modifications (DT p.66) have no fee beyond parts and tools. Allocate materials and register successful construction to enable their effects.",

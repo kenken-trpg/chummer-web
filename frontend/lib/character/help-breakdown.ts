@@ -179,3 +179,45 @@ export function weaponHelpLines(
   if (has(item.reach)) lines.push({ label: ui("help.weapon.reach") });
   return lines;
 }
+
+/**
+ * The sheet's weapon table explains its columns once, above the table: every
+ * line {@link weaponHelpLines} gives for any of the weapons, each once and in
+ * column order.
+ */
+export function weaponTableHelpLines(
+  weapons: Parameters<typeof weaponHelpLines>[0][],
+  ui: UiFn,
+): HelpLine[] {
+  const present = new Set(weapons.flatMap((w) => weaponHelpLines(w, ui)).map((l) => l.label));
+  // a weapon with every stat gives the lines in column order
+  const every = { accuracy: "1", damage: "1", ap: "1", rc: "1", mode: "1", ammo: "1", reach: "1" };
+  return weaponHelpLines(every, ui).filter((l) => present.has(l.label));
+}
+
+/**
+ * Where a weapon's Accuracy or DV came from, when the engine worked it out
+ * from a formula in the data (`Physical` for a melee weapon, `({STR}+2)P`).
+ * The sheet gives these under the weapon table's "?" rather than a "?" in
+ * each cell, which would squeeze the name column to a letter on a phone.
+ * Three of the same spur give the line once.
+ */
+export function weaponFormulaLines(
+  weapons: { name: string; accuracy_formula?: string; damage_formula?: string }[],
+  tr: Tr,
+  ui: UiFn,
+): HelpLine[] {
+  const lines = weapons.flatMap((w) =>
+    (
+      [
+        [ui("sheet.col.accuracy"), w.accuracy_formula],
+        ["DV", w.damage_formula],
+      ] as const
+    )
+      .filter(([, formula]) => formula)
+      .map(([stat, formula]) =>
+        ui("help.weapon.formula", { name: tr(w.name), stat, formula: formula! }),
+      ),
+  );
+  return [...new Set(lines)].map((label) => ({ label }));
+}

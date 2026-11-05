@@ -3,6 +3,7 @@ import { Section } from "@/components/character/sheet/blocks";
 import { matrixCM } from "@/lib/character/format";
 import { useUiText } from "@/lib/i18n";
 import { scopeTr } from "@/lib/ui-strings";
+import { HelpTip } from "@/components/help/HelpTip";
 
 export function MatrixSection(s: SheetData) {
   const { tr: sheetTr, d } = s;
@@ -116,7 +117,27 @@ export function MatrixSection(s: SheetData) {
             <table className="sheet-table sheet-table--matrix">
               <thead>
                 <tr>
-                  <th>{ui("sheet.col.device")}</th>
+                  <th>
+                    <HelpTip
+                      label={ui("help.open", { label: ui("help.matrix.statsLabel") })}
+                      lines={[
+                        { label: ui("help.matrix.deviceRating") },
+                        // A and S only where some device in the table has them
+                        ...(rows.some((r) => r.a != null)
+                          ? [{ label: ui("help.matrix.attack") }]
+                          : []),
+                        ...(rows.some((r) => r.s != null)
+                          ? [{ label: ui("help.matrix.sleaze") }]
+                          : []),
+                        { label: ui("help.matrix.dataprocessing") },
+                        { label: ui("help.matrix.firewall") },
+                        ...(rows.some((r) => r.order) ? [{ label: ui("help.matrix.array") }] : []),
+                        { label: ui("help.matrix.cm") },
+                      ]}
+                    >
+                      {ui("sheet.col.device")}
+                    </HelpTip>
+                  </th>
                   <th>DR</th>
                   <th>A</th>
                   <th>S</th>

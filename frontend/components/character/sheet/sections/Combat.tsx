@@ -4,6 +4,8 @@ import { rangeNameFor, rangeRow } from "@/lib/character/sheet-format";
 import { Fragment } from "react";
 import { useUiText } from "@/lib/i18n";
 import { scopeTr } from "@/lib/ui-strings";
+import { HelpTip } from "@/components/help/HelpTip";
+import { weaponFormulaLines, weaponTableHelpLines } from "@/lib/character/help-breakdown";
 
 export function CombatSection(s: SheetData) {
   const { catalog, tr: sheetTr, d, totals, weapons, armors } = s;
@@ -13,7 +15,14 @@ export function CombatSection(s: SheetData) {
     <Section title="sheet.combat" empty={!weapons.length && !armors.length && !d.worn_armor}>
       {armors.length || d.worn_armor ? (
         <div className="sheet-block">
-          <h4>{ui("sheet.armorBlock")}</h4>
+          <h4>
+            <HelpTip
+              label={ui("help.open", { label: ui("sheet.armorBlock") })}
+              lines={[{ label: ui("help.armor.value") }, { label: ui("help.armor.stack") }]}
+            >
+              {ui("sheet.armorBlock")}
+            </HelpTip>
+          </h4>
           <ul className="sheet-list">
             {(armors.length ? armors : []).map((item) => (
               <li key={item.id}>
@@ -46,7 +55,14 @@ export function CombatSection(s: SheetData) {
       ) : null}
       {weapons.length ? (
         <div className="sheet-block">
-          <h4>{ui("sheet.weapons")}</h4>
+          <h4>
+            <HelpTip
+              label={ui("help.open", { label: ui("sheet.weapons") })}
+              lines={[...weaponTableHelpLines(weapons, ui), ...weaponFormulaLines(weapons, tr, ui)]}
+            >
+              {ui("sheet.weapons")}
+            </HelpTip>
+          </h4>
           <table className="sheet-table sheet-table--weapon">
             <thead>
               <tr>
