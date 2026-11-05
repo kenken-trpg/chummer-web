@@ -100,11 +100,11 @@ def characters(draw: st.DrawFn) -> bytes:
 
 
 # The catalog is read once at import. The default 100 examples took ~7 s run
-# alone on 2026-10-18; on 2026-11-05 they took ~29 s alone and ~60 s beside
-# the other xdist workers, the longest test in the suite. Fewer examples on a
-# PR were tried at the 7 s mark and bought ~2 s of suite time, inside the
-# run-to-run noise, so it stayed at 100; why one example got ~4x slower since
-# has not been looked into.
+# alone on 2026-10-18 and ~27 s by 2026-11-05: each export fix since had the
+# exporter look one more data file up, and every lookup re-parsed the XML.
+# With the parsed files cached (`_xml._vendored_data`) they take ~4 s. Fewer
+# examples on a PR were tried at the 7 s mark and bought ~2 s of suite time,
+# inside the run-to-run noise, so it stays at 100.
 # `function_scoped_fixture` is not in play and there is no per-example setup,
 # so the only health check worth silencing is the one about `catalog()` being
 # slow the very first time it is touched.
