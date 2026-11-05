@@ -10,6 +10,7 @@ import { defaultBit, skillsoftBit, specBit } from "@/lib/character/bits";
 import { skillDefault } from "@/lib/character/skill-default";
 import { specializationBonus } from "@/lib/character/skill-specialization";
 import { skillDice } from "@/lib/character/format";
+import { careerFloor } from "@/lib/character/career-floor";
 import { KarmaLevels, SpecKarma, skillLimits, specEditor } from "./shared";
 
 export function ActiveSkills(props: TabPanelProps) {
@@ -149,7 +150,8 @@ export function ActiveSkills(props: TabPanelProps) {
                     yet, so the thumb snapped back and the commit sent the old
                     rating. 1 was as low as a skill could go. */}
                 <RangeInput
-                  min={0}
+                  min={careerFloor(ch, "skills", s.name)}
+                  floor={careerFloor(ch, "skills", s.name) || undefined}
                   disabled={d.life_module_skills?.frozen}
                   max={Math.max(
                     0,

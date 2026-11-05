@@ -4,6 +4,7 @@ import { HelpTip } from "@/components/help/HelpTip";
 import type { TabPanelProps } from "@/components/character/types";
 import { ATTRS, attrShown } from "@/lib/character/constants";
 import { attrLabel } from "@/lib/ui-strings";
+import { careerFloor } from "@/lib/character/career-floor";
 
 export function AttrsTab({ character: ch, d, t, tr, ui, patch, setCharacter }: TabPanelProps) {
   const spec = d.metatype_info.attributes;
@@ -48,6 +49,9 @@ export function AttrsTab({ character: ch, d, t, tr, ui, patch, setCharacter }: T
         // on the next compute anyway. Show it already there, so the slider and
         // the number beside it never disagree.
         const rating = Math.max(range.min, ch.attributes[key] ?? range.min);
+        // In career, never under what it was on entering career (Chummer
+        // cannot lower one): the karma chargen paid stays paid.
+        const low = Math.min(range.max, Math.max(range.min, careerFloor(ch, "attributes", key)));
         // MAG / RES / DEP under essence loss: the slider stays on what was
         // bought, and the range the loss left is shown beside the total
         const essMax = range.ess_max;
@@ -71,10 +75,10 @@ export function AttrsTab({ character: ch, d, t, tr, ui, patch, setCharacter }: T
               </HelpTip>
             </span>
             <RangeInput
-              min={range.min}
+              min={low}
               max={range.max}
               value={rating}
-              floor={range.min}
+              floor={low}
               label={attrLabel(key, t)}
               onDraft={(value) =>
                 setCharacter({ ...ch, attributes: { ...ch.attributes, [key]: value } })
