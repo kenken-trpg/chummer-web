@@ -332,6 +332,41 @@ def test_a_character_with_no_custom_data_never_needs_the_handshake(client: TestC
     assert client.post("/api/characters/patch", json={"state": state}).status_code == 200
 
 
+_WIDGET = "c0ffee00-0000-4000-8000-000000000001"
+_GEAR_FILES = {
+    "d/manifest.xml": "<manifest><guid>g</guid><version>1</version></manifest>",
+    "d/custom_gear.xml": (
+        f"<chummer><gears><gear><id>{_WIDGET}</id><name>Custom Widget</name><category>Electronics</category>"
+        "<rating>0</rating><avail>4R</avail><cost>1234</cost><source>SR5</source><page>1</page></gear></gears></chummer>"
+    ),
+}
+
+
+def test_an_item_the_custom_data_added_is_exported_to_chummer_whole(client: TestClient) -> None:
+    """The export ran under the vendored data only: compute priced the item,
+    but the save named it `<name />` with no cost, which Chummer opens as a
+    nameless thing worth 0¥. A plain character goes first, so the per-kind
+    index of item fields is already cached when the custom one asks."""
+    plain = client.post("/api/characters/new").json()
+    plain["gear"] = [{"gear_id": _gear_id("Medkit")}]
+    plain = client.post("/api/characters/patch", json={"state": plain}).json()
+    assert client.post("/api/characters/chummer", json={"state": plain}).status_code == 200
+
+    up = client.post("/api/customdata", json={"files": _GEAR_FILES, "customdata": ["g>1"]}).json()
+    state = client.post("/api/characters/new").json()
+    state["settings"] = {**state["settings"], "customdata": ["g>1"], "dataset": up["dataset"]}
+    state["gear"] = [{"gear_id": _WIDGET}]
+    state = client.post("/api/characters/patch", json={"state": state}).json()
+    res = client.post("/api/characters/chummer", json={"state": state})
+
+    gear = next(g for g in ET.fromstring(res.content).iter("gear") if g.findtext("sourceid") == _WIDGET)
+    assert (gear.findtext("name"), gear.findtext("cost"), gear.findtext("avail")) == ("Custom Widget", "1234", "4R")
+
+
+def _gear_id(name: str) -> str:
+    return next(row["id"] for row in catalog()["gear"] if row["name"] == name)
+
+
 # --- the catalog the pick lists are built from --------------------------- #
 
 

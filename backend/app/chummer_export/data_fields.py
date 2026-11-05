@@ -5,9 +5,9 @@ from __future__ import annotations
 
 import xml.etree.ElementTree as ET
 from collections.abc import Callable
-from functools import cache
+from functools import lru_cache
 
-from ..data_loader._xml import parse_data
+from ..data_loader._xml import current_overlay_key, parse_data
 from ._common import _sub
 
 #: What Chummer's `Load` of each kind of item reads from the save alone: the
@@ -190,8 +190,16 @@ _COMPOSED: dict[str, Callable[[ET.Element], dict[str, str]]] = {
 }
 
 
-@cache
 def _definitions(kind: str) -> dict[str, ET.Element]:
+    """Each item of `kind` by id, in the custom data in force if any."""
+    return _definitions_for(kind, current_overlay_key())
+
+
+@lru_cache(maxsize=64)
+def _definitions_for(kind: str, _overlay_key: str) -> dict[str, ET.Element]:
+    """`_definitions` for one data set: keyed on it, so a character with
+    custom data and one without never read each other's index (as
+    `chummer_import._common._data_index` is)."""
     file, path, _ = _FROM_DATA[kind]
     return {node.findtext("id") or "": node for node in parse_data(file).findall(path)}
 
