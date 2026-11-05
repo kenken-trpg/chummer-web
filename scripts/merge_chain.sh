@@ -19,18 +19,65 @@
 # two test cases are what the two branches meant. Any other
 # conflict stops the run for a human — the i18n dictionaries included, even
 # though two branches usually just append there: a conflicting wording is a
-# choice, and a duplicated key would only surface in locales.test.ts. The run ends on main, up to date.
+# choice, and a duplicated key would only surface in locales.test.ts.
+#
+# All of it happens in a throwaway worktree, never in the tree this is run
+# from. That tree is shared — with you, and with any other session working in
+# it — and switching it to each branch carried whatever was uncommitted there
+# along: the `git commit -a` after the checks below then pushed another
+# session's half-done edit into an unrelated PR (#883). In its own worktree the
+# run sees only the branch. It checks each branch out detached, so a branch
+# another worktree has checked out is no obstacle either (#778).
+#
+# On a STOP the worktree is kept, rebase and all, and its path printed. At the
+# end, local main is fast-forwarded to origin/main only where that cannot touch
+# anyone's work: not checked out anywhere, or checked out in a tree with no
+# uncommitted changes.
 set -u
 cd "$(dirname "$0")/.."
-here=$(pwd)
-keepboth=scripts/keep_both_sides.py
+repo=$(pwd)
+keepboth=$repo/scripts/keep_both_sides.py
+
+git fetch -q origin || exit 1
+tmp=${TMPDIR:-/tmp}
+wt=$(mktemp -d "${tmp%/}/merge_chain.XXXXXX") || exit 1
+git worktree add -q --detach "$wt" origin/main || exit 1
+finish() {
+  status=$?
+  cd "$repo" || return
+  if [ "$status" = 0 ]; then
+    # removes the links below, not what they point to
+    git worktree remove --force "$wt"
+  else
+    echo "worktree kept for a look: $wt (git worktree remove --force $wt)"
+  fi
+}
+trap finish EXIT
+# What the checks run on and git does not hold: link them from this tree. They
+# stay untracked there, and the `commit -a` below takes tracked files only.
+for dep in backend/.venv backend/vendor frontend/node_modules; do
+  [ -e "$repo/$dep" ] && ln -s "$repo/$dep" "$wt/$dep"
+done
+cd "$wt" || exit 1
 
 for pair in "$@"; do
   n=${pair%%:*}; br=${pair#*:}
   echo "=== #$n $br"
   if [ "$(gh pr view "$n" --json state -q .state)" = MERGED ]; then echo "already merged"; continue; fi
   git fetch -q origin
-  git switch -q "$br" || exit 1
+  # The branch as pushed — or the local one, when it holds that and more (a
+  # commit not pushed yet). Two that have diverged are for a human to settle.
+  remote=$(git rev-parse -q --verify "refs/remotes/origin/$br") || { echo "STOP: no origin/$br"; exit 1; }
+  start=$remote
+  if mine=$(git rev-parse -q --verify "refs/heads/$br"); then
+    if git merge-base --is-ancestor "$remote" "$mine"; then
+      start=$mine
+    elif ! git merge-base --is-ancestor "$mine" "$remote"; then
+      echo "STOP: local $br and origin/$br have diverged"
+      exit 1
+    fi
+  fi
+  git checkout -q --detach "$start" || exit 1
   # Where this branch sat before the rebase, so that what main gained since can
   # be told apart from what the branch itself changes.
   was=$(git merge-base HEAD origin/main)
@@ -81,7 +128,7 @@ for pair in "$@"; do
   if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
     git commit -qam "style: format after rebase"
   fi
-  git push -q --force-with-lease origin "$br" || exit 1
+  git push -q --force-with-lease="refs/heads/$br:$remote" origin "HEAD:refs/heads/$br" || exit 1
   # Wait for GitHub to agree that the head is what was just pushed, rather than
   # guessing how long that takes. `gh pr checks` reports the checks of the PR's
   # head commit, so once the two match, what it lists is this push's — which is
@@ -146,8 +193,20 @@ for pair in "$@"; do
     exit 1
   fi
   # The remote branch goes with the repository's delete-on-merge setting; the
-  # local one is ours to clean up, and cannot be deleted while checked out.
-  git switch -q main && git branch -qD "$br"
+  # local one is ours to clean up — unless a worktree has it checked out.
+  if git show-ref -q --verify "refs/heads/$br"; then
+    git branch -qD "$br" 2>/dev/null || echo "kept local $br: a worktree has it checked out"
+  fi
   echo "merged #$n"
 done
-cd "$here" && git switch -q main && git pull -q --ff-only && echo DONE
+git fetch -q origin
+holder=$(git worktree list --porcelain |
+  awk '/^worktree /{w=substr($0,10)} $0=="branch refs/heads/main"{print w}')
+if [ -z "$holder" ]; then
+  git fetch -q origin main:main || echo "main left as is: it has commits origin/main lacks"
+elif [ -z "$(git -C "$holder" status --porcelain --untracked-files=no)" ]; then
+  git -C "$holder" merge -q --ff-only origin/main || echo "main left as is in $holder: not a fast-forward"
+else
+  echo "main left as is: $holder has uncommitted changes"
+fi
+echo DONE

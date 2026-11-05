@@ -293,6 +293,13 @@ checking that guess costs more than going down the list.
   and #276 merged with `backend-windows` red because a `STOP` here is only this
   script exiting while `--auto` is an instruction GitHub keeps. If the merge
   does not happen, auto-merge is disarmed on the way out.
+  It works in a throwaway worktree of its own, so the tree you run it from
+  stays on its branch with its edits: the old way switched that tree to each
+  branch and its `git commit -a` once pushed an unrelated uncommitted edit into
+  a PR (#883). `backend/.venv`, `backend/vendor` and `frontend/node_modules` are
+  linked from your tree. On a `STOP` the worktree is kept and its path printed;
+  at the end local `main` is fast-forwarded only if no checked-out tree has
+  uncommitted changes in the way.
 - **CI has one required check, `ci-ok`.** It is the last job in
   `.github/workflows/ci.yml` and passes only if every other job did, so the
   list of what gates a merge lives in the repository and changes in a reviewed
