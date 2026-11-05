@@ -20,6 +20,16 @@ from ._quality_ctx import quality_req_ctx
 from .context import Ctx
 
 
+def _martial_rows(arts: list[dict]) -> list[tuple[str, int, int]]:
+    """Each style, and each technique on it, as a `kept_karma` row."""
+    rows: list[tuple[str, int, int]] = []
+    for art in arts:
+        rows.append((str(art["id"]), int(art["style_karma"]), int(art["style_karma"])))
+        for tech in art.get("techniques") or []:
+            rows.append((f"{art['id']}/{tech['name']}", int(tech["karma"]), int(tech["karma"])))
+    return rows
+
+
 def _social_pass(ctx: Ctx) -> None:
     """Phase 15 — contacts and martial arts (both karma, so after the ledger
     opens), the spend breakdowns, and notoriety / street cred / public
@@ -62,10 +72,18 @@ def _social_pass(ctx: Ctx) -> None:
         int(ctx.effects.get("unarmed_dv") or 0),
         bool(ctx.effects.get("unarmed_physical")),
     )
+    # A style, technique or program costs the same bought in career as at
+    # chargen; what the record keeps is that deleting one gives nothing back.
+    ctx.martial["karma"] = kept_karma(ctx, "martial_arts", _martial_rows(ctx.martial.get("public") or []))
     ctx.karma_spent += int(ctx.martial.get("karma") or 0)
     ctx.ai_programs = resolve_ai_programs(ctx.state, ctx.enabled, ctx.qualities, career=ctx.career)
     ctx.warnings.extend(ctx.ai_programs["warnings"])
     ctx.errors.extend(ctx.ai_programs["errors"])
+    ctx.ai_programs["karma"] = kept_karma(
+        ctx,
+        "ai_programs",
+        [(str(row["id"]), int(row["karma"]), int(row["karma"])) for row in ctx.ai_programs["public"]],
+    )
     ctx.karma_spent += ctx.ai_programs["karma"]
     ctx.critter_powers = resolve_critter_powers(
         ctx.state, ctx.enabled, ctx.critter_power_categories, quality_req_ctx(ctx), career=ctx.career

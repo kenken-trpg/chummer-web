@@ -5,8 +5,17 @@ worked karma out again from what is held, so it did.
 """
 
 from app.data_loader import catalog
-from app.engine import compute, snapshot_career_baseline
-from app.models import CharacterState, ComplexFormInstall, ContactInstall, SpellInstall, SpiritInstall
+from app.engine import compute, default_attributes, find_metatype, snapshot_career_baseline
+from app.models import (
+    AIProgramInstall,
+    CharacterState,
+    ComplexFormInstall,
+    ContactInstall,
+    MartialArtInstall,
+    Priorities,
+    SpellInstall,
+    SpiritInstall,
+)
 from tests.engine_support import CLEANER, EDITOR, HERMETIC, SPIRIT_FIRE, STUNBOLT, _mage, _mundane, _techno
 
 
@@ -75,6 +84,8 @@ def test_the_record_is_made_on_the_first_career_pass_and_kept() -> None:
         "spirits": {},
         "spells": {},
         "complex_forms": {},
+        "martial_arts": {},
+        "ai_programs": {},
     }
 
 
@@ -146,3 +157,57 @@ def test_a_paid_chargen_spell_dropped_in_career_gives_no_karma_back() -> None:
     before = _left(st)
     st.spells = st.spells[:-1]
     assert _left(st) == before
+
+
+def _karate_id() -> str:
+    return next(item["id"] for item in catalog()["martial_arts"] if item["name"] == "Karate")
+
+
+def test_a_martial_art_or_technique_dropped_in_career_gives_no_karma_back() -> None:
+    st = _career(
+        _mundane(
+            "ck-martial", martial_arts=[MartialArtInstall(art_id=_karate_id(), techniques=["Counterstrike", "Sweep"])]
+        )
+    )
+    assert _spent(st.derived, "engine.spend.martialArts") == 12
+    before = _left(st)
+    st.martial_arts[0].techniques = ["Counterstrike"]
+    assert _left(st) == before
+    st.martial_arts = []
+    assert _left(st) == before
+
+
+def test_a_technique_learned_in_career_costs_its_karma() -> None:
+    st = _career(
+        _mundane("ck-martial-new", martial_arts=[MartialArtInstall(art_id=_karate_id(), techniques=["Counterstrike"])])
+    )
+    before = _left(st)
+    st.martial_arts[0].techniques = ["Counterstrike", "Sweep"]
+    assert before - _left(st) == 5
+
+
+def _ai_program(name: str) -> str:
+    return next(p["id"] for p in catalog()["ai_programs"] if p["name"] == name)
+
+
+def _ai(cid: str, *programs: str) -> CharacterState:
+    return CharacterState(
+        id=cid,
+        name=cid,
+        metatype="A.I.",
+        metavariant="E-Ghost",
+        talent="A.I.",
+        priorities=Priorities(Heritage="A", Attributes="B", Talent="C", Skills="D", Resources="E"),
+        attributes=default_attributes(find_metatype("A.I.", "E-Ghost")),
+        ai_programs=[AIProgramInstall(program_id=_ai_program(name)) for name in programs],
+    )
+
+
+def test_an_ai_program_deleted_in_career_gives_no_karma_back() -> None:
+    st = _career(_ai("ck-ai", "Armor"))
+    assert _spent(st.derived, "engine.spend.aiPrograms") == 5
+    before = _left(st)
+    st.ai_programs = []
+    assert _left(st) == before
+    st.ai_programs = [AIProgramInstall(program_id=_ai_program("Browse"))]
+    assert before - _left(st) == 5
