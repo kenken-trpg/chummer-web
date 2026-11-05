@@ -2,6 +2,7 @@
 import type { TabPanelProps } from "@/components/character/types";
 import { HelpTip } from "@/components/help/HelpTip";
 import { RangeInput } from "@/components/character/RangeInput";
+import { careerFloor } from "@/lib/character/career-floor";
 import { SpecPicker } from "@/components/character/SpecPicker";
 import { skillDice } from "@/lib/character/format";
 import { editRow } from "@/lib/character/rows";
@@ -87,7 +88,8 @@ export function ExoticSkills({
                 </HelpTip>
               </span>
               <RangeInput
-                min={free ? 0 : 1}
+                min={Math.max(free ? 0 : 1, careerFloor(ch, "exotic_skills", local?.id ?? row.id))}
+                floor={careerFloor(ch, "exotic_skills", local?.id ?? row.id) || undefined}
                 max={Math.max(0, row.rating_max - free)}
                 disabled={d.life_module_skills?.frozen}
                 value={rating}
@@ -126,7 +128,11 @@ export function ExoticSkills({
               <b>{skillDice(d.life_module_skills ? row.rating : rating, bonus)}</b>
               <button
                 className="btn danger"
-                disabled={d.life_module_skills?.frozen || (!!free && !local)}
+                disabled={
+                  d.life_module_skills?.frozen ||
+                  (!!free && !local) ||
+                  careerFloor(ch, "exotic_skills", local?.id ?? row.id) > 0
+                }
                 onClick={() =>
                   patchExotic(
                     (ch.exotic_skills || []).filter((item) => item.id !== (local?.id || row.id)),

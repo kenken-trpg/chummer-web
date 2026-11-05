@@ -2,6 +2,7 @@
 import type { TabPanelProps } from "@/components/character/types";
 import { HelpTip } from "@/components/help/HelpTip";
 import { RangeInput } from "@/components/character/RangeInput";
+import { careerFloor } from "@/lib/character/career-floor";
 import { skillDice } from "@/lib/character/format";
 import { KarmaLevels, skillLimits } from "./shared";
 
@@ -58,7 +59,8 @@ export function SkillGroups(props: TabPanelProps) {
               )}
             </span>
             <RangeInput
-              min={0}
+              min={careerFloor(ch, "skill_groups", g)}
+              floor={careerFloor(ch, "skill_groups", g) || undefined}
               max={Math.max(0, groupMax - (lifeGroup?.free_uniform_rating || 0))}
               disabled={unequal || d.life_module_skills?.frozen}
               value={ch.skill_groups[g] || 0}

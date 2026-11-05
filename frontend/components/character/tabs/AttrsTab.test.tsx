@@ -29,6 +29,20 @@ function renderTab(
 }
 
 describe("<AttrsTab>", () => {
+  it("in career, stops a slider at the rating it had on entering career", () => {
+    // Chummer cannot lower an attribute after creation: the karma chargen
+    // paid for it never comes back
+    renderTab({
+      character: {
+        career: true,
+        attributes: { BOD: 4, AGI: 3 },
+        career_baseline: { attributes: { BOD: 3, AGI: 3 } },
+      } as never,
+    });
+    const [bod] = screen.getAllByRole("slider");
+    expect(bod.getAttribute("min")).toBe("3");
+  });
+
   it("renders the 9 physical/mental sliders and the point line, hiding MAG/RES", () => {
     renderTab();
     expect(screen.getAllByRole("slider")).toHaveLength(9);

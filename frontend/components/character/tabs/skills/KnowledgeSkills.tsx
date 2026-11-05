@@ -9,6 +9,7 @@ import { skillsoftBit, specBit } from "@/lib/character/bits";
 import { DEFAULT_PENALTY } from "@/lib/character/skill-default";
 import { skillDice } from "@/lib/character/format";
 import { KarmaLevels, SpecKarma, knowledgeEditor, skillLimits, specEditor } from "./shared";
+import { careerFloor } from "@/lib/character/career-floor";
 
 /** The knowledge skills the character has, with the notes that apply to all. */
 export function KnowledgeSkills(props: TabPanelProps) {
@@ -119,7 +120,11 @@ export function KnowledgeSkills(props: TabPanelProps) {
                 <span className="muted">{ui("skills.free")}</span>
               ) : (
                 <RangeInput
-                  min={d.life_module_skills ? 0 : 1}
+                  min={Math.max(
+                    d.life_module_skills ? 0 : 1,
+                    careerFloor(ch, "knowledge_skills", row.name),
+                  )}
+                  floor={careerFloor(ch, "knowledge_skills", row.name) || undefined}
                   disabled={d.life_module_skills?.frozen}
                   max={Math.max(
                     0,
@@ -189,7 +194,8 @@ export function KnowledgeSkills(props: TabPanelProps) {
                     d.life_module_skills?.frozen ||
                     (!!d.life_module_skills?.free_knowledge[row.name] &&
                       !ch.knowledge_skills[row.name]) ||
-                    d.life_module_skills?.native_languages.includes(row.name)
+                    d.life_module_skills?.native_languages.includes(row.name) ||
+                    careerFloor(ch, "knowledge_skills", row.name) > 0
                   }
                   onClick={() => know.remove(row.name)}
                 >

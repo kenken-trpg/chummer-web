@@ -25,6 +25,26 @@ import {
  */
 
 describe("<SkillsTab> knowledge skills", () => {
+  it("in career, a skill held on entering career cannot be deleted or lowered under it", () => {
+    renderTab({
+      character: {
+        career: true,
+        knowledge_skills: { Underworld: 3, Bars: 1 },
+        career_baseline: { knowledge_skills: { Underworld: 2 } },
+        derived: {
+          knowledge_skills: [
+            knowRow("Underworld", { category: "Street", rating: 3 }),
+            knowRow("Bars", { category: "Street", rating: 1 }),
+          ],
+        },
+      } as never,
+    });
+    const [underworld, bars] = screen.getAllByRole("button", { name: "削除" });
+    expect((underworld as HTMLButtonElement).disabled).toBe(true);
+    expect((bars as HTMLButtonElement).disabled).toBe(false);
+    expect(screen.getByRole("slider", { name: "Underworld" }).getAttribute("min")).toBe("2");
+  });
+
   it("does not add a skill the character already has, or a blank name", () => {
     const patch = vi.fn();
     renderTab({
