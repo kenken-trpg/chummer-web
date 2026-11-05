@@ -234,7 +234,6 @@ _ROW_DEFAULTS: dict[str, str] = {
 
 _PLAYERS_TEXT = "the player's own text, which this app does not hold"
 _NEW_ON_LOAD = "a new one is made on load; the export names a row by guid where something points at it"
-_NOT_WRITTEN = "not written yet — "
 
 #: Row fields Chummer states and this export does not, with why — as
 #: `_ACCEPTED_DROPS` is for the header. A reason that starts "not written
