@@ -195,13 +195,17 @@ def test_metamagic_takes_the_arts_too():
         (212, "Fight or Flight Filter", "FFF"),
         (220, "Task Spirit", "労役の精霊"),
         (225, "Healthy Glow", "健康美"),
-        (226, "Mass Astral Disruption", "集団アストラル撹乱"),
+        (226, "Mass Astral Disruption", "集団アストラル攪乱"),
         (227, "MCT Blue Defender", "MCT ブルー・ディフェンダー"),
         (229, "Celerity", "俊足"),
         (230, "Antennae", "アンテナ"),
         (231, "Ammo: Zapper", "ザッパー弾"),
         (231, "Fuchi Cyber-N", "フチ・サイバーN"),
         (231, "Fuchi Cyber-Ex", "フチ・サイバーEX"),
+        (233, "Spirit Hunter II", "精霊狩り（II）"),
+        (237, "Phobia (Common, Severe)", "恐怖症（Common, Severe）"),
+        (240, "Strive For Perfection", "完璧主義"),
+        (241, "Betameth", "ベータメス"),
     ],
 )
 def test_article_entries_are_available_with_the_issue_and_translated(vol, english, japanese):
@@ -209,12 +213,12 @@ def test_article_entries_are_available_with_the_issue_and_translated(vol, englis
     entry = next(e for e in rr.load() if e.vol == vol and e.english == english)
     assert entry.ja == japanese and entry.ids
     for id_ in entry.ids:
-        assert all({"source": rr.code(vol), "page": ""} in row["also_in"] for row in _find(catalog, id_))
+        assert all({"source": rr.code(vol), "page": entry.page} in row["also_in"] for row in _find(catalog, id_))
     assert rr.stamp(catalog, [entry])[rr.code(vol)][english] == japanese
 
 
 def test_all_issues_in_the_article_have_resolved_data():
-    assert {book["code"] for book in rr.books()} == {rr.code(vol) for vol in range(210, 232) if vol not in (215, 216)}
+    assert {book["code"] for book in rr.books()} == {rr.code(vol) for vol in range(210, 242) if vol not in (215, 216)}
 
 
 def test_spirit_category_resolves_the_article_spirits():
