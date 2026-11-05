@@ -45,14 +45,18 @@ git fetch -q origin || exit 1
 tmp=${TMPDIR:-/tmp}
 wt=$(mktemp -d "${tmp%/}/merge_chain.XXXXXX") || exit 1
 git worktree add -q --detach "$wt" origin/main || exit 1
+# Test output, kept beside the worktree rather than in it.
+logs=$wt.logs
+mkdir -p "$logs" || exit 1
 finish() {
   status=$?
   cd "$repo" || return
   if [ "$status" = 0 ]; then
     # removes the links below, not what they point to
     git worktree remove --force "$wt"
+    rm -rf "$logs"
   else
-    echo "worktree kept for a look: $wt (git worktree remove --force $wt)"
+    echo "worktree kept for a look: $wt (git worktree remove --force $wt; rm -rf $wt.logs)"
   fi
 }
 trap finish EXIT
@@ -68,6 +72,38 @@ for dep in backend/.venv backend/vendor frontend/node_modules; do
   done
 done
 cd "$wt" || exit 1
+
+# The checks, run from the worktree's root. Each test run's output goes to a
+# file in $logs and its exit status is read as it is. It used to be piped into
+# `tail -1` / `grep "Tests "`, so the status was theirs: #894 went on to push
+# and merge past "1 failed, 2759 passed", and with only the last line kept no
+# one could tell which test it was. (Not `set -o pipefail` instead: the
+# `printf … | grep -q` tests below would turn false whenever grep quit before
+# printf had written everything.) On a failure the failing tests are named and
+# the whole output stays in $logs.
+backend_checks() {
+  (cd backend && uv run --no-sync ruff format -q tests && uv run --no-sync ruff check -q app tests) ||
+    { echo "STOP: backend lint"; return 1; }
+  if ! (cd backend && uv run --no-sync pytest -q -n auto) >"$logs/pytest.log" 2>&1; then
+    grep -E '^(FAILED|ERROR) ' "$logs/pytest.log"
+    tail -1 "$logs/pytest.log"
+    echo "STOP: backend tests (full output: $logs/pytest.log)"
+    return 1
+  fi
+  tail -1 "$logs/pytest.log"
+}
+frontend_checks() {
+  # `--no`: never install. What is run must be what node_modules holds.
+  (cd frontend && npx --no -- prettier --write --log-level warn . >/dev/null && npx --no -- tsc --noEmit) ||
+    { echo "STOP: frontend lint"; return 1; }
+  if ! (cd frontend && npx --no -- vitest run) >"$logs/vitest.log" 2>&1; then
+    grep -E '^ *(FAIL|×) ' "$logs/vitest.log"
+    grep -E '^ *Tests ' "$logs/vitest.log"
+    echo "STOP: frontend tests (full output: $logs/vitest.log)"
+    return 1
+  fi
+  grep -E '^ *Tests ' "$logs/vitest.log"
+}
 
 for pair in "$@"; do
   n=${pair%%:*}; br=${pair#*:}
@@ -123,18 +159,14 @@ for pair in "$@"; do
   if [ -n "$elsewhere" ] || printf '%s\n' "$touched" | grep -q '^backend/'; then
     [ -e backend/.venv ] && [ -e backend/vendor ] ||
       { echo "STOP: backend/.venv or backend/vendor not found in $repo or $main_tree"; exit 1; }
-    (cd backend && uv run --no-sync ruff format -q tests && uv run --no-sync ruff check -q app tests &&
-      uv run --no-sync pytest -q -n auto 2>&1 | tail -1) || { echo "STOP: backend checks"; exit 1; }
+    backend_checks || exit 1
   else
     echo "backend untouched on both sides — checked already"
   fi
   if [ -n "$elsewhere" ] || printf '%s\n' "$touched" | grep -q '^frontend/'; then
     [ -e frontend/node_modules ] ||
       { echo "STOP: frontend/node_modules not found in $repo or $main_tree"; exit 1; }
-    # `--no`: never install. What is run must be what node_modules holds.
-    (cd frontend && npx --no -- prettier --write --log-level warn . >/dev/null &&
-      npx --no -- tsc --noEmit && npx --no -- vitest run 2>&1 | grep -E "Tests ") ||
-      { echo "STOP: frontend checks"; exit 1; }
+    frontend_checks || exit 1
   else
     echo "frontend untouched on both sides — checked already"
   fi

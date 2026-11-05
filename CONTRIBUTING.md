@@ -300,6 +300,10 @@ checking that guess costs more than going down the list.
   linked from your tree. On a `STOP` the worktree is kept and its path printed;
   at the end local `main` is fast-forwarded only if no checked-out tree has
   uncommitted changes in the way.
+  A failing test stops the run and names the test; the whole output stays
+  beside the worktree (`<worktree>.logs/pytest.log`, `vitest.log`). The test
+  output used to be piped into `tail` / `grep`, whose exit status was
+  the one read, so #894 merged past `1 failed, 2759 passed`.
 - **CI has one required check, `ci-ok`.** It is the last job in
   `.github/workflows/ci.yml` and passes only if every other job did, so the
   list of what gates a merge lives in the repository and changes in a reviewed
