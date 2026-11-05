@@ -37,6 +37,11 @@ class CareerBaseline(BaseModel):
     # cheaper. None for a baseline from before it was kept, whose existing
     # levels take `special_drop` (capped by today's).
     raise_drops: dict[str, list[int]] | None = None
+    # What each row of a kind (contacts, spirits, ...) cost on the first
+    # career pass, by kind and row id: Chummer never gives chargen karma back
+    # when the thing is deleted (`compute/_career_items.py`). None until the
+    # first career pass records it; a kind missing is recorded when priced.
+    chargen_karma: dict[str, dict[str, int]] | None = None
 
 
 class RewardEntry(BaseModel):

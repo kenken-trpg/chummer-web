@@ -14,6 +14,7 @@ from ..martial_arts import resolve_martial_arts, sync_quality_martial_arts
 from ._career import (
     nuyen_spend_breakdown,
 )
+from ._career_items import kept_karma
 from ._career_qualities import career_quality_karma
 from ._quality_ctx import quality_req_ctx
 from .context import Ctx
@@ -38,7 +39,11 @@ def _social_pass(ctx: Ctx) -> None:
         excon=bool(ctx.effects.get("excon")),
     )
     ctx.warnings.extend(ctx.contacts["warnings"])
-    ctx.karma_spent += int(ctx.contacts.get("karma") or 0)
+    # Contact points are a chargen thing: Chummer charges nothing for a
+    # contact added or raised in play, and gives nothing back for one
+    # dropped, so a career character keeps paying what chargen took.
+    ctx.contacts["karma"] = kept_karma(ctx, "contacts", [("points", int(ctx.contacts.get("karma") or 0), 0)])
+    ctx.karma_spent += int(ctx.contacts["karma"])
 
     martial_ctx = quality_req_ctx(ctx)
     martial_ctx = {
