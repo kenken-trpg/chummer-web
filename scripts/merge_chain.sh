@@ -36,6 +36,9 @@
 set -u
 cd "$(dirname "$0")/.."
 repo=$(pwd)
+# The repository's own working tree, where the dependencies are installed when
+# this is run from a worktree that has none of its own.
+main_tree=$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")
 keepboth=$repo/scripts/keep_both_sides.py
 
 git fetch -q origin || exit 1
@@ -53,10 +56,16 @@ finish() {
   fi
 }
 trap finish EXIT
-# What the checks run on and git does not hold: link them from this tree. They
-# stay untracked there, and the `commit -a` below takes tracked files only.
+# What the checks run on and git does not hold: link them from this tree, or
+# from the repository's own when this one has none (a worktree usually lacks
+# node_modules). They stay untracked, and the `commit -a` below takes tracked
+# files only. A missing one is a STOP at its check, not something to fetch:
+# without node_modules, `npx tsc` downloaded and ran an unrelated npm package
+# named `tsc` (#894's first run).
 for dep in backend/.venv backend/vendor frontend/node_modules; do
-  [ -e "$repo/$dep" ] && ln -s "$repo/$dep" "$wt/$dep"
+  for from in "$repo" "$main_tree"; do
+    if [ -e "$from/$dep" ]; then ln -s "$from/$dep" "$wt/$dep"; break; fi
+  done
 done
 cd "$wt" || exit 1
 
@@ -112,14 +121,20 @@ for pair in "$@"; do
   elsewhere=$(printf '%s\n' "$touched" |
     grep -vE '^(backend/|frontend/|changelog\.d/|docs/|\.github/|$)|\.md$')
   if [ -n "$elsewhere" ] || printf '%s\n' "$touched" | grep -q '^backend/'; then
+    [ -e backend/.venv ] && [ -e backend/vendor ] ||
+      { echo "STOP: backend/.venv or backend/vendor not found in $repo or $main_tree"; exit 1; }
     (cd backend && uv run --no-sync ruff format -q tests && uv run --no-sync ruff check -q app tests &&
       uv run --no-sync pytest -q -n auto 2>&1 | tail -1) || { echo "STOP: backend checks"; exit 1; }
   else
     echo "backend untouched on both sides — checked already"
   fi
   if [ -n "$elsewhere" ] || printf '%s\n' "$touched" | grep -q '^frontend/'; then
-    (cd frontend && npx prettier --write --log-level warn . >/dev/null &&
-      npx tsc --noEmit && npx vitest run 2>&1 | grep -E "Tests ") || { echo "STOP: frontend checks"; exit 1; }
+    [ -e frontend/node_modules ] ||
+      { echo "STOP: frontend/node_modules not found in $repo or $main_tree"; exit 1; }
+    # `--no`: never install. What is run must be what node_modules holds.
+    (cd frontend && npx --no -- prettier --write --log-level warn . >/dev/null &&
+      npx --no -- tsc --noEmit && npx --no -- vitest run 2>&1 | grep -E "Tests ") ||
+      { echo "STOP: frontend checks"; exit 1; }
   else
     echo "frontend untouched on both sides — checked already"
   fi
