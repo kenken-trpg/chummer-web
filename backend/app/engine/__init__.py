@@ -30,6 +30,7 @@ from .compute import (  # noqa: F401  (engine re-export barrel)
     compute,
     default_attributes,
     nuyen_spend_breakdown,
+    overlay_for,
     resolve_attribute_selects,
     resolve_gear,
     resolve_movement,

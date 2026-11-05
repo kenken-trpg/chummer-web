@@ -13,8 +13,8 @@ from __future__ import annotations
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
 
-from ..data_loader import catalog
-from ..engine import compute, find_metatype
+from ..data_loader import catalog, using_customdata
+from ..engine import compute, find_metatype, overlay_for
 from ..models import CharacterState
 from ..rules import rules_for, using_rules
 from ._common import _Ctx, _id_name
@@ -52,8 +52,12 @@ def state_to_chum5(state: CharacterState, *, settings_key: str | None = None) ->
     `settings_key` points `<settings>` at a settings file of the player's own
     — the one `life_module_settings.chummer_settings_file` writes — instead of
     the shipped preset.
+
+    Under the character's custom data too, as `compute` is: the names, prices
+    and fields an export looks up for an item the custom data added are in
+    that data and nowhere else, and without it such an item went out nameless.
     """
-    with using_rules(rules_for(state.settings)):
+    with using_rules(rules_for(state.settings)), using_customdata(overlay_for(state)):
         return _write(state, settings_key)
 
 

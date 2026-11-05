@@ -64,13 +64,13 @@ def compute(state: CharacterState) -> CharacterState:
     free functions. It is a ContextVar, so a concurrent request computing a
     different character sees its own — see `app/rules.py`.
     """
-    with using_rules(rules_for(state.settings)), using_customdata(_overlay_for(state)):
+    with using_rules(rules_for(state.settings)), using_customdata(overlay_for(state)):
         return _compute(
             state.model_copy(deep=True) if normalize_build_method(state.build_method) == "LifeModule" else state
         )
 
 
-def _overlay_for(state: CharacterState) -> Overlay | None:
+def overlay_for(state: CharacterState) -> Overlay | None:
     """The character's custom data, if the server still has it merged.
 
     `None` when the settings ask for none, and also when the cache has lost
