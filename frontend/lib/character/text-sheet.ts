@@ -377,6 +377,13 @@ export function textSheet(x: TextArgs): string {
       pool: d.karma?.pool ?? 0,
     }),
   );
+  if ((ch.career || d.career) && d.debt?.principal)
+    line(
+      ui("txt.debt", {
+        remaining: d.debt.remaining.toLocaleString(),
+        principal: d.debt.principal.toLocaleString(),
+      }),
+    );
 
   if ((ch.notes || "").trim()) {
     line();

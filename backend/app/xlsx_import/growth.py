@@ -27,6 +27,7 @@ import re
 import uuid
 from typing import Any
 
+from ..models.career import DEBT_PAYMENT_REASON
 from ..notices import Notice, notice
 
 #: The log runs from row 4 to row 1000 — the range the sheet's own
@@ -85,24 +86,32 @@ def import_growth(cells: dict[str, str], st: dict[str, Any], warn: list[Notice])
     """Fill the reward ledger from the 成長ログ sheet."""
     rewards: list[dict[str, Any]] = []
     spent: list[dict[str, Any]] = []
+    payments: list[dict[str, Any]] = []
     for row in range(LOG_FIRST_ROW, LOG_LAST_ROW + 1):
         karma = _amount(cells.get(f"{REWARD_KARMA}{row}"))
         nuyen = _amount(cells.get(f"{REWARD_NUYEN}{row}"))
         if not karma and not nuyen:
+            continue
+        # a payment towards In Debt, as this app writes one: counted, not
+        # history, since nothing else in the character spends it
+        if nuyen < 0 and not karma and (cells.get(f"{REWARD_NOTE}{row}") or "").strip() == DEBT_PAYMENT_REASON:
+            payments.append({"id": str(uuid.uuid4()), "nuyen": -nuyen})
             continue
         entry = {"id": str(uuid.uuid4()), "label": _label(cells, row), "karma": karma, "nuyen": nuyen}
         # A negative row is the sheet being used to write something off rather
         # than to earn it. Kept as history: the ledger clamps a reward at zero,
         # so putting it there would turn a loss into nothing at all.
         (spent if karma < 0 or nuyen < 0 else rewards).append(entry)
-    if not rewards and not spent:
+    if not rewards and not spent and not payments:
         return
     if rewards:
         st["reward_log"] = rewards
     if spent:
         st["expense_log"] = spent
+    if payments:
+        st["debt_payments"] = payments
     st["career"] = True
-    warn.append(notice("engine.import.xlsxGrowthLog", count=len(rewards) + len(spent)))
+    warn.append(notice("engine.import.xlsxGrowthLog", count=len(rewards) + len(spent) + len(payments)))
 
 
 __all__ = ["LOG_FIRST_ROW", "LOG_LAST_ROW", "import_growth"]

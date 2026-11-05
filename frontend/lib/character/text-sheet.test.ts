@@ -234,3 +234,22 @@ describe("textSheet omits what the character does not have", () => {
     expect(sheet()).toBe(sheet().trimEnd());
   });
 });
+
+describe("textSheet In Debt", () => {
+  const withDebt = (career: boolean) =>
+    sheet(
+      makeCharacter({
+        career,
+        derived: { career, debt: { principal: 15000, paid: 4000, remaining: 11000 } },
+      } as never),
+      makeCatalog(),
+    );
+
+  it("prints what is left of the debt in career mode", () => {
+    expect(withDebt(true)).toContain("借金の残り 11,000¥ / 15,000¥");
+  });
+
+  it("leaves it out while the character is being built", () => {
+    expect(withDebt(false)).not.toContain("借金");
+  });
+});

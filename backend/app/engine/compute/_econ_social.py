@@ -112,6 +112,7 @@ def _social_pass(ctx: Ctx) -> None:
         foci_nuyen=int(ctx.foci.get("nuyen") or 0),
         spirits_nuyen=int(ctx.spirits.get("nuyen") or 0),
         markup_nuyen=ctx.nuyen_markup,
+        debt_nuyen=ctx.debt_paid,
     )
 
     ctx.quality_notoriety = int(ctx.effects.get("notoriety") or 0)

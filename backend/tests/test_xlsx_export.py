@@ -313,6 +313,24 @@ def test_the_reward_ledger_comes_back_with_its_dates() -> None:
     ]
 
 
+def test_payments_towards_in_debt_come_back_as_payments() -> None:
+    """Written to the log as a write-off named In Debt, and read back as a
+    payment — counted, so the debt and the nuyen left come back as they were."""
+    from app.characters import apply_patch
+    from app.models import CharacterPatch, DebtPayment
+
+    in_debt = next(q["id"] for q in catalog()["qualities"] if q["name"] == "In Debt")
+    first = _character(growth=[{"A": "12000.0", "B": "7.0", "D": "ラン"}])
+    first = apply_patch(first, CharacterPatch(quality_ids=[*first.quality_ids, in_debt, in_debt]))
+    first = apply_patch(first, CharacterPatch(debt_payments=[DebtPayment(nuyen=3000)]))
+    assert first.derived["debt"]["remaining"] == 7000
+    again = _again(first)
+    assert [row.nuyen for row in again.debt_payments] == [3000]
+    assert list(again.expense_log) == []
+    assert again.derived["debt"] == first.derived["debt"]
+    assert again.derived["nuyen"] == first.derived["nuyen"]
+
+
 def test_a_character_that_was_never_played_writes_an_empty_log() -> None:
     """Nothing earned, nothing written — and it still reads back in creation."""
     again = _again(_character())

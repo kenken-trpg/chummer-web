@@ -345,6 +345,7 @@ export const EN_APP = {
   "txt.duration": " / lasts {duration}",
 
   "txt.money": "Nuyen {nuyen}¥  karma left {remaining}/{pool}",
+  "txt.debt": "Debt left {remaining}¥ / {principal}¥",
   "app.err.boot": "Could not start up.",
   "app.err.catalogReload":
     "The option lists could not be rebuilt for this custom data. The pick lists are still the ones from before it was loaded.",
