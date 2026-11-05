@@ -40,8 +40,27 @@ change it). `--build-only` re-mixes the last recording without playing it
 again; `--bgm` loops the music under the narration, fades it in and out, and
 ducks it while the voice speaks. It needs macOS, ffmpeg (`brew install
 ffmpeg`), and Playwright Chromium. The script's `scenes` list holds the spoken
-line (kana for English words `say` misreads) and the subtitle apart. Credit the
-music in the video description as its licence asks.
+line (English words in kana) and the subtitle apart; a word only one engine
+misreads goes in its `READINGS` entry instead. Credit the music in the video
+description as its licence asks.
+
+For a more natural voice, the lines can be read by
+[Irodori-TTS](https://github.com/Aratako/Irodori-TTS) instead of `say`. Write
+them out, read them in the Irodori-TTS environment (the first run downloads the
+model from Hugging Face), then record with those clips:
+
+```sh
+node scripts/record-walkthrough.mjs --narration narration.jsonl
+uv run --project ~/mydevelop/Irodori-TTS python scripts/irodori_narration.py \
+  narration.jsonl voices/ --caption "落ち着いた女性の声で、はっきりと読み上げてください。"
+node scripts/record-walkthrough.mjs --voice-dir voices --bgm music.mp3
+```
+
+`--caption` describes the voice (the VoiceDesign model); `--ref-wav clip.wav`
+copies the voice of a clip instead (the base model). The same `--seed` gives the
+same take. `--candidates 3` reads each line three times (`<name>_001.wav` …), so
+you can copy the best to `<name>.wav`. `--only 05-attributes` re-reads just
+that line, for example after adding a word to `READINGS.irodori`.
 
 ## Application publishing
 
