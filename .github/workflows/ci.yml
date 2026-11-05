@@ -229,7 +229,27 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       # no install hooks: see the Dockerfile
-      - run: ../scripts/retry.sh npm ci --ignore-scripts
+      # node_modules itself, not only npm's download cache: unpacking the
+      # tarballs is what `npm ci` spends its ~50 s on. Keyed on the lockfile
+      # and the Node major, not the exact version: runners in one run resolved
+      # "24" to both 24.22.1 and 24.22.2, and with --ignore-scripts nothing
+      # under node_modules is compiled against Node, so a patch release would
+      # only throw away a good cache (keep `node24` in step with node-version).
+      # Saved straight after the install — before anything the job runs can
+      # write into it (vitest and Next both keep caches under node_modules/).
+      - name: Restore node_modules
+        id: node-modules
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: frontend/node_modules
+          key: node-modules-${{ runner.os }}-${{ runner.arch }}-node24-${{ hashFiles('frontend/package-lock.json') }}
+      - if: steps.node-modules.outputs.cache-hit != 'true'
+        run: ../scripts/retry.sh npm ci --ignore-scripts
+      - if: steps.node-modules.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: frontend/node_modules
+          key: ${{ steps.node-modules.outputs.cache-primary-key }}
 
       # Same cache the e2e job keeps, under its own key so the two jobs cannot
       # race each other writing it: most of what `next build` costs is the
@@ -288,7 +308,20 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      - run: ../scripts/retry.sh npm ci --ignore-scripts
+      # node_modules, restored or installed and saved: see the frontend job
+      - name: Restore node_modules
+        id: node-modules
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: frontend/node_modules
+          key: node-modules-${{ runner.os }}-${{ runner.arch }}-node24-${{ hashFiles('frontend/package-lock.json') }}
+      - if: steps.node-modules.outputs.cache-hit != 'true'
+        run: ../scripts/retry.sh npm ci --ignore-scripts
+      - if: steps.node-modules.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: frontend/node_modules
+          key: ${{ steps.node-modules.outputs.cache-primary-key }}
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run format:check
@@ -356,7 +389,20 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      - run: ../scripts/retry.sh npm ci --ignore-scripts
+      # node_modules, restored or installed and saved: see the frontend job
+      - name: Restore node_modules
+        id: node-modules
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: frontend/node_modules
+          key: node-modules-${{ runner.os }}-${{ runner.arch }}-node24-${{ hashFiles('frontend/package-lock.json') }}
+      - if: steps.node-modules.outputs.cache-hit != 'true'
+        run: ../scripts/retry.sh npm ci --ignore-scripts
+      - if: steps.node-modules.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: frontend/node_modules
+          key: ${{ steps.node-modules.outputs.cache-primary-key }}
       - run: npm run format:check
       - run: npm run test
 
@@ -416,8 +462,21 @@ jobs:
         working-directory: backend
         run: ./.venv/bin/python scripts/fetch_chummer_data.py
 
-      - working-directory: frontend
+      # node_modules, restored or installed and saved: see the frontend job
+      - name: Restore node_modules
+        id: node-modules
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: frontend/node_modules
+          key: node-modules-${{ runner.os }}-${{ runner.arch }}-node24-${{ hashFiles('frontend/package-lock.json') }}
+      - if: steps.node-modules.outputs.cache-hit != 'true'
+        working-directory: frontend
         run: ../scripts/retry.sh npm ci --ignore-scripts
+      - if: steps.node-modules.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: frontend/node_modules
+          key: ${{ steps.node-modules.outputs.cache-primary-key }}
 
       # The browser is ~130MB downloaded on every run otherwise. Keyed on the
       # lockfile: playwright pins one browser build per version, and mixing a
