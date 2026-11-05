@@ -96,7 +96,7 @@ def _export_identity(root: ET.Element, state: CharacterState, names: _Names, ctx
     left = ctx["derived"] if state.career else {}
     _sub(root, "karma", int((left.get("karma") or {}).get("remaining") or 0) if state.career else 0)
     _sub(root, "nuyen", int(left.get("nuyen") or 0) if state.career else 0)
-    if state.career and (state.reward_log or state.expense_log):
+    if state.career and (state.reward_log or state.expense_log or state.debt_payments):
         _export_reward_log(root, state)
     # Reputation, and the nuyen bought with karma at chargen — Chummer keeps
     # the latter in `<nuyenbp>`, which is build points in old money.

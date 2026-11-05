@@ -199,6 +199,12 @@
   },
   "damage_resistance": 0,
   "dealer_connection_categories": [],
+  "debt": {
+    "paid": 0,
+    "principal": 0,
+    "remaining": 0
+  },
+  "debt_payments": [],
   "device_rating_limit": 6,
   "disabled_bioware_grades": [],
   "disabled_cyberware_grades": [],

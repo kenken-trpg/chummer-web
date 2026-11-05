@@ -306,6 +306,12 @@ class _GearPart(TypedDict):
     lifestyle: Row | None
 
 
+class _Debt(TypedDict):
+    principal: int
+    paid: int
+    remaining: int
+
+
 class _EconomyPart(TypedDict):
     """The keys ``assemble._economy`` builds."""
 
@@ -320,6 +326,7 @@ class _EconomyPart(TypedDict):
     career_advancement_karma: int
     career_advancement_lines: list[Row]
     nuyen_amt: int
+    debt: _Debt
     nuyen_karma_max: int
     trustfund: int
     trustfund_label: Notice | None
@@ -341,6 +348,7 @@ class _EconomyPart(TypedDict):
     bioware_ess_multiplier: int
     reward_log: list[Row]
     expense_log: list[Row]
+    debt_payments: list[Row]
     karma_spend_breakdown: list[Row]
     nuyen_spend_breakdown: list[Row]
     lifestyle_cost_mod: int

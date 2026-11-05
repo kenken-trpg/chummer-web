@@ -518,6 +518,9 @@ export const EN_HELP = {
   "help.ware.essDiscountWhen": "Only offered when the settings file allows essence discounts",
   "help.side.chummerAdjust":
     "What a Chummer save\u2019s balance leaves apart from the build and the rewards",
+  "help.side.debt": "What In Debt\u2019s levels lent (RF p.156), less what has been paid back",
+  "help.side.debtPayment":
+    "A payment comes off the nuyen left, and goes to Chummer as an expense named \u201cIn Debt\u201d",
   "help.side.chummerAdjustWhy":
     "Rent paid, purchases at their own prices \u2014 added to what is left",
   "help.prio.methodLabel": "The build methods",

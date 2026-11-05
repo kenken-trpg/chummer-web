@@ -115,6 +115,10 @@ export const JA_SIDEBAR = {
   "side.showBreakdown": "成長／買い物の内訳",
   "side.karmaSpend": "カルマ消費",
   "side.nuyenSpend": "新円消費",
+  "side.debtLeft": "借金の残り",
+  "side.debtPayment": "返済",
+  "side.debtAmount": "返済額",
+  "side.payDebt": "返済する",
 
   // --- toolbar ----------------------------------------------------------
   // `title` and `aria-label` are UI copy like any other: a tooltip nobody can

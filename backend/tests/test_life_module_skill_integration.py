@@ -357,3 +357,22 @@ def test_new_growth_uses_updated_price_but_prior_growth_is_not_repriced():
     assert not two.derived["errors"]
     assert [r.price.per_rating for r in two.life_module_skill_advancements] == [2, 3]
     assert two.derived["career_advancement_karma"] == 16 + 27
+
+
+def test_in_debt_payments_survive_a_life_module_chum5_round_trip():
+    """The v2 state predates the payments: they come back from `<expenses>`,
+    and the adjustment it restores already counted them."""
+    from app.models import DebtPayment
+
+    in_debt = next(q["id"] for q in catalog()["qualities"] if q["name"] == "In Debt")
+    state = apply_patch(allocated(), CharacterPatch(quality_ids=[in_debt] * 2))
+    career = apply_patch(state, CharacterPatch(career=True))
+    assert not career.derived["errors"]
+    career = apply_patch(career, CharacterPatch(debt_payments=[DebtPayment(nuyen=7000)]))
+    assert career.derived["debt"] == {"principal": 10000, "paid": 7000, "remaining": 3000}
+    xml = state_to_chum5(career)
+    assert b"lifemoduleskillstate" in xml
+    back, _ = chum5_to_state(xml)
+    again = import_character(back)
+    assert again.derived["debt"] == career.derived["debt"]
+    assert again.derived["nuyen"] == career.derived["nuyen"]

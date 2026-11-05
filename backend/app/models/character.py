@@ -7,7 +7,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from ._common import _reject_oversized_collections, _reject_oversized_input, clean_extra_portraits, clean_portrait
-from .career import CareerBaseline, RewardEntry
+from .career import CareerBaseline, DebtPayment, RewardEntry
 from .gear import (
     ArmorInstall,
     ArmorModInstall,
@@ -160,6 +160,7 @@ class CharacterPatch(BaseModel):
     public_awareness: int | None = None
     reward_log: list[RewardEntry] | None = None
     expense_log: list[RewardEntry] | None = None
+    debt_payments: list[DebtPayment] | None = None
     tradition_id: str | None = None
     stream_id: str | None = None
     options: CharacterOptions | None = None
@@ -363,6 +364,9 @@ class CharacterState(BaseModel):
     #: the balance itself is already met by `karma_adjust` / `nuyen_adjust`,
     #: so these rows are shown and written back, never counted again
     expense_log: list[RewardEntry] = Field(default_factory=list)
+    #: payments towards In Debt (career mode): spent like a purchase, and
+    #: taken off the debt the quality's levels ran up
+    debt_payments: list[DebtPayment] = Field(default_factory=list)
     tradition_id: str | None = None
     stream_id: str | None = None
     options: CharacterOptions = Field(default_factory=CharacterOptions)

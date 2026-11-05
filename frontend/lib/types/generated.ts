@@ -640,6 +640,11 @@ export interface CareerBaseline {
   raise_drops?: Record<string, number[]> | null;
 }
 
+export interface DebtPayment {
+  id?: string;
+  nuyen?: number;
+}
+
 export interface RewardEntry {
   id?: string;
   label?: string;
@@ -801,6 +806,10 @@ export interface Character {
    *  so these rows are shown and written back, never counted again
    */
   expense_log?: RewardEntry[];
+  /** payments towards In Debt (career mode): spent like a purchase, and
+   *  taken off the debt the quality's levels ran up
+   */
+  debt_payments?: DebtPayment[];
   tradition_id?: string | null;
   stream_id?: string | null;
   options?: CharacterOptions;
