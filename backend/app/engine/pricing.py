@@ -43,7 +43,9 @@ def apply_ware_essence_multipliers(
     _work_out_essence(bio, bmult, 100)
     free_bio = max(0.0, float(effects.get("prototype_transhuman_ess") or 0))
     if free_bio > 0:
-        for item in _prototype_transhuman_pieces(bio, free_bio):
+        picked = _ticked_pieces(bio)
+        for item in picked if picked is not None else _prototype_transhuman_pieces(bio, free_bio):
+            item["prototype_ess"] = float(item.get("essence") or 0)
             item["essence"] = 0.0
             item["prototype_transhuman"] = True
     cyber_lost = round(sum(float(item.get("essence") or 0) for item in cyber), 4)
@@ -84,6 +86,35 @@ def _work_out_essence(items: list[dict[str, Any]], mult_pct: int, total_pct: int
             continue
         mine = own[key] if item.get("ess_self") else 0.0
         item["essence"] = round(mine + to_parent.get(key, 0.0), 4)
+
+
+def _ticked_pieces(bio: list[dict[str, Any]]) -> list[dict[str, Any]] | None:
+    """The bioware the player ticked for Prototype Transhuman, with what sits
+    in it (Chummer's `PrototypeTranshuman` setter ticks the children too);
+    None when nothing has been ticked or unticked yet.
+
+    Only a piece with no parent can be ticked (`CharacterCreate`'s
+    `blnCanBePT`), so a child's own mark is not read. Whether the ticked
+    pieces fit the allowance is the creation check's to say
+    (`Message_OverPrototypeLimit`), not this one's.
+    """
+    if all(item.get("prototype_pick") is None for item in bio):
+        return None
+    ids = {str(item.get("id")) for item in bio}
+    waived = {
+        str(item.get("id"))
+        for item in bio
+        if item.get("prototype_pick") and str(item.get("parent_id") or "") not in ids
+    }
+    grew = True
+    while grew:
+        grew = False
+        for item in bio:
+            key = str(item.get("id"))
+            if key not in waived and str(item.get("parent_id") or "") in waived:
+                waived.add(key)
+                grew = True
+    return [item for item in bio if str(item.get("id")) in waived]
 
 
 def _prototype_transhuman_pieces(bio: list[dict[str, Any]], allowance: float) -> list[dict[str, Any]]:

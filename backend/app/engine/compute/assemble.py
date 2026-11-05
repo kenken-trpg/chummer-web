@@ -288,6 +288,7 @@ def _combat_and_body(ctx: Ctx) -> _CombatPart:
         },
         "essence_penalty": round(float(ctx.effects.get("essence_penalty") or 0), 4),
         "prototype_transhuman_ess": float(ctx.effects.get("prototype_transhuman_ess") or 0),
+        "prototype_transhuman_used": ctx.prototype_transhuman_used,
     }
 
 

@@ -255,6 +255,7 @@ class _CombatPart(TypedDict):
     essence_lost_bio: float
     essence_penalty: float
     prototype_transhuman_ess: float
+    prototype_transhuman_used: float
     armor: int
     special_armor: dict[str, Any]
     worn_armor: str

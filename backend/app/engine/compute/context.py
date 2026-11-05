@@ -96,6 +96,8 @@ class Ctx:
     granted_ware: list[GrantWareRow] = field(default_factory=list)
     cyber_installed: list[dict[str, Any]] = field(default_factory=list)
     bio_installed: list[dict[str, Any]] = field(default_factory=list)
+    #: the essence the bioware Prototype Transhuman waives adds up to
+    prototype_transhuman_used: float = 0.0
     #: Adapsin is on, so cyberware reads the Adapsin column of the grade table.
     adapsin: bool = False
     installed: list[dict[str, Any]] = field(default_factory=list)

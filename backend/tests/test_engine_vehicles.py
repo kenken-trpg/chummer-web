@@ -778,6 +778,60 @@ def test_prototype_transhuman_waives_whole_pieces_the_most_it_can() -> None:
     assert out.derived["essence_lost_bio"] == 0.3
 
 
+TONER = "69ab0255-a76b-4190-a8be-0473fed231ef"
+ARTICULATION = "dfada66f-73f7-4648-aff4-6b6bce25f84c"
+
+
+def _proto(cid: str, bioware: list[CyberwareInstall], **kwargs: object) -> dict:
+    return compute(
+        _mundane(
+            cid,
+            quality_ids=[PROTOTYPE_TRANSHUMAN],
+            quality_extras={PROTOTYPE_TRANSHUMAN: "Astral Beacon"},
+            bioware=bioware,
+            **kwargs,
+        )
+    ).derived
+
+
+def test_prototype_transhuman_waives_the_pieces_the_player_ticked() -> None:
+    """Chummer waives what the player ticked (`<prototypetranshuman>`), not
+    the set that waives the most: Enhanced Articulation alone here, though
+    Muscle Toner 4 would have waived more."""
+    out = _proto(
+        "proto-ticked",
+        [
+            CyberwareInstall(id="art", ware_id=ARTICULATION, prototype_transhuman=True),
+            CyberwareInstall(id="t4", ware_id=TONER, rating=4, prototype_transhuman=False),
+        ],
+    )
+    rows = {row["id"]: (row["essence"], bool(row.get("prototype_transhuman"))) for row in out["bioware"]}
+    assert rows == {"art": (0.0, True), "t4": (0.8, False)}
+    assert out["prototype_transhuman_used"] == 0.3
+    assert not has(out["errors"], "engine.ware.prototypeOver")
+
+
+def test_prototype_transhuman_ticked_past_its_allowance_is_an_error_at_creation() -> None:
+    """`Message_OverPrototypeLimit`: the ticked pieces still cost nothing,
+    and the build is not valid until they fit."""
+    pieces = [
+        CyberwareInstall(id="art", ware_id=ARTICULATION, prototype_transhuman=True),
+        CyberwareInstall(id="t4", ware_id=TONER, rating=4, prototype_transhuman=True),
+    ]
+    out = _proto("proto-over", pieces)
+    assert out["essence_lost_bio"] == 0.0
+    assert out["prototype_transhuman_used"] == 1.1
+    assert has(out["errors"], "engine.ware.prototypeOver")
+    career = _proto("proto-over-career", pieces, career=True)
+    assert not has(career["errors"], "engine.ware.prototypeOver")
+
+
+def test_prototype_transhuman_untouched_still_picks_the_most() -> None:
+    out = _proto("proto-auto", [CyberwareInstall(id="t4", ware_id=TONER, rating=4)])
+    assert out["bioware"][0]["prototype_transhuman"] is True
+    assert out["prototype_transhuman_used"] == 0.8
+
+
 def test_prototype_transhuman_requires_forced_quality_choice() -> None:
     out = compute(_mundane("proto-empty", quality_ids=[PROTOTYPE_TRANSHUMAN]))
     assert has(out.derived["errors"], "engine.qualities.pickExtra")

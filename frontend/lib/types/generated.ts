@@ -82,6 +82,12 @@ export interface WareInstall {
    *  -100 to 100; negative costs more)
    */
   ess_discount?: number;
+  /** Prototype Transhuman (RF p.159): whether this bioware is one the
+   *  allowance waives, as the player ticked it (Chummer's
+   *  `<prototypetranshuman>`). None on every piece: nothing ticked yet, and
+   *  the engine picks the set that waives the most.
+   */
+  prototype_transhuman?: boolean | null;
 }
 
 export interface AdeptPowerInstall {

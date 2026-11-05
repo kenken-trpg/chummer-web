@@ -6,6 +6,7 @@ import xml.etree.ElementTree as ET
 
 from app.characters import compute_state, import_character
 from app.chummer_export import state_to_chum5
+from app.chummer_export.check import roundtrip_differences
 from app.chummer_import import chum5_to_state
 from app.data_loader import catalog, catalog_list
 from app.engine.constants import (
@@ -1318,7 +1319,7 @@ def test_prototype_transhuman_marks_the_bioware_its_allowance_covers() -> None:
     ]
     root = ET.fromstring(state_to_chum5(state))
     marks = {w.findtext("guid"): w.findtext("prototypetranshuman") for w in root.findall("./cyberwares/cyberware")}
-    assert marks == {"ea": "True", "sb": "True", "mt": None}
+    assert marks == {"ea": "True", "sb": "True", "mt": "False"}
     assert root.findtext("prototypetranshuman") == "1"
 
 
@@ -1384,6 +1385,50 @@ def test_what_gear_armor_and_a_quality_bring_is_a_weapon_of_its_own() -> None:
     assert weapons["g1"].findtext("damage") == "16P (-2/m)"
     back = chum5_to_state(xml)[0]
     assert back["weapons"] == []
+
+
+def test_prototype_transhumans_ticks_come_back_as_the_players_choice() -> None:
+    """Read back, the unticked stay unticked: the engine does not pick again."""
+    state, _ = _with_quality("Prototype Transhuman", {})
+    state.bioware = [
+        CyberwareInstall(id="ea", ware_id="dfada66f-73f7-4648-aff4-6b6bce25f84c", prototype_transhuman=False),
+        CyberwareInstall(id="mt", ware_id="69ab0255-a76b-4190-a8be-0473fed231ef", rating=4, prototype_transhuman=True),
+    ]
+    back = chum5_to_state(state_to_chum5(state))[0]
+    assert {row["ware_id"][:4]: row.get("prototype_transhuman") for row in back["bioware"]} == {
+        "dfad": False,
+        "69ab": True,
+    }
+
+
+def test_ticks_on_a_character_without_prototype_transhuman_are_not_read() -> None:
+    """`Cyberware.Save` writes the tick on every piece, False on everyone
+    without the quality: kept, it came back None from this app's own file and
+    the export check counted every piece of ware as lost (#913's e2e)."""
+    state = CharacterState(
+        id="w",
+        name="Ware",
+        priorities=Priorities(),
+        metatype="Human",
+        attributes={},
+        cyberware=[CyberwareInstall(id="dj", ware_id="47c48542-48c3-417e-91f0-b5a456183f05")],
+        bioware=[CyberwareInstall(id="mt", ware_id="69ab0255-a76b-4190-a8be-0473fed231ef")],
+    )
+    root = ET.fromstring(state_to_chum5(state))
+    for el in root.iter("cyberware"):
+        ET.SubElement(el, "prototypetranshuman").text = "False"
+    back = chum5_to_state(ET.tostring(root))[0]
+    assert all("prototype_transhuman" not in row for row in back["cyberware"] + back["bioware"])
+
+
+def test_an_untouched_prototype_transhuman_pick_survives_the_export_check() -> None:
+    """The file carries the engine's pick as ticks; read back, that is the
+    same character, not changed bioware."""
+    state, _ = _with_quality("Prototype Transhuman", {})
+    state.bioware = [CyberwareInstall(id="mt", ware_id="69ab0255-a76b-4190-a8be-0473fed231ef", rating=4)]
+    keys = {n["key"] for n in roundtrip_differences(state)}
+    assert "engine.export.lost" not in keys
+    assert "engine.export.gained" not in keys
 
 
 def test_a_prototype_transhuman_file_from_before_keeps_its_pick() -> None:

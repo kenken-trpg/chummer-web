@@ -55,6 +55,11 @@ def essence(ctx: Ctx) -> None:
     ctx.ess_lost = round(ctx.ess_lost_cyber + ctx.ess_lost_bio, 4)
     if ctx.effects.get("disable_bioware") and ctx.bio_installed:
         ctx.err("engine.ware.bioDisabled")
+    allowance = float(ctx.effects.get("prototype_transhuman_ess") or 0)
+    ctx.prototype_transhuman_used = round(sum(float(item.get("prototype_ess") or 0) for item in ctx.bio_installed), 4)
+    if allowance > 0 and not ctx.career and ctx.prototype_transhuman_used > allowance + 1e-9:
+        # Chummer's creation check (`Message_OverPrototypeLimit`)
+        ctx.err("engine.ware.prototypeOver", used=ctx.prototype_transhuman_used, limit=allowance)
     ess_penalty = float(ctx.effects.get("essence_penalty") or 0)
     ess_penalty_mag_exempt = float(ctx.effects.get("essence_penalty_mag_exempt") or 0)
     rules = current_rules()

@@ -514,6 +514,8 @@ export const EN_HELP = {
     "Each costs 1 LP and 10% of the base cost, plus its own price where it has one (RF p.219)",
   "help.prio.nuyenRate": "1 karma = {rate}\u00a5",
   "help.prio.nuyenOneWay": "Only while creating, and nuyen cannot be turned back into karma",
+  "help.ware.prototypeTranshuman":
+    "A ticked piece of bioware, and whatever sits in it, costs no essence, up to the quality's allowance. With nothing ticked, the set that waives the most is picked for you",
   "help.ware.essDiscount": "An essence discount the GM allowed; negative costs more",
   "help.ware.essDiscountWhen": "Only offered when the settings file allows essence discounts",
   "help.side.chummerAdjust":

@@ -184,6 +184,7 @@ def resolve_ware(
                 "plugin": plugin,
                 "essence": ess,
                 "ess_discount": int(inst.ess_discount or 0),
+                "prototype_pick": getattr(inst, "prototype_transhuman", None),
                 "nuyen": cost,
                 "cost": picked,
                 "cost_range": ware.get("cost_range"),

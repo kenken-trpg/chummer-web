@@ -213,3 +213,65 @@ it("explains the summary line's essence and ¥, which are not bioware's alone", 
   expect(screen.getByText(/Essence は残っている合計/)).toBeDefined();
   expect(screen.getByText(/装備や資質も含めた支出の合計/)).toBeDefined();
 });
+
+describe("<BioTab> Prototype Transhuman", () => {
+  beforeEach(() => localStorage.clear());
+
+  const row = (id: string, ware_id: string, name: string, waived: boolean) => ({
+    id,
+    ware_id,
+    name,
+    category: "Bioware",
+    grade: "Standard",
+    rating: 1,
+    essence: waived ? 0 : 0.2,
+    nuyen: 31000,
+    source: "SR5",
+    ...(waived ? { prototype_transhuman: true } : {}),
+  });
+
+  it("the first tick keeps the engine's pick as the player's own", () => {
+    const patch = vi.fn();
+    renderTab({
+      patch,
+      character: {
+        bioware: [
+          { id: "b1", ware_id: "musc", rating: 1, grade: "Standard" },
+          { id: "b2", ware_id: "toner", rating: 1, grade: "Standard" },
+        ],
+        derived: {
+          prototype_transhuman_ess: 1,
+          prototype_transhuman_used: 0.2,
+          bioware: [
+            row("b1", "musc", "Muscle Augmentation", true),
+            row("b2", "toner", "Muscle Toner", false),
+          ],
+        },
+      } as never,
+    });
+    expect(screen.getByText(/無料にしたバイオウェア 0.2 \/ 上限 1/)).toBeDefined();
+    const [augmentation, toner] = screen.getAllByRole("checkbox", { name: "Prototype Transhuman" });
+    expect((augmentation as HTMLInputElement).checked).toBe(true);
+    fireEvent.click(toner);
+    expect(patch).toHaveBeenCalledWith({
+      bioware: [
+        expect.objectContaining({ id: "b1", prototype_transhuman: true }),
+        expect.objectContaining({ id: "b2", prototype_transhuman: true }),
+      ],
+    });
+  });
+
+  it("offers no tick in career", () => {
+    renderTab({
+      character: {
+        career: true,
+        bioware: [{ id: "b1", ware_id: "musc", rating: 1, grade: "Standard" }],
+        derived: {
+          prototype_transhuman_ess: 1,
+          bioware: [row("b1", "musc", "Muscle Augmentation", true)],
+        },
+      } as never,
+    });
+    expect(screen.queryByRole("checkbox", { name: "Prototype Transhuman" })).toBeNull();
+  });
+});

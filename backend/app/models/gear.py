@@ -31,6 +31,11 @@ class CyberwareInstall(BaseModel):
     #: allows under `<allowcyberwareessdiscounts>` (Chummer's `ESSDiscount`,
     #: -100 to 100; negative costs more)
     ess_discount: int = Field(default=0, ge=-100, le=100)
+    #: Prototype Transhuman (RF p.159): whether this bioware is one the
+    #: allowance waives, as the player ticked it (Chummer's
+    #: `<prototypetranshuman>`). None on every piece: nothing ticked yet, and
+    #: the engine picks the set that waives the most.
+    prototype_transhuman: bool | None = None
 
 
 class ArmorInstall(BaseModel):

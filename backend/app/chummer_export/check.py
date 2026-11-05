@@ -30,6 +30,12 @@ def roundtrip_differences(state: CharacterState) -> list[Notice]:
     as notices. Empty when it comes back the same."""
     first = import_character(state.model_dump())
     again = import_character(chum5_to_state(state_to_chum5(first))[0])
+    if all(row.prototype_transhuman is None for row in first.bioware):
+        # Nothing ticked: the file carries the engine's pick as ticks (Chummer
+        # charges full essence for an unticked piece), and reads back as the
+        # same pieces waived — the same character, not a changed one
+        for row in again.bioware:
+            row.prototype_transhuman = None
     return _app_differences(first, again) + chummer_settings_losses(again)
 
 
