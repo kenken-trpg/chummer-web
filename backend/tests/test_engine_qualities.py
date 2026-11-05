@@ -571,6 +571,46 @@ def test_in_debt_adds_nuyen_and_lowers_cap() -> None:
     assert out.derived["nuyen_amt"] == 5000
     assert out.derived["karma_chargen"]["nuyen_karma_max"] == 9
     assert out.derived["nuyen_pool"] == 55_000
+    assert out.derived["debt"] == {"principal": 5000, "paid": 0, "remaining": 5000}
+
+
+def test_in_debt_payments_are_spent_and_taken_off_the_debt() -> None:
+    from app.models import DebtPayment
+
+    state = _mundane("in-debt-paid", quality_ids=[IN_DEBT] * 3)
+    owing = int(compute(state).derived["nuyen"])
+    state.career = True
+    state.debt_payments = [DebtPayment(nuyen=4000), DebtPayment(nuyen=-100)]
+    paid = compute(state)
+    assert paid.derived["debt"] == {"principal": 15000, "paid": 4000, "remaining": 11000}
+    assert paid.derived["nuyen"] == owing - 4000
+    # paid past the loan: spent all the same, and nothing left owing
+    state.debt_payments = [DebtPayment(nuyen=20000)]
+    assert compute(state).derived["debt"]["remaining"] == 0
+    # outside career mode a payment is not counted
+    state.career = False
+    assert compute(state).derived["nuyen"] == owing
+    # no In Debt, no debt
+    assert compute(_mundane("no-debt")).derived["debt"]["principal"] == 0
+
+
+def test_in_debt_payments_round_trip_through_chummer() -> None:
+    from app.characters import apply_patch
+    from app.chummer_export import state_to_chum5
+    from app.chummer_import import chum5_to_state
+    from app.models import CharacterPatch, CharacterState, DebtPayment
+
+    state = apply_patch(compute(_mundane("in-debt-trip", quality_ids=[IN_DEBT] * 3)), CharacterPatch(career=True))
+    state = apply_patch(state, CharacterPatch(debt_payments=[DebtPayment(nuyen=4000)]))
+    xml = state_to_chum5(state).decode()
+    assert "<reason>In Debt</reason>" in xml and "<amount>-4000</amount>" in xml
+    imported, _ = chum5_to_state(xml)
+    back = compute(CharacterState.model_validate(imported))
+    # counted again rather than kept as history, so the balance needs no adjustment
+    assert back.derived["debt"] == state.derived["debt"]
+    assert back.derived["nuyen"] == state.derived["nuyen"]
+    assert imported["nuyen_adjust"] == 0
+    assert not imported.get("expense_log")
 
 
 def test_trust_fund_covers_medium_lifestyle() -> None:

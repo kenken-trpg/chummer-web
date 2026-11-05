@@ -17,6 +17,7 @@ from ..data_loader import catalog
 from ..engine import find_metatype
 from ..engine.priority import heritage_cost, priority_value
 from ..models import CharacterState
+from ..models.career import DEBT_PAYMENT_REASON
 from ..rules import current_rules
 from ._common import _Ctx, _Names, _sub
 
@@ -145,6 +146,16 @@ def _export_reward_log(root: ET.Element, state: CharacterState) -> None:
             _sub(el, "type", kind)
             _sub(el, "refund", "False")
             _sub(el, "rewardid", row.id)
+    for payment in state.debt_payments:
+        if payment.nuyen <= 0:
+            continue
+        el = _sub(expenses, "expense")
+        _sub(el, "guid", payment.id)
+        _sub(el, "date", stamp)
+        _sub(el, "amount", -payment.nuyen)
+        _sub(el, "reason", DEBT_PAYMENT_REASON)
+        _sub(el, "type", "Nuyen")
+        _sub(el, "refund", "False")
 
 
 #: Chummer writes a priority as "letter,sum-to-ten value" (`E,0` … `A,4`) —

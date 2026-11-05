@@ -353,6 +353,11 @@ def _economy(ctx: Ctx) -> _EconomyPart:
         "career_advancement_karma": int(ctx.career_adv_karma),
         "career_advancement_lines": ctx.career_adv_lines,
         "nuyen_amt": int(ctx.effects.get("nuyen_amt") or 0),
+        "debt": {
+            "principal": ctx.debt_principal,
+            "paid": ctx.debt_paid,
+            "remaining": max(0, ctx.debt_principal - ctx.debt_paid),
+        },
         "nuyen_karma_max": int(ctx.nuyen_karma_max),
         "trustfund": int(ctx.effects.get("trustfund") or 0),
         "trustfund_label": _trustfund_notice(int(ctx.effects.get("trustfund") or 0)),
@@ -382,6 +387,7 @@ def _economy(ctx: Ctx) -> _EconomyPart:
             {"id": row.id, "label": row.label, "karma": int(row.karma or 0), "nuyen": int(row.nuyen or 0)}
             for row in (ctx.state.expense_log or [])
         ],
+        "debt_payments": [{"id": row.id, "nuyen": int(row.nuyen or 0)} for row in (ctx.state.debt_payments or [])],
         "karma_spend_breakdown": ctx.karma_spend_lines,
         "nuyen_spend_breakdown": ctx.nuyen_spend_lines,
     }

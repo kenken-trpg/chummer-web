@@ -46,3 +46,21 @@ class RewardEntry(BaseModel):
     label: str = ""
     karma: int = 0
     nuyen: int = 0
+
+
+#: The Chummer `<expense>` `<reason>` a payment towards In Debt is written
+#: under, and known by when read back — also from a save Chummer has written
+#: over, which keeps the reason and drops anything of this app's own.
+DEBT_PAYMENT_REASON = "In Debt"
+
+
+class DebtPayment(BaseModel):
+    """A payment towards In Debt (RF p.156), made in career mode.
+
+    Kept apart from the reward ledger, which only ever earns, and from
+    `expense_log`, which is history the balance already holds: this one is
+    spent, and what is left of the debt is worked out from it.
+    """
+
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    nuyen: int = 0

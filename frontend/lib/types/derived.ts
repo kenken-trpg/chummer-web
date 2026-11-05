@@ -84,6 +84,9 @@ export interface Derived {
   notoriety_quality?: number;
   notoriety_bonus?: number;
   nuyen_amt?: number;
+  /** In Debt (RF p.156): what its levels lent, paid back in career, and left. */
+  debt?: { principal: number; paid: number; remaining: number };
+  debt_payments?: { id: string; nuyen: number }[];
   nuyen_karma_max?: number;
   trustfund?: number;
   trustfund_label?: Notice | null;

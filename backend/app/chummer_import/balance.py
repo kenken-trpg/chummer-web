@@ -11,6 +11,7 @@ from typing import Any
 from ..data_loader import CatalogDict
 from ..data_loader._xml import _int, _text
 from ..models._common import clamp_input_ints
+from ..models.career import DEBT_PAYMENT_REASON
 from ..notices import Notice
 from ._common import _is_uuid
 
@@ -26,7 +27,7 @@ def _spend_log_from_expenses(root: ET.Element) -> list[dict[str, Any]]:
     for el in root.findall("./expenses/expense"):
         amount = _int(el.find("amount"))
         kind = _text(el.find("type")).lower()
-        if amount >= 0 or kind not in ("karma", "nuyen"):
+        if amount >= 0 or kind not in ("karma", "nuyen") or _is_debt_payment(el):
             continue
         out.append(
             {
@@ -37,6 +38,31 @@ def _spend_log_from_expenses(root: ET.Element) -> list[dict[str, Any]]:
             }
         )
     return out
+
+
+def _is_debt_payment(el: ET.Element) -> bool:
+    return (
+        _text(el.find("type")).lower() == "nuyen"
+        and _int(el.find("amount")) < 0
+        and _text(el.find("reason")) == DEBT_PAYMENT_REASON
+    )
+
+
+def _debt_payments_from_expenses(root: ET.Element) -> list[dict[str, Any]]:
+    """The payments towards In Debt: spent nuyen, counted again on import.
+
+    Unlike the rest of what a save spent, nothing else in the character
+    prices these, so they are counted rather than kept as history — and
+    the debt left comes back as saved.
+    """
+    return [
+        {
+            "id": key if _is_uuid(key := _text(el.find("guid"))) else str(uuid.uuid4()),
+            "nuyen": -_int(el.find("amount")),
+        }
+        for el in root.findall("./expenses/expense")
+        if _is_debt_payment(el)
+    ]
 
 
 def _reward_log_from_expenses(root: ET.Element) -> list[dict[str, Any]] | None:
@@ -81,6 +107,11 @@ def _import_balance(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn
     """
     if not st.get("career"):
         return
+    # read before the v2 return below: its fields predate the payments, and
+    # the adjustment it restores was worked out with them counted
+    payments = _debt_payments_from_expenses(root)
+    if payments:
+        st["debt_payments"] = payments
     if root.find("lifemoduleskillstate") is not None:
         # v2 restores the exact baseline, reward ledger and adjustments. The
         # standard projection was verified by the life-module reader already.

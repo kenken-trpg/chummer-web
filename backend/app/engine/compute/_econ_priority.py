@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any, cast
 
 from ...data_loader import PHYSICAL_ATTRS, SPECIAL_ATTRS
+from ...improvements import collect_effects
 from ...rules import current_rules
 from ..priority import heritage_cost, priority_value
 from ._career import (
@@ -97,7 +98,29 @@ def _priority_points(ctx: Ctx) -> None:
         ]
         ctx.nuyen_markup = restricted_markup(ctx.state.career_baseline, rows)
         ctx.nuyen_spent += ctx.nuyen_markup
+    _debt(ctx)
     ctx.nuyen = ctx.nuyen_pool - ctx.nuyen_spent
+
+
+#: In Debt (RF p.156): each level lends its `<nuyenamt>` at creation.
+IN_DEBT_ID = "2b4dd1b1-b806-44e3-9067-65dc39c82d13"
+
+
+def _debt(ctx: Ctx) -> None:
+    """What In Debt lent, and what the career payments have paid back.
+
+    The loan is the quality's own `<nuyenamt>`, level by level — bought or
+    granted by a life module alike, a switched-off one not at all. Payments
+    count only in career mode, and are spent like any purchase; the debt
+    left never goes below nothing, though nothing stops a payment past it.
+    """
+    ctx.debt_principal = sum(
+        int(collect_effects([(str(q["name"]), q.get("bonus") or [])])["nuyen_amt"] or 0)
+        for q in ctx.qualities
+        if q["id"] == IN_DEBT_ID and q["id"] not in ctx.disabled_qualities
+    )
+    ctx.debt_paid = sum(max(0, int(row.nuyen or 0)) for row in ctx.state.debt_payments or []) if ctx.career else 0
+    ctx.nuyen_spent += ctx.debt_paid
 
 
 def _attribute_karma_levels(ctx: Ctx, floors: dict[str, int]) -> dict[str, int]:

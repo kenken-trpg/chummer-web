@@ -10,6 +10,7 @@ import { SidebarMagicStats } from "@/components/character/sidebar/SidebarMagicSt
 import { SidebarFlags } from "@/components/character/sidebar/SidebarFlags";
 import { SidebarEconomy } from "@/components/character/sidebar/SidebarEconomy";
 import { SidebarCareerRewards } from "@/components/character/sidebar/SidebarCareerRewards";
+import { SidebarDebt } from "@/components/character/sidebar/SidebarDebt";
 import { SidebarBudgets } from "@/components/character/sidebar/SidebarBudgets";
 import { SidebarAwakened } from "@/components/character/sidebar/SidebarAwakened";
 import { SidebarAttributes } from "@/components/character/sidebar/SidebarAttributes";
@@ -42,6 +43,7 @@ export function CharacterSidebar({
       <SidebarFlags {...blockProps} />
       <SidebarEconomy {...blockProps} />
       <SidebarCareerRewards {...blockProps} />
+      <SidebarDebt {...blockProps} />
       <SidebarBudgets {...blockProps} />
       <SidebarAwakened {...blockProps} />
       <SidebarAttributes {...blockProps} />

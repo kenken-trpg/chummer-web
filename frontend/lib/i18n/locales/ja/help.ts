@@ -444,6 +444,9 @@ export const JA_HELP = {
   "help.ware.essDiscount": "GM が認めたエッセンスの割引。マイナスにすると割増になる",
   "help.ware.essDiscountWhen": "設定ファイルが ESS 割引を許しているときだけ出る",
   "help.side.chummerAdjust": "Chummer のセーブの残高と、この app が構成と報酬から出す残りとの差",
+  "help.side.debt": "借金（In Debt、RF p.156）の段階ぶん借りた新円から、返済した分を引いた残り",
+  "help.side.debtPayment":
+    "返済は新円の残りから引く。Chummer には「In Debt」という名目の支出として書き出す",
   "help.side.chummerAdjustWhy": "払った家賃や、別の価格での購入などの分。残りに足している",
   "help.prio.methodLabel": "作成法の違い",
   "help.prio.methodPriority": "優先度：A〜E を 5 項目に 1 つずつ割り当てる標準の作成法（SR5 p.65）",

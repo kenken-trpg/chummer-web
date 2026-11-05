@@ -187,6 +187,9 @@ class Ctx:
     nuyen_spent: int = 0
     #: Restricted / Forbidden markup on what career bought (in `nuyen_spent`).
     nuyen_markup: int = 0
+    #: In Debt: what its levels lent, and what career payments paid back
+    debt_principal: int = 0
+    debt_paid: int = 0
     nuyen: int = 0
 
     # --- skills ---------------------------------------------------------

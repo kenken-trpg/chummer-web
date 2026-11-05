@@ -115,6 +115,10 @@ export const EN_SIDEBAR = {
   "side.hideBreakdown": "Hide breakdown",
   "side.showBreakdown": "Advancement / purchase breakdown",
   "side.karmaSpend": "Karma spent",
+  "side.debtLeft": "Debt left",
+  "side.debtPayment": "Payment",
+  "side.debtAmount": "Payment amount",
+  "side.payDebt": "Pay back",
   "side.nuyenSpend": "Nuyen spent",
 
   // --- toolbar ----------------------------------------------------------

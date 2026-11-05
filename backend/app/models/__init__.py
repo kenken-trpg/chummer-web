@@ -5,7 +5,7 @@ emits them into `frontend/lib/types/generated.ts`.
 """
 
 from ._common import MAX_PORTRAITS, clean_extra_portraits, clean_portrait
-from .career import CareerBaseline, RewardEntry
+from .career import CareerBaseline, DebtPayment, RewardEntry
 from .character import (
     CharacterCreate,
     CharacterPatch,
@@ -96,6 +96,7 @@ __all__ = [
     "CharacterOptions",
     "SettingsState",
     "CareerBaseline",
+    "DebtPayment",
     "RewardEntry",
     "CharacterPatch",
     "CustomDataUpload",
