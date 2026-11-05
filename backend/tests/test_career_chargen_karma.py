@@ -195,6 +195,23 @@ def test_a_martial_art_or_technique_dropped_in_career_gives_no_karma_back() -> N
     assert _left(st) == before
 
 
+def test_dropping_the_free_technique_does_not_make_the_next_one_look_free() -> None:
+    """The total keeps the 5 Sweep cost at chargen; the tab shows it too."""
+    st = _career(
+        _mundane(
+            "ck-martial-show",
+            martial_arts=[MartialArtInstall(art_id=_karate_id(), techniques=["Counterstrike", "Sweep"])],
+        )
+    )
+    before = _left(st)
+    st.martial_arts[0].techniques = ["Sweep"]
+    out = compute(st).derived
+    assert out["karma"]["remaining"] == before
+    art = out["martial_arts"][0]
+    assert art["techniques"] == [{**art["techniques"][0], "name": "Sweep", "karma": 5, "free": False}]
+    assert art["karma"] == 12
+
+
 def test_a_technique_learned_in_career_costs_its_karma() -> None:
     st = _career(
         _mundane("ck-martial-new", martial_arts=[MartialArtInstall(art_id=_karate_id(), techniques=["Counterstrike"])])

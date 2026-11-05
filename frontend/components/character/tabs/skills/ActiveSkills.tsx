@@ -10,7 +10,7 @@ import { defaultBit, skillsoftBit, specBit } from "@/lib/character/bits";
 import { skillDefault } from "@/lib/character/skill-default";
 import { specializationBonus } from "@/lib/character/skill-specialization";
 import { skillDice } from "@/lib/character/format";
-import { careerFloor } from "@/lib/character/career-floor";
+import { careerFloor, careerSpecLocked } from "@/lib/character/career-floor";
 import { KarmaLevels, SpecKarma, skillLimits, specEditor } from "./shared";
 
 export function ActiveSkills(props: TabPanelProps) {
@@ -181,7 +181,7 @@ export function ActiveSkills(props: TabPanelProps) {
                   <SpecPicker
                     options={[...(s.specs || []), ...(d.skill_spec_options?.[s.name] || [])]}
                     value={specValue}
-                    disabled={!hasSkill || Boolean(expertise)}
+                    disabled={!hasSkill || Boolean(expertise) || careerSpecLocked(ch, s.name)}
                     tr={(spec) => specTr(tr, s.name, spec)}
                     onDraft={(next) => spec.draft(s.name, next)}
                     onCommit={(next) => spec.commit(s.name, next)}

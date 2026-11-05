@@ -242,9 +242,9 @@ Chummerのホームノード（`Character.HomeNode`）は、ギア・ヴィー�
   （`career_raise_karma`の`level_drops`）。EDGの上限は上げた後のDEPになる。
 - キャリアで足すプログラムは作成時と同じ値段（5／8）。前提のプログラムは確かめない（Chummerも追加するときだけ）。
 - `.chum5`の往復で、キャリアの残りカルマとDEPが変わらない。
-- **Chummerとの違い**：キャリアで作成時からのプログラムを消すと、このアプリではカルマが戻る。Chummerは消すだけで戻さない
-  （`cmdDeleteAIProgram_Click`は`RemoveSelectedObject`だけ）。資質は戻さないようにしてある（`_career_qualities.py`）が、
-  プログラムにはその仕組みが無い。
+- キャリアで作成時からのプログラムを消しても、カルマは戻らない。Chummerも消すだけで戻さない
+  （`cmdDeleteAIProgram_Click`は`RemoveSelectedObject`だけ）。キャリアの最初の計算で各プログラムのカルマを記録し
+  （`compute/_career_items.py`の`kept_karma`）、以後はその値を数え続ける（#910）。
 - 検証：`backend/tests/test_ai_chargen.py`の「career」の節。
 
 ## 表記
@@ -261,5 +261,3 @@ Home Node、Core Damage Track（Core CM）、Depth、Program Limit、Persona Fir
    日本語の本（コア・ラン＆ガン・コデックス）にはA.I.の章が無いので、英語版のData Trailsが要る。
 2. **実セーブとの照合**。Chummer.TestsにA.I.のPCが無い。Chummerで作ったセーブが手に入れば
    `make reconcile`と同じ形で確かめる。
-3. **キャリアで消したプログラムのカルマ**。上の「Chummerとの違い」。呪文・格闘技・イニシエーションなども同じだった。
-   まとめて[開発 TODO](TODO.md)の「キャリアで消した品目・下げた値のカルマ」で扱う。

@@ -9,7 +9,7 @@ import { skillsoftBit, specBit } from "@/lib/character/bits";
 import { DEFAULT_PENALTY } from "@/lib/character/skill-default";
 import { skillDice } from "@/lib/character/format";
 import { KarmaLevels, SpecKarma, knowledgeEditor, skillLimits, specEditor } from "./shared";
-import { careerFloor } from "@/lib/character/career-floor";
+import { careerFloor, careerSpecLocked } from "@/lib/character/career-floor";
 
 /** The knowledge skills the character has, with the notes that apply to all. */
 export function KnowledgeSkills(props: TabPanelProps) {
@@ -159,6 +159,7 @@ export function KnowledgeSkills(props: TabPanelProps) {
               <span className="spec-cell">
                 <SpecPicker
                   options={knowSpec?.specs || []}
+                  disabled={careerSpecLocked(ch, row.name)}
                   value={specValue}
                   tr={(spec) => specTr(tr, row.name, spec)}
                   onDraft={(next) => spec.draft(row.name, next)}
