@@ -130,6 +130,7 @@ export const JA_HELP = {
   "help.weapon.ammo":
     "装弾数と装填方式（(c) クリップ／(m) 弾倉／(b) 折り式／(d) ドラム／(ml) 手詰め）",
   "help.weapon.reach": "Reach（間合い）：近接戦で相手より長いと、その差がテストのボーナスになる",
+  "help.weapon.formula": "{name} の{stat}は、データの式 {formula} を計算した値",
   "help.armor.statsLabel": "装甲値",
   "help.armor.value": "装甲値：ダメージ抵抗のダイスに足す値（SR5 p.169）",
   "help.armor.stack":
@@ -247,6 +248,8 @@ export const JA_HELP = {
   "help.matrix.statsLabel": "マトリックス値",
   "help.matrix.deviceRating":
     "DR（機器レーティング）：機器の素の性能。持ち主が操作していないときのテストに使う",
+  "help.matrix.cm":
+    "CM（マトリックス・コンディション・モニター）：8 ＋ DR ÷ 2（切り上げ）マス。埋まると機器が壊れる（SR5 p.229）",
   "help.matrixmod.statsLabel": "電子改造の値",
   "help.matrixmod.what":
     "電子改造（DT p.66）：改造自体の追加費用はないが、部品・工具は別途必要。材料を配分し、成功した施工を登録すると効果が有効になる",

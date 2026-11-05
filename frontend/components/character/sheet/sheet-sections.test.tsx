@@ -390,7 +390,7 @@ describe("<WareSection> on the compact sheet", () => {
 });
 
 describe("<CombatSection> a limit-based Accuracy", () => {
-  it("shows the number and keeps the formula on hover", () => {
+  it("shows the number; the formula is on hover and under the weapons' ?", () => {
     const withBlade = buildSheetData({
       character: {
         ...RICH_CHARACTER,
@@ -417,6 +417,65 @@ describe("<CombatSection> a limit-based Accuracy", () => {
     const cell = container.querySelector('td[title="Physical"]');
     expect(cell?.textContent).toBe("6");
     expect(container.querySelector('td[title="({STR}+1)P"]')?.textContent).toBe("4P");
+    // a title= is mouse-only, so the heading's "?" says it too — and no "?"
+    // in the cells, which would squeeze the name column on a phone
+    expect(container.querySelector("td .help-tip")).toBeNull();
+    const button = container.querySelector('button[aria-label="武器 の説明"]')!;
+    const tip = container.querySelector(`[id="${button.getAttribute("aria-describedby")}"]`)!;
+    expect(tip.textContent).toContain("Hand Blade の精度は、データの式 Physical を計算した値");
+    expect(tip.textContent).toContain("Hand Blade のDVは、データの式 ({STR}+1)P を計算した値");
+  });
+});
+
+describe("the sheet's tables and blocks explain themselves like the tabs do", () => {
+  /** Accessible names of the "?" buttons, and the text each one opens. */
+  const tips = (container: HTMLElement) =>
+    Object.fromEntries(
+      [...container.querySelectorAll("button.help-tip-button")].map((button) => [
+        button.getAttribute("aria-label"),
+        container.querySelector(`[id="${button.getAttribute("aria-describedby")}"]`)!.textContent,
+      ]),
+    );
+
+  it("armor and weapons explain their values, only for the stats some weapon has", () => {
+    const got = tips(render(<CombatSection {...s} />).container);
+    expect(got["防具 の説明"]).toContain("装甲値");
+    // the Predator has Acc, DV, AP and a mode, and no reach
+    expect(got["武器 の説明"]).toContain("Acc（精度）");
+    expect(got["武器 の説明"]).toContain("発射モード");
+    expect(got["武器 の説明"]).not.toContain("Reach");
+  });
+
+  it("the matrix table explains DR, the four attributes and the condition monitor", () => {
+    const got = tips(render(<MatrixSection {...s} />).container);
+    const text = got["マトリックス値 の説明"];
+    for (const part of ["DR（機器レーティング）", "アタック", "スリーズ", "データプロセシング"]) {
+      expect(text).toContain(part);
+    }
+    // bindRuns keeps the operators with their operands: no-break spaces
+    expect(text).toMatch(/8\s＋\sDR\s÷\s2/);
+  });
+
+  it("each magic block carries the help its tab has", () => {
+    const data = buildSheetData({
+      character: {
+        ...RICH_CHARACTER,
+        derived: {
+          ...RICH_CHARACTER.derived,
+          enabled_tabs: [...RICH_CHARACTER.derived!.enabled_tabs!, "foci", "initiation"],
+        },
+      } as never,
+      catalog: RICH_CATALOG,
+      tr: identityTr,
+      layout: "standard",
+    });
+    const got = Object.entries(tips(render(<MagicSection {...data} />).container));
+    const about = (heading: string) => got.find(([name]) => name?.startsWith(heading))?.[1];
+    expect(about("アデプトパワー")).toContain("パワーポイント");
+    expect(about("呪文")).toContain("ドレイン抵抗");
+    expect(about("精霊")).toContain("助力");
+    expect(about("収束具")).toContain("魔力×2");
+    expect(about("イニシエーション")).toContain("メタマジック");
   });
 });
 
@@ -505,7 +564,8 @@ describe("no English left on the sheet where a translation exists", () => {
   });
 
   it("the weapon and matrix tables head their columns in Japanese", () => {
-    const combat = render(<CombatSection {...s} />).container.textContent;
+    // the headings, not the "?" text, which names the stat the way the book prints it
+    const combat = render(<CombatSection {...s} />).container.querySelector("thead")!.textContent;
     expect(combat).toContain("精度");
     expect(combat).not.toContain("Acc");
     const matrix = render(<MatrixSection {...s} />).container.querySelector("thead")!.textContent;

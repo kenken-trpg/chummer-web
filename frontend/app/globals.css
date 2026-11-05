@@ -1972,6 +1972,12 @@ input[type="search"] {
   align-items: center;
   gap: 4px;
 }
+/* In a sheet table cell (the matrix table's 機器 heading) the "?" drops under
+   its text rather than widen a column on a 320px screen. */
+.sheet-table .help-tip {
+  flex-wrap: wrap;
+  justify-content: center;
+}
 .help-tip-button {
   width: 1.1em;
   height: 1.1em;
@@ -2037,4 +2043,11 @@ input[type="search"] {
        element in the sheet, and the screen theme's panel colour is dark */
     background: none !important;
   }
+}
+/* The 卓用 A4 layout is the paper on screen: no "?" there either. The sections
+   it shares with the standard layout (combat, matrix, magic) carry them. */
+.character-sheet--print .help-tip-button,
+.character-sheet--print .help-tip-body {
+  display: none !important;
+  background: none !important;
 }
