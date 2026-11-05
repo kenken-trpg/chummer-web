@@ -35,3 +35,12 @@ def kept_karma(ctx: Ctx, kind: str, rows: Iterable[tuple[str, int, int]]) -> int
         baseline.chargen_karma[kind] = {row_id: int(now) for row_id, now, _ in rows}
         return sum(now for _, now, _ in rows)
     return sum(recorded.values()) + sum(career for row_id, _, career in rows if row_id not in recorded)
+
+
+def bought_in_career(ctx: Ctx, kind: str, rows: list[dict]) -> list[dict]:
+    """The rows of `kind` the record does not hold: bought in career."""
+    baseline = ctx.state.career_baseline if ctx.career else None
+    recorded = (baseline.chargen_karma or {}).get(kind) if baseline is not None else None
+    if recorded is None:
+        return []
+    return [row for row in rows if str(row.get("id") or "") not in recorded]

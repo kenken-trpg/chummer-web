@@ -16,12 +16,13 @@ from ..karma import (
     skill_karma_cost,
     skill_levels_karma_cost,
 )
+from ..magic import spell_karma_cost
 from ..qualities import apply_cost_discounts, counts_toward_quality_limit, is_free_take, surge_metagenic_limit
 from ._career import (
     career_raise_karma,
     snapshot_career_baseline,
 )
-from ._career_items import kept_karma
+from ._career_items import bought_in_career, kept_karma
 from ._life_modules import price as life_price
 from ._quality_ctx import quality_req_ctx
 from .context import Ctx
@@ -69,7 +70,7 @@ def _karma_totals(ctx: Ctx) -> None:
     ctx.extra_adept_karma = (
         int(ctx.enhancements.get("karma") or 0) + int(ctx.qi.get("karma") or 0) + int(ctx.foci.get("karma") or 0)
     )
-    ctx.spell_karma = int(ctx.magic.get("karma") or 0) + int(ctx.resonance.get("karma") or 0)
+    ctx.spell_karma = _spell_karma(ctx)
     ctx.spirit_karma = _spirit_karma(ctx)
     ctx.career_adv_karma = 0
     ctx.career_adv_lines = []
@@ -250,6 +251,39 @@ def _check_career_mystic_pp(ctx: Ctx) -> None:
         return
     if int(ctx.state.mystic_pp or 0) > baseline.mystic_pp:
         ctx.errors.append(notice("engine.adept.mysticPpInCareer", before=baseline.mystic_pp, after=ctx.state.mystic_pp))
+
+
+def _spell_karma(ctx: Ctx) -> int:
+    """Spells and complex forms. In career a spell or form costs its karma
+    however many free ones chargen left unused or dropped since: the free
+    ones are a chargen allowance (Chummer charges `<karmaspell>` for every
+    spell learned in career). One given by a quality stays free."""
+    spells = list(ctx.magic.get("public") or [])
+    forms = list(ctx.resonance.get("public") or [])
+    form_cost = current_rules().karma_complex_form
+    total = kept_karma(
+        ctx,
+        "spells",
+        [
+            (str(row["id"]), int(row.get("karma") or 0), 0 if row.get("granted") else _career_spell_cost(ctx, row))
+            for row in spells
+        ],
+    )
+    total += kept_karma(
+        ctx, "complex_forms", [(str(row["id"]), int(row.get("karma") or 0), form_cost) for row in forms]
+    )
+    for row in bought_in_career(ctx, "spells", spells):
+        if not row.get("granted"):
+            row["free"] = False
+            row["karma"] = _career_spell_cost(ctx, row)
+    for row in bought_in_career(ctx, "complex_forms", forms):
+        row["free"] = False
+        row["karma"] = form_cost
+    return total
+
+
+def _career_spell_cost(ctx: Ctx, row: dict) -> int:
+    return spell_karma_cost(str(row.get("kind") or "spell"), ctx.effects)
 
 
 def _spirit_karma(ctx: Ctx) -> int:
