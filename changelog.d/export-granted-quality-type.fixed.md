@@ -1,1 +1,0 @@
-- **他の資質が付けた資質が、Chummer でポジティブ扱いになるのを直しました**：Prototype Transhuman で選んだ資質や、Pie Iesu Domine が付ける High Pain Tolerance などです。Chummer は資質の種別をセーブからだけ読むため、書いていなかった Insomnia や Wanted などのネガティブ資質がポジティブとして開かれ、資質の上限にも数えられていました。種別・カルマ 0・上限に数えないこと・出典と頁を書き出すようにしました。
