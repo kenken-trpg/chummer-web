@@ -16,7 +16,7 @@
 // --build-only  reuse the last recording in --out; only re-mix (e.g. to add --bgm)
 // --voice-dir   take each scene's clip from DIR/<NN>-<id>.wav instead of `say`
 // --narration   write the spoken lines as JSON Lines ({name, text}) and stop;
-//               the input for scripts/irodori_narration.py
+//               for another TTS, which hands back DIR/<name>.wav for --voice-dir
 //
 // Needs ffmpeg and Playwright Chromium, and macOS for `say` unless --voice-dir.
 import { execFileSync } from "node:child_process";
@@ -68,8 +68,9 @@ const READINGS = {
   // macOS `say` (Kyoko): 能力値 came out as のうりょくあたい, and
   // のうりょくち as のう・りよくち
   say: { 能力値: "ノウリョクチ" },
-  // Irodori-TTS, through --narration: add words here after listening
-  irodori: {},
+  // the lines --narration writes for another TTS (e.g. Irodori-TTS): add
+  // words here after listening to its clips
+  narration: {},
 };
 const spoken = (text, engine) =>
   Object.entries(READINGS[engine]).reduce(
@@ -142,7 +143,7 @@ for (const [i, s] of scenes.entries())
   s.name = `${String(i).padStart(2, "0")}-${s.id}`;
 if (args.narration) {
   const lines = scenes.map((s) =>
-    JSON.stringify({ name: s.name, text: spoken(s.say, "irodori") }),
+    JSON.stringify({ name: s.name, text: spoken(s.say, "narration") }),
   );
   writeFileSync(resolve(args.narration), lines.join("\n") + "\n");
   console.log(`Wrote ${resolve(args.narration)} (${lines.length} lines)`);
