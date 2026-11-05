@@ -155,8 +155,10 @@ def resolve_ware(
         # Chummer multiplies the whole cost by (1 - discount) whether or not
         # the setting is on now; the setting only decides who may enter one.
         ess_discount = 1.0 - max(-100, min(100, int(inst.ess_discount or 0))) / 100.0
-        ess_base = round(eval_formula(ware.get("ess"), rating, extras=formula_extras) * grade_ess * ess_discount, 4)
-        ess = 0.0 if included or (slotted and (plugin or add_to_parent)) else ess_base
+        ess_raw = round(eval_formula(ware.get("ess"), rating, extras=formula_extras) * ess_discount, 4)
+        ess_base = round(ess_raw * grade_ess, 4)
+        ess_self = not (included or (slotted and (plugin or add_to_parent)))
+        ess = ess_base if ess_self else 0.0
         picked = chosen_cost(ware, inst.cost)
         inst.cost = picked
         base_cost = picked if picked is not None else eval_formula(ware.get("cost"), rating, extras=formula_extras)
@@ -202,6 +204,15 @@ def resolve_ware(
                 "source": ware.get("source"),
                 "bonus": nodes,
                 "ess_to_parent": ess_base if add_to_parent else 0.0,
+                # What `apply_ware_essence_multipliers` needs to work the
+                # essence out again as Chummer does (`Cyberware.CalculatedESS`):
+                # the formula's value, the grade, and whether the piece counts
+                # its own essence. A grade forced to None (bioware like
+                # Thickened Digestive Tract Lining) takes no multiplier.
+                "ess_raw": ess_raw,
+                "ess_grade": grade_ess,
+                "ess_self": ess_self,
+                "ess_multiplied": grade_name != "None",
                 "add_weapon": ware.get("add_weapon") or "",
                 "add_weapon_id": ware.get("add_weapon_id") or "",
                 "device_rating": _device_rating_of(ware, rating),

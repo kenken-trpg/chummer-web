@@ -158,6 +158,7 @@ def _zero_vehicle_hosted_essence(resolved: list[dict[str, Any]], vehicle_hosts: 
         if item.get("id") in hosted:
             item["essence"] = 0.0
             item["ess_to_parent"] = 0.0
+            item["ess_raw"] = 0.0
 
 
 def _attach_ware_to_vehicle_mods(mods: list[dict[str, Any]], ware: list[dict[str, Any]]) -> list[Notice]:

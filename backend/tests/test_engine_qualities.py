@@ -674,7 +674,36 @@ def test_biocompatibility_bioware_scales_bioware_essence() -> None:
     )
     assert compat.derived["bioware_ess_multiplier"] == 90
     assert base.derived["essence_lost_bio"] == 0.4
-    assert compat.derived["essence_lost_bio"] == 0.3  # 0.4 * 0.9, floored to the tenth
+    # 0.4 * 0.9, not floored to the tenth (Chummer rounds each piece to two places)
+    assert compat.derived["essence_lost_bio"] == 0.36
+
+
+REACTION_ENHANCERS = "4cef53aa-13ea-4f28-8fbf-e3b254248247"
+THICKENED_DIGESTIVE_LINING = "a2acbc5a-187c-4e6f-95e5-c015f1aab56b"  # grade forced to None
+
+
+def test_biocompatibility_adds_to_the_grade_rather_than_multiplying_it() -> None:
+    """Chummer adds Biocompatibility's 90 to the grade (`Cyberware.CalculatedESS`):
+    Used Reaction Enhancers 2 are 0.6 x (1.25 - 0.1) = 0.69, not
+    0.6 x 1.25 x 0.9 = 0.675 floored to 0.6 (Chummer's own BLUE save has
+    0.94 Essence left; this app had 1.3)."""
+    state = _mundane(
+        "ess-add",
+        quality_ids=[BIOCOMPAT_CYBER],
+        cyberware=[CyberwareInstall(ware_id=REACTION_ENHANCERS, rating=2, grade="Used")],
+    )
+    assert compute(state).derived["essence_lost_cyber"] == 0.69
+
+
+def test_a_grade_forced_to_none_takes_no_essence_multiplier() -> None:
+    """Chummer skips the character's multipliers for a piece whose grade is
+    forced to None (Chummer's Munin save: 5.78 left, not 5.76)."""
+    state = _mundane(
+        "ess-none",
+        quality_ids=[BIOCOMPAT_BIO],
+        bioware=[CyberwareInstall(ware_id=THICKENED_DIGESTIVE_LINING)],
+    )
+    assert compute(state).derived["essence_lost_bio"] == 0.1
 
 
 def test_made_man_does_not_discount_gear() -> None:

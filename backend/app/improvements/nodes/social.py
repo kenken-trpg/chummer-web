@@ -206,8 +206,10 @@ def _ambidextrous(tag: str, node: dict[str, Any], fields: dict[str, Any], effect
 def _cyberwareessmultiplier(
     tag: str, node: dict[str, Any], fields: dict[str, Any], effects: EffectsDict, source: str
 ) -> None:
-    effects["cyberware_ess_multiplier"] = int(
-        round(int(effects.get("cyberware_ess_multiplier") or 100) * _as_int(node.get("value"), 100) / 100.0)
+    # Chummer adds these up (each takes `1 - value/100` off the grade's
+    # multiplier, `Cyberware.CalculatedESS`), so two 90s are 80, not 81.
+    effects["cyberware_ess_multiplier"] = (
+        int(effects.get("cyberware_ess_multiplier") or 100) + _as_int(node.get("value"), 100) - 100
     )
 
 
@@ -215,8 +217,10 @@ def _cyberwareessmultiplier(
 def _biowareessmultiplier(
     tag: str, node: dict[str, Any], fields: dict[str, Any], effects: EffectsDict, source: str
 ) -> None:
-    effects["bioware_ess_multiplier"] = int(
-        round(int(effects.get("bioware_ess_multiplier") or 100) * _as_int(node.get("value"), 100) / 100.0)
+    # Chummer adds these up (each takes `1 - value/100` off the grade's
+    # multiplier, `Cyberware.CalculatedESS`), so two 90s are 80, not 81.
+    effects["bioware_ess_multiplier"] = (
+        int(effects.get("bioware_ess_multiplier") or 100) + _as_int(node.get("value"), 100) - 100
     )
 
 
