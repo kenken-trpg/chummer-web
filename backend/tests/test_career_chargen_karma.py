@@ -11,12 +11,26 @@ from app.models import (
     CharacterState,
     ComplexFormInstall,
     ContactInstall,
+    FocusInstall,
+    InitiationChoice,
     MartialArtInstall,
     Priorities,
+    SettingsState,
     SpellInstall,
     SpiritInstall,
+    SubmersionChoice,
 )
-from tests.engine_support import CLEANER, EDITOR, HERMETIC, SPIRIT_FIRE, STUNBOLT, _mage, _mundane, _techno
+from tests.engine_support import (
+    CLEANER,
+    EDITOR,
+    HERMETIC,
+    SPIRIT_FIRE,
+    STUNBOLT,
+    WEAPON_FOCUS,
+    _mage,
+    _mundane,
+    _techno,
+)
 
 
 def _career(state: CharacterState) -> CharacterState:
@@ -86,6 +100,10 @@ def test_the_record_is_made_on_the_first_career_pass_and_kept() -> None:
         "complex_forms": {},
         "martial_arts": {},
         "ai_programs": {},
+        "qi_foci": {},
+        "foci": {},
+        "initiation": {},
+        "submersion": {},
     }
 
 
@@ -211,3 +229,52 @@ def test_an_ai_program_deleted_in_career_gives_no_karma_back() -> None:
     assert _left(st) == before
     st.ai_programs = [AIProgramInstall(program_id=_ai_program("Browse"))]
     assert before - _left(st) == 5
+
+
+QUICKENING_META = "4ea558ed-0fe8-4b9e-b2fa-afffb3eb2476"
+OVERCLOCKING = "61055141-71f5-400e-9e67-cef650ce4801"
+CHARGEN_GRADES = SettingsState(allow_initiation_in_create_mode=True)
+
+
+def test_an_initiate_grade_removed_in_career_gives_no_karma_back() -> None:
+    st = _career(
+        _mage(
+            "ck-init",
+            tradition_id=HERMETIC,
+            settings=CHARGEN_GRADES,
+            initiate_grade=1,
+            initiations=[InitiationChoice(grade=1, kind="metamagic", option_id=QUICKENING_META)],
+        )
+    )
+    assert _spent(st.derived, "engine.spend.initiation") == 13
+    before = _left(st)
+    st.initiate_grade = 0
+    assert _left(st) == before
+    st.initiate_grade = 2
+    assert before - _left(st) == 16
+
+
+def test_a_submersion_grade_removed_in_career_gives_no_karma_back() -> None:
+    st = _career(
+        _techno(
+            "ck-sub",
+            settings=CHARGEN_GRADES,
+            submersion_grade=1,
+            submersions=[SubmersionChoice(grade=1, echo_id=OVERCLOCKING)],
+        )
+    )
+    before = _left(st)
+    assert _spent(st.derived, "engine.spend.submersion") > 0
+    st.submersion_grade = 0
+    assert _left(st) == before
+
+
+def test_a_focus_unbound_in_career_gives_no_karma_back_and_binding_one_costs() -> None:
+    st = _career(_mage("ck-focus", tradition_id=HERMETIC, foci=[FocusInstall(id="wf", gear_id=WEAPON_FOCUS, force=2)]))
+    bound = int(st.derived["foci"][0]["karma"])
+    assert bound > 0
+    before = _left(st)
+    st.foci[0].bonded = False
+    assert _left(st) == before
+    st.foci.append(FocusInstall(id="wf2", gear_id=WEAPON_FOCUS, force=2))
+    assert before - _left(st) == bound

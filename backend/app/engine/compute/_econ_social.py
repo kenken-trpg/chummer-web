@@ -3,6 +3,9 @@ notoriety / public awareness."""
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from typing import Any
+
 from ...improvements import apply_bonus_nodes
 from ...notices import notice
 from ...rules import current_rules
@@ -10,6 +13,7 @@ from ..ai_programs import resolve_ai_programs
 from ..contacts import resolve_contacts, sync_quality_contacts
 from ..critter_powers import resolve_critter_powers
 from ..gear import apply_unarmed_bonuses
+from ..magic import initiation_karma_for_grade, submersion_karma_for_grade
 from ..martial_arts import resolve_martial_arts, sync_quality_martial_arts
 from ._career import (
     nuyen_spend_breakdown,
@@ -18,6 +22,17 @@ from ._career_items import kept_karma
 from ._career_qualities import career_quality_karma
 from ._quality_ctx import quality_req_ctx
 from .context import Ctx
+
+
+def _grade_rows(price: Callable[..., int], grade: int, choices: list[Any]) -> list[tuple[str, int, int]]:
+    """Each initiation / submersion grade held, as a `kept_karma` row."""
+    flags = {int(c.grade): c for c in choices or []}
+    rows: list[tuple[str, int, int]] = []
+    for g in range(1, max(0, int(grade)) + 1):
+        c = flags.get(g)
+        cost = price(g, group=bool(c and c.group), ordeal=bool(c and c.ordeal), schooling=bool(c and c.schooling))
+        rows.append((str(g), cost, cost))
+    return rows
 
 
 def _martial_rows(arts: list[dict]) -> list[tuple[str, int, int]]:
@@ -91,6 +106,14 @@ def _social_pass(ctx: Ctx) -> None:
     ctx.warnings.extend(ctx.critter_powers["warnings"])
     ctx.errors.extend(ctx.critter_powers["errors"])
     ctx.karma_spent += ctx.critter_powers["karma"]
+    # Chummer's "Remove Initiate Grade" only removes the grade
+    # (`RemoveSelectedObject`): the karma it cost stays spent.
+    ctx.initiation["karma"] = kept_karma(
+        ctx, "initiation", _grade_rows(initiation_karma_for_grade, ctx.initiation["grade"], ctx.state.initiations)
+    )
+    ctx.submersion["karma"] = kept_karma(
+        ctx, "submersion", _grade_rows(submersion_karma_for_grade, ctx.submersion["grade"], ctx.state.submersions)
+    )
     ctx.karma_spent += int(ctx.initiation.get("karma") or 0)
     ctx.karma_spent += int(ctx.submersion.get("karma") or 0)
     baseline_qualities = ctx.state.career_baseline.quality_ids if ctx.state.career_baseline else None

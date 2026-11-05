@@ -67,6 +67,11 @@ def _karma_totals(ctx: Ctx) -> None:
             ctx.warn("engine.qualities.negativeNoBonus", karma=excess, limit=rules.quality_karma_cap_negative)
     ctx.mystic_karma = int(ctx.state.mystic_pp) * current_rules().karma_mystic_pp
     _check_career_mystic_pp(ctx)
+    # Unbinding a focus in Chummer (`treFoci_AfterCheck`) gives no karma
+    # back; binding one in career pays for it. A focus bound at another
+    # Force is a new row.
+    ctx.qi["karma"] = kept_karma(ctx, "qi_foci", _bound_rows(ctx.qi.get("public") or [], "rating"))
+    ctx.foci["karma"] = kept_karma(ctx, "foci", _bound_rows(ctx.foci.get("public") or [], "force"))
     ctx.extra_adept_karma = (
         int(ctx.enhancements.get("karma") or 0) + int(ctx.qi.get("karma") or 0) + int(ctx.foci.get("karma") or 0)
     )
@@ -251,6 +256,13 @@ def _check_career_mystic_pp(ctx: Ctx) -> None:
         return
     if int(ctx.state.mystic_pp or 0) > baseline.mystic_pp:
         ctx.errors.append(notice("engine.adept.mysticPpInCareer", before=baseline.mystic_pp, after=ctx.state.mystic_pp))
+
+
+def _bound_rows(foci: list[dict], force_key: str) -> list[tuple[str, int, int]]:
+    """Each bonded focus, by id and Force, as a `kept_karma` row."""
+    return [
+        (f"{row['id']}@{row[force_key]}", int(row["karma"]), int(row["karma"])) for row in foci if row.get("bonded")
+    ]
 
 
 def _spell_karma(ctx: Ctx) -> int:
