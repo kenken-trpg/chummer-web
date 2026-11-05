@@ -6,10 +6,12 @@ connection / used-gear / build-repair discounts, Overclocker.
 from __future__ import annotations
 
 from collections.abc import Iterator
+from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
 
 from ..data_loader import DRUG_CATEGORIES, format_avail
 from ..improvements import EffectsDict
+from ..rules import current_rules
 from .bundle_types import GearBundle
 from .constants import (
     BLACK_MARKET_AVAIL_BONUS,
@@ -18,7 +20,6 @@ from .constants import (
     MATRIX_ARRAY_KEYS,
     TRUST_FUND_LIFESTYLE,
 )
-from .karma import _floor_tenth
 
 
 def apply_ware_essence_multipliers(
@@ -26,19 +27,20 @@ def apply_ware_essence_multipliers(
     bio: list[dict[str, Any]],
     effects: EffectsDict,
 ) -> tuple[float, float]:
+    """Each piece's essence, as Chummer works it out (`Cyberware.CalculatedESS`).
+
+    The grade's multiplier and the character's (Biocompatibility's 90 takes
+    0.1 off) are added, not multiplied: Used cyberware under Biocompatibility
+    is 1.25 - 0.1 = 1.15. A total multiplier (Sensitive System's 200)
+    multiplies what that gives. Each piece is then rounded to two places,
+    away from zero, unless the settings say not to round essence; a piece
+    that adds to its parent's essence is added after its own rounding.
+    """
     cmult = int(effects.get("cyberware_ess_multiplier") or 100)
     bmult = int(effects.get("bioware_ess_multiplier") or 100)
     tmult = int(effects.get("cyberware_total_ess_multiplier") or 100)
-    if cmult != 100:
-        for item in cyber:
-            ess = float(item.get("essence") or 0)
-            if ess > 0:
-                item["essence"] = _floor_tenth(ess * cmult / 100.0)
-    if bmult != 100:
-        for item in bio:
-            ess = float(item.get("essence") or 0)
-            if ess > 0:
-                item["essence"] = _floor_tenth(ess * bmult / 100.0)
+    _work_out_essence(cyber, cmult, tmult)
+    _work_out_essence(bio, bmult, 100)
     free_bio = max(0.0, float(effects.get("prototype_transhuman_ess") or 0))
     if free_bio > 0:
         for item in _prototype_transhuman_pieces(bio, free_bio):
@@ -46,9 +48,42 @@ def apply_ware_essence_multipliers(
             item["prototype_transhuman"] = True
     cyber_lost = round(sum(float(item.get("essence") or 0) for item in cyber), 4)
     bio_lost = round(sum(float(item.get("essence") or 0) for item in bio), 4)
-    if tmult != 100 and cyber_lost > 0:
-        cyber_lost = round(_floor_tenth(cyber_lost * tmult / 100.0), 4)
     return cyber_lost, bio_lost
+
+
+def _round_essence(value: float) -> float:
+    if current_rules().dont_round_essence_internally:
+        return round(value, 6)
+    return float(Decimal(str(round(value, 6))).quantize(Decimal("0.01"), ROUND_HALF_UP))
+
+
+def _work_out_essence(items: list[dict[str, Any]], mult_pct: int, total_pct: int) -> None:
+    own: dict[str, float] = {}
+    for item in items:
+        if "ess_raw" not in item:
+            continue
+        grade = float(item.get("ess_grade") or 1)
+        if item.get("ess_multiplied", True):
+            modifier = max(0.0, (grade + mult_pct / 100.0 - 1.0) * total_pct / 100.0)
+        else:
+            modifier = grade
+        own[str(item["id"])] = _round_essence(float(item["ess_raw"] or 0) * modifier)
+    for item in items:
+        key = str(item.get("id"))
+        if key not in own:
+            continue
+        item["ess_to_parent"] = own[key] if float(item.get("ess_to_parent") or 0) else 0.0
+    to_parent: dict[str, float] = {}
+    for item in items:
+        if float(item.get("ess_to_parent") or 0) and item.get("parent_id"):
+            parent = str(item["parent_id"])
+            to_parent[parent] = to_parent.get(parent, 0.0) + float(item["ess_to_parent"])
+    for item in items:
+        key = str(item.get("id"))
+        if key not in own:
+            continue
+        mine = own[key] if item.get("ess_self") else 0.0
+        item["essence"] = round(mine + to_parent.get(key, 0.0), 4)
 
 
 def _prototype_transhuman_pieces(bio: list[dict[str, Any]], allowance: float) -> list[dict[str, Any]]:

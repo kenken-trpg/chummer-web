@@ -1402,9 +1402,14 @@ def _magician_with_datajacks(grades: list[str], settings: SettingsState | None =
 _ESS_1005 = ["Used"] * 5 + ["Betaware"] * 4 + ["Standard"]
 
 
-def test_magic_loss_rounds_the_essence_left_first() -> None:
-    """Chummer rounds 4.995 Essence to 5.00 before taking MAG off it."""
-    assert _magician_with_datajacks(_ESS_1005)["totals"]["MAG"] == 3
+def test_each_piece_is_rounded_to_two_places() -> None:
+    """Chummer rounds each piece's essence (away from zero) before adding
+    them up, so a Used Datajack is 0.13, not 0.125: the ten add up to 1.03,
+    not 1.005, and two points of MAG go."""
+    out = _magician_with_datajacks(_ESS_1005)
+    assert out["essence"] == 4.97
+    assert out["totals"]["MAG"] == 2
+    assert [w["essence"] for w in out["cyberware"]][:1] == [0.13]
 
 
 def test_the_house_rule_keeps_essence_unrounded() -> None:
