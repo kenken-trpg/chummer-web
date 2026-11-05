@@ -6,6 +6,7 @@ import xml.etree.ElementTree as ET
 
 from app.characters import compute_state, import_character
 from app.chummer_export import state_to_chum5
+from app.chummer_export.check import roundtrip_differences
 from app.chummer_import import chum5_to_state
 from app.data_loader import catalog, catalog_list
 from app.engine.constants import (
@@ -1398,6 +1399,36 @@ def test_prototype_transhumans_ticks_come_back_as_the_players_choice() -> None:
         "dfad": False,
         "69ab": True,
     }
+
+
+def test_ticks_on_a_character_without_prototype_transhuman_are_not_read() -> None:
+    """`Cyberware.Save` writes the tick on every piece, False on everyone
+    without the quality: kept, it came back None from this app's own file and
+    the export check counted every piece of ware as lost (#913's e2e)."""
+    state = CharacterState(
+        id="w",
+        name="Ware",
+        priorities=Priorities(),
+        metatype="Human",
+        attributes={},
+        cyberware=[CyberwareInstall(id="dj", ware_id="47c48542-48c3-417e-91f0-b5a456183f05")],
+        bioware=[CyberwareInstall(id="mt", ware_id="69ab0255-a76b-4190-a8be-0473fed231ef")],
+    )
+    root = ET.fromstring(state_to_chum5(state))
+    for el in root.iter("cyberware"):
+        ET.SubElement(el, "prototypetranshuman").text = "False"
+    back = chum5_to_state(ET.tostring(root))[0]
+    assert all("prototype_transhuman" not in row for row in back["cyberware"] + back["bioware"])
+
+
+def test_an_untouched_prototype_transhuman_pick_survives_the_export_check() -> None:
+    """The file carries the engine's pick as ticks; read back, that is the
+    same character, not changed bioware."""
+    state, _ = _with_quality("Prototype Transhuman", {})
+    state.bioware = [CyberwareInstall(id="mt", ware_id="69ab0255-a76b-4190-a8be-0473fed231ef", rating=4)]
+    keys = {n["key"] for n in roundtrip_differences(state)}
+    assert "engine.export.lost" not in keys
+    assert "engine.export.gained" not in keys
 
 
 def test_a_prototype_transhuman_file_from_before_keeps_its_pick() -> None:

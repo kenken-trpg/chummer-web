@@ -52,6 +52,12 @@ def _import_ware(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
     #: gear held in a piece of ware: (install id, ware id, kind, node)
     carried: list[tuple[str, str, Phrase, ET.Element]] = []
 
+    try:
+        proto = float(_text(root.find("prototypetranshuman")) or 0) > 0
+    except ValueError:
+        proto = False
+    bio_kind = ui("engine.kind.bioware")
+
     def load_ware(nodes: list[ET.Element], kind: Phrase) -> list[dict[str, Any]]:
         out: list[dict[str, Any]] = []
         for w in nodes:
@@ -69,11 +75,13 @@ def _import_ware(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
                 "discounted": _discounted(w),
                 "ess_discount": max(-100, min(100, _int(w.find("essdiscount"), 0))),
             }
-            # Prototype Transhuman's tick (`Cyberware.Save` writes it on every
-            # piece, False on the unticked): what the player chose, not the
-            # set the engine would pick
+            # Prototype Transhuman's tick: what the player chose, not the set
+            # the engine would pick. `Cyberware.Save` writes it on every piece
+            # of every character, False on the rest, so it is read only on
+            # bioware and only when the character has the allowance; kept on
+            # all the others it would come back None from this app's own file
             ticked = w.find("prototypetranshuman")
-            if ticked is not None and _text(ticked):
+            if proto and kind == bio_kind and ticked is not None and _text(ticked):
                 row["prototype_transhuman"] = _text(ticked).lower() == "true"
             if (ware_by_id.get(wid) or {}).get("cost_range"):
                 row["cost"] = _picked_cost(w)
