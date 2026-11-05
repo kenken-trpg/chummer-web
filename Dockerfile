@@ -39,7 +39,7 @@ RUN mkdir -p public && npm run build
 
 # ─── 2. python deps into a venv ─────────────────────────────────────────────
 # python:3.12-bookworm
-FROM python:3.12-bookworm@sha256:5560e9ab8709f459489e5b8aa696eda8a07ef821e14bb122be62d91234bfa98b AS pydeps
+FROM python:3.12-bookworm@sha256:a5bab0ff300f91231c2e68bf73a8a8d60762ac39ce1c50eaf6803e4c38a9062b AS pydeps
 ENV PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1
 RUN python -m venv /opt/venv
 ENV PATH=/opt/venv/bin:$PATH
@@ -49,7 +49,7 @@ RUN retry pip install -r requirements.txt supervisor
 
 # ─── 3. bake the pinned Chummer game data ───────────────────────────────────
 # python:3.12-slim-bookworm
-FROM python:3.12-slim-bookworm@sha256:34386ef0cb081344d7ec1c103ba398e6e9f64e9ab3a1509accc92a4e24a07258 AS chummer
+FROM python:3.12-slim-bookworm@sha256:e697c81897302a4c4333bade000d98038fbb21eb064f8ee1fd42d02ebcd9d337 AS chummer
 WORKDIR /app/backend
 ARG CHUMMER_REF=""
 COPY backend/scripts/fetch_chummer_data.py scripts/fetch_chummer_data.py
@@ -58,7 +58,7 @@ RUN CHUMMER_REF="$CHUMMER_REF" python scripts/fetch_chummer_data.py
 
 # ─── 4. runtime ────────────────────────────────────────────────────────────
 # python:3.12-slim-bookworm (same digest as stage 3)
-FROM python:3.12-slim-bookworm@sha256:34386ef0cb081344d7ec1c103ba398e6e9f64e9ab3a1509accc92a4e24a07258 AS runtime
+FROM python:3.12-slim-bookworm@sha256:e697c81897302a4c4333bade000d98038fbb21eb064f8ee1fd42d02ebcd9d337 AS runtime
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PATH=/opt/venv/bin:/usr/local/bin:$PATH \
