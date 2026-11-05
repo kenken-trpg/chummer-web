@@ -37,8 +37,9 @@ const origin = process.env.MANUAL_ORIGIN || "http://127.0.0.1:3100";
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // --- narration -------------------------------------------------------------
-// `say` reads English words letter by letter or oddly, so the spoken line and
-// the subtitle are kept apart.
+// `say` reads English words letter by letter or oddly, and some game terms
+// wrong (能力値 comes out as のうりょくあたい), so the spoken line and the
+// subtitle are kept apart; write such words in kana in `say`.
 const scenes = [
   {
     id: "title",
@@ -57,7 +58,7 @@ const scenes = [
   },
   {
     id: "priority",
-    say: "最初に優先度を決めます。表のマスを押すと、その項目に優先度が割り当てられます。ここでは、能力値をビーにします。",
+    say: "最初に優先度を決めます。表のマスを押すと、その項目に優先度が割り当てられます。ここでは、のうりょくちを、ビーにします。",
     sub: "最初に優先度を決めます。表のマスを押すと、その項目に優先度が割り当てられます。\nここでは能力値を B にします。",
   },
   {
@@ -67,7 +68,7 @@ const scenes = [
   },
   {
     id: "attributes",
-    say: "能力値は、スライダーで上げ下げします。右のサイドバーには、残りのポイントや注意点が、すぐに反映されます。",
+    say: "のうりょくちは、スライダーで上げ下げします。右のサイドバーには、残りのポイントや注意点が、すぐに反映されます。",
     sub: "能力値はスライダーで上げ下げします。\n右のサイドバーには、残りのポイントや注意点がすぐに反映されます。",
   },
   {
@@ -559,10 +560,11 @@ if (args.bgm) {
   inputs.push("-stream_loop", "-1", "-i", resolve(args.bgm));
   const b = data.timeline.length + 1;
   filters.push(
-    `[${b}:a]aresample=48000,volume=0.35,atrim=0:${end.toFixed(3)},` +
+    `[${b}:a]aresample=48000,volume=0.2,atrim=0:${end.toFixed(3)},` +
       `afade=t=in:d=1.5,afade=t=out:st=${Math.max(end - 3, 0).toFixed(3)}:d=3[bed]`,
-    // the music steps back while the narration plays
-    "[bed][key]sidechaincompress=threshold=0.03:ratio=8:attack=20:release=400[ducked]",
+    // the music steps well back while the narration plays: about 19 dB under
+    // the voice, and about 10 dB under it between lines
+    "[bed][key]sidechaincompress=threshold=0.02:ratio=20:attack=20:release=400[ducked]",
     `[voice][ducked]amix=inputs=2:normalize=0,${loud}`,
   );
 } else {
