@@ -13,9 +13,15 @@ from ..notices import NoticeError, notice
 # base64 portraits) is a few MB; the default sits well clear of that.
 _MAX_DECOMPRESSED_BYTES = int(os.environ.get("CHUM5_MAX_DECOMPRESSED_BYTES") or 32 * 1024 * 1024)
 
+# The output cap does not bound the decoder's dictionary: the container header
+# can ask liblzma to allocate far more memory before producing any XML. Bound
+# decoder memory independently, including for the XZ fallback. This leaves room
+# for the default 8 MiB dictionary and higher compression presets through 9.
+_MAX_LZMA_MEMORY_BYTES = 128 * 1024 * 1024
+
 
 def _bounded_lzma(raw: bytes, fmt: int) -> bytes:
-    d = lzma.LZMADecompressor(format=fmt)
+    d = lzma.LZMADecompressor(format=fmt, memlimit=_MAX_LZMA_MEMORY_BYTES)
     out = d.decompress(raw, _MAX_DECOMPRESSED_BYTES + 1)
     if len(out) > _MAX_DECOMPRESSED_BYTES or not d.eof:
         raise ValueError("decompressed .chum5lz exceeds the size limit")

@@ -88,7 +88,7 @@ runtime. Move the pin with `--build-arg CHUMMER_REF=<sha>`.
 | `IMPORT_RATE_LIMIT` | `20/minute` | per client IP, the XML-handling routes (imports, settings / customdata upload, .chum5 export and its check) |
 | `CSP_REPORT_RATE_LIMIT` | `60/minute` | per client IP, `/api/csp-report` |
 | `MAX_REQUEST_BYTES` | `12582912` | 413 above this, chunked bodies included; the bundled Caddy enforces it too |
-| `CHUM5_MAX_DECOMPRESSED_BYTES` | `33554432` | `.chum5lz` decompression-bomb cap |
+| `CHUM5_MAX_DECOMPRESSED_BYTES` | `33554432` | `.chum5lz` expanded-output cap; LZMA decoder memory has a separate fixed 128 MiB cap |
 | `TRUSTED_PROXY_HOPS` | `0` | entries in from the right of `x-forwarded-for` that hold the real client |
 | `TRUST_CLOUDFLARE_IP` | unset | `1` behind Cloudflare, which sets `cf-connecting-ip`; ignored otherwise |
 | `LOG_FORMAT` | `text` | `json` for one object per line |
