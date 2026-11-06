@@ -121,12 +121,10 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                   <div className="cyber-controls">
                     <label>
                       {ui("common.qty")}
-                      <input
-                        type="number"
+                      <BoundedNumberInput
                         min={1}
                         value={item.qty}
-                        onChange={(e) => {
-                          const qty = Number(e.target.value);
+                        onCommit={(qty) => {
                           if (fromGear) {
                             patch({
                               gear: editRow(ch.gear, item.source_gear_id, { qty }),

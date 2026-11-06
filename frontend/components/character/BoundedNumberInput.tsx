@@ -15,6 +15,7 @@ import { useState, type InputHTMLAttributes } from "react";
  * that reads as a whole number inside the range is sent straight away, so the
  * spinner and a single digit act as before; anything else (empty, out of
  * range) waits, and leaving the box sends it clamped, or puts the value back.
+ * `max` may be left out for a count with no ceiling (months, rounds).
  */
 export function BoundedNumberInput({
   min,
@@ -24,13 +25,13 @@ export function BoundedNumberInput({
   ...rest
 }: {
   min: number;
-  max: number;
+  max?: number;
   value: number;
   onCommit: (value: number) => void;
 } & Omit<InputHTMLAttributes<HTMLInputElement>, "min" | "max" | "value" | "onChange" | "type">) {
   const [draft, setDraft] = useState<string | null>(null);
-  const lo = Math.min(min, max);
-  const hi = Math.max(min, max);
+  const lo = max === undefined ? min : Math.min(min, max);
+  const hi = max === undefined ? Infinity : Math.max(min, max);
   const parse = (text: string) => {
     if (!/^-?\d+$/.test(text.trim())) return null;
     return Number(text);
@@ -40,7 +41,7 @@ export function BoundedNumberInput({
       {...rest}
       type="number"
       min={lo}
-      max={hi}
+      max={max === undefined ? undefined : hi}
       value={draft ?? value}
       onChange={(e) => {
         const text = e.target.value;

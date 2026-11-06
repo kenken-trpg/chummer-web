@@ -1,4 +1,5 @@
 import { HelpTip } from "@/components/help/HelpTip";
+import { BoundedNumberInput } from "@/components/character/BoundedNumberInput";
 import type { SidebarBlockProps } from "@/components/character/sidebar/types";
 
 export function SidebarCareerEdit({ ch, d, career, patch, ui }: SidebarBlockProps) {
@@ -15,12 +16,11 @@ export function SidebarCareerEdit({ ch, d, career, patch, ui }: SidebarBlockProp
                 {ui("side.scEdit")}
               </HelpTip>
             </span>
-            <input
-              type="number"
+            <BoundedNumberInput
               min={0}
               aria-label={ui("side.scEdit")}
               value={ch.street_cred || 0}
-              onChange={(e) => patch({ street_cred: Math.max(0, Number(e.target.value) || 0) })}
+              onCommit={(n) => patch({ street_cred: n })}
               style={{ width: 64 }}
             />
           </div>
@@ -72,11 +72,11 @@ export function SidebarCareerEdit({ ch, d, career, patch, ui }: SidebarBlockProp
                 {ui("side.notorietyBonus")}
               </HelpTip>
             </span>
-            <input
-              type="number"
+            <BoundedNumberInput
+              min={-999}
               aria-label={ui("side.notorietyBonus")}
               value={ch.notoriety_bonus || 0}
-              onChange={(e) => patch({ notoriety_bonus: Number(e.target.value) || 0 })}
+              onCommit={(n) => patch({ notoriety_bonus: n })}
               style={{ width: 64 }}
             />
           </div>
@@ -89,14 +89,11 @@ export function SidebarCareerEdit({ ch, d, career, patch, ui }: SidebarBlockProp
                 {ui("side.publicAwarenessAward")}
               </HelpTip>
             </span>
-            <input
-              type="number"
+            <BoundedNumberInput
               min={0}
               aria-label={ui("side.publicAwarenessAward")}
               value={ch.public_awareness || 0}
-              onChange={(e) =>
-                patch({ public_awareness: Math.max(0, Number(e.target.value) || 0) })
-              }
+              onCommit={(n) => patch({ public_awareness: n })}
               style={{ width: 64 }}
             />
           </div>
