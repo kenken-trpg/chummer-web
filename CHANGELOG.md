@@ -3,6 +3,12 @@
 Notable changes. Format follows [Keep a Changelog](https://keepachangelog.com/);
 self-hosters can pin to a tag instead of tracking `main`.
 
+## [0.5.25] — 2026-11-06
+
+### Fixed
+
+- **武器の個数・ライフスタイルの月数・調合したドラッグの個数・キャリアのストリート・クレッド／悪名／知名度の欄も、打ち込みで値を変えられるようにしました**：v0.5.24 で直した数値の欄と同じく、欄を空にすると 1 や 0 に戻り、続けて打った数字が後ろに付いていました（「1」の後ろに「3」で 13）。悪名の追加分は「-」を打った時点で 0 に戻っていたので、負の値を打ち込めませんでした。
+
 ## [0.5.24] — 2026-11-06
 
 ### Fixed
@@ -3007,7 +3013,8 @@ First tagged release.
 - One-container Docker image (Caddy + uvicorn + Next standalone) published to
   GHCR; `make up` / `compose.yaml` for local self-hosting.
 
-[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.24...HEAD
+[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.25...HEAD
+[0.5.25]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.24...v0.5.25
 [0.5.24]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.23...v0.5.24
 [0.5.23]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.22...v0.5.23
 [0.5.22]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.21...v0.5.22
