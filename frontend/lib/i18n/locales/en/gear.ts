@@ -235,6 +235,7 @@ export const EN_GEAR = {
 
   "bio.search": "Search bioware",
   "ware.bundledSuffix": " (bundled)",
+  "ware.programsStored": "Programs stored {used}/{max}",
   "ware.addHeldGear": "Choose what goes inside",
   "ware.implantedHint": "Set it up on the Gear tab",
   "ware.takeOut": "Take out",

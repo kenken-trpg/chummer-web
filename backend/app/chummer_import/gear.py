@@ -138,6 +138,12 @@ class _GearRouter:
             and host[0] == ui("engine.kind.vehicle")
             and (self.rows_by_id.get(gid) or {}).get("program_host") == "rccs"
         )
+        # a program stored in ware that holds its category (a Datajack Plus)
+        runs_there = runs_there or (
+            bucket == "programs"
+            and host_allow is not None
+            and str((self.rows_by_id.get(gid) or {}).get("category") or "") in host_allow
+        )
         if (
             host is not None
             and (bucket not in _HOST_BUCKETS or host_allow is not None and bucket != "gear")

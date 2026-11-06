@@ -1,4 +1,4 @@
-import type { InstalledGear } from "./gear";
+import type { InstalledGear, InstalledProgram } from "./gear";
 
 // Cyberware and bioware: row shapes listed in `Derived` (../derived.ts).
 
@@ -45,4 +45,8 @@ export interface InstalledWare {
   allow_gear?: string[];
   /** what it holds, as gear rows */
   gear?: InstalledGear[];
+  /** `<programs>`: how many programs it stores (a Datajack Plus: its Rating) */
+  program_max?: number;
+  /** the programs stored in it */
+  programs?: InstalledProgram[];
 }

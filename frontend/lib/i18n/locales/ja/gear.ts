@@ -237,6 +237,7 @@ export const JA_GEAR = {
 
   "bio.search": "バイオウェアを検索",
   "ware.bundledSuffix": "（同梱）",
+  "ware.programsStored": "入っているプログラム {used}/{max}",
   "ware.addHeldGear": "中に入れるものを選ぶ",
   "ware.implantedHint": "設定は装備タブで行います",
   "ware.takeOut": "取り出す",

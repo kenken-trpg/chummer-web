@@ -193,6 +193,7 @@ def resolve_ware(
                 "capacity_max": 0.0 if plugin else _capacity_value(ware.get("capacity"), rating),
                 "allow_subsystems": list(ware.get("allow_subsystems") or []),
                 "allow_gear": list(ware.get("allow_gear") or []),
+                "program_max": int(eval_formula(str(ware.get("programs") or "0"), rating, 0)),
                 "limbslot": ware.get("limbslot"),
                 "limbslotcount": ware.get("limbslotcount") or "1",
                 **({"inherit_attributes": True} if ware.get("inherit_attributes") else {}),
