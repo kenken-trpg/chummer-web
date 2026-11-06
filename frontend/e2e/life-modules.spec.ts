@@ -100,8 +100,19 @@ test("life module layout keeps choices and actions inside desktop and mobile vie
     const summary = panel.locator("summary").first();
     await summary.click();
     await expect(panel.locator("details").first()).toHaveAttribute("open", "");
-    for (const control of await panel.locator("input, select, button").all()) {
-      const box = await control.boundingBox();
+    // There are 221 controls in this fixture. Reading each boundingBox across
+    // the protocol at three widths made this test time out under load. Take
+    // one layout snapshot per width, retaining the check for every control.
+    const boxes = await panel.locator("input, select, button").evaluateAll((controls) =>
+      controls.map((control) => {
+        if (!control.getClientRects().length) return null;
+        const { x, width } = control.getBoundingClientRect();
+        return { x, width };
+      }),
+    );
+    expect(boxes.length).toBeGreaterThan(0);
+    for (const box of boxes) {
+      expect(box).not.toBeNull();
       expect(box!.x).toBeGreaterThanOrEqual(0);
       expect(box!.x + box!.width).toBeLessThanOrEqual(width);
     }
