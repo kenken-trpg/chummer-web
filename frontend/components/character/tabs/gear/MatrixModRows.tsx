@@ -7,6 +7,7 @@ import { HelpTip } from "@/components/help/HelpTip";
 import type { TabPanelProps } from "@/components/character/types";
 import type { GearCatalogItem } from "@/lib/types";
 import { dropTree } from "@/lib/character/gear";
+import { CUSTOM_DECK_ATTRIBUTES } from "./CustomDeckAttributes";
 
 /**
  * The Electronic Modifications (DT p.66) soldered into one matrix device.
@@ -31,7 +32,10 @@ export function MatrixModRows({
   hostName: string;
 }) {
   const installed = (d.gear || []).filter(
-    (row) => row.parent_id === hostId && row.category !== "Cyberdeck Modules",
+    (row) =>
+      row.parent_id === hostId &&
+      row.category !== "Cyberdeck Modules" &&
+      row.category !== CUSTOM_DECK_ATTRIBUTES,
   );
   const parentMod = (d.gear || []).find((r) => r.id === hostId);
   const host = [...(d.cyberdecks || []), ...(d.commlinks || []), ...(d.rccs || [])].find(

@@ -82,6 +82,7 @@ export const EN_GEAR = {
   "veh.searchVehicles": "Search vehicles",
   "gear.capacity": " / capacity {used}/{max}",
   "gear.addArmorGear": "Carry gear in it",
+  "gear.customDeckAttributes": "Attributes bought",
   "gear.putIn": "Put in",
   "gear.implantedIn": "Implanted in {name}",
   "gear.addMod": "Add a mod",

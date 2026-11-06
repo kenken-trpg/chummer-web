@@ -1,0 +1,1 @@
+- **Fuchi Cyber-N・Cyber-Ex で、能力値を 1 つずつ買えるようにしました**：この 2 つのデッキ（Kill Code）は能力値がすべて 0 で、Attack・Sleaze・Data Processing・Firewall を別々に買います。これまでは能力値を買う部品がカタログに無く、機器レーティングしか選べず、能力値は 0 のままでした。今は、デッキの行に能力値ごとの選択欄が出て、0 からデッキのレーティングまで選べます。価格は Attack と Firewall がレーティングの 3 乗 × 500¥、Sleaze と Data Processing が 2 乗 × 500¥ です。Chummer 形式の書き出しと読み込みでも、デッキの中の部品として残ります。

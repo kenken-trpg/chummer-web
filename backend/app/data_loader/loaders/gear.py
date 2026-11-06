@@ -264,6 +264,7 @@ ELECTRONIC_RULES = {
 GEAR_SKIP_CATEGORIES = GEAR_SPECIALIZED_CATEGORIES | {
     "Foci",
     "Formulae",
+    # loaded on their own below: their names start with "["
     "Custom Cyberdeck Attributes",
     "Custom Drugs",
     "Paydata",
@@ -323,6 +324,29 @@ def load_gear() -> list[dict[str, Any]]:
         item["extra_kind"] = _extra_kind(item.get("bonus"), name)
         item["needs_extra"] = bool(item["extra_kind"])
         items.append(item)
+    items.extend(_custom_cyberdeck_attributes())
+    return items
+
+
+def _custom_cyberdeck_attributes() -> list[dict[str, Any]]:
+    """The four attributes a Fuchi Cyber-N / Cyber-Ex is bought with (KC p.60).
+
+    Those decks come at 0 in every attribute; each one is a piece of gear in
+    the deck (`[Custom Cyberdeck] Attack`, ...) at a rating up to the deck's own
+    (`{Parent Rating}`), priced Rating³ × 500, that adds its rating to the
+    attribute (`<modattack>`). The engine caps the rating by the deck.
+    """
+    items = _load_gear_categories({"Custom Cyberdeck Attributes"}, allow_brackets=True)
+    for item in items:
+        item["parent_rating_max"] = True
+        item["minrating"] = 1
+        item["maxrating"] = GEAR_RATING_CAP
+        item["requireparent"] = True
+        # `<armorcapacity>[2]` is the space Chummer gives it in the deck, not
+        # something a jacket carries
+        item["armor_capacity"] = ""
+        item["extra_kind"] = ""
+        item["needs_extra"] = False
     return items
 
 
