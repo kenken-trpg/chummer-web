@@ -3,6 +3,13 @@
 Notable changes. Format follows [Keep a Changelog](https://keepachangelog.com/);
 self-hosters can pin to a tag instead of tracking `main`.
 
+## [0.5.27] — 2026-11-06
+
+### Fixed
+
+- **キャリアで、作成時の専門化・エキゾチック技能を消しても、カルマが戻らないようにしました**：v0.5.26 で能力値・技能を作成時の値に戻すようにしましたが、消された専門化と、カルマで作ったキャラクターのエキゾチック技能は戻せず、作成時に払ったカルマが戻っていました（専門化 7、エキゾチック技能はレーティング分）。今は、キャリアに移ったときの値段を記録し、消しても払ったままにします。キャリアで足した専門化を消したとき、キャリアで上げた分を消したときは、これまでどおり戻ります。
+  プライオリティで作成時に専門化をカルマで買っていると、キャリアに移った時点でそのカルマが戻っていたのも直しました。
+
 ## [0.5.26] — 2026-11-06
 
 ### Fixed
@@ -3019,7 +3026,8 @@ First tagged release.
 - One-container Docker image (Caddy + uvicorn + Next standalone) published to
   GHCR; `make up` / `compose.yaml` for local self-hosting.
 
-[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.26...HEAD
+[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.27...HEAD
+[0.5.27]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.26...v0.5.27
 [0.5.26]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.25...v0.5.26
 [0.5.25]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.24...v0.5.25
 [0.5.24]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.23...v0.5.24
