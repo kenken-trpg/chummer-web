@@ -93,15 +93,12 @@ export function LifestyleGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                   )}
                   <label>
                     {lifeIncrement(item.increment, ui)}
-                    <input
-                      type="number"
+                    <BoundedNumberInput
                       min={1}
                       value={item.months}
-                      onChange={(e) =>
+                      onCommit={(months) =>
                         patch({
-                          lifestyles: editRow(ch.lifestyles, item.id, {
-                            months: Number(e.target.value),
-                          }),
+                          lifestyles: editRow(ch.lifestyles, item.id, { months }),
                         })
                       }
                     />

@@ -1,4 +1,5 @@
 "use client";
+import { BoundedNumberInput } from "@/components/character/BoundedNumberInput";
 import { useState } from "react";
 import { HelpTip } from "@/components/help/HelpTip";
 import type { TabPanelProps } from "@/components/character/types";
@@ -167,11 +168,10 @@ export function CustomDrugMixer({ catalog, character: ch, d, tr, ui, patch }: Ta
                 </button>
                 <label>
                   {ui("common.qty")}
-                  <input
-                    type="number"
+                  <BoundedNumberInput
                     min={1}
                     value={drug.qty ?? 1}
-                    onChange={(e) => editDrug(index, { qty: Number(e.target.value) })}
+                    onCommit={(n) => editDrug(index, { qty: n })}
                   />
                 </label>
                 <HelpTip

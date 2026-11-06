@@ -67,3 +67,26 @@ it("puts the value back when the box is left empty", () => {
   expect(onCommit).not.toHaveBeenCalled();
   expect(box().value).toBe("1");
 });
+
+it("takes any count over the minimum when there is no maximum", () => {
+  const onCommit = vi.fn();
+  render(<BoundedNumberInput aria-label="months" min={1} value={1} onCommit={onCommit} />);
+  const months = screen.getByLabelText("months") as HTMLInputElement;
+  expect(months.hasAttribute("max")).toBe(false);
+  fireEvent.change(months, { target: { value: "" } });
+  fireEvent.change(months, { target: { value: "36" } });
+  expect(onCommit).toHaveBeenCalledTimes(1);
+  expect(onCommit).toHaveBeenCalledWith(36);
+});
+
+it("lets a negative value be typed one key at a time", () => {
+  const onCommit = vi.fn();
+  render(<BoundedNumberInput aria-label="bonus" min={-999} value={0} onCommit={onCommit} />);
+  const bonus = screen.getByLabelText("bonus") as HTMLInputElement;
+  // the minus sign alone is not a number yet (the box reads it as ""): the
+  // old box sent 0 here, and the 0 that came back wiped the sign out
+  fireEvent.change(bonus, { target: { value: "-" } });
+  expect(onCommit).not.toHaveBeenCalled();
+  fireEvent.change(bonus, { target: { value: "-2" } });
+  expect(onCommit).toHaveBeenCalledWith(-2);
+});
