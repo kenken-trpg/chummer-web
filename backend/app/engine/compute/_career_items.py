@@ -37,6 +37,27 @@ def kept_karma(ctx: Ctx, kind: str, rows: Iterable[tuple[str, int, int]]) -> int
     return sum(recorded.values()) + sum(career for row_id, _, career in rows if row_id not in recorded)
 
 
+def kept_when_gone(ctx: Ctx, kind: str, rows: Iterable[tuple[str, int]]) -> int:
+    """What the rows of `kind` held on the first career pass cost then, for
+    those no longer held: `rows` are (id, karma as priced now).
+
+    For a kind priced from what is held, whose rows can also be raised in
+    career, so a held row costs what it does now (raises and all) and only a
+    deleted one needs the record."""
+    rows = list(rows)
+    baseline = ctx.state.career_baseline if ctx.career else None
+    if baseline is None:
+        return 0
+    if baseline.chargen_karma is None:
+        baseline.chargen_karma = {}
+    recorded = baseline.chargen_karma.get(kind)
+    if recorded is None:
+        baseline.chargen_karma[kind] = {row_id: int(now) for row_id, now in rows}
+        return 0
+    held = {row_id for row_id, _ in rows}
+    return sum(karma for row_id, karma in recorded.items() if row_id not in held)
+
+
 def bought_in_career(ctx: Ctx, kind: str, rows: list[dict]) -> list[dict]:
     """The rows of `kind` the record does not hold: bought in career."""
     baseline = ctx.state.career_baseline if ctx.career else None

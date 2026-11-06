@@ -28,6 +28,7 @@ from ..skills import (
     resolve_specializations,
     resolve_talent_skills,
 )
+from ._career_items import kept_karma
 from .context import Ctx
 
 
@@ -250,13 +251,19 @@ def _price_points(ctx: Ctx, active_points: dict[str, int], free_skills: dict[str
     )
     rules = current_rules()
     if ctx.is_karma:
-        ctx.spec_karma = (
-            int(ctx.specs["active_spent"]) * rules.karma_specialization
-            + int(ctx.specs["knowledge_spent"]) * rules.karma_knowledge_specialization
-        )
+        # A Karma build prices them from what is held. In career a chargen one
+        # deleted keeps what it cost (Chummer gives no karma back), one bought
+        # since costs the same.
+        rows = _spec_rows(set(ctx.specs["active_paid"]), set(ctx.specs["knowledge_paid"]))
+        ctx.spec_karma = kept_karma(ctx, "specializations", ((name, k, k) for name, k in rows))
     elif ctx.career:
-        # Priority career: new specs cost karma (baseline settles chargen specs).
-        ctx.spec_karma = 0
+        # Priority career: a new one is priced as a raise
+        # (`_career._specialization_buys`). The chargen ones keep what they
+        # cost then, which is karma only for those bought with karma rather
+        # than a point — deleted or not.
+        ctx.spec_karma = kept_karma(
+            ctx, "specializations", ((name, k, 0) for name, k in _chargen_spec_rows(ctx, active_points, free_skills))
+        )
     else:
         ctx.spec_karma = (
             len(karma_specs_active) * rules.karma_specialization
@@ -270,6 +277,32 @@ def _price_points(ctx: Ctx, active_points: dict[str, int], free_skills: dict[str
             ctx.skill_spent += overflow
             ctx.know_spent = ctx.know_max
             ctx.warn("engine.skills.knowledgeOnSkillPoints", points=overflow)
+
+
+def _spec_rows(karma_active: set[str], karma_knowledge: set[str]) -> list[tuple[str, int]]:
+    """(skill, karma) for each specialization paid with karma."""
+    rules = current_rules()
+    return [(name, rules.karma_specialization) for name in sorted(karma_active)] + [
+        (name, rules.karma_knowledge_specialization) for name in sorted(karma_knowledge)
+    ]
+
+
+def _chargen_spec_rows(ctx: Ctx, active_points: dict[str, int], free_skills: dict[str, int]) -> list[tuple[str, int]]:
+    """(skill, karma) for each specialization a Priority sheet had on entering
+    career: karma for one bought with karma, 0 for one bought with a point.
+    Read the way chargen does (`_price_points`), so the first career pass
+    records what chargen charged."""
+    baseline = ctx.state.career_baseline
+    held = set(ctx.specs["active_paid"]) | set(ctx.specs["knowledge_paid"])
+    base = set(baseline.skill_specializations or []) if baseline is not None else held
+    paid_active = set(ctx.specs["active_paid"]) & base
+    paid_knowledge = set(ctx.specs["knowledge_paid"]) & base
+    karma_active, karma_knowledge = _forced_karma_specs(ctx, paid_active, paid_knowledge, active_points, free_skills)
+    chosen = set(ctx.state.skill_specs_karma or [])
+    karma_active |= paid_active & chosen
+    karma_knowledge |= paid_knowledge & chosen
+    priced = dict(_spec_rows(karma_active, karma_knowledge))
+    return [(name, priced.get(name, 0)) for name in sorted(paid_active | paid_knowledge)]
 
 
 def _forced_karma_specs(

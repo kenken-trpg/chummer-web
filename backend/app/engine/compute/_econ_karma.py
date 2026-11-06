@@ -8,6 +8,7 @@ from ...rules import current_rules
 from ..karma import (
     _active_karma_mults,
     _filter_karma_rules,
+    _karma_raise_cost,
     _skill_category_map,
     attribute_karma_cost,
     attribute_levels_karma_cost,
@@ -22,7 +23,7 @@ from ._career import (
     career_raise_karma,
     snapshot_career_baseline,
 )
-from ._career_items import bought_in_career, kept_karma
+from ._career_items import bought_in_career, kept_karma, kept_when_gone
 from ._life_modules import price as life_price
 from ._quality_ctx import quality_req_ctx
 from .context import Ctx
@@ -90,6 +91,9 @@ def _karma_totals(ctx: Ctx) -> None:
         ctx.skill_buy_karma = skill_karma_cost(
             ctx.state.skill_groups, ctx.skill_totals, ctx.data["skills"], group_cap=ctx.skill_group_cap
         ) + group_karma_compensation(ctx.state.skill_groups, ctx.skill_totals, {}, ctx.data["skills"])
+        # an exotic skill row bought at chargen and deleted in career keeps
+        # what it cost (Chummer gives no karma back)
+        ctx.skill_buy_karma += kept_when_gone(ctx, "exotic_skills", _exotic_rows(ctx))
         know_cats = {
             str(row.get("name") or ""): str(row.get("category") or "")
             for row in (ctx.knowledge.get("public") or [])
@@ -202,6 +206,20 @@ def _karma_totals(ctx: Ctx) -> None:
                 level_drops=_raise_drops(ctx, baseline),
             )
             ctx.karma_spent += ctx.career_adv_karma
+
+
+def _exotic_rows(ctx: Ctx) -> list[tuple[str, int]]:
+    """(row id, karma) for each exotic skill row, at the Karma build price
+    `skill_karma_cost` charges it from nothing."""
+    rules = current_rules()
+    return [
+        (
+            str(row.id),
+            _karma_raise_cost(0, int(row.rating or 0), rules.karma_active_skill, rules.karma_new_active_skill),
+        )
+        for row in ctx.state.exotic_skills or []
+        if getattr(row, "id", None)
+    ]
 
 
 def _priced_ratings(ctx: Ctx) -> dict[str, int]:
