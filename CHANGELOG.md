@@ -3,6 +3,19 @@
 Notable changes. Format follows [Keep a Changelog](https://keepachangelog.com/);
 self-hosters can pin to a tag instead of tracking `main`.
 
+## [0.5.28] — 2026-11-06
+
+### Fixed
+
+- **キャリアで、後から買ったウェアにだけ掛かるエッセンスの倍率を、ウェアごとに覚えるようにしました**：`cyberwaretotalessmultipliernonretroactive` などの倍率（カスタムデータ Adapsin Applied as Multiplier, Not Grade の Adapsin など）は、Chummer では、キャリアに入った時点か、キャリアで買った時点の値をウェアごとに持ち、その後に倍率の元を足したり外したりしても変わりません。このアプリは、キャリアでもその時の倍率を全部のウェアに掛けていたので、キャリアで Adapsin を外すと、それまでのウェアのエッセンスまで戻っていました。Chummer のキャリアのセーブを取り込むときも、書き出すときも、この値（`<extraessadditivemultiplier>`・`<extraessmultiplicativemultiplier>`）を扱います。作成中は、今までどおり全部のウェアに掛かります。
+
+- **ファイル名の途中に名前が入ったカスタムデータのファイルが、読み飛ばされていたのを直しました**：Chummer は、データファイル（たとえば `bioware.xml`）ごとに、`amend_AdapsinMultiplier_bioware.xml` のような「`amend_`・`custom_`・`override_` ＋ 任意の名前 ＋ `_bioware.xml`」のファイルも読みます。このアプリは名前の入らない `amend_bioware.xml` の形しか見ておらず、Chummer に同梱のカスタムデータでも 15 のフォルダの 18 のファイル（Adapsin Applied as Multiplier, Not Grade・Exclude German sourcebooks・Orks Have Natural Weapon Tusks など）を「このアプリが読まないデータ」として読み飛ばしていました。
+  あわせて、Adapsin Applied as Multiplier, Not Grade が使うエッセンスの合計の倍率（`cyberwaretotalessmultipliernonretroactive` など）と、バイオウェアの合計の倍率に対応しました。テスト用セーブの Bastion は、このカスタムデータを読み込むと、エッセンスが Chummer と同じ 1.00 になります（読み込まなければ 1.04 で、今のデータの Adapsin では、これが正しい値です）。
+
+- **マトリックス値の `データプロセシング` を、用語集どおり「データ処理」にしました**：マトリックス値の「?」の説明だけが片仮名で、シートや Home Node の表示（データ処理）と食い違っていました。あわせて、Fuchi Cyber-N・Cyber-Ex の能力値の「?」で英語のままだった Attack・Sleaze・Data Processing・Firewall を、アタック・スリーズ・データ処理・ファイアウォールにしました。
+
+- **値段を自分で決める品目の価格も、打ち込みで途中の値にできるようにしました**：v0.5.24 で数値の欄を直したときに、価格の欄が残っていました。服・バイオスカルプティング・整形・情報の品目など、価格の範囲が 0 より上から始まる品目では、欄を空にすると下限に戻り、続けて打った数字が後ろに付いて、上限に丸められていました。今は範囲内の数になったときだけ送り、範囲の外や空のときは欄を離れたときに範囲内に収めます。
+
 ## [0.5.27] — 2026-11-06
 
 ### Fixed
@@ -3026,7 +3039,8 @@ First tagged release.
 - One-container Docker image (Caddy + uvicorn + Next standalone) published to
   GHCR; `make up` / `compose.yaml` for local self-hosting.
 
-[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.27...HEAD
+[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.28...HEAD
+[0.5.28]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.27...v0.5.28
 [0.5.27]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.26...v0.5.27
 [0.5.26]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.25...v0.5.26
 [0.5.25]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.24...v0.5.25
