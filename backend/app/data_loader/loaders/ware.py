@@ -116,6 +116,9 @@ def _load_ware_items(root: ET.Element, xpath: str, default_category: str) -> lis
                     for c in el.findall("./allowgear/gearcategory") + el.findall("./allowdrug/drugcategory")
                     if _text(c)
                 ],
+                # how many programs it stores (`<programs>`: a Datajack
+                # Plus holds its Rating, KC p.65)
+                "programs": _text(el.find("programs")),
                 "subsystems": subsystems,
                 "bonus": parse_bonus(el.find("bonus")),
                 "wirelessbonus": parse_bonus(el.find("wirelessbonus")),

@@ -63,4 +63,10 @@ def _public_installed(item: dict[str, Any]) -> dict[str, Any]:
         # what it may hold (`<allowgear>`) and what it holds
         "allow_gear": list(item.get("allow_gear") or []),
         "gear": list(item.get("gear") or []),
+        # the programs stored in it (a Datajack Plus), and how many fit
+        **(
+            {"programs": list(item.get("programs") or []), "program_max": int(item.get("program_max") or 0)}
+            if item.get("program_max")
+            else {}
+        ),
     }

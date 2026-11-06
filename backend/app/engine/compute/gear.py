@@ -16,7 +16,7 @@ from typing import Any, cast
 from ...improvements import apply_bonus_nodes
 from ...improvements.effect_rows import GrantGearRow
 from ...models import CharacterState
-from ...notices import Notice
+from ...notices import Notice, notice, term
 from ..bundle_types import GearBundle
 from ..constants import ADEPT_TALENTS
 from ..contacts import apply_erased_lifestyle_cap
@@ -286,6 +286,17 @@ def gear_phase(ctx: Ctx) -> None:
             item["gear"] = [
                 {**row, "bucket": "gear"} for row in ctx.gear.get("gear") or [] if row.get("parent_id") == item["id"]
             ]
+        if item.get("program_max"):
+            item["programs"] = [row for row in ctx.gear.get("programs") or [] if row.get("parent_id") == item["id"]]
+            if len(item["programs"]) > int(item["program_max"]):
+                ctx.warnings.append(
+                    notice(
+                        "engine.gear.programsOver",
+                        name=term(str(item.get("name") or "")),
+                        used=len(item["programs"]),
+                        max=int(item["program_max"]),
+                    )
+                )
     apply_erased_lifestyle_cap(ctx.gear, bool(ctx.effects.get("erased")), ctx.warnings)
     apply_reach_bonus(ctx.gear.get("weapons"), int(ctx.effects.get("reach") or 0))
     apply_weapon_category_dv(ctx.gear.get("weapons"), ctx.effects)

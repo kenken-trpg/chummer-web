@@ -4,6 +4,7 @@ import { AddonSelect } from "@/components/character/AddonSelect";
 import { CarriedGearRow } from "@/components/character/tabs/gear/ArmorRows";
 import { HelpTip } from "@/components/help/HelpTip";
 import type { TabPanelProps } from "@/components/character/types";
+import { useBookFilter } from "@/lib/character/books";
 import type { InstalledWare } from "@/lib/types";
 
 /** The housings' `<allowgear>` categories whose devices keep their own list
@@ -24,6 +25,7 @@ export function WareHeldGear({
   ui,
   patch,
 }: Pick<TabPanelProps, "catalog" | "character" | "tr" | "ui" | "patch"> & { item: InstalledWare }) {
+  const byBook = useBookFilter();
   const allowed = item.allow_gear || [];
   if (!allowed.length) return null;
   const options = (catalog.gear || []).filter(
@@ -37,6 +39,15 @@ export function WareHeldGear({
       .filter((row) => row.parent_id === item.id)
       .map((row) => ({ bucket, row })),
   );
+  // programs a piece of ware stores (a Datajack Plus, KC p.65): they keep
+  // their own list, like a deck's, and run nowhere here
+  const storedPrograms = (ch.derived?.programs || []).filter((row) => row.parent_id === item.id);
+  const programOptions = item.program_max
+    ? byBook(catalog.programs || []).filter(
+        (prog) =>
+          allowed.includes(prog.category) && !storedPrograms.some((row) => row.gear_id === prog.id),
+      )
+    : [];
   const setParent = (bucket: ImplantBucket, id: string, parent_id: string | null) =>
     patch({
       [bucket]: (ch[bucket] || []).map((row) => (row.id === id ? { ...row, parent_id } : row)),
@@ -68,6 +79,53 @@ export function WareHeldGear({
           </button>
         </div>
       ))}
+      {item.program_max ? (
+        <div className="muted">
+          {ui("ware.programsStored", { used: storedPrograms.length, max: item.program_max })}
+        </div>
+      ) : null}
+      {storedPrograms.map((prog) => (
+        <div className="cyber-item" key={prog.id}>
+          <div>
+            <b>{tr(prog.label || prog.name)}</b>
+            <div className="muted">{prog.nuyen}¥</div>
+          </div>
+          {item.included || item.granted_by ? null : (
+            <button
+              className="btn danger"
+              onClick={() =>
+                patch({ programs: (ch.programs || []).filter((row) => row.id !== prog.id) })
+              }
+            >
+              {ui("common.remove")}
+            </button>
+          )}
+        </div>
+      ))}
+      {item.included ||
+      item.granted_by ||
+      storedPrograms.length >= (item.program_max || 0) ? null : (
+        <AddonSelect
+          rowName={tr(item.name)}
+          prompt={ui("gear.addProgram")}
+          addLabel={ui("gear.putIn")}
+          tr={tr}
+          options={programOptions}
+          onAdd={(prog) =>
+            patch({
+              programs: [
+                ...(ch.programs || []),
+                {
+                  gear_id: prog.id,
+                  rating: Math.max(1, prog.minrating || 1),
+                  parent_id: item.id,
+                  running: false,
+                },
+              ],
+            })
+          }
+        />
+      )}
       {item.included || item.granted_by || implanted.length
         ? null
         : buckets.map((bucket) => (

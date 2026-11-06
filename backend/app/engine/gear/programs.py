@@ -15,6 +15,7 @@ from ...models import CharacterState, GearInstall
 from ...notices import Notice, notice, term, ui
 from ..selects import gear_extra_options, gear_extra_skill_kind
 from ._common import _clamp_rating, _program_label
+from .misc_hosts import _ware_hosts
 from .vehicles import _iter_vehicle_hosts
 
 
@@ -32,6 +33,10 @@ def _resolve_programs(
         hosts[str(row.get("id") or "")] = ("rccs", row)
     for vehicle, vehicle_spec in _iter_vehicle_hosts(state):
         hosts[vehicle.id] = ("vehicles", vehicle_spec)
+    # ware that stores programs (a Datajack Plus, KC p.65): only the
+    # categories its `<allowgear>` names, and none of them run there
+    for ware_id, ware_host in _ware_hosts(state).items():
+        hosts[ware_id] = ware_host
     kept: list[GearInstall] = []
     public: list[dict[str, Any]] = []
     nuyen = 0
@@ -43,7 +48,8 @@ def _resolve_programs(
         host = hosts.get(inst.parent_id or "")
         # an autosoft runs on the RCC that shares it, or on the drone itself
         kinds = (want_kind, "vehicles") if want_kind == "rccs" else (want_kind,)
-        if inst.parent_id and (host is None or host[0] not in kinds):
+        in_ware = host is not None and host[0] == "ware" and spec.get("category") in host[1].get("allow_gear", [])
+        if inst.parent_id and not in_ware and (host is None or host[0] not in kinds):
             # left where nothing runs it: kept as a copy the character owns
             warnings.append(
                 notice(
@@ -88,7 +94,13 @@ def _resolve_programs(
                 "rating_max": int(spec.get("maxrating") or 0),
                 "parent_id": inst.parent_id,
                 "included": bool(inst.included),
-                "running": bool(inst.parent_id and inst.running) if want_kind == "cyberdecks" else inst.running,
+                "running": (
+                    False
+                    if in_ware
+                    else bool(inst.parent_id and inst.running)
+                    if want_kind == "cyberdecks"
+                    else inst.running
+                ),
                 "extra": extra,
                 "needs_extra": bool(extra_kind),
                 "extra_kind": extra_kind,
