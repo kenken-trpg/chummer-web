@@ -8,6 +8,7 @@ import { OPTICS_DEVICE_CATS } from "@/lib/character/constants";
 import { alreadySlotted, dropTree, miscFits } from "@/lib/character/gear";
 import { sourceBit } from "@/lib/character/format";
 import { editRow } from "@/lib/character/rows";
+import { BoundedNumberInput } from "@/components/character/BoundedNumberInput";
 
 export function OpticsGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   return (
@@ -63,14 +64,13 @@ export function OpticsGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                   <div className="cyber-controls">
                     <label>
                       {ui("common.rating")}
-                      <input
-                        type="number"
+                      <BoundedNumberInput
                         min={1}
                         max={item.rating_max}
                         value={item.rating}
-                        onChange={(e) =>
+                        onCommit={(n) =>
                           patch({
-                            optics: editRow(ch.optics, item.id, { rating: Number(e.target.value) }),
+                            optics: editRow(ch.optics, item.id, { rating: n }),
                           })
                         }
                       />
@@ -106,15 +106,14 @@ export function OpticsGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                     {child.rating_max > 0 && !child.included ? (
                       <label>
                         {ui("common.rating")}
-                        <input
-                          type="number"
+                        <BoundedNumberInput
                           min={1}
                           max={child.rating_max}
                           value={child.rating}
-                          onChange={(e) =>
+                          onCommit={(n) =>
                             patch({
                               optics: editRow(ch.optics, child.id, {
-                                rating: Number(e.target.value),
+                                rating: n,
                               }),
                             })
                           }

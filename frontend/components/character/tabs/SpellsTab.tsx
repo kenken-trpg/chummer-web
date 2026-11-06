@@ -7,6 +7,7 @@ import { spellDescriptors, spellDuration, spellLabel, spellRange } from "@/lib/s
 import { attrLabel } from "@/lib/ui-strings";
 import { HelpTip } from "@/components/help/HelpTip";
 import { editRow } from "@/lib/character/rows";
+import { BoundedNumberInput } from "@/components/character/BoundedNumberInput";
 
 export function SpellsTab({ catalog, character: ch, d, t, tr, ui, patch }: TabPanelProps) {
   const [spellSearch, setSpellSearch] = useState("");
@@ -176,14 +177,13 @@ export function SpellsTab({ catalog, character: ch, d, t, tr, ui, patch }: TabPa
                 {item.has_force && item.spell ? (
                   <label>
                     {ui("common.force")}
-                    <input
-                      type="number"
+                    <BoundedNumberInput
                       min={item.spell.force_min}
                       max={item.spell.force_max}
                       value={item.spell.force}
-                      onChange={(e) =>
+                      onCommit={(n) =>
                         patch({
-                          spells: editRow(ch.spells, item.id, { force: Number(e.target.value) }),
+                          spells: editRow(ch.spells, item.id, { force: n }),
                         })
                       }
                     />

@@ -11,6 +11,7 @@ import { alreadySlotted, dropTree } from "@/lib/character/gear";
 import { HelpTip } from "@/components/help/HelpTip";
 import { sourceBit } from "@/lib/character/format";
 import { editRow } from "@/lib/character/rows";
+import { BoundedNumberInput } from "@/components/character/BoundedNumberInput";
 
 export function CommlinkGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   return (
@@ -54,15 +55,14 @@ export function CommlinkGear({ catalog, character: ch, d, tr, ui, patch }: TabPa
                 {item.rating_max > 0 ? (
                   <label>
                     {ui("common.rating")}
-                    <input
-                      type="number"
+                    <BoundedNumberInput
                       min={1}
                       max={item.rating_max}
                       value={item.rating}
-                      onChange={(e) =>
+                      onCommit={(n) =>
                         patch({
                           commlinks: editRow(ch.commlinks, item.id, {
-                            rating: Number(e.target.value),
+                            rating: n,
                           }),
                         })
                       }
@@ -71,15 +71,14 @@ export function CommlinkGear({ catalog, character: ch, d, tr, ui, patch }: TabPa
                 ) : null}
                 <label>
                   {ui("common.qty")}
-                  <input
-                    type="number"
+                  <BoundedNumberInput
                     min={1}
                     max={999}
                     value={item.qty ?? 1}
-                    onChange={(e) =>
+                    onCommit={(n) =>
                       patch({
                         commlinks: editRow(ch.commlinks, item.id, {
-                          qty: Math.max(1, Number(e.target.value) || 1),
+                          qty: Math.max(1, n || 1),
                         }),
                       })
                     }

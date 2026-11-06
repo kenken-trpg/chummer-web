@@ -5,6 +5,7 @@ import { useState } from "react";
 import { cfDuration, cfTarget, sourceBit, testLine } from "@/lib/character/format";
 import { HelpTip } from "@/components/help/HelpTip";
 import { editRow } from "@/lib/character/rows";
+import { BoundedNumberInput } from "@/components/character/BoundedNumberInput";
 
 export function ComplexFormsTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   const [cfSearch, setCfSearch] = useState("");
@@ -62,15 +63,14 @@ export function ComplexFormsTab({ catalog, character: ch, d, tr, ui, patch }: Ta
             <div className="cyber-controls">
               <label>
                 {ui("common.level")}
-                <input
-                  type="number"
+                <BoundedNumberInput
                   min={item.level_min}
                   max={item.level_max}
                   value={item.level}
-                  onChange={(e) =>
+                  onCommit={(n) =>
                     patch({
                       complex_forms: editRow(ch.complex_forms, item.id, {
-                        level: Number(e.target.value),
+                        level: n,
                       }),
                     })
                   }

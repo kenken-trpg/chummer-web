@@ -7,6 +7,7 @@ import type { TabPanelProps } from "@/components/character/types";
 import { trAs } from "@/lib/ui-strings";
 import { useBookFilter } from "@/lib/character/books";
 import { editRow } from "@/lib/character/rows";
+import { BoundedNumberInput } from "@/components/character/BoundedNumberInput";
 
 /**
  * The apps on one device and the select to add more. A commlink runs them,
@@ -72,14 +73,13 @@ export function AppRows({
             {app.rating_max > 0 ? (
               <label>
                 {ui("common.rating")}
-                <input
-                  type="number"
+                <BoundedNumberInput
                   min={1}
                   max={app.rating_max}
                   value={app.rating}
-                  onChange={(e) =>
+                  onCommit={(n) =>
                     patch({
-                      apps: editRow(ch.apps, app.id, { rating: Number(e.target.value) }),
+                      apps: editRow(ch.apps, app.id, { rating: n }),
                     })
                   }
                 />

@@ -6,6 +6,7 @@ import { optionalNumber, sourceBit, testLine } from "@/lib/character/format";
 import { CritterPowerRow } from "@/components/character/CritterPowerRow";
 import { HelpTip } from "@/components/help/HelpTip";
 import { editRow } from "@/lib/character/rows";
+import { BoundedNumberInput } from "@/components/character/BoundedNumberInput";
 
 export function SpritesTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   const [spriteSearch, setSpriteSearch] = useState("");
@@ -71,29 +72,27 @@ export function SpritesTab({ catalog, character: ch, d, tr, ui, patch }: TabPane
             <div className="cyber-controls">
               <label>
                 {ui("common.level")}
-                <input
-                  type="number"
+                <BoundedNumberInput
                   min={1}
                   max={item.level_max}
                   value={item.level}
-                  onChange={(e) =>
+                  onCommit={(n) =>
                     patch({
-                      sprites: editRow(ch.sprites, item.id, { level: Number(e.target.value) }),
+                      sprites: editRow(ch.sprites, item.id, { level: n }),
                     })
                   }
                 />
               </label>
               <label>
                 {ui("sprite.tasks")}
-                <input
-                  type="number"
+                <BoundedNumberInput
                   min={0}
                   max={item.level_max}
                   value={item.services}
-                  onChange={(e) =>
+                  onCommit={(n) =>
                     patch({
                       sprites: editRow(ch.sprites, item.id, {
-                        services: Number(e.target.value),
+                        services: n,
                         hits: null,
                         opposed_hits: null,
                       }),

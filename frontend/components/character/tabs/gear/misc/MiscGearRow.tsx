@@ -11,6 +11,7 @@ import { GearChild } from "@/components/character/tabs/gear/misc/GearChild";
 import type { InstalledGear } from "@/lib/types";
 import { renderNotices } from "@/lib/engine-notices";
 import { sourceBit } from "@/lib/character/format";
+import { BoundedNumberInput } from "@/components/character/BoundedNumberInput";
 
 /** One top-level piece of gear (or one drug) the character owns, with what is
  *  slotted into it and the controls that change it.
@@ -111,27 +112,21 @@ export function MiscGearRow({
           />
           <label>
             {ui("common.qty")}
-            <input
-              type="number"
+            <BoundedNumberInput
               min={1}
               max={999}
               value={item.purchased_qty ?? item.qty}
-              onChange={(e) =>
-                patch({ gear: editRow(ch.gear, item.id, { qty: Number(e.target.value) }) })
-              }
+              onCommit={(n) => patch({ gear: editRow(ch.gear, item.id, { qty: n }) })}
             />
           </label>
           {item.rating_max > 0 ? (
             <label>
               {ui("common.rating")}
-              <input
-                type="number"
+              <BoundedNumberInput
                 min={1}
                 max={item.rating_max}
                 value={item.rating}
-                onChange={(e) =>
-                  patch({ gear: editRow(ch.gear, item.id, { rating: Number(e.target.value) }) })
-                }
+                onCommit={(n) => patch({ gear: editRow(ch.gear, item.id, { rating: n }) })}
               />
             </label>
           ) : null}

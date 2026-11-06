@@ -11,6 +11,7 @@ import { dropTree } from "@/lib/character/gear";
 import { HelpTip } from "@/components/help/HelpTip";
 import { sourceBit } from "@/lib/character/format";
 import { editRow } from "@/lib/character/rows";
+import { BoundedNumberInput } from "@/components/character/BoundedNumberInput";
 
 export function RccGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   return (
@@ -48,14 +49,13 @@ export function RccGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
                 <div className="cyber-controls">
                   <label>
                     {ui("common.rating")}
-                    <input
-                      type="number"
+                    <BoundedNumberInput
                       min={1}
                       max={item.rating_max}
                       value={item.rating}
-                      onChange={(e) =>
+                      onCommit={(n) =>
                         patch({
-                          rccs: editRow(ch.rccs, item.id, { rating: Number(e.target.value) }),
+                          rccs: editRow(ch.rccs, item.id, { rating: n }),
                         })
                       }
                     />

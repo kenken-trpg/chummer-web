@@ -10,6 +10,7 @@ import { r5SlotLabel } from "@/lib/character/constants";
 import { vehicleFits, vehicleForbidden, wareFitsVehicleMod } from "@/lib/character/gear";
 import { removeWareTree, wareBounds, modularVehicleHosts } from "@/lib/character/ware";
 import { editRow } from "@/lib/character/rows";
+import { BoundedNumberInput } from "@/components/character/BoundedNumberInput";
 
 /** The vehicle mods fitted to one vehicle, and the picker that adds another.
  *
@@ -112,15 +113,14 @@ export function VehicleModRows({
             {mod.rating_max > 0 && !mod.included ? (
               <label>
                 {ui("common.rating")}
-                <input
-                  type="number"
+                <BoundedNumberInput
                   min={1}
                   max={mod.rating_max}
                   value={mod.rating}
-                  onChange={(e) =>
+                  onCommit={(n) =>
                     patch({
                       vehicle_mods: editRow(ch.vehicle_mods, mod.id, {
-                        rating: Number(e.target.value),
+                        rating: n,
                       }),
                     })
                   }

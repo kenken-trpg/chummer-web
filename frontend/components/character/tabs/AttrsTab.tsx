@@ -5,6 +5,7 @@ import type { TabPanelProps } from "@/components/character/types";
 import { ATTRS, attrShown } from "@/lib/character/constants";
 import { attrLabel } from "@/lib/ui-strings";
 import { careerFloor } from "@/lib/character/career-floor";
+import { BoundedNumberInput } from "@/components/character/BoundedNumberInput";
 
 export function AttrsTab({ character: ch, d, t, tr, ui, patch, setCharacter }: TabPanelProps) {
   const spec = d.metatype_info.attributes;
@@ -88,17 +89,16 @@ export function AttrsTab({ character: ch, d, t, tr, ui, patch, setCharacter }: T
             {showKarma && karmaSplit ? (
               <label className="attr-karma">
                 {ui("attrs.karmaLevels")}
-                <input
-                  type="number"
+                <BoundedNumberInput
                   aria-label={`${attrLabel(key, t)} ${ui("attrs.karmaLevels")}`}
                   min={0}
                   max={Math.max(0, rating - karmaSplit.floors[key])}
                   value={karmaSplit.levels[key] ?? 0}
-                  onChange={(e) =>
+                  onCommit={(n) =>
                     patch({
                       attribute_karma: {
                         ...(ch.attribute_karma || {}),
-                        [key]: Math.max(0, Number(e.target.value) || 0),
+                        [key]: Math.max(0, n || 0),
                       },
                     })
                   }

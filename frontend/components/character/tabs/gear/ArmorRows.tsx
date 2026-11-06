@@ -11,6 +11,7 @@ import type {
   OpticsCatalogItem,
 } from "@/lib/types";
 import { editRow } from "@/lib/character/rows";
+import { BoundedNumberInput } from "@/components/character/BoundedNumberInput";
 
 type RowProps = Pick<TabPanelProps, "character" | "tr" | "ui" | "patch">;
 
@@ -60,14 +61,13 @@ export function ArmorModRow({
       {mod.rating_max > 1 && !mod.included ? (
         <label>
           {ui("common.rating")}
-          <input
-            type="number"
+          <BoundedNumberInput
             min={1}
             max={mod.rating_max}
             value={mod.rating}
-            onChange={(e) =>
+            onCommit={(n) =>
               patch({
-                armor_mods: editRow(ch.armor_mods, mod.id, { rating: Number(e.target.value) }),
+                armor_mods: editRow(ch.armor_mods, mod.id, { rating: n }),
               })
             }
           />
@@ -165,16 +165,13 @@ export function CarriedGearRow({
       {gear.rating_max > 1 && !gear.included ? (
         <label>
           {ui("common.rating")}
-          <input
-            type="number"
+          <BoundedNumberInput
             min={1}
             max={gear.rating_max}
             value={gear.rating}
-            onChange={(e) =>
+            onCommit={(n) =>
               patch({
-                [bucket]: rows.map((row) =>
-                  row.id === gear.id ? { ...row, rating: Number(e.target.value) } : row,
-                ),
+                [bucket]: rows.map((row) => (row.id === gear.id ? { ...row, rating: n } : row)),
               })
             }
           />

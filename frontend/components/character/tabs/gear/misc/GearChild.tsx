@@ -3,6 +3,7 @@ import type { TabPanelProps } from "@/components/character/types";
 import { dropTree } from "@/lib/character/gear";
 import { editRow } from "@/lib/character/rows";
 import type { InstalledGear } from "@/lib/types";
+import { BoundedNumberInput } from "@/components/character/BoundedNumberInput";
 
 /** One thing slotted into, or carried inside, a piece of gear — and whatever
  *  it holds in turn. A container's contents nest as deep as the player (or
@@ -59,14 +60,11 @@ export function GearChild({
       {child.rating_max > 0 && !child.included ? (
         <label>
           {ui("common.rating")}
-          <input
-            type="number"
+          <BoundedNumberInput
             min={1}
             max={child.rating_max}
             value={child.rating}
-            onChange={(e) =>
-              patch({ gear: editRow(ch.gear, child.id, { rating: Number(e.target.value) }) })
-            }
+            onCommit={(n) => patch({ gear: editRow(ch.gear, child.id, { rating: n }) })}
           />
         </label>
       ) : null}

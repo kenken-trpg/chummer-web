@@ -6,6 +6,7 @@ import { renderNotice } from "@/lib/engine-notices";
 import { CritterPowerRow } from "@/components/character/CritterPowerRow";
 import { HelpTip } from "@/components/help/HelpTip";
 import { editRow } from "@/lib/character/rows";
+import { BoundedNumberInput } from "@/components/character/BoundedNumberInput";
 
 export function SpiritsTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   return (
@@ -86,29 +87,27 @@ export function SpiritsTab({ catalog, character: ch, d, tr, ui, patch }: TabPane
             <div className="cyber-controls">
               <label>
                 {ui("common.force")}
-                <input
-                  type="number"
+                <BoundedNumberInput
                   min={1}
                   max={item.force_max}
                   value={item.force}
-                  onChange={(e) =>
+                  onCommit={(n) =>
                     patch({
-                      spirits: editRow(ch.spirits, item.id, { force: Number(e.target.value) }),
+                      spirits: editRow(ch.spirits, item.id, { force: n }),
                     })
                   }
                 />
               </label>
               <label>
                 {ui("spirit.services")}
-                <input
-                  type="number"
+                <BoundedNumberInput
                   min={0}
                   max={item.force_max}
                   value={item.services}
-                  onChange={(e) =>
+                  onCommit={(n) =>
                     patch({
                       spirits: editRow(ch.spirits, item.id, {
-                        services: Number(e.target.value),
+                        services: n,
                         hits: null,
                         opposed_hits: null,
                       }),

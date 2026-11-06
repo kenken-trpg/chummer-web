@@ -1,5 +1,6 @@
 "use client";
 import type { TabPanelProps } from "@/components/character/types";
+import { BoundedNumberInput } from "@/components/character/BoundedNumberInput";
 
 /** The limits and mode every skills section reads, from one place. */
 export function skillLimits({ character: ch, d }: Pick<TabPanelProps, "character" | "d">) {
@@ -41,15 +42,14 @@ export function KarmaLevels({
   return (
     <label className="attr-karma">
       {ui("attrs.karmaLevels")}
-      <input
-        type="number"
+      <BoundedNumberInput
         aria-label={`${label ?? tr(name)} ${ui("attrs.karmaLevels")}`}
         min={0}
         max={rating}
         value={levels?.[name] ?? 0}
-        onChange={(e) =>
+        onCommit={(n) =>
           patch({
-            [field]: { ...(ch[field] || {}), [name]: Math.max(0, Number(e.target.value) || 0) },
+            [field]: { ...(ch[field] || {}), [name]: Math.max(0, n || 0) },
           })
         }
       />

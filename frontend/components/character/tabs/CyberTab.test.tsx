@@ -425,7 +425,11 @@ describe("<CyberTab> black market discount", () => {
   it("stores the essence discount it is given, clamped", () => {
     const patch = vi.fn();
     renderTab({ character: character({ allow_ess_discounts: true }) as never, patch });
-    fireEvent.change(screen.getByLabelText("ESS 割引 %"), { target: { value: "150" } });
+    const box = screen.getByLabelText("ESS 割引 %");
+    fireEvent.change(box, { target: { value: "150" } });
+    // out of range: held while typing, clamped when the box is left
+    expect(patch).not.toHaveBeenCalled();
+    fireEvent.focusOut(box);
     expect((patch.mock.calls[0][0] as Character).cyberware![0].ess_discount).toBe(100);
     // what the box is for is on its "?", and so is the grade's
     expect(screen.getByText(/GM が認めたエッセンスの割引/)).toBeDefined();

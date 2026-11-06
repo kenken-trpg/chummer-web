@@ -7,6 +7,7 @@ import { CORE_LIFESTYLES } from "@/lib/character/constants";
 import { lifeIncrement, sourceBit } from "@/lib/character/format";
 import { HelpTip } from "@/components/help/HelpTip";
 import { editRow } from "@/lib/character/rows";
+import { BoundedNumberInput } from "@/components/character/BoundedNumberInput";
 
 export function LifestyleGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   const byBook = useBookFilter();
@@ -75,15 +76,14 @@ export function LifestyleGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                     item.raise_max?.[key] ? (
                       <label key={key}>
                         {ui(`life.${key}`)}
-                        <input
-                          type="number"
+                        <BoundedNumberInput
                           min={0}
                           max={item.raise_max[key]}
                           value={item.raised?.[key] ?? 0}
-                          onChange={(e) =>
+                          onCommit={(n) =>
                             patch({
                               lifestyles: editRow(ch.lifestyles, item.id, {
-                                [key]: Math.max(0, Number(e.target.value) || 0),
+                                [key]: Math.max(0, n || 0),
                               }),
                             })
                           }
