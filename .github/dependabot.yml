@@ -35,8 +35,18 @@ updates:
     multi-ecosystem-group: dependencies
     ignore:
       # eslint-plugin-jsx-a11y supports only ESLint <=9. Revisit its peer range
-      # before allowing an upgrade that npm cannot install.
+      # before allowing an upgrade that npm cannot install. @eslint/js 10 peers
+      # on ESLint 10, so it moves with ESLint, not ahead of it (#937).
       - dependency-name: eslint
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "@eslint/js"
+        update-types:
+          - version-update:semver-major
+      # typescript-eslint peers on TypeScript <6.1, so the frontend stays on 5
+      # until that range widens (#937). The Workers have no such peer and are
+      # already on 7; they still take its minor and patch releases.
+      - dependency-name: typescript
         update-types:
           - version-update:semver-major
     groups:
