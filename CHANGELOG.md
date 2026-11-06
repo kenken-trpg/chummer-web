@@ -3,6 +3,12 @@
 Notable changes. Format follows [Keep a Changelog](https://keepachangelog.com/);
 self-hosters can pin to a tag instead of tracking `main`.
 
+## [0.5.24] — 2026-11-06
+
+### Fixed
+
+- **レーティング・フォース・レベルなどの数値の欄も、打ち込みで途中の値にできるようにしました**：v0.5.23 でサイバーウェアのレーティングを直したのと同じ症状が、ほかの欄にもありました。欄を空にすると最小値に戻り、続けて打った数字が後ろに付いて、最大値に丸められていました。装備・防具・コムリンク・デッキ・RCC・プログラム・センサー・光学機器・ヴィークルのレーティングや個数、呪文・精霊・収束具・アデプトパワーのフォースやレベル、コンタクトのコネクションと忠誠度、ライフスタイルの追加点、能力値・技能のカルマ分、エッセンス割引の欄です。範囲の外や空のときは、欄を離れたときに範囲内に収めます。
+
 ## [0.5.23] — 2026-11-06
 
 ### Fixed
@@ -3001,7 +3007,8 @@ First tagged release.
 - One-container Docker image (Caddy + uvicorn + Next standalone) published to
   GHCR; `make up` / `compose.yaml` for local self-hosting.
 
-[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.23...HEAD
+[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.24...HEAD
+[0.5.24]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.23...v0.5.24
 [0.5.23]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.22...v0.5.23
 [0.5.22]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.21...v0.5.22
 [0.5.21]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.20...v0.5.21
