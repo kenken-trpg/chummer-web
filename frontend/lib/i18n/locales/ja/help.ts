@@ -77,7 +77,7 @@ export const JA_HELP = {
   "help.matrix.sleaze":
     "スリーズ（SLZ）：気づかれずに侵入・潜伏する行動に使う。相手のマトリックス知覚に対抗する",
   "help.matrix.dataprocessing":
-    "データプロセシング（DP）：編集・検索・マークの維持など、静かな行動に使う。デッキのイニシアティブにも効く",
+    "データ処理（DP）：編集・検索・マークの維持など、静かな行動に使う。デッキのイニシアティブにも効く",
   "help.matrix.firewall":
     "ファイアウォール（FW）：相手の攻撃・侵入に対する防御。テストの対抗値になる",
   "help.matrix.array":
@@ -280,7 +280,7 @@ export const JA_HELP = {
   "help.martial.technique": "技法は 1 つ 5 カルマ。資質で付いてくる分は無料",
   "help.martial.chargen": "作成時は格闘技スタイル 1 つ・技法 5 つまで。キャリア中は上限なし",
   "help.gear.customDeckAttributes":
-    "Fuchi Cyber-N・Cyber-Ex は能力値がすべて 0 で、Attack・Sleaze・Data Processing・Firewall を 1 つずつ買う（KC p.60）。レーティングはデッキのレーティングまで。0 は買わない",
+    "Fuchi Cyber-N・Cyber-Ex は能力値がすべて 0 で、アタック・スリーズ・データ処理・ファイアウォールを 1 つずつ買う（KC p.60）。レーティングはデッキのレーティングまで。0 は買わない",
   "help.gear.statsLabel": "装備の値",
   "help.gear.rating":
     "R（レーティング）：性能の段階。上げると価格も入手値も上がることが多い。上限は品目ごと",
