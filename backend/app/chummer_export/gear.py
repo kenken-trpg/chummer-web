@@ -23,6 +23,11 @@ from .metatype import export_metatype_weapons
 from .natural_weapons import weapons_of, write_added_weapon
 
 
+def _plain_decimal(value: float) -> str:
+    """A decimal as Chummer writes one (`0.9`, `-0.1`, `1`): no float noise."""
+    return f"{value:.6f}".rstrip("0").rstrip(".") or "0"
+
+
 def _ware_writer(state: CharacterState, names: _Names) -> Any:
     """Return ``(by_parent, emit)`` for cyber- and bioware rows.
 
@@ -85,6 +90,16 @@ def _ware_writer(state: CharacterState, names: _Names) -> Any:
             _sub(w, "parentid", r.parent_id if r.parent_id and getattr(r, "included", False) else "")
             _sub(w, "discountedcost", "True" if getattr(r, "discounted", False) else "False")
             _sub(w, "essdiscount", getattr(r, "ess_discount", 0) or 0)
+            # the `...nonretroactive` multipliers the piece holds in career
+            # (`Cyberware.Load` takes 0 and 1 for a piece without them)
+            _sub(w, "extraessadditivemultiplier", _plain_decimal(getattr(r, "ess_extra_additive", None) or 0.0))
+            _sub(
+                w,
+                "extraessmultiplicativemultiplier",
+                _plain_decimal(
+                    1.0 if getattr(r, "ess_extra_multiplicative", None) is None else r.ess_extra_multiplicative
+                ),
+            )
             kind = "cyberware" if r.ware_id in _definitions("cyberware") else "bioware"
             _sub(w, "improvementsource", kind.capitalize())
             _from_data(w, kind, r.ware_id, included=bool(getattr(r, "included", False)))

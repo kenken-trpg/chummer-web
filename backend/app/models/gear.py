@@ -36,6 +36,13 @@ class CyberwareInstall(BaseModel):
     #: `<prototypetranshuman>`). None on every piece: nothing ticked yet, and
     #: the engine picks the set that waives the most.
     prototype_transhuman: bool | None = None
+    #: the `...nonretroactive` essence multipliers this piece holds in career
+    #: (Chummer's `<extraessadditivemultiplier>`, added to the grade's, and
+    #: `<extraessmultiplicativemultiplier>`): what they were on entering
+    #: career, or when it was bought there. None until the engine keeps them,
+    #: on the first career compute that sees the piece; dropped in chargen.
+    ess_extra_additive: float | None = None
+    ess_extra_multiplicative: float | None = None
 
 
 class ArmorInstall(BaseModel):

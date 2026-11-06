@@ -88,6 +88,14 @@ export interface WareInstall {
    *  the engine picks the set that waives the most.
    */
   prototype_transhuman?: boolean | null;
+  /** the `...nonretroactive` essence multipliers this piece holds in career
+   *  (Chummer's `<extraessadditivemultiplier>`, added to the grade's, and
+   *  `<extraessmultiplicativemultiplier>`): what they were on entering
+   *  career, or when it was bought there. None until the engine keeps them,
+   *  on the first career compute that sees the piece; dropped in chargen.
+   */
+  ess_extra_additive?: number | null;
+  ess_extra_multiplicative?: number | null;
 }
 
 export interface AdeptPowerInstall {
