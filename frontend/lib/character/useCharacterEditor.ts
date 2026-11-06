@@ -53,6 +53,9 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
   const history = useCharacterHistory();
   const lastCommitted = useRef<Character | null>(null);
   const busy = useRef(false);
+  /** Character transitions wait for the current server + IndexedDB commit. */
+  const idleWaiters = useRef<Array<() => void>>([]);
+  const transition = useRef(0);
   /** The body on the wire, and the one edit held back behind it. Both are
    *  only set while `busy`, so the unload guard below already covers them. */
   const inFlight = useRef<Record<string, unknown> | null>(null);
@@ -82,13 +85,19 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     return () => window.removeEventListener("beforeunload", guard);
   }, []);
 
-  function remember(c: Character) {
+  async function remember(c: Character) {
+    await waitForIdle();
     setCh(c);
     lastCommitted.current = c;
     history.reset();
     try {
       localStorage.setItem("lastCharacterId", c.id);
     } catch {}
+  }
+  /** Wait for the current patch to finish its server recompute and IndexedDB write. */
+  function waitForIdle(): Promise<void> {
+    if (!busy.current) return Promise.resolve();
+    return new Promise((resolve) => idleWaiters.current.push(resolve));
   }
   async function refreshRoster() {
     setRoster(await api.list().catch(() => []));
@@ -125,9 +134,9 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
       opened = await api.get(last).catch(() => null);
     }
     if (opened) {
-      remember(opened);
+      await remember(opened);
     } else {
-      remember(await api.create("Runner"));
+      await remember(await api.create("Runner"));
       void refreshRoster();
     }
   });
@@ -147,8 +156,12 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
 
   async function openCharacter(id: string) {
     if (!id || id === ch?.id) return;
+    const request = ++transition.current;
     try {
-      remember(await api.get(id));
+      await waitForIdle();
+      const opened = await api.get(id);
+      if (request !== transition.current) return;
+      await remember(opened);
       onCharacterOpened?.();
       // Picked back up rather than dropped: a character imported from a
       // template keeps the rows nobody has settled yet.
@@ -161,8 +174,12 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
   /** Returns false when the backend refused — `deleteCurrent` needs to know,
    *  and the Toolbar's "＋ 新規キャラ" must not reject unhandled. */
   async function newCharacter(): Promise<boolean> {
+    const request = ++transition.current;
     try {
-      remember(await api.create("Runner"));
+      await waitForIdle();
+      const created = await api.create("Runner");
+      if (request !== transition.current) return false;
+      await remember(created);
       onCharacterOpened?.();
       void refreshRoster();
       setError(null);
@@ -173,6 +190,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     }
   }
   async function deleteCurrent() {
+    await waitForIdle();
     if (!ch) return;
     if (!window.confirm(ui("app.confirm.delete", { name: ch.name || ui("app.unnamed") }))) return;
     const others = roster.filter((r) => r.id !== ch.id);
@@ -186,6 +204,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     void refreshRoster();
   }
   async function duplicateCurrent() {
+    await waitForIdle();
     if (!ch) return;
     const fallbackName = ui("app.copyOf", { name: ch.name || ui("app.unnamed") });
     const name = window.prompt(ui("app.prompt.duplicateName"), fallbackName);
@@ -194,7 +213,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
       const { id: _id, derived: _d, ...rest } = ch;
       void _id;
       void _d;
-      remember(await api.import({ ...rest, name: name || fallbackName }));
+      await remember(await api.import({ ...rest, name: name || fallbackName }));
       onCharacterOpened?.();
       void refreshRoster();
     } catch (e) {
@@ -261,6 +280,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
       inFlight.current = null;
       queued.current = null;
       updaters.current = [];
+      for (const resolve of idleWaiters.current.splice(0)) resolve();
     }
   }
 

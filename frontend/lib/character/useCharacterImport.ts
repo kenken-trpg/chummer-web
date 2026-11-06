@@ -30,7 +30,7 @@ function isFvttActor(payload: unknown): boolean {
 export function useCharacterImport(opts: {
   ch: Character | null;
   ui: UiFn;
-  remember: (c: Character) => void;
+  remember: (c: Character) => Promise<void>;
   refreshRoster: () => Promise<void>;
   setError: (message: string | null) => void;
   onCharacterOpened?: () => void;
@@ -83,8 +83,8 @@ export function useCharacterImport(opts: {
   /** What both ways into a キャラシテンプレート do once the sheet has been read:
    *  open it, put its unsettled 装備 rows in front of the player, and say what
    *  the sheet could not be taken at its word on. */
-  function openTemplateImport(res: XlsxImport) {
-    remember(res.character);
+  async function openTemplateImport(res: XlsxImport) {
+    await remember(res.character);
     onCharacterOpened?.();
     savePendingGear(res.character.id, res.pending_gear);
     readPendingGear(res.character.id);
@@ -103,7 +103,7 @@ export function useCharacterImport(opts: {
     setError(null);
     setImportReport(null);
     try {
-      openTemplateImport(await api.importSheetUrl(url));
+      await openTemplateImport(await api.importSheetUrl(url));
     } catch (e) {
       setError(errorMessage(e, ui, "app.err.load"));
       throw e;
@@ -115,7 +115,7 @@ export function useCharacterImport(opts: {
     setImportReport(null);
     try {
       if (/\.xlsx$/i.test(file.name)) {
-        openTemplateImport(await api.importXlsx(await file.arrayBuffer()));
+        await openTemplateImport(await api.importXlsx(await file.arrayBuffer()));
         return;
       }
       const payload = /\.chum5(lz)?$/i.test(file.name) ? null : JSON.parse(await file.text());
@@ -124,11 +124,11 @@ export function useCharacterImport(opts: {
           payload === null
             ? await api.importChummer(await file.arrayBuffer())
             : await api.importFvtt(payload);
-        remember(character);
+        await remember(character);
         onCharacterOpened?.();
         reportImport(warnings);
       } else {
-        remember(await api.import(payload));
+        await remember(await api.import(payload));
         onCharacterOpened?.();
       }
       void refreshRoster();
