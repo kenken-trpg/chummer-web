@@ -166,6 +166,13 @@
       → 2026-11-06 に直した（下）。Blindfire は一致し、Bastion は Adapsin の 0.04 だけ。
     - Bastion は、さらに 5.202 の Adapsin（合計の倍率 90 の改善効果）。今のデータでは Adapsin はグレード（Used (Adapsin) など）で、
       このアプリはそちらで計算するので 0.04 ずれる。
+      → 2026-11-06 に調べた：Bastion は Chummer 同梱のカスタムデータ「Adapsin Applied as Multiplier, Not Grade」を使っている
+      （セーブの `<customdatadirectorynames>`）。今のデータの値としては 1.04 が正しい。このカスタムデータのファイル名
+      `amend_AdapsinMultiplier_bioware.xml` をこのアプリが読み飛ばしていたのと、その改善効果
+      `cyberwaretotalessmultipliernonretroactive` が未実装だったのを直し、読み込めば 1.00 で一致する。
+    - 残り：`...nonretroactive` の倍率を、キャリアでもふつうの倍率として全部のウェアに掛けている。Chummer はキャリアでは
+      品目ごとに買ったときの倍率を持つ（`<extraessadditivemultiplier>`・`<extraessmultiplicativemultiplier>`。作成中に買った分は
+      作成完了の時点の値）。キャリアで倍率の元（Adapsin など）を足したり外したりしたときだけずれる。取り込みもこの 2 つを読まない。
     - Fuzzy-chargen：保存値が 1.74500 で、エッセンスを丸めない Chummer で保存されている。丸めれば 1.74 で正しい。
 - [x] **Prototype Transhuman で無料にするバイオウェアを選ぶ**（2026-11-06）
   - バイオウェアの行に `prototype_transhuman`（True / False / None）を持つ。どの行も None なら、今までどおりいちばん多く

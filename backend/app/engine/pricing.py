@@ -38,9 +38,8 @@ def apply_ware_essence_multipliers(
     """
     cmult = int(effects.get("cyberware_ess_multiplier") or 100)
     bmult = int(effects.get("bioware_ess_multiplier") or 100)
-    tmult = int(effects.get("cyberware_total_ess_multiplier") or 100)
-    _work_out_essence(cyber, cmult, tmult)
-    _work_out_essence(bio, bmult, 100)
+    _work_out_essence(cyber, cmult, int(effects.get("cyberware_total_ess_multiplier") or 100))
+    _work_out_essence(bio, bmult, int(effects.get("bioware_total_ess_multiplier") or 100))
     free_bio = max(0.0, float(effects.get("prototype_transhuman_ess") or 0))
     if free_bio > 0:
         picked = _ticked_pieces(bio)

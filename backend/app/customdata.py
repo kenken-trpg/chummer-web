@@ -276,13 +276,22 @@ def apply_custom(base: ET.Element, custom: ET.Element, source: str, report: Merg
 _PREFIXES = ("custom_", "amend_", "override_")
 
 
-def base_file_of(filename: str) -> str | None:
-    """The vendored data file a custom-data file applies to, or `None` if the
-    name is not one of Chummer's."""
+def base_files_of(filename: str) -> list[str]:
+    """The data files a custom-data file could apply to, longest name first;
+    empty if the name is not one of Chummer's.
+
+    Chummer looks for `*_<file>` beside each data file it loads
+    (`XmlManager`), so a pack may put a tag between the prefix and the file:
+    `amend_AdapsinMultiplier_bioware.xml` is an amend of `bioware.xml`, and
+    `amend_german_books.xml` one of `books.xml`. Which of these names a real
+    data file is for the caller to find out.
+    """
     for prefix in _PREFIXES:
         if filename.startswith(prefix):
-            return filename[len(prefix) :]
-    return None
+            rest = filename[len(prefix) :]
+            parts = rest.split("_")
+            return ["_".join(parts[i:]) for i in range(len(parts)) if parts[i]]
+    return []
 
 
 def _directory_of(path: str) -> str:
@@ -341,16 +350,17 @@ def build_overlay(
             if _directory_of(path) != directory:
                 continue
             filename = path.rsplit("/", 1)[-1]
-            base_name = base_file_of(filename)
-            if base_name is None:
+            names = base_files_of(filename)
+            if not names:
                 continue  # manifest.xml, or something Chummer would ignore too
-            base = base_tree(base_name)
-            if base is None:
+            found = [(name, tree) for name in names if (tree := base_tree(name)) is not None]
+            if not found:
                 # `critters.xml`, `lifemodules.xml`: real Chummer data this app
                 # does not load. The pack is fine; this part of it has nowhere
                 # to go, which is a different thing from a rule that failed.
-                report.ignored.append(base_name)
+                report.ignored.append(names[-1])
                 continue
+            base_name, base = found[0]
             text = files[path].decode("utf-8-sig", errors="replace")
             if "<chummer" not in text:
                 # A placeholder: several published packs ship a licence header
