@@ -489,7 +489,24 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('frontend/package-lock.json') }}
 
-      - working-directory: frontend
+      # The Azure mirror took 9m17s to transfer 15.5 MB in run 42213138114.
+      # This runner is disposable: use Ubuntu's primary mirror and bound each
+      # stalled connection, including the apt subprocess Playwright starts.
+      - name: Configure APT for browser dependencies
+        run: |
+          sudo tee /etc/apt/apt.conf.d/99-e2e-network >/dev/null <<'EOF'
+          Acquire::Retries "2";
+          Acquire::http::Timeout "20";
+          Acquire::https::Timeout "20";
+          EOF
+          for source in /etc/apt/apt-mirrors.txt /etc/apt/sources.list /etc/apt/sources.list.d/ubuntu.sources; do
+            if [ -f "$source" ]; then
+              sudo sed -i 's@http[s]\?://azure.archive.ubuntu.com/ubuntu@https://archive.ubuntu.com/ubuntu@g' "$source"
+            fi
+          done
+
+      - name: Install browser system dependencies
+        working-directory: frontend
         run: ../scripts/retry.sh npx playwright install-deps chromium
 
       - if: steps.playwright-cache.outputs.cache-hit != 'true'
@@ -515,10 +532,23 @@ jobs:
       - working-directory: frontend
         run: npm run test:e2e
 
-      # The trace of every failed attempt, flaky ones included: a test that
-      # failed once and passed on the retry leaves the job green, and that is
-      # the case with nothing else to go on. `failure()` skipped exactly those,
-      # and `playwright-report/` was empty besides: the CI reporter is
+      - name: Summarize E2E attempts and timings
+        if: ${{ !cancelled() }}
+        run: python3 scripts/summarize_e2e.py frontend/test-results/results.json
+
+      - name: Upload E2E results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: playwright-results
+          path: frontend/test-results/results.json
+          if-no-files-found: warn
+          retention-days: 14
+
+      # The trace of every failed attempt. Before failOnFlakyTests was set,
+      # `failure()` lost the evidence when a retry passed. Keep collecting it
+      # independently of the job outcome; `playwright-report/` was empty too:
+      # the CI console reporter is
       # `github`, which writes no HTML report. Traces and screenshots are
       # under test-results/ (playwright.config.ts: retain-on-failure); named
       # file by file, since `.last-run.json` is there after a clean run too

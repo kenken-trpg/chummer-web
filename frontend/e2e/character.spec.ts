@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { openExportMenu, waitForEditor, watchCsp } from "./helpers";
+import { currentCharacter, openExportMenu, waitForEditor, watchCsp } from "./helpers";
 
 /**
  * The one flow the unit suite structurally cannot cover: a character is created
@@ -19,17 +19,21 @@ test("a character survives a reload and exports to .chum5", async ({ page }) => 
   await name.fill("Testrunner");
   // the editor patches on blur, so move focus before asserting anything
   await name.blur();
+  await expect.poll(async () => (await currentCharacter(page)).name).toBe("Testrunner");
 
   // Edit through the engine: pick a metatype and let the sidebar totals move.
   // exact: the priority table's Heritage cells read 全てのメタタイプ, and the
   // tab labels are short enough that a substring match reaches into the panel
   await page.getByRole("button", { name: "メタタイプ", exact: true }).click();
   await page.getByRole("button", { name: /Ork/ }).first().click();
+  await expect.poll(async () => (await currentCharacter(page)).metatype).toBe("Ork");
 
   await page.getByRole("button", { name: "能力値", exact: true }).click();
   const body = page.getByRole("slider").first();
+  const before = Number(await body.inputValue());
   await body.focus();
   await page.keyboard.press("ArrowRight");
+  await expect.poll(async () => (await currentCharacter(page)).attributes.BOD).toBe(before + 1);
 
   // A reload proves IndexedDB, not React state: the roster picker is populated
   // from storage on boot and `lastCharacterId` decides which one opens.
@@ -39,6 +43,8 @@ test("a character survives a reload and exports to .chum5", async ({ page }) => 
   await expect(page.getByRole("combobox", { name: "保存済みキャラクター" })).toContainText(
     "Testrunner",
   );
+  await expect.poll(async () => (await currentCharacter(page)).metatype).toBe("Ork");
+  await expect.poll(async () => (await currentCharacter(page)).attributes.BOD).toBe(before + 1);
 
   // The export round-trips the stored state through the backend's XML writer.
   await openExportMenu(page);
@@ -61,6 +67,7 @@ test("the sheet renders and a share link round-trips through the URL fragment", 
   await waitForEditor(page);
   await page.getByRole("textbox", { name: "キャラクター名" }).fill("Sharetest");
   await page.getByRole("textbox", { name: "キャラクター名" }).blur();
+  await expect.poll(async () => (await currentCharacter(page)).name).toBe("Sharetest");
 
   // exact: the toolbar also has a "シート表示" button
   await page.getByRole("button", { name: "シート", exact: true }).click();
@@ -86,9 +93,29 @@ test("a .chum5 written by this app is readable by it again", async ({ page }) =>
   await page.goto("/");
   await waitForEditor(page);
 
+  // Hold the real engine response to exercise the interval where the name
+  // field already says Roundtrip but exporting would still use Runner.
+  let release!: () => void;
+  let started!: () => void;
+  const responseGate = new Promise<void>((resolve) => (release = resolve));
+  const patchStarted = new Promise<void>((resolve) => (started = resolve));
+  await page.route("**/api/characters/patch", async (route) => {
+    const response = await route.fetch();
+    started();
+    await responseGate;
+    await route.fulfill({ response });
+  });
   const name = page.getByRole("textbox", { name: "キャラクター名" });
   await name.fill("Roundtrip");
   await name.blur();
+  await patchStarted;
+  try {
+    await expect(name).toHaveValue("Roundtrip");
+    expect((await currentCharacter(page)).name).not.toBe("Roundtrip");
+  } finally {
+    release();
+  }
+  await expect.poll(async () => (await currentCharacter(page)).name).toBe("Roundtrip");
 
   await openExportMenu(page);
   const download = await Promise.all([

@@ -32,7 +32,13 @@ export default defineConfig({
   workers: process.env.CI ? 4 : undefined,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
-  reporter: process.env.CI ? "github" : "list",
+  // Retrying keeps the trace useful, but a second-attempt pass must not hide
+  // a race from ci-ok. JSON records every attempt, also on a successful run.
+  failOnFlakyTests: !!process.env.CI,
+  reporter: [
+    [process.env.CI ? "github" : "list"],
+    ["json", { outputFile: "test-results/results.json" }],
+  ],
 
   use: {
     baseURL: "http://127.0.0.1:3100",
@@ -63,7 +69,9 @@ export default defineConfig({
       // sets it in the Worker (`deploy/cloudflare/src/index.ts`), so raising
       // it for a trusted single-client run costs no coverage.
       env: { IMPORT_RATE_LIMIT: "200/minute" },
-      url: "http://127.0.0.1:8100/api/health",
+      // Health only means uvicorn bound its socket. Wait for the catalog
+      // warm-up too, so the first parallel tests do not race its startup.
+      url: "http://127.0.0.1:8100/api/ready",
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
     },

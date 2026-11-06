@@ -3,6 +3,8 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { deflateRawSync, inflateRawSync } from "node:zlib";
 import { expect, type APIRequestContext, type Page } from "@playwright/test";
+import type { StoredCharacter } from "../lib/character/local-store";
+import type { Character } from "../lib/types";
 
 /** The editor mints a character on first load; wait for the toolbar it fills. */
 export async function waitForEditor(page: Page) {
@@ -57,23 +59,40 @@ export async function freshCharacter(
 
 /**
  * The characters in the page's IndexedDB, read directly. For waiting on a
- * write the UI does not announce: a patch resolves before its record is stored.
+ * write the UI does not announce: an HTTP response can arrive before its
+ * record is stored.
  */
-export function storedCharacters(
-  page: Page,
-): Promise<{ name: string; settings?: { dataset?: string } }[]> {
+export function storedCharacters(page: Page): Promise<Character[]> {
   return page.evaluate(
     () =>
       new Promise((resolve, reject) => {
         const open = indexedDB.open("chummer-web");
         open.onerror = () => reject(open.error);
         open.onsuccess = () => {
-          const all = open.result.transaction("characters").objectStore("characters").getAll();
-          all.onerror = () => reject(all.error);
-          all.onsuccess = () => resolve(all.result.map((r) => r.character));
+          const db = open.result;
+          const tx = db.transaction("characters");
+          const all: IDBRequest<StoredCharacter[]> = tx.objectStore("characters").getAll();
+          // Match the app's persistence boundary: a request event alone is
+          // not a committed transaction. Polling must also close its handles.
+          tx.oncomplete = () => {
+            db.close();
+            resolve(all.result.map((r) => r.character));
+          };
+          tx.onabort = tx.onerror = () => {
+            db.close();
+            reject(tx.error ?? new Error("Reading stored characters failed"));
+          };
         };
       }),
   );
+}
+
+/** Read the selected, committed record rather than whichever id sorts first. */
+export async function currentCharacter(page: Page): Promise<Character> {
+  const id = await page.evaluate(() => localStorage.getItem("lastCharacterId"));
+  const character = (await storedCharacters(page)).find((row) => row.id === id);
+  if (!character) throw new Error(`Selected character ${id} is not stored yet`);
+  return character;
 }
 
 /**
