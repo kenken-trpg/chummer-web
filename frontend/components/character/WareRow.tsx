@@ -10,6 +10,7 @@ import { SkillPickSelects } from "@/components/character/SkillPickSelects";
 import { BlackMarketTip } from "@/components/character/DiscountToggle";
 import { HelpTip } from "@/components/help/HelpTip";
 import { PriceField } from "@/components/character/tabs/gear/PriceField";
+import { BoundedNumberInput } from "@/components/character/BoundedNumberInput";
 import { useUiText } from "@/lib/i18n";
 
 export function WareRow(props: {
@@ -268,12 +269,11 @@ export function WareRow(props: {
           {spec && ratingMax > ratingMin && !locked ? (
             <label>
               {ui("common.rating")}
-              <input
-                type="number"
+              <BoundedNumberInput
                 min={ratingMin}
                 max={ratingMax}
                 value={item.rating}
-                onChange={(e) => onPatchRow(item.id, { rating: Number(e.target.value) })}
+                onCommit={(rating) => onPatchRow(item.id, { rating })}
               />
             </label>
           ) : null}
