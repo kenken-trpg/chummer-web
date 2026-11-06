@@ -191,6 +191,10 @@ export const EN_ENGINE = {
   "engine.spend.adeptPower": "Adept / qi / foci",
   "engine.spend.armor": "Armor",
   "engine.spend.armorMods": "Armor mods",
+  "engine.career.attributeBelowChargen":
+    "Attribute {name} cannot go under its chargen {floor} in career (put back from {asked})",
+  "engine.career.skillBelowChargen":
+    "{name} cannot go under its chargen {floor} in career (put back from {asked})",
   "engine.spend.attribute": "Attribute {name} {before}→{after}",
   "engine.spend.attributesKarma": "Attributes (karma build)",
   "engine.spend.bioware": "Bioware",

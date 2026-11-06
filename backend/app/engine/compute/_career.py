@@ -10,7 +10,7 @@ from typing import Any
 
 from ...improvements import EffectsDict, empty_effects
 from ...models import CareerBaseline, CharacterState
-from ...notices import notice, term
+from ...notices import Notice, notice, term
 from ...rules import current_rules
 from ..bundle_types import GearBundle
 from ..karma import (
@@ -50,6 +50,62 @@ def snapshot_career_baseline(state: CharacterState) -> CareerBaseline:
         item_ids=sorted({str(row.id) for field in _ITEM_FIELDS for row in getattr(state, field) or []}),
         mystic_pp=int(state.mystic_pp or 0),
     )
+
+
+#: The rated fields a career rating may not go under the baseline's in, and
+#: the notice each says so with.
+_FLOORED = (
+    ("attributes", "engine.career.attributeBelowChargen"),
+    ("skill_groups", "engine.career.skillBelowChargen"),
+    ("skills", "engine.career.skillBelowChargen"),
+    ("knowledge_skills", "engine.career.skillBelowChargen"),
+)
+
+
+def hold_career_floors(state: CharacterState) -> list[Notice]:
+    """Put back any rating set under the one it had on entering career.
+
+    Chummer has no way to lower an attribute or a skill after creation, nor to
+    delete a skill bought then, so the karma chargen paid for it never comes
+    back. This app prices karma from the ratings held, so a lower rating would
+    give it back. The editors stop at the baseline (`career-floor.ts`); this is
+    the same stop for whatever else writes a state — an API client, a pasted
+    JSON, a sheet edited by hand. A knowledge skill deleted comes back at its
+    chargen rating, and an exotic skill row is kept at its own; one deleted
+    outright cannot be rebuilt from the baseline, which holds only its rating.
+    """
+    baseline = state.career_baseline
+    if not state.career or baseline is None:
+        return []
+    out: list[Notice] = []
+    for field, key in _FLOORED:
+        floors = getattr(baseline, field) or {}
+        held = getattr(state, field)
+        if held is None:
+            held = {}
+            setattr(state, field, held)
+        for name, floor in floors.items():
+            if field == "attributes" and name == "ESS":
+                continue
+            now = int(held.get(name) or 0)
+            if now < int(floor):
+                held[name] = int(floor)
+                label = name if field == "attributes" else term(name)
+                out.append(notice(key, name=label, asked=now, floor=int(floor)))
+    exotic_floors = baseline.exotic_skills or {}
+    for row in state.exotic_skills or []:
+        floor = int(exotic_floors.get(str(row.id), 0))
+        if int(row.rating or 0) < floor:
+            out.append(
+                notice(
+                    "engine.career.skillBelowChargen",
+                    name=term(exotic_skill_label(str(row.skill_name), str(row.extra or ""))),
+                    asked=int(row.rating or 0),
+                    floor=floor,
+                )
+            )
+            row.rating = floor
+    return out
 
 
 #: The `CharacterState` lists whose rows a career purchase is told apart by:
