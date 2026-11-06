@@ -104,6 +104,7 @@ def test_the_record_is_made_on_the_first_career_pass_and_kept() -> None:
         "foci": {},
         "initiation": {},
         "submersion": {},
+        "specializations": {},
     }
 
 
