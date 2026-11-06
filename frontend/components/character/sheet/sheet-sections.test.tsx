@@ -449,7 +449,7 @@ describe("the sheet's tables and blocks explain themselves like the tabs do", ()
   it("the matrix table explains DR, the four attributes and the condition monitor", () => {
     const got = tips(render(<MatrixSection {...s} />).container);
     const text = got["マトリックス値 の説明"];
-    for (const part of ["DR（機器レーティング）", "アタック", "スリーズ", "データプロセシング"]) {
+    for (const part of ["DR（機器レーティング）", "アタック", "スリーズ", "データ処理"]) {
       expect(text).toContain(part);
     }
     // bindRuns keeps the operators with their operands: no-break spaces
