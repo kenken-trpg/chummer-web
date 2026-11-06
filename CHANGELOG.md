@@ -3,6 +3,12 @@
 Notable changes. Format follows [Keep a Changelog](https://keepachangelog.com/);
 self-hosters can pin to a tag instead of tracking `main`.
 
+## [0.5.26] — 2026-11-06
+
+### Fixed
+
+- **キャリアで、能力値・技能を作成時の値より下げた状態を読み込んでも、カルマが戻らないようにしました**：v0.5.22 で画面のスライダーは作成時の値で止めましたが、計算は持っている値からカルマを出し直すので、JSON の取り込みや API で低い値を書き込むと、作成時に払ったカルマが戻っていました。今は計算の側でも、能力値・技能・技能グループ・知識技能・エキゾチック技能を作成時の値に戻し、そうしたことを警告に出します。消された作成時の知識技能も戻します。
+
 ## [0.5.25] — 2026-11-06
 
 ### Fixed
@@ -3013,7 +3019,8 @@ First tagged release.
 - One-container Docker image (Caddy + uvicorn + Next standalone) published to
   GHCR; `make up` / `compose.yaml` for local self-hosting.
 
-[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.25...HEAD
+[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.26...HEAD
+[0.5.26]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.25...v0.5.26
 [0.5.25]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.24...v0.5.25
 [0.5.24]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.23...v0.5.24
 [0.5.23]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.22...v0.5.23
