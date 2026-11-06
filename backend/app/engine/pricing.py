@@ -35,11 +35,23 @@ def apply_ware_essence_multipliers(
     multiplies what that gives. Each piece is then rounded to two places,
     away from zero, unless the settings say not to round essence; a piece
     that adds to its parent's essence is added after its own rounding.
+
+    The `...nonretroactive` multipliers count the same way, from what a
+    piece holds (`ess_extra_add` / `ess_extra_mult`, which career sets,
+    `essence.py`) or, on a piece that holds none, from the live bonus.
     """
-    cmult = int(effects.get("cyberware_ess_multiplier") or 100)
-    bmult = int(effects.get("bioware_ess_multiplier") or 100)
-    _work_out_essence(cyber, cmult, int(effects.get("cyberware_total_ess_multiplier") or 100))
-    _work_out_essence(bio, bmult, int(effects.get("bioware_total_ess_multiplier") or 100))
+    _work_out_essence(
+        cyber,
+        int(effects.get("cyberware_ess_multiplier") or 100),
+        int(effects.get("cyberware_total_ess_multiplier") or 100),
+        nonretroactive_multipliers(effects, "cyberware"),
+    )
+    _work_out_essence(
+        bio,
+        int(effects.get("bioware_ess_multiplier") or 100),
+        int(effects.get("bioware_total_ess_multiplier") or 100),
+        nonretroactive_multipliers(effects, "bioware"),
+    )
     free_bio = max(0.0, float(effects.get("prototype_transhuman_ess") or 0))
     if free_bio > 0:
         picked = _ticked_pieces(bio)
@@ -58,14 +70,31 @@ def _round_essence(value: float) -> float:
     return float(Decimal(str(round(value, 6))).quantize(Decimal("0.01"), ROUND_HALF_UP))
 
 
-def _work_out_essence(items: list[dict[str, Any]], mult_pct: int, total_pct: int) -> None:
+def nonretroactive_multipliers(effects: EffectsDict, kind: str) -> tuple[float, float]:
+    """What the `...nonretroactive` bonuses of `kind` ("cyberware" or
+    "bioware") add to a piece's grade and multiply its essence by, as
+    Chummer keeps them on it (`Cyberware.SaveNonRetroactiveEssenceModifiers`)."""
+    if kind == "cyberware":
+        add = int(effects.get("cyberware_ess_multiplier_nonretro") or 100)
+        total = int(effects.get("cyberware_total_ess_multiplier_nonretro") or 100)
+    else:
+        add = int(effects.get("bioware_ess_multiplier_nonretro") or 100)
+        total = int(effects.get("bioware_total_ess_multiplier_nonretro") or 100)
+    return (add - 100) / 100.0, total / 100.0
+
+
+def _work_out_essence(
+    items: list[dict[str, Any]], mult_pct: int, total_pct: int, live: tuple[float, float] = (0.0, 1.0)
+) -> None:
     own: dict[str, float] = {}
     for item in items:
         if "ess_raw" not in item:
             continue
         grade = float(item.get("ess_grade") or 1)
         if item.get("ess_multiplied", True):
-            modifier = max(0.0, (grade + mult_pct / 100.0 - 1.0) * total_pct / 100.0)
+            extra_add = float(item.get("ess_extra_add", live[0]))
+            extra_mult = float(item.get("ess_extra_mult", live[1]))
+            modifier = max(0.0, (grade + extra_add + mult_pct / 100.0 - 1.0) * total_pct / 100.0 * extra_mult)
         else:
             modifier = grade
         own[str(item["id"])] = _round_essence(float(item["ess_raw"] or 0) * modifier)

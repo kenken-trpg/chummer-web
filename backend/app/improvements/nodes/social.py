@@ -203,52 +203,64 @@ def _ambidextrous(tag: str, node: dict[str, Any], fields: dict[str, Any], effect
 
 
 # The `...nonretroactive` twins are what Chummer applies only to ware bought
-# after the bonus: it keeps them on each piece once the character is created
-# (`Cyberware.SaveNonRetroactiveEssenceModifiers`), but while it is being
-# built they count on every piece like the plain ones (`CalculatedESS` reads
-# both while `!Created`). This app reads them as the plain ones in career too;
-# see docs/TODO.md.
+# under them. While the character is being built they count on every piece
+# like the plain ones (`Cyberware.CalculatedESS` reads both while
+# `!Created`); on entering career, and on each piece bought there, Chummer
+# keeps their value on the piece (`SaveNonRetroactiveEssenceModifiers`) and
+# reads only that. So they are kept under their own keys, `_nonretro`.
+
+
+def _added(held: int | None, node: dict[str, Any]) -> int:
+    # Chummer adds these up (each takes `1 - value/100` off the grade's
+    # multiplier, `Cyberware.CalculatedESS`), so two 90s are 80, not 81.
+    return int(held or 100) + _as_int(node.get("value"), 100) - 100
+
+
+def _multiplied(held: int | None, node: dict[str, Any]) -> int:
+    # the total ones multiply (`decTotalESSMultiplier *= value / 100`)
+    return int(round(int(held or 100) * _as_int(node.get("value"), 100) / 100.0))
 
 
 @handles("cyberwareessmultiplier", "cyberwareessmultipliernonretroactive")
 def _cyberwareessmultiplier(
     tag: str, node: dict[str, Any], fields: dict[str, Any], effects: EffectsDict, source: str
 ) -> None:
-    # Chummer adds these up (each takes `1 - value/100` off the grade's
-    # multiplier, `Cyberware.CalculatedESS`), so two 90s are 80, not 81.
-    effects["cyberware_ess_multiplier"] = (
-        int(effects.get("cyberware_ess_multiplier") or 100) + _as_int(node.get("value"), 100) - 100
-    )
+    if tag.endswith("nonretroactive"):
+        effects["cyberware_ess_multiplier_nonretro"] = _added(effects.get("cyberware_ess_multiplier_nonretro"), node)
+    else:
+        effects["cyberware_ess_multiplier"] = _added(effects.get("cyberware_ess_multiplier"), node)
 
 
 @handles("biowareessmultiplier", "biowareessmultipliernonretroactive")
 def _biowareessmultiplier(
     tag: str, node: dict[str, Any], fields: dict[str, Any], effects: EffectsDict, source: str
 ) -> None:
-    # Chummer adds these up (each takes `1 - value/100` off the grade's
-    # multiplier, `Cyberware.CalculatedESS`), so two 90s are 80, not 81.
-    effects["bioware_ess_multiplier"] = (
-        int(effects.get("bioware_ess_multiplier") or 100) + _as_int(node.get("value"), 100) - 100
-    )
+    if tag.endswith("nonretroactive"):
+        effects["bioware_ess_multiplier_nonretro"] = _added(effects.get("bioware_ess_multiplier_nonretro"), node)
+    else:
+        effects["bioware_ess_multiplier"] = _added(effects.get("bioware_ess_multiplier"), node)
 
 
 @handles("cyberwaretotalessmultiplier", "cyberwaretotalessmultipliernonretroactive")
 def _cyberwaretotalessmultiplier(
     tag: str, node: dict[str, Any], fields: dict[str, Any], effects: EffectsDict, source: str
 ) -> None:
-    # these multiply (`decTotalESSMultiplier *= value / 100`)
-    effects["cyberware_total_ess_multiplier"] = int(
-        round(int(effects.get("cyberware_total_ess_multiplier") or 100) * _as_int(node.get("value"), 100) / 100.0)
-    )
+    if tag.endswith("nonretroactive"):
+        key_value = effects.get("cyberware_total_ess_multiplier_nonretro")
+        effects["cyberware_total_ess_multiplier_nonretro"] = _multiplied(key_value, node)
+    else:
+        effects["cyberware_total_ess_multiplier"] = _multiplied(effects.get("cyberware_total_ess_multiplier"), node)
 
 
 @handles("biowaretotalessmultiplier", "biowaretotalessmultipliernonretroactive")
 def _biowaretotalessmultiplier(
     tag: str, node: dict[str, Any], fields: dict[str, Any], effects: EffectsDict, source: str
 ) -> None:
-    effects["bioware_total_ess_multiplier"] = int(
-        round(int(effects.get("bioware_total_ess_multiplier") or 100) * _as_int(node.get("value"), 100) / 100.0)
-    )
+    if tag.endswith("nonretroactive"):
+        key_value = effects.get("bioware_total_ess_multiplier_nonretro")
+        effects["bioware_total_ess_multiplier_nonretro"] = _multiplied(key_value, node)
+    else:
+        effects["bioware_total_ess_multiplier"] = _multiplied(effects.get("bioware_total_ess_multiplier"), node)
 
 
 @handles("essencemax")

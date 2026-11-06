@@ -151,6 +151,12 @@ class EffectsDict(TypedDict):
     bioware_ess_multiplier: int
     cyberware_total_ess_multiplier: int
     bioware_total_ess_multiplier: int
+    #: the `...nonretroactive` twins of the four above, kept apart: in career
+    #: they count only on the ware bought under them (`pricing.py`)
+    cyberware_ess_multiplier_nonretro: int
+    bioware_ess_multiplier_nonretro: int
+    cyberware_total_ess_multiplier_nonretro: int
+    bioware_total_ess_multiplier_nonretro: int
     essence_max_mod: int
     disable_bioware: bool
     special_modification_limit: int
@@ -387,6 +393,10 @@ def empty_effects() -> EffectsDict:
         "bioware_ess_multiplier": 100,
         "cyberware_total_ess_multiplier": 100,
         "bioware_total_ess_multiplier": 100,
+        "cyberware_ess_multiplier_nonretro": 100,
+        "bioware_ess_multiplier_nonretro": 100,
+        "cyberware_total_ess_multiplier_nonretro": 100,
+        "bioware_total_ess_multiplier_nonretro": 100,
         "essence_max_mod": 0,
         "disable_bioware": False,
         "disabled_cyberware_grades": [],

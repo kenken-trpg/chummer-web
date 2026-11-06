@@ -21,6 +21,13 @@ _GRADE_NAMES = {
 }
 
 
+def _decimal(node: ET.Element | None, default: float) -> float:
+    try:
+        return float(_text(node)) if _text(node) else default
+    except ValueError:
+        return default
+
+
 def _grade_name(node: ET.Element) -> str:
     raw = _text(node.find("grade")) or "Standard"
     return _GRADE_NAMES.get(raw, raw)
@@ -57,6 +64,10 @@ def _import_ware(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
     except ValueError:
         proto = False
     bio_kind = ui("engine.kind.bioware")
+    # A created character's ware holds the `...nonretroactive` essence
+    # multipliers it was bought under; Chummer reads them as 0 and 1 when the
+    # save has none (`Cyberware.Load`). In chargen they are worked out live.
+    created = _text(root.find("created")).lower() == "true"
 
     def load_ware(nodes: list[ET.Element], kind: Phrase) -> list[dict[str, Any]]:
         out: list[dict[str, Any]] = []
@@ -83,6 +94,9 @@ def _import_ware(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
             ticked = w.find("prototypetranshuman")
             if proto and kind == bio_kind and ticked is not None and _text(ticked):
                 row["prototype_transhuman"] = _text(ticked).lower() == "true"
+            if created:
+                row["ess_extra_additive"] = _decimal(w.find("extraessadditivemultiplier"), 0.0)
+                row["ess_extra_multiplicative"] = _decimal(w.find("extraessmultiplicativemultiplier"), 1.0)
             if (ware_by_id.get(wid) or {}).get("cost_range"):
                 row["cost"] = _picked_cost(w)
             out.append(row)

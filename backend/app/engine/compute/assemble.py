@@ -377,8 +377,13 @@ def _economy(ctx: Ctx) -> _EconomyPart:
         "black_market_contact_id": ctx.bmp_contact_id if ctx.bmp_active else "",
         "black_market_avail_bonus": BLACK_MARKET_AVAIL_BONUS if ctx.bmp_active else 0,
         "dealer_connection_categories": list(ctx.effects.get("dealer_connection_categories") or []),
-        "cyberware_ess_multiplier": int(ctx.effects.get("cyberware_ess_multiplier") or 100),
-        "bioware_ess_multiplier": int(ctx.effects.get("bioware_ess_multiplier") or 100),
+        # what ware bought now takes, the `...nonretroactive` bonuses with the rest
+        "cyberware_ess_multiplier": int(ctx.effects.get("cyberware_ess_multiplier") or 100)
+        + int(ctx.effects.get("cyberware_ess_multiplier_nonretro") or 100)
+        - 100,
+        "bioware_ess_multiplier": int(ctx.effects.get("bioware_ess_multiplier") or 100)
+        + int(ctx.effects.get("bioware_ess_multiplier_nonretro") or 100)
+        - 100,
         "lifestyle_cost_mod": int(ctx.effects.get("lifestyle_cost") or 0),
         "reward_log": [
             {"id": row.id, "label": row.label, "karma": int(row.karma or 0), "nuyen": int(row.nuyen or 0)}

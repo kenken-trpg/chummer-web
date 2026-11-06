@@ -8,7 +8,7 @@ from decimal import ROUND_HALF_UP, Decimal
 
 from ...rules import current_rules
 from ..constants import MAG_TALENTS, RES_TALENTS
-from ..pricing import apply_ware_essence_multipliers
+from ..pricing import apply_ware_essence_multipliers, nonretroactive_multipliers
 from ..resonance import _cyberadept_res_penalty_reduction
 from ..special_attributes import is_ai
 from .context import Ctx
@@ -47,8 +47,42 @@ def _special_penalty(ess_start: float, loss: float) -> int:
     return int(math.ceil(loss - 1e-9)) if loss > 0 else 0
 
 
+def _hold_nonretroactive(ctx: Ctx) -> None:
+    """In career, each piece's essence takes the `...nonretroactive`
+    multipliers it was bought under, not the live ones.
+
+    Chummer keeps them on every piece on entering career, and on a piece
+    bought there when it is bought (`SaveNonRetroactiveEssenceModifiers`),
+    and reads only that once the character is created. Here a piece holds
+    them from the first career compute that sees it: the one that enters
+    career, or the one after it is added. Taking Adapsin out in career then
+    leaves what it took off the ware bought under it, and ware bought after
+    takes none. In chargen they are dropped, as Chummer works them out again
+    on entering career.
+    """
+    for installs, items, kind in (
+        (ctx.state.cyberware, ctx.cyber_installed, "cyberware"),
+        (ctx.state.bioware, ctx.bio_installed, "bioware"),
+    ):
+        rows = {str(item.get("id")): item for item in items}
+        live = nonretroactive_multipliers(ctx.effects, kind)
+        for inst in installs or []:
+            if not ctx.career:
+                inst.ess_extra_additive = inst.ess_extra_multiplicative = None
+                continue
+            item = rows.get(inst.id)
+            if inst.ess_extra_additive is None or inst.ess_extra_multiplicative is None:
+                # a piece of forced grade None keeps none (Chummer returns early)
+                held = live if item is None or item.get("ess_multiplied", True) else (0.0, 1.0)
+                inst.ess_extra_additive, inst.ess_extra_multiplicative = round(held[0], 6), round(held[1], 6)
+            if item is not None:
+                item["ess_extra_add"] = inst.ess_extra_additive
+                item["ess_extra_mult"] = inst.ess_extra_multiplicative
+
+
 def essence(ctx: Ctx) -> None:
     ess_start = float(ctx.attrs_spec.get("ESS", {}).get("max") or 6) + float(ctx.effects.get("essence_max_mod") or 0)
+    _hold_nonretroactive(ctx)
     ctx.ess_lost_cyber, ctx.ess_lost_bio = apply_ware_essence_multipliers(
         ctx.cyber_installed, ctx.bio_installed, ctx.effects
     )
