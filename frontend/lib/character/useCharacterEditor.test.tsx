@@ -1030,6 +1030,27 @@ describe("useCharacterEditor undo/redo", () => {
     expect(api.patch).toHaveBeenLastCalledWith("c1", { name: "B" });
   });
 
+  it("waits for an in-flight patch to commit before switching characters", async () => {
+    const gate = deferred<Character>();
+    api.patch.mockReturnValue(gate.promise);
+    api.get.mockResolvedValue(makeCharacter({ id: "c2", name: "Other" }));
+    const { result } = await booted();
+
+    let patching!: Promise<void>;
+    let opening!: Promise<void>;
+    await act(async () => {
+      patching = result.current.patch({ name: "Saved first" });
+      opening = result.current.openCharacter("c2");
+      await Promise.resolve();
+      expect(api.get).not.toHaveBeenCalledWith("c2");
+      gate.resolve(makeCharacter({ id: "c1", name: "Saved first" }));
+      await Promise.all([patching, opening]);
+    });
+
+    expect(result.current.ch?.id).toBe("c2");
+    expect(api.get).toHaveBeenCalledWith("c2");
+  });
+
   it("restoreSnapshot refuses to run while a patch is in flight", async () => {
     // undo and redo guard too, so this one is belt and braces -- but the hook
     // exposes restoreSnapshot, and a caller reaching it directly mid-patch
