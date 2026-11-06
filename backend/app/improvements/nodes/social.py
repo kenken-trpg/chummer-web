@@ -202,7 +202,15 @@ def _ambidextrous(tag: str, node: dict[str, Any], fields: dict[str, Any], effect
     effects["ambidextrous"] = True
 
 
-@handles("cyberwareessmultiplier")
+# The `...nonretroactive` twins are what Chummer applies only to ware bought
+# after the bonus: it keeps them on each piece once the character is created
+# (`Cyberware.SaveNonRetroactiveEssenceModifiers`), but while it is being
+# built they count on every piece like the plain ones (`CalculatedESS` reads
+# both while `!Created`). This app reads them as the plain ones in career too;
+# see docs/TODO.md.
+
+
+@handles("cyberwareessmultiplier", "cyberwareessmultipliernonretroactive")
 def _cyberwareessmultiplier(
     tag: str, node: dict[str, Any], fields: dict[str, Any], effects: EffectsDict, source: str
 ) -> None:
@@ -213,7 +221,7 @@ def _cyberwareessmultiplier(
     )
 
 
-@handles("biowareessmultiplier")
+@handles("biowareessmultiplier", "biowareessmultipliernonretroactive")
 def _biowareessmultiplier(
     tag: str, node: dict[str, Any], fields: dict[str, Any], effects: EffectsDict, source: str
 ) -> None:
@@ -224,12 +232,22 @@ def _biowareessmultiplier(
     )
 
 
-@handles("cyberwaretotalessmultiplier")
+@handles("cyberwaretotalessmultiplier", "cyberwaretotalessmultipliernonretroactive")
 def _cyberwaretotalessmultiplier(
     tag: str, node: dict[str, Any], fields: dict[str, Any], effects: EffectsDict, source: str
 ) -> None:
+    # these multiply (`decTotalESSMultiplier *= value / 100`)
     effects["cyberware_total_ess_multiplier"] = int(
         round(int(effects.get("cyberware_total_ess_multiplier") or 100) * _as_int(node.get("value"), 100) / 100.0)
+    )
+
+
+@handles("biowaretotalessmultiplier", "biowaretotalessmultipliernonretroactive")
+def _biowaretotalessmultiplier(
+    tag: str, node: dict[str, Any], fields: dict[str, Any], effects: EffectsDict, source: str
+) -> None:
+    effects["bioware_total_ess_multiplier"] = int(
+        round(int(effects.get("bioware_total_ess_multiplier") or 100) * _as_int(node.get("value"), 100) / 100.0)
     )
 
 

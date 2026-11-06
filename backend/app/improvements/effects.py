@@ -150,6 +150,7 @@ class EffectsDict(TypedDict):
     cyberware_ess_multiplier: int
     bioware_ess_multiplier: int
     cyberware_total_ess_multiplier: int
+    bioware_total_ess_multiplier: int
     essence_max_mod: int
     disable_bioware: bool
     special_modification_limit: int
@@ -385,6 +386,7 @@ def empty_effects() -> EffectsDict:
         "cyberware_ess_multiplier": 100,
         "bioware_ess_multiplier": 100,
         "cyberware_total_ess_multiplier": 100,
+        "bioware_total_ess_multiplier": 100,
         "essence_max_mod": 0,
         "disable_bioware": False,
         "disabled_cyberware_grades": [],
