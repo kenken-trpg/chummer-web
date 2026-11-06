@@ -189,10 +189,45 @@ def test_decompress_reads_xz() -> None:
     assert decompress_chum5lz(lzma.compress(SAMPLE)).lstrip().startswith(b"<?xml")
 
 
+@pytest.mark.parametrize("fmt", [lzma.FORMAT_ALONE, lzma.FORMAT_XZ])
+def test_decompress_bounds_decoder_memory_independently_of_output(monkeypatch: pytest.MonkeyPatch, fmt: int) -> None:
+    import app.chummer_import.container as ci
+
+    # The XML and archive are tiny; only the dictionary exceeds this test's
+    # decoder budget. Use a small real dictionary so a regression is safe too.
+    filter_id = lzma.FILTER_LZMA1 if fmt == lzma.FORMAT_ALONE else lzma.FILTER_LZMA2
+    payload = lzma.compress(SAMPLE, format=fmt, filters=[{"id": filter_id, "dict_size": 1024 * 1024}])
+    assert len(payload) < ci._MAX_DECOMPRESSED_BYTES
+    monkeypatch.setattr(ci, "_MAX_LZMA_MEMORY_BYTES", 512 * 1024)
+    with pytest.raises(NoticeError) as caught:
+        ci.decompress_chum5lz(payload)
+    assert caught.value.notice["key"] == "api.chum5lzUndecompressible"
+    # The same stream works when its dictionary fits, without changing XML.
+    monkeypatch.setattr(ci, "_MAX_LZMA_MEMORY_BYTES", 2 * 1024 * 1024)
+    assert ci.decompress_chum5lz(payload) == SAMPLE
+
+
 def test_decompress_rejects_garbage_with_hint() -> None:
     with pytest.raises(NoticeError) as caught:
         decompress_chum5lz(b"\x00\x01\x02not-compressed-not-xml\xff\xfe")
     assert caught.value.notice["key"] == "api.chum5lzUndecompressible"
+
+
+def test_import_route_rejects_decoder_memory_over_budget(monkeypatch: pytest.MonkeyPatch) -> None:
+    from starlette.testclient import TestClient
+
+    import app.chummer_import.container as ci
+    from app.main import app
+
+    payload = lzma.compress(SAMPLE, format=lzma.FORMAT_ALONE)
+    monkeypatch.setattr(ci, "_MAX_LZMA_MEMORY_BYTES", 512 * 1024)
+    response = TestClient(app).post(
+        "/api/characters/import-chummer",
+        content=payload,
+        headers={"content-type": "application/octet-stream"},
+    )
+    assert response.status_code == 400
+    assert response.json()["detail"]["key"] == "api.chum5lzUndecompressible"
 
 
 def test_decompress_rejects_bomb_over_the_size_cap(monkeypatch: pytest.MonkeyPatch) -> None:
