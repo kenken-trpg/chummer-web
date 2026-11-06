@@ -348,6 +348,23 @@ checking that guess costs more than going down the list.
   Chummer does when the books are ambiguous — Chummer is the reference
   implementation this project chases.
 
+### Dependency maintenance
+
+Dependabot's routine version updates are collected into one `dependencies`
+multi-ecosystem PR, checked monthly on the first day at 09:00 Asia/Tokyo.
+The batch covers GitHub Actions, all three npm directories, pip and Docker
+base-image digests. Major library updates are included too; if a migration
+blocks the batch, resolve it there or split out the incompatible update.
+ESLint majors and Node/Python runtime migrations retain their explicit ignores
+in `.github/dependabot.yml` until their compatibility constraints are resolved.
+
+Security updates remain enabled in repository settings and do not wait for
+the monthly schedule. Each ecosystem has a catch-all `security-updates` group;
+GitHub groups them within its supported scope, so security fixes may still
+arrive as separate PRs. The limit of one open routine batch does not limit
+security PRs. Existing individual PRs are not assumed to consolidate immediately;
+check the next Dependabot run before retiring any superseded updates.
+
 ## Releasing
 
 1. `make changelog` to fold `changelog.d/` into `[Unreleased]`, then write the
