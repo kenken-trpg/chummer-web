@@ -81,6 +81,7 @@ export const JA_GEAR = {
   "veh.searchVehicles": "ヴィークルを検索",
   "gear.capacity": " / 容量 {used}/{max}",
   "gear.addArmorGear": "装備を入れる",
+  "gear.customDeckAttributes": "購入する能力値",
   "gear.putIn": "入れる",
   "gear.implantedIn": "{name} に埋め込み",
   "gear.addMod": "改造を追加",

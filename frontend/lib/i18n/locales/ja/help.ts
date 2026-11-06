@@ -279,6 +279,8 @@ export const JA_HELP = {
   "help.martial.style": "格闘技スタイルは 7 カルマ（品目ごとに別のカルマのことがある）",
   "help.martial.technique": "技法は 1 つ 5 カルマ。資質で付いてくる分は無料",
   "help.martial.chargen": "作成時は格闘技スタイル 1 つ・技法 5 つまで。キャリア中は上限なし",
+  "help.gear.customDeckAttributes":
+    "Fuchi Cyber-N・Cyber-Ex は能力値がすべて 0 で、Attack・Sleaze・Data Processing・Firewall を 1 つずつ買う（KC p.60）。レーティングはデッキのレーティングまで。0 は買わない",
   "help.gear.statsLabel": "装備の値",
   "help.gear.rating":
     "R（レーティング）：性能の段階。上げると価格も入手値も上がることが多い。上限は品目ごと",

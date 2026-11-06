@@ -7,6 +7,7 @@ import { DeckModuleRows, DECK_BUILDER } from "./DeckModuleRows";
 import { AppRows } from "@/components/character/tabs/gear/AppRows";
 import { LooseProgramRows } from "@/components/character/tabs/gear/LooseProgramRows";
 import { MatrixModRows } from "@/components/character/tabs/gear/MatrixModRows";
+import { CustomDeckAttributes } from "@/components/character/tabs/gear/CustomDeckAttributes";
 import { HelpTip } from "@/components/help/HelpTip";
 import type { TabPanelProps } from "@/components/character/types";
 import { useBookFilter } from "@/lib/character/books";
@@ -90,6 +91,17 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                   </label>
                 </div>
               ) : null}
+              <CustomDeckAttributes
+                deckId={item.id}
+                deckName={item.name}
+                deckRating={item.rating}
+                catalog={catalog}
+                character={ch}
+                d={d}
+                tr={tr}
+                ui={ui}
+                patch={patch}
+              />
               {item.can_reorder && (item.array || []).length === 4 ? (
                 <div className="matrix-array">
                   {MATRIX_ATTRS.map(([key, label]) => (

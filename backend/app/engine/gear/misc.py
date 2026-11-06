@@ -218,10 +218,14 @@ def _resolve_misc_gear(
     unit_costs: dict[str, int] = {}
     # Parents first so children can reference Parent Cost.
     ordered = sorted(rows, key=lambda row: 1 if row.parent_id else 0)
+    deck_ratings = {deck.id: int(deck.rating or 1) for deck in state.cyberdecks or []}
     for inst in ordered:
         spec = specs.get(inst.gear_id)
         if not spec:
             continue
+        if spec.get("parent_rating_max"):
+            # a custom deck's attribute goes no higher than the deck (KC p.60)
+            spec = {**spec, "maxrating": max(1, deck_ratings.get(inst.parent_id or "", 1))}
         extra = _checked_extra(spec, inst, granted_ids, warnings)
         inst.extra = extra or None
         rating = _clamp_rating(spec, inst.rating)

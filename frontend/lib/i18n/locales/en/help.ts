@@ -315,6 +315,8 @@ export const EN_HELP = {
   "help.martial.technique": "Each technique costs 5 karma; the ones a quality brings are free",
   "help.martial.chargen":
     "At creation: one style and up to five techniques; career play has no cap",
+  "help.gear.customDeckAttributes":
+    "A Fuchi Cyber-N or Cyber-Ex comes at 0 in every attribute; Attack, Sleaze, Data Processing and Firewall are each bought on their own (KC p.60), up to the deck's rating. 0 is not bought",
   "help.gear.statsLabel": "Stats",
   "help.gear.rating":
     "Rating is the step of performance; raising it usually raises the price and the availability too. The cap is per item",
