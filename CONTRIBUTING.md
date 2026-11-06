@@ -161,10 +161,38 @@ first two were create → edit → reload → `.chum5` export, and share-link �
 fragment → read-only view.
 
 CI runs it on every pull request as well as on `main` and tags, with one retry
-(`playwright.config.ts`). The report is uploaded as an artifact when it fails.
-A test that only passes on its retry is still a bug to chase: see
+(`playwright.config.ts`). A test that passes only on its retry fails CI too:
+`failOnFlakyTests` keeps the first failure visible to `ci-ok`. See
 `critter-powers.spec.ts` in #681, where the flake was the app losing a
 rulebook tick.
+
+Every run writes `frontend/test-results/results.json`, with each attempt's
+status, retry number, errors and duration. CI uploads it as `playwright-results`
+even on success, and `scripts/summarize_e2e.py` puts counts, retried/failed
+tests and the slowest tests in the Actions summary. Failed-attempt traces,
+screenshots and error contexts are kept separately in `playwright-traces`.
+If setup fails before a report exists, the summary says so rather than
+reporting zero tests as a pass.
+
+To check a suspected race with the same parallelism as CI and no retries:
+
+```bash
+cd frontend
+npm run test:e2e -- --retries=0 --repeat-each=3 --workers=4
+```
+
+Use a file argument before the options to repeat just the affected flow.
+Wait for the expected state in IndexedDB before reloading or exporting after
+an edit: a filled textbox or an HTTP response alone does not prove the save
+committed. Keep the actual reload and check the state again afterwards.
+The API startup check uses `/api/ready`, which waits for catalog warm-up.
+
+When a CI run is slow, compare setup steps with the test step first. Browser
+system dependencies come from APT independently of the Chromium cache. The
+E2E job uses Ubuntu's primary mirror instead of the Azure mirror that spent
+9m17s downloading 15.5 MB in run 42213138114, and configures bounded connection
+timeouts/retries on the disposable runner. These are connection timeouts,
+not a guaranteed upper bound on the total installation time.
 
 ### Accessibility
 
