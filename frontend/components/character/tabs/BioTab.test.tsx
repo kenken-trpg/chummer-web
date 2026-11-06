@@ -158,9 +158,54 @@ describe("<BioTab> a player-priced piece", () => {
     ).toBeDefined();
     expect(screen.getByText("この品目の価格は 500〜2,000¥ の範囲で決める")).toBeDefined();
     expect(field.value).toBe("1000");
+    // past the top it waits for the box to be left, then is held to the range
     fireEvent.change(field, { target: { value: "5000" } });
+    expect(patch).not.toHaveBeenCalled();
+    fireEvent.focusOut(field);
     expect(patch).toHaveBeenLastCalledWith({
       bioware: [{ id: "b1", ware_id: "sculpt", rating: 1, grade: "Standard", cost: 2000 }],
+    });
+  });
+
+  it("lets a price be typed over the old one when the range starts above 0", () => {
+    const patch = vi.fn();
+    renderTab({
+      patch,
+      character: {
+        bioware: [{ id: "b1", ware_id: "sculpt", rating: 1, grade: "Standard", cost: 1000 }],
+        derived: {
+          bioware: [
+            {
+              id: "b1",
+              ware_id: "sculpt",
+              name: "Moderate Biosculpting Modification",
+              category: "Biosculpting",
+              grade: "Standard",
+              rating: 1,
+              essence: 0,
+              nuyen: 1000,
+              cost: 1000,
+              cost_range: [500, 2000],
+              source: "CF",
+            },
+          ],
+        },
+      } as never,
+    });
+    const field = screen.getByRole("spinbutton", {
+      name: "Moderate Biosculpting Modification: 価格",
+    }) as HTMLInputElement;
+    // Clearing the box used to send the bottom (500), so the next digits ran
+    // on behind it — "5000", held to 2000. Only the ends could be typed in.
+    for (const text of ["", "1", "15", "150"]) {
+      fireEvent.change(field, { target: { value: text } });
+      expect(field.value).toBe(text);
+    }
+    expect(patch).not.toHaveBeenCalled();
+    fireEvent.change(field, { target: { value: "1500" } });
+    expect(patch).toHaveBeenCalledTimes(1);
+    expect(patch).toHaveBeenLastCalledWith({
+      bioware: [{ id: "b1", ware_id: "sculpt", rating: 1, grade: "Standard", cost: 1500 }],
     });
   });
 

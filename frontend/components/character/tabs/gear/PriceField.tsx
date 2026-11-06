@@ -1,6 +1,7 @@
 "use client";
 import type { UiFn } from "@/lib/i18n";
 import { HelpTip } from "@/components/help/HelpTip";
+import { BoundedNumberInput } from "@/components/character/BoundedNumberInput";
 
 /**
  * The price of an item the rules leave to the player — `Variable(lo-hi)` in
@@ -31,13 +32,12 @@ export function PriceField({
     >
       <label>
         {ui("gear.price")}
-        <input
-          type="number"
+        <BoundedNumberInput
           aria-label={`${label}: ${ui("gear.price")}`}
           min={lo}
           max={hi}
           value={value}
-          onChange={(e) => onChange(Math.max(lo, Math.min(hi, Number(e.target.value) || 0)))}
+          onCommit={onChange}
         />
       </label>
     </HelpTip>
