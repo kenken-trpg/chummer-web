@@ -185,6 +185,10 @@ export const JA_ENGINE = {
   "engine.spend.adeptPower": "アデプト／気／収束具",
   "engine.spend.armor": "防具",
   "engine.spend.armorMods": "防具改造",
+  "engine.career.attributeBelowChargen":
+    "能力値 {name} は作成時の {floor} より下げられません（{asked} から戻しました）",
+  "engine.career.skillBelowChargen":
+    "{name} は作成時の {floor} より下げられません（{asked} から戻しました）",
   "engine.spend.attribute": "能力値 {name} {before}→{after}",
   "engine.spend.attributesKarma": "能力値（カルマ作成）",
   "engine.spend.bioware": "バイオウェア",

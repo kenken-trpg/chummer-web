@@ -15,6 +15,7 @@ from ..ware import (
     _required_warnings,
     ensure_subsystems,
 )
+from ._career import hold_career_floors
 from .context import Ctx
 
 
@@ -75,6 +76,8 @@ def bootstrap(ctx: Ctx) -> None:
         ctx.meta = find_metatype(ctx.state.metatype, ctx.state.metavariant)
     ctx.attrs_spec = ctx.meta["attributes"]
     ctx.warnings = _drop_invalid_vehicle_ware(ctx.state)
+    # before anything is priced from the ratings
+    ctx.warnings.extend(hold_career_floors(ctx.state))
     if ctx.state.metavariant and ctx.meta["name"] != ctx.state.metavariant:
         ctx.warn("engine.meta.invalidVariant", name=term(ctx.state.metavariant), metatype=term(ctx.state.metatype))
         ctx.state.metavariant = None
