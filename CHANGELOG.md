@@ -3,6 +3,16 @@
 Notable changes. Format follows [Keep a Changelog](https://keepachangelog.com/);
 self-hosters can pin to a tag instead of tracking `main`.
 
+## [0.5.23] — 2026-11-06
+
+### Fixed
+
+- **Fuchi Cyber-N・Cyber-Ex で、能力値を 1 つずつ買えるようにしました**：この 2 つのデッキ（Kill Code）は能力値がすべて 0 で、Attack・Sleaze・Data Processing・Firewall を別々に買います。これまでは能力値を買う部品がカタログに無く、機器レーティングしか選べず、能力値は 0 のままでした。今は、デッキの行に能力値ごとの選択欄が出て、0 からデッキのレーティングまで選べます。価格は Attack と Firewall がレーティングの 3 乗 × 500¥、Sleaze と Data Processing が 2 乗 × 500¥ です。Chummer 形式の書き出しと読み込みでも、デッキの中の部品として残ります。
+
+- **データジャック・プラスに、プログラムを入れられるようにしました**：データジャック・プラス（Kill Code）は、レーティングと同じ本数のコモン・ハッキングのプログラムを入れておけます。これまでは、ウェアの「中に入れる装備」にプログラムが出ず、Chummer のセーブで入っていたプログラムも、読み込むと外れていました。今は、サイバーウェアのタブの行から入れられ、入っている本数と上限が出ます（超えると警告）。Chummer 形式の書き出しと読み込みでも、ジャックの中に残ります。
+
+- **サイバーウェア・バイオウェアのレーティングを、欄に打ち込んで途中の値にできるようにしました**：これまでは 1 文字打つたびに値を送っていたので、欄を空にすると 0 が送られて最小値に戻り、続けて打った数字がその後ろに付いて（「1」の後ろに「3」で 13）最大値に丸められていました。そのため、打ち込みでは 1 か最大値しか入りませんでした。今は、範囲内の数になったときだけ送り、範囲の外や空のときは欄を離れたときに範囲内に収めます。矢印のボタンでの変更は今までどおりです。
+
 ## [0.5.22] — 2026-11-06
 
 ### Added
@@ -2991,7 +3001,8 @@ First tagged release.
 - One-container Docker image (Caddy + uvicorn + Next standalone) published to
   GHCR; `make up` / `compose.yaml` for local self-hosting.
 
-[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.22...HEAD
+[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.23...HEAD
+[0.5.23]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.22...v0.5.23
 [0.5.22]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.21...v0.5.22
 [0.5.21]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.20...v0.5.21
 [0.5.20]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.19...v0.5.20
