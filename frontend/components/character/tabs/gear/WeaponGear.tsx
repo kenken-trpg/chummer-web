@@ -10,6 +10,7 @@ import { weaponHelpLines } from "@/lib/character/help-breakdown";
 import { availBit, formatAccessoryCost, formatAmmoCost, sourceBit } from "@/lib/character/format";
 import { removeWareTree } from "@/lib/character/ware";
 import { editRow } from "@/lib/character/rows";
+import { BoundedNumberInput } from "@/components/character/BoundedNumberInput";
 
 export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   const byBook = useBookFilter();
@@ -247,14 +248,13 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                     </button>
                     <label>
                       {ui("common.qty")}
-                      <input
-                        type="number"
+                      <BoundedNumberInput
                         min={1}
                         max={999}
                         value={ammo.qty}
-                        onChange={(e) =>
+                        onCommit={(n) =>
                           patch({
-                            gear: editRow(ch.gear, ammo.id, { qty: Number(e.target.value) }),
+                            gear: editRow(ch.gear, ammo.id, { qty: n }),
                           })
                         }
                       />

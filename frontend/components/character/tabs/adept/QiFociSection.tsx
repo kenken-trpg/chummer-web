@@ -6,6 +6,7 @@ import type { TabPanelProps } from "@/components/character/types";
 import { HelpTip } from "@/components/help/HelpTip";
 import { sourceBit } from "@/lib/character/format";
 import { editRow } from "@/lib/character/rows";
+import { BoundedNumberInput } from "@/components/character/BoundedNumberInput";
 
 /** Qi foci: the ones bound, with their Force, power rating and choice, and a
  *  searchable list of the powers one can hold. */
@@ -71,14 +72,13 @@ export function QiFociSection({
               ) : null}
               <label>
                 {ui("common.force")}
-                <input
-                  type="number"
+                <BoundedNumberInput
                   min={item.rating_min}
                   max={item.rating_max}
                   value={item.rating}
-                  onChange={(e) =>
+                  onCommit={(n) =>
                     patch({
-                      qi_foci: editRow(ch.qi_foci, item.id, { rating: Number(e.target.value) }),
+                      qi_foci: editRow(ch.qi_foci, item.id, { rating: n }),
                     })
                   }
                 />
@@ -86,15 +86,14 @@ export function QiFociSection({
               {item.bonded !== false && item.power_rating_max > 1 ? (
                 <label>
                   {ui("adept.qiPowerRating")}
-                  <input
-                    type="number"
+                  <BoundedNumberInput
                     min={1}
                     max={item.power_rating_max}
                     value={item.power_rating}
-                    onChange={(e) =>
+                    onCommit={(n) =>
                       patch({
                         qi_foci: editRow(ch.qi_foci, item.id, {
-                          power_rating: Number(e.target.value),
+                          power_rating: n,
                         }),
                       })
                     }

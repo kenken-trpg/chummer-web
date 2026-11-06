@@ -5,6 +5,7 @@ import { CONTACT_ROLES } from "@/lib/character/constants";
 import { HelpTip } from "@/components/help/HelpTip";
 import { contactTerm } from "@/lib/ui-strings";
 import { editRow } from "@/lib/character/rows";
+import { BoundedNumberInput } from "@/components/character/BoundedNumberInput";
 
 export function ContactsTab({ character: ch, d, tr, ui, patch, setCharacter }: TabPanelProps) {
   const [contactName, setContactName] = useState("");
@@ -106,15 +107,14 @@ export function ContactsTab({ character: ch, d, tr, ui, patch, setCharacter }: T
               </label>
               <label>
                 {ui("contact.connection")}
-                <input
-                  type="number"
+                <BoundedNumberInput
                   min={1}
                   max={item.connection_max}
                   value={item.connection}
-                  onChange={(e) =>
+                  onCommit={(n) =>
                     patch({
                       contacts: editRow(ch.contacts, item.id, {
-                        connection: Number(e.target.value),
+                        connection: n,
                       }),
                     })
                   }
@@ -122,14 +122,13 @@ export function ContactsTab({ character: ch, d, tr, ui, patch, setCharacter }: T
               </label>
               <label>
                 {ui("contact.loyalty")}
-                <input
-                  type="number"
+                <BoundedNumberInput
                   min={item.loyalty_min ?? 1}
                   max={item.loyalty_max}
                   value={item.loyalty}
-                  onChange={(e) =>
+                  onCommit={(n) =>
                     patch({
-                      contacts: editRow(ch.contacts, item.id, { loyalty: Number(e.target.value) }),
+                      contacts: editRow(ch.contacts, item.id, { loyalty: n }),
                     })
                   }
                 />

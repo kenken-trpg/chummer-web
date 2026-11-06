@@ -15,6 +15,7 @@ import { DEFAULT_ARRAY_ORDER, MATRIX_ATTRS } from "@/lib/character/constants";
 import { dropTree, swapMatrixOrder } from "@/lib/character/gear";
 import { sourceBit } from "@/lib/character/format";
 import { editRow } from "@/lib/character/rows";
+import { BoundedNumberInput } from "@/components/character/BoundedNumberInput";
 
 export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   const byBook = useBookFilter();
@@ -75,15 +76,14 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                 <div className="cyber-controls">
                   <label>
                     {ui("common.rating")}
-                    <input
-                      type="number"
+                    <BoundedNumberInput
                       min={1}
                       max={item.rating_max}
                       value={item.rating}
-                      onChange={(e) =>
+                      onCommit={(n) =>
                         patch({
                           cyberdecks: editRow(ch.cyberdecks, item.id, {
-                            rating: Number(e.target.value),
+                            rating: n,
                           }),
                         })
                       }
@@ -182,15 +182,14 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                     {prog.rating_max > 0 ? (
                       <label>
                         {ui("common.rating")}
-                        <input
-                          type="number"
+                        <BoundedNumberInput
                           min={1}
                           max={prog.rating_max}
                           value={prog.rating}
-                          onChange={(e) =>
+                          onCommit={(n) =>
                             patch({
                               programs: editRow(ch.programs, prog.id, {
-                                rating: Number(e.target.value),
+                                rating: n,
                               }),
                             })
                           }

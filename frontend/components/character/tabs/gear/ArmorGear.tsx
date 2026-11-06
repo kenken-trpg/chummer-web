@@ -16,6 +16,7 @@ import {
   specialArmorLine,
 } from "@/lib/character/format";
 import { editRow } from "@/lib/character/rows";
+import { BoundedNumberInput } from "@/components/character/BoundedNumberInput";
 
 /** The other pieces a Custom Fit (Stack) can be tailored to: whole armors
  * (not `+N` accessories), by catalog name, keeping the current pick even
@@ -119,14 +120,13 @@ export function ArmorGear({ catalog, character: ch, d, tr, ui, patch }: TabPanel
                   {item.rating_max > 0 ? (
                     <label>
                       {ui("common.rating")}
-                      <input
-                        type="number"
+                      <BoundedNumberInput
                         min={1}
                         max={item.rating_max}
                         value={item.rating}
-                        onChange={(e) =>
+                        onCommit={(n) =>
                           patch({
-                            armor: editRow(ch.armor, item.id, { rating: Number(e.target.value) }),
+                            armor: editRow(ch.armor, item.id, { rating: n }),
                           })
                         }
                       />

@@ -5,6 +5,7 @@ import { formatPoints, sourceBit } from "@/lib/character/format";
 import { editRow } from "@/lib/character/rows";
 import { renderNotice } from "@/lib/engine-notices";
 import type { InstalledAdeptPower } from "@/lib/types";
+import { BoundedNumberInput } from "@/components/character/BoundedNumberInput";
 
 /** One adept power the character has, with its rating, choice, Force and
  *  Way discount, and the button that drops it. */
@@ -54,15 +55,14 @@ export function AdeptPowerRow({
           {!item.free_only && item.rating_max > item.rating_min ? (
             <label>
               {ui("adept.rating")}
-              <input
-                type="number"
+              <BoundedNumberInput
                 min={item.rating_min}
                 max={item.rating_max}
                 value={item.rating}
-                onChange={(e) =>
+                onCommit={(n) =>
                   patch({
                     adept_powers: editRow(ch.adept_powers, item.id, {
-                      rating: Number(e.target.value),
+                      rating: n,
                     }),
                   })
                 }
@@ -82,15 +82,14 @@ export function AdeptPowerRow({
           {item.spell ? (
             <label>
               {ui("common.force")}
-              <input
-                type="number"
+              <BoundedNumberInput
                 min={item.spell.force_min}
                 max={item.spell.force_max}
                 value={item.spell.force}
-                onChange={(e) =>
+                onCommit={(n) =>
                   patch({
                     adept_powers: editRow(ch.adept_powers, item.id, {
-                      force: Number(e.target.value),
+                      force: n,
                     }),
                   })
                 }

@@ -5,6 +5,7 @@ import type { VehicleRowProps } from "@/components/character/tabs/gear/vehicle/t
 import { useBookFilter } from "@/lib/character/books";
 import { alreadySlotted, dropTree, vehicleInteriorFits } from "@/lib/character/gear";
 import { editRow } from "@/lib/character/rows";
+import { BoundedNumberInput } from "@/components/character/BoundedNumberInput";
 
 /** Gear carried inside one vehicle — a medkit in the glovebox rather than
  *  anything bolted to the chassis. */
@@ -56,14 +57,13 @@ export function VehicleGearRows({
           {acc.rating_max > 0 && !acc.included ? (
             <label>
               {ui("common.rating")}
-              <input
-                type="number"
+              <BoundedNumberInput
                 min={1}
                 max={acc.rating_max}
                 value={acc.rating}
-                onChange={(e) =>
+                onCommit={(n) =>
                   patch({
-                    gear: editRow(ch.gear, acc.id, { rating: Number(e.target.value) }),
+                    gear: editRow(ch.gear, acc.id, { rating: n }),
                   })
                 }
               />

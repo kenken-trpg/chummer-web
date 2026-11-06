@@ -6,6 +6,7 @@ import type { TabPanelProps } from "@/components/character/types";
 import { trAs } from "@/lib/ui-strings";
 import { useBookFilter } from "@/lib/character/books";
 import { editRow } from "@/lib/character/rows";
+import { BoundedNumberInput } from "@/components/character/BoundedNumberInput";
 
 /** The autosofts on one host — an RCC that shares them, or a drone or
  *  vehicle that runs them itself — with their picks, and the control that
@@ -53,14 +54,13 @@ export function AutosoftRows({
             {prog.rating_max > 0 ? (
               <label>
                 {ui("common.rating")}
-                <input
-                  type="number"
+                <BoundedNumberInput
                   min={1}
                   max={prog.rating_max}
                   value={prog.rating}
-                  onChange={(e) =>
+                  onCommit={(n) =>
                     patch({
-                      programs: editRow(ch.programs, prog.id, { rating: Number(e.target.value) }),
+                      programs: editRow(ch.programs, prog.id, { rating: n }),
                     })
                   }
                 />

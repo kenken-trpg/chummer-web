@@ -5,6 +5,7 @@ import type { TabPanelProps } from "@/components/character/types";
 import { useState } from "react";
 import { optionalNumber, sourceBit, testLine } from "@/lib/character/format";
 import { editRow } from "@/lib/character/rows";
+import { BoundedNumberInput } from "@/components/character/BoundedNumberInput";
 
 export function FociTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   const [focusSearch, setFocusSearch] = useState("");
@@ -77,14 +78,13 @@ export function FociTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
               </label>
               <label>
                 {ui("common.force")}
-                <input
-                  type="number"
+                <BoundedNumberInput
                   min={1}
                   max={item.force_max}
                   value={item.force}
-                  onChange={(e) =>
+                  onCommit={(n) =>
                     patch({
-                      foci: editRow(ch.foci, item.id, { force: Number(e.target.value) }),
+                      foci: editRow(ch.foci, item.id, { force: n }),
                     })
                   }
                 />

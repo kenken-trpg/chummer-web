@@ -217,17 +217,13 @@ export function WareRow(props: {
             >
               <label>
                 {ui("ware.essDiscount")}
-                <input
-                  type="number"
+                <BoundedNumberInput
                   min={-100}
                   max={100}
                   value={item.ess_discount ?? 0}
-                  onChange={(e) =>
+                  onCommit={(n) =>
                     onPatchRow(item.id, {
-                      ess_discount: Math.max(
-                        -100,
-                        Math.min(100, Math.trunc(Number(e.target.value) || 0)),
-                      ),
+                      ess_discount: Math.max(-100, Math.min(100, Math.trunc(n || 0))),
                     })
                   }
                 />
