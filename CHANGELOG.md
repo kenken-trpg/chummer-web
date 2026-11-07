@@ -3,6 +3,12 @@
 Notable changes. Format follows [Keep a Changelog](https://keepachangelog.com/);
 self-hosters can pin to a tag instead of tracking `main`.
 
+## [0.5.32] — 2026-11-07
+
+### Added
+
+- **コンタクトの所在地・メタタイプ・性別・年齢・種類・支払い方法・趣味・悪癖・私生活・備考を書けるようにしました**：コンタクトのタブで、各コンタクトの「詳しい情報」を開くと書けます。何か書いてあるコンタクトは、最初から開いています。計算には使いません。Chummer のセーブにあるこれらの欄は、これまで取り込むと消えていましたが、今は取り込みでも `.chum5` の書き出しでもそのまま残ります（Chummer のテスト用セーブ 34 件の 402 欄が、すべて元どおりに戻ることを確かめました）。ライフモジュールで付くコンタクトには、まだ書けません。
+
 ## [0.5.31] — 2026-11-07
 
 ### Added
@@ -3061,7 +3067,8 @@ First tagged release.
 - One-container Docker image (Caddy + uvicorn + Next standalone) published to
   GHCR; `make up` / `compose.yaml` for local self-hosting.
 
-[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.31...HEAD
+[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.32...HEAD
+[0.5.32]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.31...v0.5.32
 [0.5.31]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.30...v0.5.31
 [0.5.30]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.29...v0.5.30
 [0.5.29]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.28...v0.5.29
