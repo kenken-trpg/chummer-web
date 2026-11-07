@@ -11,7 +11,17 @@ from __future__ import annotations
 
 import xml.etree.ElementTree as ET
 
-from scripts.reconcile.fidelity import _ACCEPTED_ROW_DROPS, _accepted_drop, _leaves, _row_drops
+from scripts.reconcile.fidelity import (
+    _ACCEPTED_DROP_SUFFIXES,
+    _ACCEPTED_DROPS,
+    _ACCEPTED_ROW_DROPS,
+    _LEGACY_ATTRIBUTES,
+    _ROW_DEFAULTS,
+    _accepted_drop,
+    _leaves,
+    _row_drops,
+    unneeded_allowances,
+)
 from scripts.reconcile.prices import _at_rating, _stored_prices, _stored_rating_prices
 
 
@@ -211,12 +221,39 @@ def test_a_row_field_at_chummers_default_is_not_a_gap() -> None:
     taken_off = _save("<gears><gear><name>Medkit</name><extra /><equipped>False</equipped></gear></gears>")
     assert _row_drops(equipped, ours) == []
     assert _row_drops(taken_off, ours) == ["gear/equipped"]
-    # `2` is `2.0`
-    limb = _save(
-        "<cyberwares><cyberware><name>Arm</name><extra /><extraessmultiplicativemultiplier>1.0"
-        "</extraessmultiplicativemultiplier></cyberware></cyberwares>"
-    )
-    assert _row_drops(limb, _save("<cyberwares><cyberware><name>Arm</name><extra /></cyberware></cyberwares>")) == []
+    # `1.0` is `1`
+    gun = _save("<weapons><weapon><name>Ares</name><extra /><rangemultiply>1.0</rangemultiply></weapon></weapons>")
+    assert _row_drops(gun, _save("<weapons><weapon><name>Ares</name><extra /></weapon></weapons>")) == []
+
+
+def test_a_default_is_recorded_only_where_it_excused_a_field() -> None:
+    """`relied` is what `unneeded_allowances` reads: a default that excused a
+    field the export left out, and not one the export wrote anyway."""
+    theirs = _save("<gears><gear><name>Medkit</name><extra /><equipped>True</equipped></gear></gears>")
+    relied: set[str] = set()
+    _row_drops(theirs, _save("<gears><gear><name>Medkit</name><extra /></gear></gears>"), relied)
+    assert relied == {"gear/equipped"}
+    written: set[str] = set()
+    _row_drops(theirs, theirs, written)
+    assert written == set()
+
+
+def test_an_allowance_no_save_needs_is_reported() -> None:
+    """An entry outlives its reason once the export writes the field, and
+    would then excuse a gap it was never meant for."""
+    everything = [
+        *_ACCEPTED_DROPS,
+        *_ACCEPTED_ROW_DROPS,
+        *(f"STR{suffix}" for suffix in _ACCEPTED_DROP_SUFFIXES),
+        *(f"{prefix}base" for prefix in _LEGACY_ATTRIBUTES),
+    ]
+    assert unneeded_allowances(everything, _ROW_DEFAULTS) == []
+    assert unneeded_allowances([t for t in everything if t != "gear/allowrename"], _ROW_DEFAULTS) == [
+        ("_ACCEPTED_ROW_DROPS", "gear/allowrename")
+    ]
+    assert unneeded_allowances(everything, [t for t in _ROW_DEFAULTS if t != "gear/equipped"]) == [
+        ("_ROW_DEFAULTS", "gear/equipped")
+    ]
 
 
 def test_a_row_only_one_side_has_is_not_compared() -> None:

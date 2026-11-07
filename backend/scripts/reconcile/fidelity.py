@@ -22,12 +22,15 @@ writes and never reads back — an attribute's `totalvalue`, recomputed on load
 — is named in `_ACCEPTED_DROPS` with the reason, and reported rather than
 counted against the export. Nothing else is: a field this app has not thought
 about fails the run, which is what makes this a gate (CI's `fidelity` job)
-rather than a reading to work down.
+rather than a reading to work down. The lists are held to the same standard
+from the other side: an entry that no save needs any more fails the run too
+(`unneeded_allowances`), since it would excuse the next gap in that field.
 """
 
 from __future__ import annotations
 
 import xml.etree.ElementTree as ET
+from collections.abc import Iterable
 from pathlib import Path
 
 #: A value Chummer wrote that says nothing: the element is there because
@@ -212,7 +215,6 @@ _ROW_DEFAULTS: dict[str, str] = {
     "quality/print": "True",
     "martialart/cost": "7",
     "contact/groupenabled": "True",
-    "cyberware/extraessmultiplicativemultiplier": "1",
     "cyberware/limbslotcount": "1",
     "cyberware/overclocked": "None",
     "armormod/equipped": "True",
@@ -224,7 +226,6 @@ _ROW_DEFAULTS: dict[str, str] = {
     "weapon/rangemultiply": "1",
     "weapon/requireammo": "True",
     "weapon/suppressive": "20",
-    "accessory/equipped": "True",
     "gear/equipped": "True",
     "gear/overclocked": "None",
     "vehiclemod/equipped": "True",
@@ -281,8 +282,6 @@ _ACCEPTED_ROW_DROPS: dict[str, str] = {
     "weapon/firingmode": "only a weapon mounted on a vehicle reads it",
     "accessory/extramount": "None — no extra mount, which is what the empty default means",
     "cyberware/forcegrade": "only Chummer's grade picker reads it",
-    "cyberware/prototypetranshuman": "this app picks the pieces the allowance covers itself, smallest first; "
-    "the player's own pick is not kept",
     "power/maxlevel": "legacy — <maxlevels> says it now",
     "quality/metagenetic": "legacy — <metagenic> says it now",
     "quality/implemented": "copied from the catalogue, which no longer marks a quality unimplemented",
@@ -316,9 +315,12 @@ def _same(text: str, default: str) -> bool:
         return text == default
 
 
-def _row_drops(theirs: ET.Element, ours: ET.Element) -> list[str]:
+def _row_drops(theirs: ET.Element, ours: ET.Element, relied: set[str] | None = None) -> list[str]:
     """`kind/tag` once for each field a row of Chummer's states that the same
-    row in the export leaves out, where Chummer would read it otherwise."""
+    row in the export leaves out, where Chummer would read it otherwise.
+
+    `relied`, when given, collects each `_ROW_DEFAULTS` entry that excused a
+    field the export left out — what `unneeded_allowances` checks against."""
     out: list[str] = []
     for kind, path in _ROWS:
         exported: dict[str, list[ET.Element]] = {}
@@ -340,12 +342,14 @@ def _row_drops(theirs: ET.Element, ours: ET.Element) -> list[str]:
                 text = (leaf.text or "").strip()
                 default = _ROW_DEFAULTS.get(tag)
                 if (text in _EMPTY_VALUES) if default is None else (not text or _same(text, default)):
+                    if default is not None and text and relied is not None:
+                        relied.add(tag)
                     continue
                 out.append(tag)
     return out
 
 
-def fidelity(path: Path) -> tuple[list[str], list[tuple[str, str, str]]]:
+def fidelity(path: Path, relied: set[str] | None = None) -> tuple[list[str], list[tuple[str, str, str]]]:
     """What Chummer states about a character that this app's export does not.
 
     `--roundtrip` reads the export back with *this app's own* importer, so it
@@ -357,6 +361,7 @@ def fidelity(path: Path) -> tuple[list[str], list[tuple[str, str, str]]]:
 
     A field Chummer wrote empty (`0`, `False`) is not reported: it is there
     because Chummer writes every field, not because this character has one.
+    `relied` is passed on to `_row_drops`.
     """
     from app.characters import import_character
     from app.chummer_export import state_to_chum5
@@ -367,10 +372,38 @@ def fidelity(path: Path) -> tuple[list[str], list[tuple[str, str, str]]]:
     our_root = ET.fromstring(exported if isinstance(exported, bytes) else exported.encode())
     theirs, ours = _leaves(their_root), _leaves(our_root)
     dropped = [tag for tag, text in theirs.items() if tag not in ours and text not in _EMPTY_VALUES]
-    dropped += _row_drops(their_root, our_root)
+    dropped += _row_drops(their_root, our_root, relied)
     changed = [
         (tag, theirs[tag], ours[tag])
         for tag in _SAME_VALUE_TAGS
         if tag in theirs and tag in ours and theirs[tag] != ours[tag]
     ]
     return dropped, changed
+
+
+def unneeded_allowances(dropped: Iterable[str], relied: Iterable[str]) -> list[tuple[str, str]]:
+    """The entries of the allow-lists above that no save needed, as
+    `(list, entry)`.
+
+    An entry outlives its reason when the export starts writing the field —
+    `cyberware/prototypetranshuman` was still listed as "the player's own
+    pick is not kept" long after #913 kept it. A stale entry is not harmless:
+    if the export ever stops writing that field again, the entry excuses the
+    gap it was never meant for. So the full run fails on one, the same as on
+    a gap, and the fix is to delete it.
+    """
+    dropped, relied = set(dropped), set(relied)
+    out = [("_ACCEPTED_DROPS", tag) for tag in _ACCEPTED_DROPS if tag not in dropped]
+    out += [("_ACCEPTED_ROW_DROPS", tag) for tag in _ACCEPTED_ROW_DROPS if tag not in dropped]
+    out += [
+        ("_ACCEPTED_DROP_SUFFIXES", suffix)
+        for suffix in _ACCEPTED_DROP_SUFFIXES
+        if not any(tag.endswith(suffix) for tag in dropped)
+    ]
+    out += [
+        ("_LEGACY_ATTRIBUTES", prefix)
+        for prefix in _LEGACY_ATTRIBUTES
+        if not any(tag.startswith(prefix) for tag in dropped)
+    ]
+    out += [("_ROW_DEFAULTS", tag) for tag in _ROW_DEFAULTS if tag not in relied]
+    return out
