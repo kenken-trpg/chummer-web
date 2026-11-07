@@ -269,8 +269,6 @@ _ACCEPTED_ROW_DROPS: dict[str, str] = {
     "contact/sex": "legacy — <gender> says it now",
     "contact/mainmugshotindex": "the portrait shown; this app holds no portraits",
     "spirit/mainmugshotindex": "the portrait shown; this app holds no portraits",
-    "armor/location": "the player's own storage location, which this app does not hold",
-    "gear/location": "the player's own storage location, which this app does not hold",
     "gear/allowrename": "only lets the player rename the piece in Chummer",
     "gear/overclocked": "the attribute an Overclocker boosts — written on cyberdecks, the only gear Chummer offers the pick on",
     "gear/conditionmonitor": "output only",

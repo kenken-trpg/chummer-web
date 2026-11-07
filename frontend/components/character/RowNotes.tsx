@@ -54,7 +54,7 @@ const NAMED: ReadonlySet<NotedBucket> = new Set([
 ]);
 
 /** One text box: what is typed shows at once, and is saved on leaving it. */
-function TextBox({
+export function TextBox({
   value,
   label,
   multiline,

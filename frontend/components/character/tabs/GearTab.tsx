@@ -15,6 +15,7 @@ import { SensorGear } from "@/components/character/tabs/gear/SensorGear";
 import { VehicleDroneGear } from "@/components/character/tabs/gear/VehicleDroneGear";
 import { MiscDrugsGear } from "@/components/character/tabs/gear/MiscDrugsGear";
 import { LifestyleGear } from "@/components/character/tabs/gear/LifestyleGear";
+import { StorageLocationsGear } from "@/components/character/tabs/gear/StorageLocationsGear";
 
 // A module constant cannot call the hook, so it holds keys and the render
 // resolves them.
@@ -31,6 +32,7 @@ const KIND_TABS: { kind: GearKind; label: MsgKey }[] = [
   { kind: "misc", label: "gear.kind.misc" },
   { kind: "drugs", label: "gear.kind.drugs" },
   { kind: "lifestyle", label: "gear.kind.lifestyle" },
+  { kind: "locations", label: "gear.kind.locations" },
 ];
 
 export function GearTab(props: TabPanelProps) {
@@ -85,6 +87,7 @@ export function GearTab(props: TabPanelProps) {
       {gearKind === "misc" && <MiscDrugsGear {...props} mode="misc" />}
       {gearKind === "drugs" && <MiscDrugsGear {...props} mode="drugs" />}
       {gearKind === "lifestyle" && <LifestyleGear {...props} />}
+      {gearKind === "locations" && <StorageLocationsGear {...props} />}
     </div>
   );
 }

@@ -185,6 +185,18 @@ export const JA_GEAR = {
 
   // Shared by the cyberware / bioware tabs.
   "gear.kind.lifestyle.hint": "ライフスタイル。作成時は月単位で前払いします",
+  "gear.kind.locations": "保管場所",
+  "gear.kind.locations.hint":
+    "品物をしまっておく場所（バックパック・車・隠れ家など）と、どこに何があるか。書き留めておくだけで、計算には使いません",
+  "gear.locations.gearTitle": "装備",
+  "gear.locations.armorTitle": "防具",
+  "gear.locations.nameOf": "{name} の名前",
+  "gear.locations.untitled": "（名前なし）",
+  "gear.locations.empty": "何も入っていません",
+  "gear.locations.unplaced": "どこにも入れていないもの",
+  "gear.locations.whereOf": "{name} の保管場所",
+  "gear.locations.nowhere": "（なし）",
+  "gear.locations.newName": "新しい保管場所の名前",
   "ware.allCategories": "すべての分類",
   "ware.compact": "簡易表示（名称のみ）",
   "ware.pending": "（未選択あり）",

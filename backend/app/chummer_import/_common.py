@@ -46,6 +46,28 @@ def _player_text(node: ET.Element, name_tag: str = "") -> dict[str, str]:
     return {field: text for field, text in out.items() if text}
 
 
+def _storage_locations(root: ET.Element, list_tag: str) -> list[dict[str, str]]:
+    """The places the player keeps things in (`<gearlocations>`,
+    `<armorlocations>`), in their order, each under the `<guid>` the rows
+    name it by; one without a guid, or a second with the same, is passed
+    over (no row could name it)."""
+    out: list[dict[str, str]] = []
+    seen: set[str] = set()
+    for loc in root.findall(f"./{list_tag}/location"):
+        guid = _text(loc.find("guid"))
+        if not guid or len(guid) > 64 or guid in seen:
+            continue
+        seen.add(guid)
+        out.append({"id": guid, "name": _text(loc.find("name"))[:200], **_player_text(loc)})
+    return out
+
+
+def _location_of(node: ET.Element, locations: list[dict[str, str]]) -> dict[str, str]:
+    """A row's `location`, where it names one of `locations`."""
+    guid = _text(node.find("location"))
+    return {"location": guid} if guid and any(loc["id"] == guid for loc in locations) else {}
+
+
 def _by_name(rows: list[dict[str, Any]]) -> dict[str, str]:
     out: dict[str, str] = {}
     for r in rows:

@@ -18,6 +18,7 @@ from .gear import (
     ElectronicPartsSupply,
     GearInstall,
     LifestyleInstall,
+    StorageLocation,
     VehicleModInstall,
     WeaponAccessoryInstall,
     WeaponInstall,
@@ -127,6 +128,8 @@ class CharacterPatch(BaseModel):
     vehicle_mods: list[VehicleModInstall] | None = None
     weapon_mounts: list[WeaponMountInstall] | None = None
     lifestyles: list[LifestyleInstall] | None = None
+    gear_locations: list[StorageLocation] | None = Field(default=None, max_length=500)
+    armor_locations: list[StorageLocation] | None = Field(default=None, max_length=500)
     contacts: list[ContactInstall] | None = None
     martial_arts: list[MartialArtInstall] | None = None
     initiate_grade: int | None = Field(default=None, le=MAX_GRADE)
@@ -322,6 +325,11 @@ class CharacterState(BaseModel):
     vehicle_mods: list[VehicleModInstall] = Field(default_factory=list)
     weapon_mounts: list[WeaponMountInstall] = Field(default_factory=list)
     lifestyles: list[LifestyleInstall] = Field(default_factory=list)
+    #: the places the player keeps their gear and their armor in (Chummer's
+    #: `<gearlocations>` / `<armorlocations>`), in the order they listed them;
+    #: a row names one as its `location`
+    gear_locations: list[StorageLocation] = Field(default_factory=list, max_length=500)
+    armor_locations: list[StorageLocation] = Field(default_factory=list, max_length=500)
     contacts: list[ContactInstall] = Field(default_factory=list)
     martial_arts: list[MartialArtInstall] = Field(default_factory=list)
     initiate_grade: int = Field(default=0, le=MAX_GRADE)

@@ -11,7 +11,16 @@ from ..data_loader import CatalogDict, catalog_list
 from ..data_loader._xml import _int, _text, current_overlay_key
 from ..engine.home_node import HOME_NODE_BUCKETS
 from ..notices import Notice, Phrase, notice, ui
-from ._common import _chummer_added, _data_index, _discounted, _picked_cost, _player_text, _Resolver
+from ._common import (
+    _chummer_added,
+    _data_index,
+    _discounted,
+    _location_of,
+    _picked_cost,
+    _player_text,
+    _Resolver,
+    _storage_locations,
+)
 
 
 def _qty(node: ET.Element) -> float:
@@ -204,7 +213,10 @@ class _GearRouter:
         parent_gid: str = "",
         host_armor: bool = False,
         host_allow: list[str] | None = None,
+        location: dict[str, str] | None = None,
     ) -> None:
+        """`location`: the row's place, for one of the character's own
+        (a child goes where its parent goes)."""
         from ..engine.gear.implants import IMPLANT_CATEGORIES
 
         name = _text(g.find("name"))
@@ -218,6 +230,7 @@ class _GearRouter:
         if self.left_out(name, gid, bucket, host, host_allow, implanted):
             return
         row = self.new_row(g, gid, bucket, name)
+        row.update(location or {})
         spec = self.rows_by_id.get(gid) or {}
         included = bool(parent_id) and (
             _included(g)
@@ -260,12 +273,15 @@ class _GearRouter:
 def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
     """Read gear, routed to whichever catalog bucket resolves it."""
     router = _GearRouter(st, warn)
+    locations = _storage_locations(root, "gearlocations")
+    if locations:
+        st["gear_locations"] = locations
     for g in root.findall("./gears/gear"):
         # A bonded focus is gear too, but it belongs to `foci` / `qi_foci`
         # rather than to any gear bucket — `_import_foci` reads it there.
         if _text(g.find("category")) == "Foci":
             continue
-        router.route(g, None, None)
+        router.route(g, None, None, location=_location_of(g, locations))
     _route_hosted_gear(router, cat, st)
     for inst_id, saved_ammo_id in (st.pop("_weapon_loaded", {}) or {}).items():
         for kind in ("weapons", "cyberware", "bioware"):
