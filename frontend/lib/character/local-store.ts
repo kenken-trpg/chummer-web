@@ -22,10 +22,13 @@ const STORE = "characters";
  *  read back as `undefined` and are treated as v0. */
 const SCHEMA_VERSION = 2;
 
+export type CharacterSnapshot = { savedAt: number; character: Character };
+
 export type StoredCharacter = {
   id: string;
   savedAt: number;
   schemaVersion?: number;
+  history?: CharacterSnapshot[];
   character: Character;
 };
 
@@ -87,9 +90,33 @@ function run<T>(
  */
 export async function putCharacter(character: Character): Promise<boolean> {
   try {
-    await run("readwrite", (s) =>
-      s.put({ id: character.id, savedAt: Date.now(), schemaVersion: SCHEMA_VERSION, character }),
-    );
+    const db = await openDB();
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction(STORE, "readwrite");
+      const store = tx.objectStore(STORE);
+      const request = store.get(character.id);
+      request.onsuccess = () => {
+        const previous = request.result as StoredCharacter | undefined;
+        const history = previous?.history ?? [];
+        // Recomputing on open must not consume an editing-history slot.
+        const inputs = ({ derived: _derived, ...state }: Character) => {
+          void _derived;
+          return JSON.stringify(state);
+        };
+        if (previous && inputs(previous.character) !== inputs(character)) {
+          history.push({ savedAt: previous.savedAt, character: previous.character });
+        }
+        store.put({
+          id: character.id,
+          savedAt: Date.now(),
+          schemaVersion: SCHEMA_VERSION,
+          character,
+          history: history.slice(-10),
+        });
+      };
+      tx.oncomplete = () => resolve();
+      tx.onabort = tx.onerror = () => reject(tx.error ?? request.error);
+    });
     return true;
   } catch (e) {
     // QuotaExceededError is actionable (drop the portrait, delete a character);
@@ -135,4 +162,10 @@ export async function listCharacters(): Promise<CharacterSummary[]> {
   } catch {
     return [];
   }
+}
+
+/** Previous states, newest first; retained with the character across reloads. */
+export async function getCharacterSnapshots(id: string): Promise<CharacterSnapshot[]> {
+  const rec = await run<StoredCharacter | undefined>("readonly", (s) => s.get(id));
+  return (rec?.history ?? []).slice().reverse();
 }

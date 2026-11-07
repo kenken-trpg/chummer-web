@@ -39,6 +39,8 @@ export function useCharacterImport(opts: {
   /** What the last import could not bring over. Not an error: the character is
    *  open, and this is the list of what to fix by hand. Dropped when the player
    *  closes it, not on the next edit — it is about a file, not about a state. */
+  const [summary, setSummary] = useState<Character | null>(null);
+  const importSummary = summary?.id === ch?.id ? summary : null;
   const [importReport, setImportReport] = useState<Notice[] | null>(null);
   /** The 装備 rows of an .xlsx import that need a person to say what they are.
    *  Tied to the character they came from, so switching character shows that
@@ -56,6 +58,7 @@ export function useCharacterImport(opts: {
 
   function dismissImportReport() {
     setImportReport(null);
+    setSummary(null);
   }
 
   /** Drop a pending row, either because it was added or because it was waved
@@ -85,6 +88,7 @@ export function useCharacterImport(opts: {
    *  the sheet could not be taken at its word on. */
   async function openTemplateImport(res: XlsxImport) {
     await remember(res.character);
+    setSummary(res.character);
     onCharacterOpened?.();
     savePendingGear(res.character.id, res.pending_gear);
     readPendingGear(res.character.id);
@@ -102,6 +106,7 @@ export function useCharacterImport(opts: {
   async function importSheetUrl(url: string) {
     setError(null);
     setImportReport(null);
+    setSummary(null);
     try {
       await openTemplateImport(await api.importSheetUrl(url));
     } catch (e) {
@@ -113,6 +118,7 @@ export function useCharacterImport(opts: {
   async function onImport(file: File) {
     setError(null);
     setImportReport(null);
+    setSummary(null);
     try {
       if (/\.xlsx$/i.test(file.name)) {
         await openTemplateImport(await api.importXlsx(await file.arrayBuffer()));
@@ -125,10 +131,13 @@ export function useCharacterImport(opts: {
             ? await api.importChummer(await file.arrayBuffer())
             : await api.importFvtt(payload);
         await remember(character);
+        setSummary(character);
         onCharacterOpened?.();
         reportImport(warnings);
       } else {
-        await remember(await api.import(payload));
+        const character = await api.import(payload);
+        await remember(character);
+        setSummary(character);
         onCharacterOpened?.();
       }
       void refreshRoster();
@@ -138,7 +147,8 @@ export function useCharacterImport(opts: {
   }
 
   return {
-    importReport,
+    importReport: summary && summary.id !== ch?.id ? null : importReport,
+    importSummary,
     dismissImportReport,
     importSheetUrl,
     onImport,

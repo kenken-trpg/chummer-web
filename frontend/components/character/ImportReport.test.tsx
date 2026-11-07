@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { ImportReport } from "@/components/character/ImportReport";
 import type { CharacterEditor } from "@/lib/character/useCharacterEditor";
 import type { Notice } from "@/lib/engine-notices";
-import { identityTr } from "@/tests/fixtures";
+import { identityTr, makeCharacter } from "@/tests/fixtures";
 
 function makeEd(over: Partial<CharacterEditor> = {}): CharacterEditor {
   return {
@@ -49,4 +49,20 @@ describe("<ImportReport>", () => {
     expect(screen.queryByText("資質「w20」はカタログに無いためスキップしました")).toBeNull();
     screen.getByText("ほか 20 件");
   });
+});
+
+it("shows the imported character even when there are no warnings", () => {
+  render(<ImportReport ed={makeEd({ importSummary: makeCharacter({ name: "Jazz" }) })} />);
+  screen.getByText("「Jazz」を取り込みました");
+  screen.getByText("取り込み処理からの警告はありません。");
+});
+
+it("lists the imported equipment by its catalog name", () => {
+  const character = makeCharacter({ gear: [{ gear_id: "g1" }] });
+  const ed = makeEd({ importSummary: character });
+  ed.catalog = {
+    gear: [{ id: "g1", name: "Imported gear" }],
+  } as unknown as CharacterEditor["catalog"];
+  render(<ImportReport ed={ed} />);
+  screen.getByText("Imported gear");
 });

@@ -1,5 +1,17 @@
 /** アプリの枠・ナビ・共通の語・書式・共有・ツールバー — English。 */
 export const EN_APP = {
+  "app.savedHistory.title": "Editing history and restore",
+  "app.savedHistory.description":
+    "The last 10 previous states are saved in this browser. Restoring also keeps the current state in history.",
+  "app.savedHistory.empty": "No history yet.",
+  "app.savedHistory.failed": "Could not load editing history.",
+  "app.savedHistory.confirm": "Restore this state? The current state will also be kept in history.",
+  "app.savedHistory.restore": "Restore",
+  "app.importReport.success": "Imported “{name}”",
+  "app.importReport.summary":
+    "After import: {skills} active skills, {qualities} qualities, {contacts} contacts",
+  "app.importReport.noWarnings": "The import reported no warnings.",
+
   "app.loading": "Loading…",
   "app.meta.description": "Unofficial Shadowrun 5e character builder",
   "app.tagline":

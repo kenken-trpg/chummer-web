@@ -1,5 +1,17 @@
 /** アプリの枠・ナビ・共通の語・書式・共有・ツールバー — 日本語。 */
 export const JA_APP = {
+  "app.savedHistory.title": "編集履歴・復元",
+  "app.savedHistory.description":
+    "変更前の状態を直近10件、このブラウザに保存します。復元前の状態も履歴に残ります。",
+  "app.savedHistory.empty": "まだ履歴がありません。",
+  "app.savedHistory.failed": "編集履歴を読み込めませんでした。",
+  "app.savedHistory.confirm": "この時点の状態に復元しますか？ 現在の状態も履歴に残ります。",
+  "app.savedHistory.restore": "復元する",
+  "app.importReport.success": "「{name}」を取り込みました",
+  "app.importReport.summary":
+    "取り込み後：能動技能 {skills}件・資質 {qualities}件・コンタクト {contacts}件",
+  "app.importReport.noWarnings": "取り込み処理からの警告はありません。",
+
   "app.loading": "読み込み中…",
   "app.meta.description": "非公式 Shadowrun 5e キャラクター作成",
   "app.tagline":

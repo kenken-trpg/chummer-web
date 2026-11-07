@@ -4,6 +4,7 @@ import { makeCharacter } from "@/tests/fixtures";
 import {
   deleteCharacter,
   getCharacter,
+  getCharacterSnapshots,
   listCharacters,
   putCharacter,
   type StoredCharacter,
@@ -161,4 +162,33 @@ it("keeps explicit stopped programs and construction records after persistence",
   });
   expect(await putCharacter(ch)).toBe(true);
   expect(await getCharacter("ledger")).toEqual(ch);
+});
+
+describe("persistent editing history", () => {
+  it("retains the last ten prior states per character and survives reads", async () => {
+    for (let i = 0; i <= 12; i++) {
+      await putCharacter(makeCharacter({ id: "history", name: `Version ${i}` }));
+    }
+    await putCharacter(makeCharacter({ id: "other", name: "Other" }));
+    const snapshots = await getCharacterSnapshots("history");
+    expect(snapshots).toHaveLength(10);
+    expect(snapshots[0].character.name).toBe("Version 11");
+    expect(snapshots[9].character.name).toBe("Version 2");
+    expect(await getCharacterSnapshots("other")).toEqual([]);
+    expect(await getCharacterSnapshots("history")).toEqual(snapshots);
+    await putCharacter(snapshots[0].character);
+    expect((await getCharacterSnapshots("history"))[0].character.name).toBe("Version 12");
+    await deleteCharacter("history");
+    expect(await getCharacterSnapshots("history")).toEqual([]);
+  });
+
+  it("does not make a snapshot when only derived calculations change", async () => {
+    const character = makeCharacter({ id: "derived" });
+    await putCharacter(character);
+    await putCharacter({
+      ...character,
+      derived: { ...character.derived, test: true },
+    } as typeof character);
+    expect(await getCharacterSnapshots("derived")).toEqual([]);
+  });
 });
