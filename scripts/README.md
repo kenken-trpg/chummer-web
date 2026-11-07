@@ -33,6 +33,7 @@ manual screenshots running:
 ```sh
 node scripts/record-walkthrough.mjs                       # walkthrough.mp4
 node scripts/record-walkthrough.mjs --build-only --bgm music.mp3  # walkthrough-bgm.mp4
+node scripts/record-walkthrough.mjs --build-only --bgm music.mp3 --bgm-volume 0.12  # quieter music
 ```
 
 The output goes to `chummer-walkthrough` in the OS temp directory (`--out` to
