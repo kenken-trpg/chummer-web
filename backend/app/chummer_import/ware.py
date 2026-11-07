@@ -75,7 +75,7 @@ def _import_ware(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
             wid = ware_r.resolve(w, warn, kind)
             if not wid:
                 continue
-            row = {
+            row: dict[str, Any] = {
                 "id": str(uuid.uuid4()),
                 "ware_id": wid,
                 "rating": max(1, _int(w.find("rating"), 1)),
