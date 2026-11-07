@@ -391,7 +391,8 @@ def build_chum5(  # noqa: C901 — one keyword per save section, written out in 
         _e(c, "role", row.get("role", ""))
         _e(c, "connection", row.get("connection", 1))
         _e(c, "loyalty", row.get("loyalty", 1))
-        _e(c, "type", "Group" if row.get("group") else "Contact")
+        _e(c, "type", "Contact")
+        _e(c, "group", "True" if row.get("group") else "False")
         if row.get("free"):
             _e(c, "free", "True")
 

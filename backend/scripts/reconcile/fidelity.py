@@ -257,13 +257,7 @@ _ACCEPTED_ROW_DROPS: dict[str, str] = {
         )
     },
     **{f"{kind}/id": "legacy — <sourceid> says it now" for kind in ("quality", "power", "gear", "vehicle")},
-    **{
-        f"contact/{tag}": _PLAYERS_TEXT
-        for tag in (
-            "colour",
-            "group",
-        )
-    },
+    **{f"contact/{tag}": _PLAYERS_TEXT for tag in ("colour",)},
     # `Contact.ContactPoints` adds 1 for a Family contact (and 2 for Blackmail)
     "contact/family": "the Family box, a point more for the contact, which this app does not offer",
     "contact/sex": "legacy — <gender> says it now",

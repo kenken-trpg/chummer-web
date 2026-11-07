@@ -94,7 +94,11 @@ def _import_lifestyles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], w
                 "role": _text(c.find("role")) or None,
                 "connection": connection,
                 "loyalty": loyalty,
-                "group": _text(c.find("type")).lower() == "group" or _text(c.find("isgroup")).lower() == "true",
+                # Chummer's `<group>` (`Contact.IsGroup`); this app's exports
+                # before 0.5.37 wrote `<type>Group</type>` instead
+                "group": _text(c.find("group")).lower() == "true"
+                or _text(c.find("type")).lower() == "group"
+                or _text(c.find("isgroup")).lower() == "true",
                 "free": free,
                 "free_connection": connection if free else 0,
                 "free_loyalty": loyalty if free else 0,

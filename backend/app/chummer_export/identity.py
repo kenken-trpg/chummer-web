@@ -187,7 +187,11 @@ def _export_contacts(root: ET.Element, state: CharacterState, names: _Names, ctx
         _sub(el, "role", crow.role or "")
         _sub(el, "connection", crow.connection)
         _sub(el, "loyalty", crow.loyalty)
-        _sub(el, "type", "Group" if crow.group else "Contact")
+        # `<type>` is Contact / Enemy / Pet (`Contact.ConvertToContactType`,
+        # where anything else is an Enemy); a group contact is a Contact with
+        # `<group>` set (`Contact.IsGroup`)
+        _sub(el, "type", "Contact")
+        _sub(el, "group", "True" if crow.group else "False")
         for field, tag in CONTACT_DETAIL_TAGS.items():
             if getattr(crow, field):
                 _sub(el, tag, getattr(crow, field))
