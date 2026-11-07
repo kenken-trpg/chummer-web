@@ -1,4 +1,5 @@
 "use client";
+import { RowNotes } from "@/components/character/RowNotes";
 import { HelpTip } from "@/components/help/HelpTip";
 import { AddonSelect } from "@/components/character/AddonSelect";
 import { catalogExtraOptions } from "@/lib/character/gear";
@@ -127,6 +128,14 @@ export function AutosoftRows({
                 </datalist>
               </label>
             ) : null}
+            <RowNotes
+              ch={ch}
+              bucket="programs"
+              id={prog.id}
+              of={tr(prog.label || prog.name)}
+              ui={ui}
+              patch={patch}
+            />
           </div>
         ))}
       <AddonSelect

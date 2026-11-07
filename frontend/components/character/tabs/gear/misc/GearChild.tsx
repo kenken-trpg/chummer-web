@@ -1,4 +1,5 @@
 "use client";
+import { RowNotes } from "@/components/character/RowNotes";
 import type { TabPanelProps } from "@/components/character/types";
 import { dropTree } from "@/lib/character/gear";
 import { editRow } from "@/lib/character/rows";
@@ -68,6 +69,14 @@ export function GearChild({
           />
         </label>
       ) : null}
+      <RowNotes
+        ch={ch}
+        bucket="gear"
+        id={child.id}
+        of={tr(child.label || child.name)}
+        ui={ui}
+        patch={patch}
+      />
       {kids.map((kid) => (
         <GearChild
           key={kid.id}

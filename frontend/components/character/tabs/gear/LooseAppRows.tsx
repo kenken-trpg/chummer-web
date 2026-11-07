@@ -1,4 +1,5 @@
 "use client";
+import { RowNotes } from "@/components/character/RowNotes";
 
 import type { TabPanelProps } from "@/components/character/types";
 import { editRow } from "@/lib/character/rows";
@@ -47,6 +48,14 @@ export function LooseAppRows({
             >
               {ui("common.remove")}
             </button>
+            <RowNotes
+              ch={ch}
+              bucket="apps"
+              id={app.id}
+              of={tr(app.label || app.name)}
+              ui={ui}
+              patch={patch}
+            />
           </div>
         ))}
       </div>

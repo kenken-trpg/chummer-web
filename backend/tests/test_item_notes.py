@@ -24,7 +24,14 @@ from app.models.gear import (
     WeaponAccessoryInstall,
     WeaponInstall,
 )
-from app.models.magic import AdeptPowerInstall, FocusInstall, SpellInstall, SpiritInstall, SpriteInstall
+from app.models.magic import (
+    AdeptPowerInstall,
+    FocusInstall,
+    QiFocusInstall,
+    SpellInstall,
+    SpiritInstall,
+    SpriteInstall,
+)
 from tests.engine_support import FORD_AMERICAR, HERMETIC, SPIRIT_FIRE, _adept, _mage, _mundane, _techno
 
 POWER_FOCUS = "62bfb38d-5515-440b-83ed-289ed926d27e"
@@ -113,11 +120,75 @@ def test_magic_rows_keep_their_notes_and_names() -> None:
     )
     assert _reimport(adept).adept_powers[0].notes == "Since the accident"
 
+    qi = _adept(
+        "notes-qi",
+        qi_foci=[
+            QiFocusInstall(
+                power_id=_id(cat["powers"], "Combat Sense"), rating=2, nickname="Prayer beads", notes="Kept"
+            ),
+            QiFocusInstall(rating=1, bonded=False, notes="Not bonded yet"),
+        ],
+    )
+    assert [(row.nickname, row.notes) for row in _reimport(qi).qi_foci] == [
+        ("Prayer beads", "Kept"),
+        ("", "Not bonded yet"),
+    ]
+
     techno = _techno(
         "notes-techno",
         sprites=[SpriteInstall(sprite_id=_id(catalog_list("sprites"), "Courier Sprite"), nickname="Thassa")],
     )
     assert _reimport(techno).sprites[0].nickname == "Thassa"
+
+
+def _gid(bucket: str, name: str) -> str:
+    return _id(catalog_list(bucket), name)
+
+
+def test_what_is_put_inside_other_gear_keeps_its_notes_and_name() -> None:
+    """Programs on a deck, apps on a commlink, an autosoft on a vehicle, and
+    the contents of a kit, of goggles and of a sensor housing: each is a row
+    of its own, with a note and a name of its own (Chummer's `<children>`)."""
+    state = _mundane(
+        "notes-nested",
+        commlinks=[CommlinkInstall(id="c", gear_id=_gid("commlinks", "Meta Link"))],
+        apps=[GearInstall(gear_id=_gid("apps", "Diagnostics"), parent_id="c", notes="app", nickname="Doc")],
+        cyberdecks=[GearInstall(id="d", gear_id=_gid("cyberdecks", "Erika MCD-1"))],
+        vehicles=[GearInstall(id="v", gear_id=FORD_AMERICAR)],
+        programs=[
+            GearInstall(gear_id=_gid("programs", "Browse"), parent_id="d", notes="program", nickname="Spider"),
+            GearInstall(gear_id=_gid("programs", "Clearsight Autosoft"), parent_id="v", rating=2, notes="autosoft"),
+        ],
+        gear=[
+            GearInstall(id="m", gear_id=_gid("gear", "Medkit"), rating=3),
+            GearInstall(gear_id=_gid("gear", "Medkit Supplies"), parent_id="m", notes="supplies", nickname="Refill"),
+        ],
+        optics=[
+            GearInstall(id="o", gear_id=_gid("optics", "Contacts"), rating=3),
+            GearInstall(gear_id=_gid("optics", "Vision Enhancement"), parent_id="o", notes="vision"),
+        ],
+        sensors=[
+            GearInstall(id="s", gear_id=_gid("sensors", "Handheld Housing"), rating=3),
+            GearInstall(id="ss", gear_id=_gid("sensors", "Single Sensor"), parent_id="s", notes="sensor"),
+            GearInstall(gear_id=_gid("sensors", "Camera"), parent_id="ss", notes="camera", nickname="Eye"),
+        ],
+    )
+    back = _reimport(state)
+    texts = sorted(
+        (row.notes, row.nickname)
+        for rows in (back.apps, back.programs, back.gear, back.optics, back.sensors)
+        for row in rows
+        if row.parent_id
+    )
+    assert texts == [
+        ("app", "Doc"),
+        ("autosoft", ""),
+        ("camera", "Eye"),
+        ("program", "Spider"),
+        ("sensor", ""),
+        ("supplies", "Refill"),
+        ("vision", ""),
+    ]
 
 
 def test_quality_notes_come_back_by_take() -> None:
@@ -171,6 +242,7 @@ _ROWS = (
     "./vehicles/vehicle",
     "./vehicles/vehicle/gears/gear",
     ".//weaponmount/weapons/weapon",
+    ".//children/gear",
     "./lifestyles/lifestyle",
 )
 

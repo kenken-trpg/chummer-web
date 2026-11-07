@@ -20,10 +20,13 @@ export type NotedBucket =
   | "rccs"
   | "sensors"
   | "optics"
+  | "programs"
+  | "apps"
   | "gear"
   | "vehicles"
   | "drones"
   | "adept_powers"
+  | "qi_foci"
   | "spells"
   | "spirits"
   | "sprites"
@@ -39,12 +42,15 @@ const NAMED: ReadonlySet<NotedBucket> = new Set([
   "rccs",
   "sensors",
   "optics",
+  "programs",
+  "apps",
   "gear",
   "vehicles",
   "drones",
   "spirits",
   "sprites",
   "foci",
+  "qi_foci",
 ]);
 
 /** One text box: what is typed shows at once, and is saved on leaving it. */

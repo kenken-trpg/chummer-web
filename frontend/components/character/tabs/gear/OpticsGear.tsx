@@ -121,6 +121,14 @@ export function OpticsGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                         />
                       </label>
                     ) : null}
+                    <RowNotes
+                      ch={ch}
+                      bucket="optics"
+                      id={child.id}
+                      of={tr(child.name)}
+                      ui={ui}
+                      patch={patch}
+                    />
                   </div>
                 ))}
                 {heldGear.map((child) => (
@@ -138,6 +146,14 @@ export function OpticsGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                         {ui("common.remove")}
                       </button>
                     )}
+                    <RowNotes
+                      ch={ch}
+                      bucket="gear"
+                      id={child.id}
+                      of={tr(child.name)}
+                      ui={ui}
+                      patch={patch}
+                    />
                   </div>
                 ))}
                 {gearAddons.length ? (

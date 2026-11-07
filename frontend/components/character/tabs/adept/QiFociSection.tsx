@@ -1,4 +1,5 @@
 "use client";
+import { RowNotes } from "@/components/character/RowNotes";
 import { useState } from "react";
 import { PickerList } from "@/components/character/CatalogPicker";
 import { optionLabel, selectLabel } from "@/components/character/ExtraSelect";
@@ -119,6 +120,14 @@ export function QiFociSection({
                 </label>
               ) : null}
             </div>
+            <RowNotes
+              ch={ch}
+              bucket="qi_foci"
+              id={item.id}
+              of={item.name ? `${ui("adept.qiTitle")}: ${tr(item.name)}` : ui("adept.qiTitle")}
+              ui={ui}
+              patch={patch}
+            />
           </div>
           <button
             className="btn danger"

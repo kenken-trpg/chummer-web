@@ -236,6 +236,14 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                         />
                       </label>
                     ) : null}
+                    <RowNotes
+                      ch={ch}
+                      bucket="programs"
+                      id={prog.id}
+                      of={tr(prog.name)}
+                      ui={ui}
+                      patch={patch}
+                    />
                   </div>
                 ))}
               <AddonSelect

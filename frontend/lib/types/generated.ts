@@ -140,6 +140,14 @@ export interface QiFocusInstall {
   power_rating?: number;
   /** Chummer's `<bonded>`: one bought but not bonded costs its price only */
   bonded?: boolean;
+  /** the player's own note on this row (Chummer's `<notes>` on the focus's
+   *  gear); nothing is computed from it
+   */
+  notes?: string;
+  /** the player's own name for this one (Chummer's `<gearname>`), shown beside
+   *  the catalogue's
+   */
+  nickname?: string;
 }
 
 export interface SpiritInstall {

@@ -1,4 +1,5 @@
 "use client";
+import { RowNotes } from "@/components/character/RowNotes";
 import { AddonSelect } from "@/components/character/AddonSelect";
 import { DeckModuleRows } from "./DeckModuleRows";
 import { ConstructionRecordEditor } from "./ConstructionRecordEditor";
@@ -113,6 +114,14 @@ export function MatrixModRows({
               patch={patch}
             />
           ) : null}
+          <RowNotes
+            ch={ch}
+            bucket="gear"
+            id={mod.id}
+            of={tr(mod.label || mod.name)}
+            ui={ui}
+            patch={patch}
+          />
           <button
             className="btn danger"
             aria-label={ui("common.removeLabel", { name: tr(mod.label || mod.name) })}

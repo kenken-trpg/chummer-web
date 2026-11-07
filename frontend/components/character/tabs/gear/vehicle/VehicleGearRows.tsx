@@ -1,4 +1,5 @@
 "use client";
+import { RowNotes } from "@/components/character/RowNotes";
 import { SlotPicker } from "@/components/character/tabs/gear/vehicle/SlotPicker";
 import { HelpTip } from "@/components/help/HelpTip";
 import type { VehicleRowProps } from "@/components/character/tabs/gear/vehicle/types";
@@ -69,6 +70,14 @@ export function VehicleGearRows({
               />
             </label>
           ) : null}
+          <RowNotes
+            ch={ch}
+            bucket="gear"
+            id={acc.id}
+            of={tr(acc.label || acc.name)}
+            ui={ui}
+            patch={patch}
+          />
         </div>
       ))}
       <SlotPicker

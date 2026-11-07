@@ -1,4 +1,5 @@
 "use client";
+import { RowNotes } from "@/components/character/RowNotes";
 import { AddonSelect } from "@/components/character/AddonSelect";
 import type { TabPanelProps } from "@/components/character/types";
 import type { GearInstall } from "@/lib/types";
@@ -111,6 +112,14 @@ export function DeckModuleRows({
           >
             {ui("common.delete")}
           </button>
+          <RowNotes
+            ch={ch}
+            bucket="gear"
+            id={r.id}
+            of={tr(r.label || r.name)}
+            ui={ui}
+            patch={patch}
+          />
         </div>
       ))}
       {used < max ? (
