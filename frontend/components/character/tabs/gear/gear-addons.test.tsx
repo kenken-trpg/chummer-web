@@ -307,6 +307,28 @@ describe("<CyberdeckGear> the matrix attribute array", () => {
     expect(rows[0].array_order).toEqual(["firewall", "sleaze", "dataprocessing", "attack"]);
   });
 
+  it("says which attribute a program raises while it runs", () => {
+    const ch = makeCharacter({
+      cyberdecks: [deck()],
+      programs: [program("p1", "Toolbox", "d1"), program("p2", "Browse", "d1")],
+      derived: {
+        cyberdecks: [deck({ dataprocessing: 3, program_bonus: { dataprocessing: 1 } })],
+        programs: [
+          program("p1", "Toolbox", "d1", { running: true, attribute_bonus: "dataprocessing" }),
+          program("p2", "Browse", "d1", { running: true, attribute_bonus: "" }),
+        ],
+      },
+    } as never);
+    renderPanel(CyberdeckGear, ch, vi.fn());
+
+    const toolbox = screen.getByRole("checkbox", { name: "Toolbox：作動中" }).closest("div")!;
+    expect(toolbox.textContent).toContain("（作動中は DP +1）");
+    const browse = screen.getByRole("checkbox", { name: "Browse：作動中" }).closest("div")!;
+    expect(browse.textContent).not.toContain("+1");
+    // the deck line shows the raised value the engine sent
+    expect(screen.getByText(/DP 3/)).toBeDefined();
+  });
+
   it("offers no reordering for a deck whose array is fixed", () => {
     const ch = makeCharacter({
       cyberdecks: [deck({ can_reorder: false })],

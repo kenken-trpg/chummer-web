@@ -203,6 +203,7 @@ export const EN_GEAR = {
   "gear.deckPrograms": " / installed {installed} / running {used}/{max}",
   "gear.programRunning": "Running",
   "gear.programRunningName": "{name}: running",
+  "gear.programAttrBonus": " (+1 {attr} while running)",
   "gear.programRunningCount": "Running {used}/{max}",
   "gear.deckProgramLimit": " / simultaneous program limit {count}",
   "gear.programs": " / programs {used}/{max}",

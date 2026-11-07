@@ -217,6 +217,8 @@ export interface InstalledMatrixDevice {
   program_used?: number;
   program_installed?: number;
   program_max?: number;
+  /** how much of each attribute above came from running programs */
+  program_bonus?: Partial<Record<"attack" | "sleaze" | "dataprocessing" | "firewall", number>>;
   nuyen: number;
   avail?: string;
   source?: string;
@@ -317,6 +319,8 @@ export interface InstalledProgram {
   included?: boolean;
   extra?: string;
   label?: string;
+  /** the deck attribute it raises by 1 while running (SR5 p.245), or "" */
+  attribute_bonus?: "attack" | "sleaze" | "dataprocessing" | "firewall" | "";
   needs_extra?: boolean;
   extra_kind?: string;
   /** the translation kind of a pick — see `gear_extra_skill_kind` */

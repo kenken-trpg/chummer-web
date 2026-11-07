@@ -59,6 +59,7 @@ from ..gear.deck_modules import resolve_deck_modules
 from ..gear.electronic_modifications import resolve_electronic_modifications
 from ..gear.implants import mark_implanted, place_implanted_devices
 from ..gear.matrix import apply_host_matrix_mods
+from ..gear.programs import apply_running_program_bonuses
 from ..limits import _finalize_avail_tree
 from ..magic import attach_weapon_focus_dice
 from ..pricing import apply_black_market_avail, apply_overclocker, apply_purchase_discounts
@@ -187,6 +188,7 @@ def resolve_gear(
     warnings.extend(resolve_electronic_modifications(state, [*commlinks, *cyberdecks, *rccs], gear_items))
     warnings.extend(resolve_deck_modules(state, cyberdecks, [*commlinks, *cyberdecks, *rccs], gear_items))
     apply_host_matrix_mods([*commlinks, *cyberdecks, *rccs], gear_items)
+    apply_running_program_bonuses(cyberdecks, programs)
     apply_armor_gear(armor_items, {"gear": gear_items, "optics": optics, "sensors": sensors}, errors)
 
     custom_drugs, custom_drug_nuyen, custom_drug_warns, custom_drug_errors = resolve_custom_drugs(state)

@@ -18,6 +18,18 @@ from ._common import _clamp_rating, _program_label
 from .misc_hosts import _ware_hosts
 from .vehicles import _iter_vehicle_hosts
 
+#: SR5 p.245: while it runs, each of these raises one attribute of the deck
+#: running it by 1 (ids from gear.xml). Chummer leaves this to the player (no
+#: `<bonus>` on them, nothing in its code), so the .chum5 export keeps the
+#: deck's own values; the sheet, the VR initiative and the VTT exports, which
+#: read the deck row, get the raised ones.
+PROGRAM_ATTRIBUTE_BONUS = {
+    "5217388a-e2ce-4add-bcc0-b0b1672f156c": "attack",  # Decryption
+    "d5877f46-03e0-4603-b77a-f27e278202ab": "sleaze",  # Stealth
+    "cffae49c-30d1-42df-b47c-a407f3a86e7a": "dataprocessing",  # Toolbox
+    "d3bb1242-73b0-4b8a-89ab-27c272ebc900": "firewall",  # Encryption
+}
+
 
 def _resolve_programs(
     state: CharacterState,
@@ -102,6 +114,8 @@ def _resolve_programs(
                     else inst.running
                 ),
                 "extra": extra,
+                # the deck attribute it raises while running (SR5 p.245)
+                "attribute_bonus": PROGRAM_ATTRIBUTE_BONUS.get(str(spec["id"]), ""),
                 "needs_extra": bool(extra_kind),
                 "extra_kind": extra_kind,
                 "extra_skill_kind": gear_extra_skill_kind(spec),
@@ -137,3 +151,24 @@ def _resolve_programs(
             warnings.append(notice("engine.gear.duplicateProgram", name=term(str(row["name"]))))
     state.programs = kept
     return public, nuyen, warnings
+
+
+def apply_running_program_bonuses(cyberdecks: list[dict[str, Any]], programs: list[dict[str, Any]]) -> None:
+    """Raise each deck's attribute by 1 for every running Toolbox, Encryption,
+    Decryption or Stealth on it (SR5 p.245).
+
+    Runs after the accessories and modules have had their say, so the point
+    lands on the attribute wherever the array put it. ``program_bonus`` on the
+    deck row says how much of each attribute came from programs. A copy that
+    is stopped, loose, or stored in ware runs nowhere and raises nothing.
+    """
+    decks = {str(row.get("id") or ""): row for row in cyberdecks}
+    for row in cyberdecks:
+        row["program_bonus"] = {}
+    for prog in programs:
+        key = str(prog.get("attribute_bonus") or "")
+        deck = decks.get(str(prog.get("parent_id") or ""))
+        if not key or deck is None or not prog.get("running"):
+            continue
+        deck[key] = int(deck.get(key) or 0) + 1
+        deck["program_bonus"][key] = int(deck["program_bonus"].get(key) or 0) + 1
