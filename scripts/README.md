@@ -41,8 +41,25 @@ change it). `--build-only` re-mixes the last recording without playing it
 again; `--bgm` loops the music under the narration, fades it in and out, and
 ducks it while the voice speaks. It needs macOS, ffmpeg (`brew install
 ffmpeg`), and Playwright Chromium. The script's `scenes` list holds the spoken
-line (kana for English words `say` misreads) and the subtitle apart. Credit the
-music in the video description as its licence asks.
+line (English words in kana) and the subtitle apart; a word only one engine
+misreads goes in its `READINGS` entry instead. Credit the music in the video
+description as its licence asks.
+
+For a more natural voice, the lines can be read by another TTS such as
+[Irodori-TTS](https://github.com/Aratako/Irodori-TTS) instead of `say`. The
+reading happens in that tool's own repository; this side only hands the lines
+over and takes the clips back:
+
+```sh
+node scripts/record-walkthrough.mjs --narration narration.jsonl
+# the other TTS reads each {name, text} line into voices/<name>.wav
+node scripts/record-walkthrough.mjs --voice-dir voices --bgm music.mp3
+```
+
+`narration.jsonl` has one `{"name": "05-attributes", "text": "…"}` per scene;
+`--voice-dir` needs a `<name>.wav` for every name and stops with the missing
+ones listed otherwise. A word that TTS misreads goes in `READINGS.narration`,
+and only that line has to be read again.
 
 ## Application publishing
 

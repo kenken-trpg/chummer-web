@@ -1,5 +1,6 @@
 // Records a narrated walkthrough for YouTube: the character-creation steps
-// played by Playwright, one narration clip per scene from macOS `say`, the
+// played by Playwright, one narration clip per scene (macOS `say`, or files
+// made by another TTS such as Irodori-TTS), the
 // subtitles, a cursor and title/end cards drawn into the page, and ffmpeg to
 // put it together as a 1080p mp4.
 //
@@ -7,15 +8,26 @@
 // (the same setup as capture-manual.mjs; see scripts/README.md):
 //
 //   node scripts/record-walkthrough.mjs [--out DIR] [--bgm FILE] [--build-only]
+//                                       [--voice-dir DIR] [--narration FILE]
 //
 // --out         working directory and output (default: chummer-walkthrough in the OS temp dir)
 // --bgm         music under the narration: looped, faded, and ducked while it speaks
 // --bgm-volume  the music's level before it is ducked (default 0.2; 0.12 is about 4 dB lower)
 // --build-only  reuse the last recording in --out; only re-mix (e.g. to add --bgm)
+// --voice-dir   take each scene's clip from DIR/<NN>-<id>.wav instead of `say`
+// --narration   write the spoken lines as JSON Lines ({name, text}) and stop;
+//               for another TTS, which hands back DIR/<name>.wav for --voice-dir
 //
-// Needs macOS (`say`, `afinfo`), ffmpeg, and Playwright Chromium.
+// Needs ffmpeg and Playwright Chromium, and macOS for `say` unless --voice-dir.
 import { execFileSync } from "node:child_process";
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -32,6 +44,8 @@ const { values: args } = parseArgs({
     bgm: { type: "string" },
     "bgm-volume": { type: "string", default: "0.2" },
     "build-only": { type: "boolean", default: false },
+    "voice-dir": { type: "string" },
+    narration: { type: "string" },
   },
 });
 const out = resolve(args.out);
@@ -47,9 +61,22 @@ const origin = process.env.MANUAL_ORIGIN || "http://127.0.0.1:3100";
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // --- narration -------------------------------------------------------------
-// `say` reads English words letter by letter or oddly, and some game terms
-// wrong (能力値 comes out as のうりょくあたい), so the spoken line and the
-// subtitle are kept apart; write such words in kana in `say`.
+// `say` is the spoken line and `sub` the subtitle. English words are in kana
+// in `say`, since no engine reads them the way the video means. Words that only
+// one engine gets wrong stay as written in `say` and go in READINGS instead.
+const READINGS = {
+  // macOS `say` (Kyoko): 能力値 came out as のうりょくあたい, and
+  // のうりょくち as のう・りよくち
+  say: { 能力値: "ノウリョクチ" },
+  // the lines --narration writes for another TTS (e.g. Irodori-TTS): add
+  // words here after listening to its clips
+  narration: {},
+};
+const spoken = (text, engine) =>
+  Object.entries(READINGS[engine]).reduce(
+    (line, [word, reading]) => line.replaceAll(word, reading),
+    text,
+  );
 const scenes = [
   {
     id: "title",
@@ -68,7 +95,7 @@ const scenes = [
   },
   {
     id: "priority",
-    say: "最初に優先度を決めます。表のマスを押すと、その項目に優先度が割り当てられます。ここでは、のうりょくちを、ビーにします。",
+    say: "最初に優先度を決めます。表のマスを押すと、その項目に優先度が割り当てられます。ここでは、能力値を、ビーにします。",
     sub: "最初に優先度を決めます。表のマスを押すと、その項目に優先度が割り当てられます。\nここでは能力値を B にします。",
   },
   {
@@ -78,7 +105,7 @@ const scenes = [
   },
   {
     id: "attributes",
-    say: "のうりょくちは、スライダーで上げ下げします。右のサイドバーには、残りのポイントや注意点が、すぐに反映されます。",
+    say: "能力値は、スライダーで上げ下げします。右のサイドバーには、残りのポイントや注意点が、すぐに反映されます。",
     sub: "能力値はスライダーで上げ下げします。\n右のサイドバーには、残りのポイントや注意点がすぐに反映されます。",
   },
   {
@@ -112,15 +139,52 @@ const scenes = [
     sub: "ご覧いただき、ありがとうございました。",
   },
 ];
+for (const [i, s] of scenes.entries())
+  s.name = `${String(i).padStart(2, "0")}-${s.id}`;
+if (args.narration) {
+  const lines = scenes.map((s) =>
+    JSON.stringify({ name: s.name, text: spoken(s.say, "narration") }),
+  );
+  writeFileSync(resolve(args.narration), lines.join("\n") + "\n");
+  console.log(`Wrote ${resolve(args.narration)} (${lines.length} lines)`);
+  process.exit(0);
+}
+const seconds = (file) =>
+  Number(
+    execFileSync("ffprobe", [
+      "-v",
+      "error",
+      "-show_entries",
+      "format=duration",
+      "-of",
+      "csv=p=0",
+      file,
+    ]).toString(),
+  );
 if (!args["build-only"]) {
+  const voiceDir = args["voice-dir"] && resolve(args["voice-dir"]);
+  const missing = voiceDir
+    ? scenes.filter((s) => !existsSync(join(voiceDir, `${s.name}.wav`)))
+    : [];
+  if (missing.length) {
+    console.error(
+      `Missing in ${voiceDir}: ${missing.map((s) => `${s.name}.wav`).join(", ")}`,
+    );
+    process.exit(1);
+  }
   rmSync(out, { recursive: true, force: true });
   mkdirSync(join(out, "frames"), { recursive: true });
   mkdirSync(join(out, "voice"), { recursive: true });
-  for (const [i, s] of scenes.entries()) {
-    s.file = join(out, "voice", `${String(i).padStart(2, "0")}-${s.id}.aiff`);
-    execFileSync("say", ["-v", "Kyoko", "-r", "185", "-o", s.file, s.say]);
-    const info = execFileSync("afinfo", [s.file]).toString();
-    s.duration = Number(/estimated duration: ([\d.]+)/.exec(info)[1]);
+  for (const s of scenes) {
+    if (voiceDir) {
+      s.file = join(out, "voice", `${s.name}.wav`);
+      copyFileSync(join(voiceDir, `${s.name}.wav`), s.file);
+    } else {
+      s.file = join(out, "voice", `${s.name}.aiff`);
+      const line = spoken(s.say, "say");
+      execFileSync("say", ["-v", "Kyoko", "-r", "185", "-o", s.file, line]);
+    }
+    s.duration = seconds(s.file);
   }
 
   // --- browser ----------------------------------------------------------------
