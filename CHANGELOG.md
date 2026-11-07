@@ -3,6 +3,12 @@
 Notable changes. Format follows [Keep a Changelog](https://keepachangelog.com/);
 self-hosters can pin to a tag instead of tracking `main`.
 
+## [0.5.31] — 2026-11-07
+
+### Added
+
+- **Overclocker で上げるマトリックス値を、デッキごとに選べるようにしました**：Overclocker（RF p.148）を持つと、装備タブのデッキの行に「オーバークロック」の欄が出て、ATK・SLZ・DP・FW・なしから選べます。これまでは、いちばん性能の高いデッキのアタックに決まっていました。選ばなければ今までどおりです。配列を並べ替えたデッキでも、選んだ値に +1 されます。`.chum5` では Chummer と同じ `<overclocked>` に書き、取り込むときも読みます。
+
 ## [0.5.30] — 2026-11-07
 
 ### Added
@@ -3055,7 +3061,8 @@ First tagged release.
 - One-container Docker image (Caddy + uvicorn + Next standalone) published to
   GHCR; `make up` / `compose.yaml` for local self-hosting.
 
-[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.30...HEAD
+[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.31...HEAD
+[0.5.31]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.30...v0.5.31
 [0.5.30]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.29...v0.5.30
 [0.5.29]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.28...v0.5.29
 [0.5.28]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.27...v0.5.28
