@@ -5,6 +5,12 @@ self-hosters can pin to a tag instead of tracking `main`.
 
 ## [Unreleased]
 
+## [0.5.35] — 2026-11-07
+
+### Added
+
+- **ほかの品目の中に入れた品目と氣収束具にも、備考を書けるようにしました**：コムリンク・サイバーデッキ・RCC に入れたアプリ・プログラム・アクセサリー・モジュール、ヴィークルやドローンのオートソフトと車内の装備、入れ物の中身、光学機器やセンサーに組み込んだもの、どこにも入っていないアプリやプログラム、氣収束具の各行に、「呼び名・備考」の欄を付けました。これまでは一番上の品目にしか欄がありませんでした。氣収束具の備考と呼び名は、取り込みでも `.chum5` の書き出しでもそのまま残ります（中に入れた品目の備考は、前から残っていました）。
+
 ## [0.5.34] — 2026-11-07
 
 ### Fixed
@@ -3081,7 +3087,8 @@ First tagged release.
 - One-container Docker image (Caddy + uvicorn + Next standalone) published to
   GHCR; `make up` / `compose.yaml` for local self-hosting.
 
-[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.34...HEAD
+[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.35...HEAD
+[0.5.35]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.34...v0.5.35
 [0.5.34]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.33...v0.5.34
 [0.5.33]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.32...v0.5.33
 [0.5.32]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.31...v0.5.32
