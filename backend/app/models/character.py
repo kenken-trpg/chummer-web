@@ -85,6 +85,7 @@ class CharacterPatch(BaseModel):
     knowledge_categories: dict[str, str] | None = None
     quality_ids: list[str] | None = None
     quality_extras: dict[str, str] | None = None
+    quality_notes: dict[str, str] | None = None
     removed_innate_qualities: list[str] | None = None
     cyberware: list[CyberwareInstall] | None = None
     bioware: list[CyberwareInstall] | None = None
@@ -273,6 +274,10 @@ class CharacterState(BaseModel):
     knowledge_categories: dict[str, str] = Field(default_factory=dict)
     quality_ids: list[str] = Field(default_factory=list)
     quality_extras: dict[str, str] = Field(default_factory=dict)
+    #: the player's own note on a quality (Chummer's `<notes>`), keyed as
+    #: `quality_extras` is: by id, and a take with its own text by that take's
+    #: key. Nothing is computed from it.
+    quality_notes: dict[str, str] = Field(default_factory=dict)
     #: The metatype's `removable="True"` qualities the player took off at
     #: chargen (a Shapeshifter's Uneducated), paying their karma back the
     #: other way. Chummer's `MetatypeRemovedAtChargen`.

@@ -1,4 +1,5 @@
 "use client";
+import { RowNotes } from "@/components/character/RowNotes";
 import { HelpTip } from "@/components/help/HelpTip";
 import { SlotPicker } from "@/components/character/tabs/gear/vehicle/SlotPicker";
 import type { VehicleRowProps } from "@/components/character/tabs/gear/vehicle/types";
@@ -133,6 +134,16 @@ export function VehicleModRows({
                 item={child}
                 childrenItems={(d.cyberware || []).filter((row) => row.parent_id === child.id)}
                 allItems={d.cyberware || []}
+                renderNotes={(row) => (
+                  <RowNotes
+                    ch={ch}
+                    bucket="cyberware"
+                    id={row.id}
+                    of={tr(row.name)}
+                    ui={ui}
+                    patch={patch}
+                  />
+                )}
                 renderHeld={(row) => (
                   <>
                     <ModularMountSelect

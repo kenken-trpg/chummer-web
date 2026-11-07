@@ -1,4 +1,5 @@
 "use client";
+import { RowNotes } from "@/components/character/RowNotes";
 import type { TabPanelProps } from "@/components/character/types";
 import { spiritRoleLabel } from "@/lib/character/constants";
 import { optionalNumber, sourceBit, testLine } from "@/lib/character/format";
@@ -162,6 +163,14 @@ export function SpiritsTab({ catalog, character: ch, d, tr, ui, patch }: TabPane
                 </select>
               </label>
             </div>
+            <RowNotes
+              ch={ch}
+              bucket="spirits"
+              id={item.id}
+              of={tr(item.name)}
+              ui={ui}
+              patch={patch}
+            />
           </div>
           <button
             className="btn danger"

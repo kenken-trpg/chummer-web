@@ -1,4 +1,5 @@
 "use client";
+import { RowNotes } from "@/components/character/RowNotes";
 import { HelpTip } from "@/components/help/HelpTip";
 import { DiscountToggle } from "@/components/character/DiscountToggle";
 import { PriceField } from "@/components/character/tabs/gear/PriceField";
@@ -206,6 +207,14 @@ export function MiscGearRow({
             </div>
           </>
         ) : null}
+        <RowNotes
+          ch={ch}
+          bucket="gear"
+          id={item.id}
+          of={tr(item.label || item.name)}
+          ui={ui}
+          patch={patch}
+        />
         {childrenItems.map((child) => (
           <GearChild
             key={child.id}

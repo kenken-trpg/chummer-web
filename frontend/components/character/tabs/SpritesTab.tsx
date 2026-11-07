@@ -1,4 +1,5 @@
 "use client";
+import { RowNotes } from "@/components/character/RowNotes";
 import { PickerList } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { useState } from "react";
@@ -149,6 +150,14 @@ export function SpritesTab({ catalog, character: ch, d, tr, ui, patch }: TabPane
                 </select>
               </label>
             </div>
+            <RowNotes
+              ch={ch}
+              bucket="sprites"
+              id={item.id}
+              of={tr(item.name)}
+              ui={ui}
+              patch={patch}
+            />
           </div>
           <button
             className="btn danger"

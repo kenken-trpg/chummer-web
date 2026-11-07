@@ -1,4 +1,5 @@
 "use client";
+import { RowNotes } from "@/components/character/RowNotes";
 import { AddonSelect } from "@/components/character/AddonSelect";
 import { CatalogPicker } from "@/components/character/CatalogPicker";
 import { DiscountToggle } from "@/components/character/DiscountToggle";
@@ -176,6 +177,14 @@ export function OpticsGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                       ],
                     })
                   }
+                />
+                <RowNotes
+                  ch={ch}
+                  bucket="optics"
+                  id={item.id}
+                  of={tr(item.name)}
+                  ui={ui}
+                  patch={patch}
                 />
               </div>
               <button

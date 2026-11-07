@@ -14,7 +14,7 @@ from typing import Any
 from ..data_loader._xml import parse_data
 from ..engine.lookups import _mentor_by_id, _paragon_by_id, _stream_by_id, _tradition_by_id
 from ..models import CharacterState
-from ._common import _Ctx, _Names, _sub
+from ._common import _Ctx, _Names, _player_text, _sub
 from .improvements import _bonus_improvements, _with_rows, _write_improvements
 
 #: Chummer's `Tradition.CustomMagicalTraditionGuidString`, the row in
@@ -43,6 +43,7 @@ def _export_spell_lists(root: ET.Element, state: CharacterState, names: _Names, 
             el = _sub(parent, item)
             _sub(el, "sourceid", iid)
             _sub(el, "name", names[bag].get(iid, ""))
+            _player_text(el, row)
             for k, fn in (extra or {}).items():
                 _sub(el, k, fn(row))
         return parent
@@ -470,6 +471,7 @@ def _export_spirits(root: ET.Element, state: CharacterState, names: _Names, ctx:
         el = _sub(spirits, "spirit")
         _sub(el, "guid", srow.id)
         _sub(el, "name", names["spirit"].get(srow.spirit_id, ""))
+        _player_text(el, srow, "crittername")
         _sub(el, "type", "Spirit")
         _sub(el, "force", srow.force)
         _sub(el, "services", srow.services)
@@ -483,6 +485,7 @@ def _export_spirits(root: ET.Element, state: CharacterState, names: _Names, ctx:
         el = _sub(spirits, "spirit")
         _sub(el, "guid", prow.id)
         _sub(el, "name", names["sprite"].get(prow.sprite_id, ""))
+        _player_text(el, prow, "crittername")
         _sub(el, "type", "Sprite")
         _sub(el, "force", prow.level)
         _sub(el, "services", prow.services)

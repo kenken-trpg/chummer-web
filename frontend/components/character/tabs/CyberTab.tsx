@@ -1,4 +1,5 @@
 "use client";
+import { RowNotes } from "@/components/character/RowNotes";
 import { sourceText } from "@/lib/character/books";
 import { PickerList } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
@@ -175,6 +176,16 @@ export function CyberTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelP
             catalogItems={catalog.cyberware.items}
             grades={cyberGrades}
             kind="cyberware"
+            renderNotes={(row) => (
+              <RowNotes
+                ch={ch}
+                bucket="cyberware"
+                id={row.id}
+                of={tr(row.name)}
+                ui={ui}
+                patch={patch}
+              />
+            )}
             renderHeld={(row) => (
               <>
                 <ModularMountSelect

@@ -1,4 +1,5 @@
 "use client";
+import { RowNotes } from "@/components/character/RowNotes";
 import { AddonSelect } from "@/components/character/AddonSelect";
 import { CatalogPicker } from "@/components/character/CatalogPicker";
 import { DiscountToggle } from "@/components/character/DiscountToggle";
@@ -285,6 +286,14 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                 character={ch}
                 d={d}
                 tr={tr}
+                ui={ui}
+                patch={patch}
+              />
+              <RowNotes
+                ch={ch}
+                bucket="cyberdecks"
+                id={item.id}
+                of={tr(item.name)}
                 ui={ui}
                 patch={patch}
               />

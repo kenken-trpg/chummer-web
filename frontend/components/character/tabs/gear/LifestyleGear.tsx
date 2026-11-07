@@ -1,4 +1,5 @@
 "use client";
+import { RowNotes } from "@/components/character/RowNotes";
 import { AddonSelect } from "@/components/character/AddonSelect";
 import { CatalogPicker } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
@@ -201,6 +202,14 @@ export function LifestyleGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                       ),
                     });
                   }}
+                />
+                <RowNotes
+                  ch={ch}
+                  bucket="lifestyles"
+                  id={item.id}
+                  of={tr(item.name)}
+                  ui={ui}
+                  patch={patch}
                 />
               </div>
               <button

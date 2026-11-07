@@ -1,4 +1,5 @@
 "use client";
+import { RowNotes } from "@/components/character/RowNotes";
 import { useState } from "react";
 import { HelpTip } from "@/components/help/HelpTip";
 import { AutosoftRows } from "@/components/character/tabs/gear/AutosoftRows";
@@ -132,6 +133,14 @@ export function VehicleDroneGear({
                   {" / "}
                   {item.nuyen.toLocaleString()}¥ / {sourceBit(item, ui)}
                 </div>
+                <RowNotes
+                  ch={ch}
+                  bucket={mode === "vehicle" ? "vehicles" : "drones"}
+                  id={item.id}
+                  of={tr(item.name)}
+                  ui={ui}
+                  patch={patch}
+                />
                 <VehicleModRows {...rowProps} />
                 <VehicleMountRows {...rowProps} />
                 <VehicleSensorRows {...rowProps} />

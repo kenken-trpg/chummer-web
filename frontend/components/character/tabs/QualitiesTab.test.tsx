@@ -720,6 +720,7 @@ describe("<QualitiesTab> leveled qualities", () => {
     expect(patch).toHaveBeenCalledWith({
       quality_ids: ["other"],
       quality_extras: { other: "keep" },
+      quality_notes: {},
       skill_picks: { "quality:other:0": "Blades" },
     });
   });
@@ -742,6 +743,7 @@ describe("<QualitiesTab> leveled qualities", () => {
       character: {
         quality_ids: ["rof", "rof"],
         quality_extras: { rof: "Ares", "rof:take:1": "Horizon" },
+        quality_notes: { rof: "Old job", "rof:take:1": "Arcology" },
         derived: {
           qualities: [
             { ...records, extra: "Ares", extra_key: "rof" },
@@ -752,11 +754,13 @@ describe("<QualitiesTab> leveled qualities", () => {
     });
     const rows = document.querySelectorAll<HTMLElement>(".card > .quality-item");
     expect(rows).toHaveLength(2);
-    expect(within(rows[1]).getByRole("textbox")).toHaveProperty("value", "Horizon");
+    expect(within(rows[1]).getByDisplayValue("Horizon")).toBeTruthy();
     fireEvent.click(within(rows[0]).getByRole("button", { name: "削除" }));
     expect(patch).toHaveBeenCalledWith({
       quality_ids: ["rof"],
       quality_extras: { rof: "Horizon" },
+      // the note moves down with its take
+      quality_notes: { rof: "Arcology" },
     });
   });
 

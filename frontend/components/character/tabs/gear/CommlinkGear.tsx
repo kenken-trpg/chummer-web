@@ -1,4 +1,5 @@
 "use client";
+import { RowNotes } from "@/components/character/RowNotes";
 import { AppRows } from "@/components/character/tabs/gear/AppRows";
 import { LooseAppRows } from "@/components/character/tabs/gear/LooseAppRows";
 import { AddonSelect } from "@/components/character/AddonSelect";
@@ -155,6 +156,14 @@ export function CommlinkGear({ catalog, character: ch, d, tr, ui, patch }: TabPa
                 character={ch}
                 d={d}
                 tr={tr}
+                ui={ui}
+                patch={patch}
+              />
+              <RowNotes
+                ch={ch}
+                bucket="commlinks"
+                id={item.id}
+                of={tr(item.name)}
                 ui={ui}
                 patch={patch}
               />

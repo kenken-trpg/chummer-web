@@ -1,4 +1,5 @@
 "use client";
+import { RowNotes } from "@/components/character/RowNotes";
 import { AddonSelect } from "@/components/character/AddonSelect";
 import { CatalogPicker } from "@/components/character/CatalogPicker";
 import { DiscountToggle } from "@/components/character/DiscountToggle";
@@ -164,6 +165,14 @@ export function SensorGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                   tr={tr}
                   options={addons}
                   onAdd={(mod) => install(mod.id, item.id, mod.minrating)}
+                />
+                <RowNotes
+                  ch={ch}
+                  bucket="sensors"
+                  id={item.id}
+                  of={tr(item.name)}
+                  ui={ui}
+                  patch={patch}
                 />
               </div>
               <button

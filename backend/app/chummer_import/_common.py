@@ -29,6 +29,23 @@ _LEGACY_NAMES = {
 }
 
 
+def _raw_text(node: ET.Element, tag: str) -> str:
+    """The player's text as Chummer saved it, trailing spaces and line breaks
+    included; "" when there is nothing but whitespace."""
+    text = node.findtext(tag) or ""
+    return text if text.strip() else ""
+
+
+def _player_text(node: ET.Element, name_tag: str = "") -> dict[str, str]:
+    """A row's own note and, where the row has one, the player's name for it
+    (`<armorname>`, `<gearname>`, ...) — as the row's `notes` / `nickname`,
+    and only when there is something written."""
+    out = {"notes": _raw_text(node, "notes")}
+    if name_tag:
+        out["nickname"] = _raw_text(node, name_tag)
+    return {field: text for field, text in out.items() if text}
+
+
 def _by_name(rows: list[dict[str, Any]]) -> dict[str, str]:
     out: dict[str, str] = {}
     for r in rows:

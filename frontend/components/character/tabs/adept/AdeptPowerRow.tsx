@@ -1,4 +1,5 @@
 "use client";
+import { RowNotes } from "@/components/character/RowNotes";
 import { ExtraSelect, optionLabel } from "@/components/character/ExtraSelect";
 import type { TabPanelProps } from "@/components/character/types";
 import { formatPoints, sourceBit } from "@/lib/character/format";
@@ -113,6 +114,14 @@ export function AdeptPowerRow({
             </label>
           ) : null}
         </div>
+        <RowNotes
+          ch={ch}
+          bucket="adept_powers"
+          id={item.id}
+          of={tr(item.name)}
+          ui={ui}
+          patch={patch}
+        />
       </div>
       {item.free_only ? (
         <span className="muted">{ui("adept.free")}</span>

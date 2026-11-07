@@ -96,6 +96,10 @@ export interface WareInstall {
    */
   ess_extra_additive?: number | null;
   ess_extra_multiplicative?: number | null;
+  /** the player's own note on this row (Chummer's `<notes>`); nothing is
+   *  computed from it
+   */
+  notes?: string;
 }
 
 export interface AdeptPowerInstall {
@@ -105,6 +109,10 @@ export interface AdeptPowerInstall {
   extra?: string | null;
   discounted?: boolean;
   force?: number | null;
+  /** the player's own note on this row (Chummer's `<notes>`); nothing is
+   *  computed from it
+   */
+  notes?: string;
 }
 
 export interface SpellInstall {
@@ -117,6 +125,10 @@ export interface SpellInstall {
    *  Detect [Life Form]'s life form (Chummer's `<extra>`)
    */
   extra?: string | null;
+  /** the player's own note on this row (Chummer's `<notes>`); nothing is
+   *  computed from it
+   */
+  notes?: string;
 }
 
 export interface QiFocusInstall {
@@ -138,6 +150,14 @@ export interface SpiritInstall {
   bound?: boolean;
   hits?: number | null;
   opposed_hits?: number | null;
+  /** the player's own note on this row (Chummer's `<notes>`); nothing is
+   *  computed from it
+   */
+  notes?: string;
+  /** the player's own name for this one (Chummer's `<crittername>`), shown beside
+   *  the catalogue's
+   */
+  nickname?: string;
 }
 
 export interface AIProgramInstall {
@@ -171,6 +191,14 @@ export interface SpriteInstall {
   registered?: boolean;
   hits?: number | null;
   opposed_hits?: number | null;
+  /** the player's own note on this row (Chummer's `<notes>`); nothing is
+   *  computed from it
+   */
+  notes?: string;
+  /** the player's own name for this one (Chummer's `<crittername>`), shown beside
+   *  the catalogue's
+   */
+  nickname?: string;
 }
 
 export interface FocusInstall {
@@ -184,6 +212,14 @@ export interface FocusInstall {
   extra?: string | null;
   /** Chummer's `<bonded>`: one bought but not bonded costs its price only */
   bonded?: boolean;
+  /** the player's own note on this row (Chummer's `<notes>` on the focus's
+   *  gear); nothing is computed from it
+   */
+  notes?: string;
+  /** the player's own name for this one (Chummer's `<gearname>`), shown beside
+   *  the catalogue's
+   */
+  nickname?: string;
 }
 
 export interface ArmorInstall {
@@ -198,6 +234,14 @@ export interface ArmorInstall {
    *  `<discountedcost>`, which the quality's categories allow)
    */
   discounted?: boolean;
+  /** the player's own note on this row (Chummer's `<notes>`); nothing is
+   *  computed from it
+   */
+  notes?: string;
+  /** the player's own name for this one (Chummer's `<armorname>`), shown beside
+   *  the catalogue's
+   */
+  nickname?: string;
 }
 
 export interface ArmorModInstall {
@@ -224,6 +268,10 @@ export interface WeaponInstall {
    *  `<discountedcost>`, which the quality's categories allow)
    */
   discounted?: boolean;
+  /** the player's own note on this row (Chummer's `<notes>`); nothing is
+   *  computed from it
+   */
+  notes?: string;
 }
 
 export interface VehicleModInstall {
@@ -265,6 +313,10 @@ export interface WeaponAccessoryInstall {
    *  `<discountedcost>`, which the quality's categories allow)
    */
   discounted?: boolean;
+  /** the player's own note on this row (Chummer's `<notes>`); nothing is
+   *  computed from it
+   */
+  notes?: string;
 }
 
 export interface CommlinkInstall {
@@ -279,6 +331,14 @@ export interface CommlinkInstall {
    *  `<discountedcost>`, which the quality's categories allow)
    */
   discounted?: boolean;
+  /** the player's own note on this row (Chummer's `<notes>`); nothing is
+   *  computed from it
+   */
+  notes?: string;
+  /** the player's own name for this one (Chummer's `<gearname>`), shown beside
+   *  the catalogue's
+   */
+  nickname?: string;
 }
 
 export interface GearInstall {
@@ -316,6 +376,15 @@ export interface GearInstall {
    *  `<discountedcost>`, which the quality's categories allow)
    */
   discounted?: boolean;
+  /** the player's own note on this row (Chummer's `<notes>`); nothing is
+   *  computed from it
+   */
+  notes?: string;
+  /** the player's own name for this one, shown beside the catalogue's
+   *  (Chummer's `<gearname>`, a vehicle's or drone's `<vehiclename>`) — not
+   *  `name`, which is what a Custom Item is
+   */
+  nickname?: string;
 }
 
 export interface ElectronicPartsSupply {
@@ -373,6 +442,10 @@ export interface LifestyleInstall {
   security?: number;
   quality_ids?: string[];
   quality_extras?: Record<string, string>;
+  /** the player's own note on this row (Chummer's `<notes>`); nothing is
+   *  computed from it
+   */
+  notes?: string;
 }
 
 export interface ExoticSkillInstall {
@@ -749,6 +822,11 @@ export interface Character {
   knowledge_categories?: Record<string, string>;
   quality_ids: string[];
   quality_extras?: Record<string, string>;
+  /** the player's own note on a quality (Chummer's `<notes>`), keyed as
+   *  `quality_extras` is: by id, and a take with its own text by that take's
+   *  key. Nothing is computed from it.
+   */
+  quality_notes?: Record<string, string>;
   /** The metatype's `removable="True"` qualities the player took off at
    *  chargen (a Shapeshifter's Uneducated), paying their karma back the
    *  other way. Chummer's `MetatypeRemovedAtChargen`.

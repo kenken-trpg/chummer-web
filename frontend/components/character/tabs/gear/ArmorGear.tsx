@@ -1,4 +1,5 @@
 "use client";
+import { RowNotes } from "@/components/character/RowNotes";
 import { PriceField } from "@/components/character/tabs/gear/PriceField";
 import { AddonSelect } from "@/components/character/AddonSelect";
 import { ArmorModRow, CarriedGearRow } from "@/components/character/tabs/gear/ArmorRows";
@@ -147,6 +148,14 @@ export function ArmorGear({ catalog, character: ch, d, tr, ui, patch }: TabPanel
                     </label>
                   ) : null}
                 </div>
+                <RowNotes
+                  ch={ch}
+                  bucket="armor"
+                  id={item.id}
+                  of={tr(item.name)}
+                  ui={ui}
+                  patch={patch}
+                />
                 {(item.mods || []).map((mod) => (
                   <ArmorModRow
                     key={mod.id}

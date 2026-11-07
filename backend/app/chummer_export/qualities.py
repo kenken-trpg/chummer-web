@@ -25,7 +25,7 @@ from ..engine.martial_arts import free_martial_art_specs
 from ..engine.priority import talent_options
 from ..engine.qualities import _quality_needs_spell_category, has_extra_per_take
 from ..models import CharacterState
-from ._common import _Ctx, _Names, _sub, improvements_of
+from ._common import _Ctx, _Names, _note, _sub, improvements_of
 from .data_fields import _from_data
 from .improvements import _bonus_improvements, _Imp, _text, _with_rows, _write_improvements
 from .life_modules import export_life_modules
@@ -54,8 +54,11 @@ def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ct
         extra, spell_category = _quality_extra_out(
             specs.get(qid) or {}, qid, state.quality_extras, {c.id: c.name for c in state.contacts}
         )
-        if take and has_extra_per_take(specs.get(qid) or {}):
-            extra = state.quality_extras.get(quality_take_extra_key(qid, take), "")
+        # a take with its own text (Records on File against a second
+        # megacorp) has its own note too; the levels of one share the first's
+        key = quality_take_extra_key(qid, take) if take and has_extra_per_take(specs.get(qid) or {}) else qid
+        if key != qid:
+            extra = state.quality_extras.get(key, "")
         if spell_category:
             _sub(q, "guid", qid)
             spell_limits.append((qid, spell_category))
@@ -66,6 +69,7 @@ def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ct
             # `_export_ai_programs` names this quality by its guid
             _sub(q, "guid", qid)
         _sub(q, "extra", extra)
+        _note(q, state.quality_notes.get(key, ""))
         _sub(q, "qualitysource", "Selected")
         # Chummer reads the karma paid and the type from the save alone: with
         # neither, every quality costs nothing and a negative one counts as positive.
@@ -208,6 +212,7 @@ def _export_granted_qualities(
         _sub(child, "sourceid", child_id)
         _sub(child, "name", child_name)
         _sub(child, "extra", extra)
+        _note(child, state.quality_notes.get(child_id, ""))
         _sub(child, "qualitysource", "Improvement")
         _sub(child, "sourcename", names["quality"].get(qid, ""))
         child_definition = bonuses.get(child_id)
@@ -267,6 +272,7 @@ def _export_talent_quality(
         "page": spec.get("page") or "",
     }.items():
         _sub(q, key, value)
+    _note(q, state.quality_notes.get(str(spec["id"]), ""))
     definition = bonuses.get(str(spec["id"]))
     bonus = definition.find("bonus") if definition is not None else None
     if bonus is not None:

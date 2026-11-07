@@ -9,7 +9,7 @@ from typing import Any
 from ..data_loader import CatalogDict
 from ..data_loader._xml import _int, _text
 from ..notices import Notice, Phrase, ui
-from ._common import _discounted, _picked_cost, _Resolver, _unexpected_children
+from ._common import _discounted, _picked_cost, _player_text, _Resolver, _unexpected_children
 
 _GRADE_NAMES = {
     "スタンダード": "Standard",
@@ -75,7 +75,7 @@ def _import_ware(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
             wid = ware_r.resolve(w, warn, kind)
             if not wid:
                 continue
-            row = {
+            row: dict[str, Any] = {
                 "id": str(uuid.uuid4()),
                 "ware_id": wid,
                 "rating": max(1, _int(w.find("rating"), 1)),
@@ -85,6 +85,7 @@ def _import_ware(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
                 "included": _came_with_parent(w),
                 "discounted": _discounted(w),
                 "ess_discount": max(-100, min(100, _int(w.find("essdiscount"), 0))),
+                **_player_text(w),
             }
             # Prototype Transhuman's tick: what the player chose, not the set
             # the engine would pick. `Cyberware.Save` writes it on every piece

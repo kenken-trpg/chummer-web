@@ -13,14 +13,7 @@ from ..engine.constants import (
 )
 from ..models.social import CONTACT_DETAIL_TAGS
 from ..notices import Notice, notice, ui
-from ._common import _is_uuid, _Resolver
-
-
-def _raw_text(node: ET.Element, tag: str) -> str:
-    """The player's text as Chummer saved it, trailing spaces and line breaks
-    included; "" when there is nothing but whitespace."""
-    text = node.findtext(tag) or ""
-    return text if text.strip() else ""
+from ._common import _is_uuid, _player_text, _raw_text, _Resolver
 
 
 def _import_lifestyles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
@@ -61,6 +54,7 @@ def _import_lifestyles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], w
                     "security": max(0, _int(ls.find("security"))),
                     "quality_ids": quality_ids,
                     "quality_extras": quality_extras,
+                    **_player_text(ls),
                 }
             )
         elif base:
