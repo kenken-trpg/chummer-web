@@ -94,4 +94,48 @@ describe("<ContactsTab>", () => {
     expect(screen.queryByRole("button", { name: "削除" })).toBeNull();
     expect(screen.getByText("資質連動")).toBeDefined();
   });
+
+  it("keeps a contact's own description and saves it on leaving the field", () => {
+    const patch = vi.fn();
+    renderTab({
+      patch,
+      character: {
+        contacts: [{ id: "c1", name: "Mr. Johnson", location: "Seattle", notes: "Owes us one." }],
+        derived: { contacts: [contact()] },
+      } as never,
+    });
+
+    const box = screen.getByText("詳しい情報（所在地・メタタイプ・備考など）").closest("details")!;
+    // something is written there, so it opens on its own
+    expect(box.open).toBe(true);
+    expect((screen.getByRole("textbox", { name: "所在地" }) as HTMLInputElement).value).toBe(
+      "Seattle",
+    );
+    const notes = screen.getByRole("textbox", { name: "備考" });
+    expect((notes as HTMLTextAreaElement).value).toBe("Owes us one.");
+    fireEvent.focusOut(notes, { target: { value: "Owes us two." } });
+    expect(patch.mock.calls.at(-1)![0].contacts[0].notes).toBe("Owes us two.");
+    fireEvent.focusOut(screen.getByRole("textbox", { name: "支払い方法" }), {
+      target: { value: "Cash" },
+    });
+    expect(patch.mock.calls.at(-1)![0].contacts[0].preferred_payment).toBe("Cash");
+  });
+
+  it("leaves the description closed while nothing is written there", () => {
+    renderTab({
+      character: {
+        contacts: [{ id: "c1", name: "Mr. Johnson" }],
+        derived: { contacts: [contact()] },
+      } as never,
+    });
+    const box = screen.getByText("詳しい情報（所在地・メタタイプ・備考など）").closest("details")!;
+    expect(box.open).toBe(false);
+  });
+
+  it("offers no description for a contact kept nowhere (a Life Module's)", () => {
+    renderTab({
+      character: { contacts: [], derived: { contacts: [contact()] } } as never,
+    });
+    expect(screen.queryByText("詳しい情報（所在地・メタタイプ・備考など）")).toBeNull();
+  });
 });

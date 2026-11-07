@@ -395,6 +395,20 @@ export interface ContactInstall {
   source_quality_id?: string | null;
   free_connection?: number;
   free_loyalty?: number;
+  /** the player's own description of the contact, kept as Chummer saves it
+   *  (`Contact.Save`): where they are, who they are, what they want, and notes.
+   *  Nothing is computed from these; like the character's own notes, no
+   *  length cap, so a Chummer save with long notes still comes in.
+   */
+  location?: string;
+  metatype?: string;
+  gender?: string;
+  age?: string;
+  contact_type?: string;
+  preferred_payment?: string;
+  hobbies_vice?: string;
+  personal_life?: string;
+  notes?: string;
 }
 
 export interface MartialArtInstall {

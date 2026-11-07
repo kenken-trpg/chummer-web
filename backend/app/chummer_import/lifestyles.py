@@ -11,8 +11,16 @@ from ..data_loader._xml import _int, _text
 from ..engine.constants import (
     QUALITY_CONTACT_EXTRA_SUFFIX,
 )
+from ..models.social import CONTACT_DETAIL_TAGS
 from ..notices import Notice, notice, ui
 from ._common import _is_uuid, _Resolver
+
+
+def _raw_text(node: ET.Element, tag: str) -> str:
+    """The player's text as Chummer saved it, trailing spaces and line breaks
+    included; "" when there is nothing but whitespace."""
+    text = node.findtext(tag) or ""
+    return text if text.strip() else ""
 
 
 def _import_lifestyles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
@@ -97,6 +105,12 @@ def _import_lifestyles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], w
                 "free_connection": connection if free else 0,
                 "free_loyalty": loyalty if free else 0,
                 "source_quality_id": granted_by.get(guid),
+                **{
+                    field: text
+                    for field, tag in CONTACT_DETAIL_TAGS.items()
+                    # saves before 5.19x name the gender `<sex>`, as Chummer still reads
+                    if (text := _raw_text(c, tag) or (_raw_text(c, "sex") if tag == "gender" else ""))
+                },
             }
         )
     st["contacts"] = contacts

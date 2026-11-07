@@ -10,6 +10,7 @@ import xml.etree.ElementTree as ET
 
 from ..engine import find_metatype
 from ..models import CharacterState
+from ..models.social import CONTACT_DETAIL_TAGS
 from ..notices import NoticeError
 from ._common import _Ctx, _Names, _sub
 from .build import _export_reward_log, _export_settings_key
@@ -187,5 +188,8 @@ def _export_contacts(root: ET.Element, state: CharacterState, names: _Names, ctx
         _sub(el, "connection", crow.connection)
         _sub(el, "loyalty", crow.loyalty)
         _sub(el, "type", "Group" if crow.group else "Contact")
+        for field, tag in CONTACT_DETAIL_TAGS.items():
+            if getattr(crow, field):
+                _sub(el, tag, getattr(crow, field))
         if crow.free:
             _sub(el, "free", "True")
