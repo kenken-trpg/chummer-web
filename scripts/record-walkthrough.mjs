@@ -69,8 +69,9 @@ const READINGS = {
   // のうりょくち as のう・りよくち
   say: { 能力値: "ノウリョクチ" },
   // the lines --narration writes for another TTS (e.g. Irodori-TTS): add
-  // words here after listening to its clips
-  narration: {},
+  // words here after listening to its clips. Irodori read 第5版 as だいごばん;
+  // 第五版 kept it, and だいごはん came out unclear
+  narration: { 第5版: "第五はん" },
 };
 const spoken = (text, engine) =>
   Object.entries(READINGS[engine]).reduce(
