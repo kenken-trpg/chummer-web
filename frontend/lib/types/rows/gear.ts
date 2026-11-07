@@ -219,6 +219,10 @@ export interface InstalledMatrixDevice {
   program_max?: number;
   /** how much of each attribute above came from running programs */
   program_bonus?: Partial<Record<"attack" | "sleaze" | "dataprocessing" | "firewall", number>>;
+  /** Overclocker's pick on this deck; null until the player makes one */
+  overclocked?: "attack" | "sleaze" | "dataprocessing" | "firewall" | "none" | null;
+  /** the attribute Overclocker raised on this deck, when it raised one */
+  overclocker?: "attack" | "sleaze" | "dataprocessing" | "firewall";
   nuyen: number;
   avail?: string;
   source?: string;

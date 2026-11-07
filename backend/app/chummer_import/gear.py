@@ -29,6 +29,13 @@ def _included(node: ET.Element) -> bool:
 
 #: what this app can fit inside a piece of armor or a vehicle
 _HOST_BUCKETS = ("gear", "optics", "sensors")
+#: Chummer's names in `<overclocked>` (`Gear.Overclocked`) to this app's keys
+_OVERCLOCKED = {
+    "Attack": "attack",
+    "Sleaze": "sleaze",
+    "Data Processing": "dataprocessing",
+    "Firewall": "firewall",
+}
 _BUCKETS = ("commlinks", "cyberdecks", "rccs", "sensors", "optics", "programs", "apps", "drones")
 
 
@@ -170,6 +177,10 @@ class _GearRouter:
             row["purchased_parts_units"] = round(_qty(g) * 4)
         if bucket == "programs":
             row["running"] = _text(g.find("equipped")).lower() != "false"
+        elif bucket == "cyberdecks" and _text(g.find("overclocked")) in _OVERCLOCKED:
+            # Overclocker's pick; "None" — every deck Chummer saves without
+            # one — is left unset, which is what it means here too
+            row["overclocked"] = _OVERCLOCKED[_text(g.find("overclocked"))]
         elif spec.get("category") == "Cyberdeck Modules":
             row["equipped"] = _text(g.find("equipped")).lower() != "false"
         if spec.get("cost_range") or spec.get("category") == "Electronic Parts":

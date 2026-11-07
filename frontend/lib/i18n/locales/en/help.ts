@@ -354,7 +354,7 @@ export const EN_HELP = {
   "help.flag.erased": "Erased: what the matrix holds about you fades on its own over time",
   "help.flag.excon": "Ex-Con: a criminal record, worse social footing in return for karma back",
   "help.flag.overclock":
-    "Overclocker: +1 to one matrix attribute (Attack where there is one) on the best deck",
+    "Overclocker: +1 to one matrix attribute, picked per deck on the gear tab (no pick: Attack on the best deck)",
   "help.flag.specialMod":
     "Special modifications n/m: the slots a quality grants, counting the weapon accessories that ask for one",
   "help.flag.fihp": "Friends in High Places: favours where a connection is what is needed",

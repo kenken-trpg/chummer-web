@@ -113,6 +113,7 @@ def _resolve_matrix_devices(
                 "source": spec.get("source") or "",
                 "page": spec.get("page") or "",
                 **stats,
+                **({"overclocked": inst.overclocked} if reorder else {}),
             }
         )
     return kept, public, nuyen

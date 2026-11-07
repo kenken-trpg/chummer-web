@@ -290,6 +290,11 @@ export interface GearInstall {
   included?: boolean;
   capacity_override?: string | null;
   array_order?: string[];
+  /** Cyberdecks only: the attribute Overclocker raises on this deck (Chummer's
+   *  `<overclocked>`) — attack / sleaze / dataprocessing / firewall, or "none".
+   *  Left unset on every deck, the highest-rated deck's Attack gets it.
+   */
+  overclocked?: "attack" | "sleaze" | "dataprocessing" | "firewall" | "none" | null;
   extra?: string | null;
   active?: boolean;
   /** Cyberdeck programs only; missing on old saves means the former all-running

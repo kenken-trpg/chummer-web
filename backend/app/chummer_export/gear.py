@@ -359,6 +359,15 @@ def _emit_accessories(
         _from_data(ac, "accessory", arow.accessory_id)
 
 
+#: this app's Matrix attribute keys as Chummer names them in `<overclocked>`
+_OVERCLOCKED = {
+    "attack": "Attack",
+    "sleaze": "Sleaze",
+    "dataprocessing": "Data Processing",
+    "firewall": "Firewall",
+}
+
+
 def _gear_writer(state: CharacterState, names: _Names) -> tuple[dict[str | None, list[Any]], Any]:
     """Gear of every bucket by parent id, and the writer of a `<gear>` list."""
     gear_rows: list[Any] = [
@@ -400,6 +409,12 @@ def _gear_writer(state: CharacterState, names: _Names) -> tuple[dict[str | None,
             parts_remaining[supply.id] = left
     by_parent_g: dict[str | None, list[Any]] = {}
     program_ids = {p.id for p in state.programs}
+    # Overclocker's pick, under Chummer's name for it (`Gear.Overclocked`):
+    # what the deck got, so Chummer adds the same point
+    overclocked = {
+        str(row.get("id")): _OVERCLOCKED.get(str(row.get("overclocker") or ""), "None")
+        for row in (state.derived or {}).get("cyberdecks") or []
+    }
     module_gids = {str(r["id"]) for r in catalog_list("gear") if r.get("category") == "Cyberdeck Modules"}
     for g in gear_rows:
         if g.id in draft_ids or getattr(g, "parent_id", None) in draft_ids or parts_remaining.get(g.id) == 0:
@@ -431,6 +446,8 @@ def _gear_writer(state: CharacterState, names: _Names) -> tuple[dict[str | None,
                 _sub(el, "homenode", "True")
             if g.id in program_ids:
                 _sub(el, "equipped", "True" if g.running else "False")
+            if g.id in overclocked:
+                _sub(el, "overclocked", overclocked[g.id])
             elif gid in module_gids:
                 _sub(el, "equipped", "True" if g.equipped else "False")
             if getattr(g, "extra", None):
