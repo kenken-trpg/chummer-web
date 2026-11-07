@@ -122,6 +122,14 @@ export function SensorGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                         />
                       </label>
                     ) : null}
+                    <RowNotes
+                      ch={ch}
+                      bucket="sensors"
+                      id={child.id}
+                      of={tr(child.name)}
+                      ui={ui}
+                      patch={patch}
+                    />
                     {(d.sensors || [])
                       .filter((grand) => grand.parent_id === child.id)
                       .map((grand) => (
@@ -141,6 +149,14 @@ export function SensorGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                           >
                             {ui("common.remove")}
                           </button>
+                          <RowNotes
+                            ch={ch}
+                            bucket="sensors"
+                            id={grand.id}
+                            of={tr(grand.name)}
+                            ui={ui}
+                            patch={patch}
+                          />
                         </div>
                       ))}
                     <AddonSelect

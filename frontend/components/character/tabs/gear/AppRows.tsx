@@ -1,4 +1,5 @@
 "use client";
+import { RowNotes } from "@/components/character/RowNotes";
 import { HelpTip } from "@/components/help/HelpTip";
 import { AddonSelect } from "@/components/character/AddonSelect";
 import { PriceField } from "@/components/character/tabs/gear/PriceField";
@@ -118,6 +119,14 @@ export function AppRows({
                 />
               </label>
             ) : null}
+            <RowNotes
+              ch={ch}
+              bucket="apps"
+              id={app.id}
+              of={tr(app.label || app.name)}
+              ui={ui}
+              patch={patch}
+            />
           </div>
         ))}
       <AddonSelect

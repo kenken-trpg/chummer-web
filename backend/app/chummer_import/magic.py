@@ -437,6 +437,7 @@ def _import_foci(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
                     "power_rating": max(1, _int(f.find("powerrating"), 1)),
                     "extra": _text(f.find("powerextra")) or None,
                     "bonded": bonded,
+                    **_player_text(gear, "gearname"),
                 }
             )
             continue

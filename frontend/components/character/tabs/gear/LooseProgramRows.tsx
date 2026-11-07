@@ -1,4 +1,5 @@
 "use client";
+import { RowNotes } from "@/components/character/RowNotes";
 import { HelpTip } from "@/components/help/HelpTip";
 import type { TabPanelProps } from "@/components/character/types";
 import { editRow } from "@/lib/character/rows";
@@ -73,6 +74,14 @@ export function LooseProgramRows({
             >
               {ui("common.remove")}
             </button>
+            <RowNotes
+              ch={ch}
+              bucket="programs"
+              id={prog.id}
+              of={tr(prog.label || prog.name)}
+              ui={ui}
+              patch={patch}
+            />
           </div>
         ))}
       </div>

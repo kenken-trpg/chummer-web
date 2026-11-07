@@ -10,6 +10,9 @@ import { makeCharacter, panelProps, testUi } from "@/tests/fixtures";
 import { ArmorGear } from "./tabs/gear/ArmorGear";
 import { CommlinkGear } from "./tabs/gear/CommlinkGear";
 import { LifestyleGear } from "./tabs/gear/LifestyleGear";
+import { AppRows } from "./tabs/gear/AppRows";
+import { GearChild } from "./tabs/gear/misc/GearChild";
+import { QiFociSection } from "./tabs/adept/QiFociSection";
 
 /** What a patch made of `updater` sends, read against `ch`. */
 function sent(patch: ReturnType<typeof vi.fn>, ch: Character) {
@@ -155,5 +158,84 @@ describe.each(PANELS)("<%s> notes", (_name, Panel, chKey, dKey, fields) => {
       ["x1", undefined],
       ["x2", "Under the floorboards"],
     ]);
+  });
+});
+
+describe("notes on what is put inside other gear", () => {
+  const derivedRow = (id: string, name: string, parent_id: string | null) => ({
+    id,
+    gear_id: `g-${id}`,
+    name,
+    parent_id,
+    nuyen: 10,
+    rating: 1,
+    rating_max: 0,
+    qty: 1,
+    included: false,
+  });
+
+  it("gives each thing in a container its own box, as deep as it nests", () => {
+    const rows = [
+      derivedRow("clip", "Spare Clip", null),
+      derivedRow("darts", "Injection Darts", "clip"),
+      derivedRow("drug", "Narcoject", "darts"),
+    ];
+    const ch = makeCharacter({ gear: rows, derived: { gear: rows } } as never);
+    const patch = vi.fn();
+    render(
+      <GearChild
+        child={rows[1] as never}
+        all={rows as never}
+        ch={ch}
+        tr={(s) => s}
+        ui={testUi}
+        patch={patch}
+      />,
+    );
+    expect(screen.getByRole("textbox", { name: "Injection Darts の呼び名" })).toBeDefined();
+    type(screen.getByRole("textbox", { name: "Narcoject の備考" }), "Two left");
+    const sentRows = sent(patch, ch).gear as { id: string; notes?: string }[];
+    expect(sentRows.map((r) => [r.id, r.notes])).toEqual([
+      ["clip", undefined],
+      ["darts", undefined],
+      ["drug", "Two left"],
+    ]);
+  });
+
+  it("keeps an app's note and name on the app", () => {
+    const apps = [derivedRow("a1", "Diagnostics", "link"), derivedRow("a2", "Ticker", "link")];
+    const ch = makeCharacter({ apps, derived: { apps } } as never);
+    const patch = vi.fn();
+    render(<AppRows hostId="link" hostName="Meta Link" {...panelProps(ch, { patch })} />);
+    type(screen.getByRole("textbox", { name: "Ticker の呼び名" }), "News");
+    const sentRows = sent(patch, ch).apps as { id: string; nickname?: string }[];
+    expect(sentRows.map((r) => [r.id, r.nickname])).toEqual([
+      ["a1", undefined],
+      ["a2", "News"],
+    ]);
+  });
+
+  it("keeps a Qi focus's note and name on the focus", () => {
+    const own = [{ id: "q1", rating: 2, power_id: "p", bonded: true, nickname: "Beads" }];
+    const shown = [
+      {
+        ...own[0],
+        name: "Combat Sense",
+        nuyen: 6000,
+        karma: 4,
+        power_rating: 1,
+        power_rating_max: 1,
+        rating_min: 1,
+        rating_max: 6,
+        options: [],
+      },
+    ];
+    const ch = makeCharacter({ qi_foci: own, derived: { qi_foci: shown } } as never);
+    const patch = vi.fn();
+    const { container } = render(<QiFociSection {...panelProps(ch, { patch })} />);
+    // something is written: open from the start
+    expect(container.querySelector("details")!.open).toBe(true);
+    type(screen.getByRole("textbox", { name: "氣収束具: Combat Sense の備考" }), "From my teacher");
+    expect(sent(patch, ch).qi_foci).toEqual([{ ...own[0], notes: "From my teacher" }]);
   });
 });

@@ -116,6 +116,14 @@ export function CommlinkGear({ catalog, character: ch, d, tr, ui, patch }: TabPa
                     >
                       {ui("common.remove")}
                     </button>
+                    <RowNotes
+                      ch={ch}
+                      bucket="gear"
+                      id={acc.id}
+                      of={tr(acc.label || acc.name)}
+                      ui={ui}
+                      patch={patch}
+                    />
                   </div>
                 ))}
               <AddonSelect

@@ -592,6 +592,7 @@ def _emit_focus_gear(gears: ET.Element, state: CharacterState, names: _Names) ->
         _sub(el, "guid", qrow.id)
         _sub(el, "sourceid", names["qifocus"].get("id", ""))
         _sub(el, "name", names["qifocus"].get("name", ""))
+        _player_text(el, qrow, "gearname")
         _sub(el, "category", "Foci")
         _sub(el, "rating", qrow.rating)
         _sub(el, "qty", 1)

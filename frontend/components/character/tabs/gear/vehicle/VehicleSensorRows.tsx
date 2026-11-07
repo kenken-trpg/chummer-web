@@ -1,4 +1,5 @@
 "use client";
+import { RowNotes } from "@/components/character/RowNotes";
 import { SlotPicker } from "@/components/character/tabs/gear/vehicle/SlotPicker";
 import { HelpTip } from "@/components/help/HelpTip";
 import type { VehicleRowProps } from "@/components/character/tabs/gear/vehicle/types";
@@ -66,6 +67,14 @@ export function VehicleSensorRows({
                 >
                   {ui("common.remove")}
                 </button>
+                <RowNotes
+                  ch={ch}
+                  bucket="sensors"
+                  id={child.id}
+                  of={tr(child.name)}
+                  ui={ui}
+                  patch={patch}
+                />
               </div>
             ))}
             <SlotPicker
