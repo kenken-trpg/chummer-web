@@ -10,6 +10,7 @@
 //
 // --out         working directory and output (default: chummer-walkthrough in the OS temp dir)
 // --bgm         music under the narration: looped, faded, and ducked while it speaks
+// --bgm-volume  the music's level before it is ducked (default 0.2; 0.12 is about 4 dB lower)
 // --build-only  reuse the last recording in --out; only re-mix (e.g. to add --bgm)
 //
 // Needs macOS (`say`, `afinfo`), ffmpeg, and Playwright Chromium.
@@ -29,10 +30,19 @@ const { values: args } = parseArgs({
   options: {
     out: { type: "string", default: join(tmpdir(), "chummer-walkthrough") },
     bgm: { type: "string" },
+    "bgm-volume": { type: "string", default: "0.2" },
     "build-only": { type: "boolean", default: false },
   },
 });
 const out = resolve(args.out);
+// checked before recording, so a typo doesn't cost a whole take
+const bgmVolume = Number(args["bgm-volume"]);
+if (!(bgmVolume > 0)) {
+  console.error(
+    `--bgm-volume must be a number above 0, not "${args["bgm-volume"]}"`,
+  );
+  process.exit(1);
+}
 const origin = process.env.MANUAL_ORIGIN || "http://127.0.0.1:3100";
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -560,10 +570,11 @@ if (args.bgm) {
   inputs.push("-stream_loop", "-1", "-i", resolve(args.bgm));
   const b = data.timeline.length + 1;
   filters.push(
-    `[${b}:a]aresample=48000,volume=0.2,atrim=0:${end.toFixed(3)},` +
+    `[${b}:a]aresample=48000,volume=${bgmVolume},atrim=0:${end.toFixed(3)},` +
       `afade=t=in:d=1.5,afade=t=out:st=${Math.max(end - 3, 0).toFixed(3)}:d=3[bed]`,
-    // the music steps well back while the narration plays: about 19 dB under
-    // the voice, and about 10 dB under it between lines
+    // the music steps well back while the narration plays: at the default
+    // --bgm-volume, about 19 dB under the voice and about 10 dB under it
+    // between lines
     "[bed][key]sidechaincompress=threshold=0.02:ratio=20:attack=20:release=400[ducked]",
     `[voice][ducked]amix=inputs=2:normalize=0,${loud}`,
   );
