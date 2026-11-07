@@ -116,7 +116,7 @@ export async function putCharacter(character: Character): Promise<boolean> {
         }
         store.put({
           id: character.id,
-          savedAt: Date.now(),
+          savedAt: previous && !changed ? previous.savedAt : Date.now(),
           schemaVersion: SCHEMA_VERSION,
           character,
           history: history.slice(-10),
@@ -166,6 +166,8 @@ export async function listCharacters(): Promise<CharacterSummary[]> {
         talent: r.character.talent,
         career: Boolean(r.character.career),
         updated: r.savedAt,
+        buildMethod: r.character.build_method ?? "Priority",
+        changesSinceBackup: r.backup?.changesSinceBackup ?? r.history?.length ?? 0,
       }))
       .sort((a, b) => b.updated - a.updated);
   } catch {
