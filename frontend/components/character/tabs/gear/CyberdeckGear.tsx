@@ -195,20 +195,26 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                         type="checkbox"
                         aria-label={ui("gear.programRunningName", { name: tr(prog.name) })}
                         checked={prog.running ?? true}
-                        onChange={(e) =>
-                          patch({
-                            programs: editRow(ch.programs, prog.id, { running: e.target.checked }),
-                          })
-                        }
+                        onChange={(e) => {
+                          // read now: the updater runs later, once React has set the
+                          // controlled box back to what the character says
+                          const running = e.target.checked;
+                          // composed from the saved character: ticking two programs in a
+                          // row would otherwise send a second body that differs from the
+                          // first in two places, which the editor drops
+                          patch((cur) => ({
+                            programs: editRow(cur.programs, prog.id, { running }),
+                          }));
+                        }}
                       />
                       {ui("gear.programRunning")}
                     </label>{" "}
                     <button
                       className="btn danger"
                       onClick={() =>
-                        patch({
-                          programs: (ch.programs || []).filter((row) => row.id !== prog.id),
-                        })
+                        patch((cur) => ({
+                          programs: (cur.programs || []).filter((row) => row.id !== prog.id),
+                        }))
                       }
                     >
                       {ui("common.remove")}
@@ -221,11 +227,11 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                           max={prog.rating_max}
                           value={prog.rating}
                           onCommit={(n) =>
-                            patch({
-                              programs: editRow(ch.programs, prog.id, {
+                            patch((cur) => ({
+                              programs: editRow(cur.programs, prog.id, {
                                 rating: n,
                               }),
-                            })
+                            }))
                           }
                         />
                       </label>
@@ -244,9 +250,9 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                     ),
                 )}
                 onAdd={(prog) =>
-                  patch({
+                  patch((cur) => ({
                     programs: [
-                      ...(ch.programs || []),
+                      ...(cur.programs || []),
                       {
                         gear_id: prog.id,
                         rating: Math.max(1, prog.minrating || 1),
@@ -254,7 +260,7 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                         running: false,
                       },
                     ],
-                  })
+                  }))
                 }
               />
               <AppRows

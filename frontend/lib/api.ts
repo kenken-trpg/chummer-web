@@ -188,6 +188,19 @@ function postState(
 }
 
 /**
+ * How long a recompute may take before it is given up as lost.
+ *
+ * The editor sends one edit at a time and drops what arrives meanwhile (see
+ * `patch-queue`), so a request that never answers does not fail one edit: it
+ * silently swallows every edit after it, for as long as the page is open.
+ * That happened in CI — a patch relayed through the Next server got no
+ * answer at all, not an error. Giving up turns it into a message saying so
+ * and frees the editor. A real recompute answers in well under a
+ * second (p50 80–122 ms in production); the margin covers a cold start.
+ */
+const COMPUTE_TIMEOUT_MS = 30_000;
+
+/**
  * POST a state (and optionally a patch) to the compute service, without the
  * portrait. The engine never reads it, and it is megabytes of base64: sending
  * it made every edit of a character with a picture a multi-MB round trip, and
@@ -201,10 +214,19 @@ async function computeRemote(
 ): Promise<Character> {
   noteCustomData(state);
   const { portrait, extra_portraits, ...rest } = state;
-  const next = await req<Character>("/api/characters/patch", {
-    method: "POST",
-    body: JSON.stringify(patch ? { state: rest, patch } : { state: rest }),
-  });
+  let next: Character;
+  try {
+    next = await req<Character>("/api/characters/patch", {
+      method: "POST",
+      body: JSON.stringify(patch ? { state: rest, patch } : { state: rest }),
+      signal: AbortSignal.timeout(COMPUTE_TIMEOUT_MS),
+    });
+  } catch (e) {
+    if (e instanceof DOMException && e.name === "TimeoutError") {
+      throw new MessageError("app.err.timeout");
+    }
+    throw e;
+  }
   const kept: Partial<Character> = {};
   if (!(patch && "portrait" in patch) && portrait !== undefined) kept.portrait = portrait;
   if (!(patch && "extra_portraits" in patch) && extra_portraits !== undefined) {

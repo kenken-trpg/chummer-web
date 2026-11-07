@@ -17,7 +17,11 @@ export function renderPanel(
   catalog: Partial<Catalog> = {},
 ) {
   const P = Panel as ComponentType<TabPanelProps>;
-  return render(<P {...panelProps(character, { catalog: makeCatalog(catalog), patch })} />);
+  // An updater is solved against the character as drawn, so a test reads the
+  // body that would be sent either way.
+  const send: TabPanelProps["patch"] = (body) =>
+    patch(typeof body === "function" ? body(character) : body);
+  return render(<P {...panelProps(character, { catalog: makeCatalog(catalog), patch: send })} />);
 }
 
 export const host = (id: string, name: string) => ({
