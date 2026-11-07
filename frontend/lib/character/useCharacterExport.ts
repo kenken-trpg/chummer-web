@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { recordBackup } from "@/lib/character/local-store";
 import { api } from "@/lib/api";
 import { exportFilename } from "@/lib/character/export-filename";
 import { buildShareUrl, SHARE_URL_WARN } from "@/lib/character/share";
@@ -61,6 +62,7 @@ export function useCharacterExport(opts: {
   setNotice: (message: string | null) => void;
 }) {
   const { ch, ui, locale, pendingGearCount, setError, setNotice } = opts;
+  const [backupVersion, setBackupVersion] = useState(0);
   const [copied, setCopied] = useState<string | null>(null);
   /** the timer that clears `copied`. Cancelled on unmount, so it cannot fire a
    *  state update into a torn-down tree (in tests: after the DOM is gone), and
@@ -84,12 +86,23 @@ export function useCharacterExport(opts: {
   /** Which format the pending review was asked for, so the panel can name it. */
   const exportReviewFormat = review && review.of === ch ? review.format : null;
 
-  function download() {
+  async function download() {
     if (!ch) return;
-    offer(
-      new Blob([JSON.stringify(ch, null, 2)], { type: "application/json" }),
-      exportFilename(ch.name, "json"),
-    );
+    try {
+      offer(
+        new Blob([JSON.stringify(ch, null, 2)], { type: "application/json" }),
+        exportFilename(ch.name, "json"),
+      );
+    } catch (e) {
+      setError(errorMessage(e, ui, "app.err.export"));
+      return;
+    }
+    try {
+      if (!(await recordBackup(ch))) throw new Error("Character no longer stored");
+      setBackupVersion((version) => version + 1);
+    } catch {
+      setNotice(ui("app.backup.recordFailed"));
+    }
   }
 
   /**
@@ -289,6 +302,7 @@ export function useCharacterExport(opts: {
   }
 
   return {
+    backupVersion,
     exportReview,
     exportReviewFormat,
     copied,

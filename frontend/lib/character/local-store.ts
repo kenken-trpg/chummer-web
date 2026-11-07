@@ -24,11 +24,17 @@ const SCHEMA_VERSION = 2;
 
 export type CharacterSnapshot = { savedAt: number; character: Character };
 
+export type BackupStatus = {
+  lastExportedAt: number | null;
+  changesSinceBackup: number;
+};
+
 export type StoredCharacter = {
   id: string;
   savedAt: number;
   schemaVersion?: number;
   history?: CharacterSnapshot[];
+  backup?: BackupStatus;
   character: Character;
 };
 
@@ -99,11 +105,13 @@ export async function putCharacter(character: Character): Promise<boolean> {
         const previous = request.result as StoredCharacter | undefined;
         const history = previous?.history ?? [];
         // Recomputing on open must not consume an editing-history slot.
-        const inputs = ({ derived: _derived, ...state }: Character) => {
-          void _derived;
-          return JSON.stringify(state);
+        const changed =
+          previous && characterInputs(previous.character) !== characterInputs(character);
+        const backup = previous?.backup ?? {
+          lastExportedAt: null,
+          changesSinceBackup: previous?.history?.length ?? 0,
         };
-        if (previous && inputs(previous.character) !== inputs(character)) {
+        if (changed) {
           history.push({ savedAt: previous.savedAt, character: previous.character });
         }
         store.put({
@@ -112,6 +120,7 @@ export async function putCharacter(character: Character): Promise<boolean> {
           schemaVersion: SCHEMA_VERSION,
           character,
           history: history.slice(-10),
+          backup: { ...backup, changesSinceBackup: backup.changesSinceBackup + (changed ? 1 : 0) },
         });
       };
       tx.oncomplete = () => resolve();
@@ -168,4 +177,43 @@ export async function listCharacters(): Promise<CharacterSummary[]> {
 export async function getCharacterSnapshots(id: string): Promise<CharacterSnapshot[]> {
   const rec = await run<StoredCharacter | undefined>("readonly", (s) => s.get(id));
   return (rec?.history ?? []).slice().reverse();
+}
+
+function characterInputs({ derived: _derived, ...state }: Character): string {
+  void _derived;
+  return JSON.stringify(state);
+}
+
+/** Export metadata stays local, outside the character and its snapshots. */
+export async function getBackupStatus(id: string): Promise<BackupStatus | null> {
+  const rec = await run<StoredCharacter | undefined>("readonly", (s) => s.get(id));
+  return rec
+    ? (rec.backup ?? { lastExportedAt: null, changesSinceBackup: rec.history?.length ?? 0 })
+    : null;
+}
+
+/** Mark only the state actually offered as JSON. Never overwrite newer edits. */
+export async function recordBackup(character: Character): Promise<boolean> {
+  const db = await openDB();
+  return new Promise<boolean>((resolve, reject) => {
+    const tx = db.transaction(STORE, "readwrite");
+    const store = tx.objectStore(STORE);
+    const request = store.get(character.id);
+    let recorded = false;
+    request.onsuccess = () => {
+      const rec = request.result as StoredCharacter | undefined;
+      if (!rec) return; // A download finishing after deletion must not recreate it.
+      const matches = characterInputs(rec.character) === characterInputs(character);
+      rec.backup = {
+        lastExportedAt: Date.now(),
+        changesSinceBackup: matches
+          ? 0
+          : Math.max(1, rec.backup?.changesSinceBackup ?? rec.history?.length ?? 0),
+      };
+      store.put(rec);
+      recorded = true;
+    };
+    tx.oncomplete = () => resolve(recorded);
+    tx.onabort = tx.onerror = () => reject(tx.error ?? request.error);
+  });
 }

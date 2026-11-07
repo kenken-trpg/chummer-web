@@ -1,5 +1,18 @@
 /** アプリの枠・ナビ・共通の語・書式・共有・ツールバー — English。 */
 export const EN_APP = {
+  "app.backup.title": "Backup",
+  "app.backup.description":
+    "Downloading JSON records the export time in this browser. A reminder appears after 10 changes, or after 7 days if there are changes.",
+  "app.backup.download": "Back up as JSON",
+  "app.backup.reminder":
+    "There have been {count} changes since backup. Save the current character as JSON.",
+  "app.backup.last": "Last JSON export: {date}",
+  "app.backup.never": "No JSON export has been recorded in this browser.",
+  "app.backup.changes": "Changes since backup: {count}",
+  "app.backup.unavailable": "Backup information is unavailable.",
+  "app.backup.recordFailed":
+    "The JSON download was started, but its export time could not be recorded.",
+
   "app.savedHistory.title": "Editing history and restore",
   "app.savedHistory.description":
     "The last 10 previous states are saved in this browser. Restoring also keeps the current state in history.",
