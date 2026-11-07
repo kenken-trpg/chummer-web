@@ -3,6 +3,14 @@
 Notable changes. Format follows [Keep a Changelog](https://keepachangelog.com/);
 self-hosters can pin to a tag instead of tracking `main`.
 
+## [0.5.29] — 2026-11-07
+
+### Fixed
+
+- **編集の保存が終わってから、別のキャラクターに切り替えるようにしました**：編集は、サーバーで再計算してからブラウザ内（IndexedDB）に保存します。その途中で別のキャラクターを開くと、遅れて返ってきた前のキャラクターの結果で、開いたばかりのキャラクターが画面上で置き換わることがありました。今は、保存が終わるのを待ってから切り替えます。切り替えを続けて何度か頼んだときは、最後に選んだキャラクターが開きます。取り込み・複製・削除して別のキャラクターに移るときも同じです。
+
+- **`.chum5lz` の取り込みで、展開に使うメモリにも上限を設けました**：展開後の大きさ（32 MiB）は前から制限していましたが、LZMA のヘッダーが求める辞書の大きさは制限しておらず、小さなファイルでも展開の前に大量のメモリを確保させられました。今は LZMA・XZ のどちらでも、展開に使うメモリを 128 MiB までにしています。通常の圧縮設定（preset 0〜9）で作ったセーブは、今までどおり読めます。
+
 ## [0.5.28] — 2026-11-06
 
 ### Fixed
@@ -3039,7 +3047,8 @@ First tagged release.
 - One-container Docker image (Caddy + uvicorn + Next standalone) published to
   GHCR; `make up` / `compose.yaml` for local self-hosting.
 
-[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.28...HEAD
+[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.29...HEAD
+[0.5.29]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.28...v0.5.29
 [0.5.28]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.27...v0.5.28
 [0.5.27]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.26...v0.5.27
 [0.5.26]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.25...v0.5.26
