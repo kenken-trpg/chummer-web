@@ -155,6 +155,13 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                     </HelpTip>{" "}
                     {tr(prog.name)}
                     {prog.rating_max > 0 ? ` R${prog.rating}` : ""}
+                    {prog.attribute_bonus
+                      ? ui("gear.programAttrBonus", {
+                          attr:
+                            MATRIX_ATTRS.find(([key]) => key === prog.attribute_bonus)?.[1] ??
+                            prog.attribute_bonus,
+                        })
+                      : ""}
                     {` / ${prog.nuyen.toLocaleString()}¥`}{" "}
                     <label>
                       <input

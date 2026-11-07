@@ -205,6 +205,7 @@ export const JA_GEAR = {
   "gear.deckPrograms": " / 搭載 {installed}本 / 作動中 {used}/{max}",
   "gear.programRunning": "作動中",
   "gear.programRunningName": "{name}：作動中",
+  "gear.programAttrBonus": "（作動中は {attr} +1）",
   "gear.programRunningCount": "作動中 {used}/{max}",
   "gear.deckProgramLimit": " / 同時実行上限 {count}",
   "gear.programs": " / プログラム {used}/{max}",
