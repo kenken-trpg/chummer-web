@@ -16,15 +16,98 @@ import { ReviewPanel } from "./ReviewPanel";
  */
 export function ImportReport({ ed }: { ed: CharacterEditor }) {
   const { ui } = useUiText();
-  const { importReport, dismissImportReport, tr } = ed;
-  if (!importReport) return null;
+  const { importReport, importSummary, dismissImportReport, tr } = ed;
+  if (!importReport && !importSummary) return null;
+  const names = new Map<string, string>();
+  const catalogRows = [
+    ...Object.values(ed.catalog ?? {}).flatMap((value) => (Array.isArray(value) ? value : [])),
+    ...(ed.catalog?.cyberware?.items ?? []),
+    ...(ed.catalog?.bioware?.items ?? []),
+  ];
+  for (const row of catalogRows) {
+    if (
+      row &&
+      typeof row === "object" &&
+      "id" in row &&
+      "name" in row &&
+      typeof row.id === "string" &&
+      typeof row.name === "string"
+    )
+      names.set(row.id, row.name);
+  }
+  function itemName(item: {
+    ware_id?: string;
+    gear_id?: string;
+    spell_id?: string;
+    armor_id?: string;
+    weapon_id?: string;
+  }) {
+    const id =
+      item.ware_id ?? item.gear_id ?? item.spell_id ?? item.armor_id ?? item.weapon_id ?? "";
+    return tr(names.get(id) ?? id);
+  }
   return (
     <ReviewPanel
       id="import-report-title"
-      title={ui("app.importReport.title", { count: importReport.length })}
-      notices={importReport}
+      title={
+        importSummary
+          ? ui("app.importReport.success", { name: importSummary.name })
+          : ui("app.importReport.title", { count: importReport?.length ?? 0 })
+      }
+      notices={importReport ?? []}
       tr={tr}
     >
+      {importSummary ? (
+        <p>
+          {ui("app.importReport.summary", {
+            skills: Object.keys(importSummary.skills).length,
+            qualities: importSummary.quality_ids.length,
+            contacts: importSummary.contacts?.length ?? 0,
+          })}
+        </p>
+      ) : null}
+      {importSummary ? (
+        <ul>
+          {(
+            [
+              ["tab.cyber", importSummary.cyberware],
+              ["tab.bio", importSummary.bioware],
+              ["tab.spells", importSummary.spells],
+              [
+                "tab.gear",
+                [
+                  ...(importSummary.gear ?? []),
+                  ...(importSummary.weapons ?? []),
+                  ...(importSummary.armor ?? []),
+                  ...(importSummary.commlinks ?? []),
+                  ...(importSummary.cyberdecks ?? []),
+                  ...(importSummary.rccs ?? []),
+                  ...(importSummary.vehicles ?? []),
+                  ...(importSummary.drones ?? []),
+                  ...(importSummary.optics ?? []),
+                  ...(importSummary.sensors ?? []),
+                  ...(importSummary.programs ?? []),
+                  ...(importSummary.apps ?? []),
+                ],
+              ],
+            ] as const
+          ).map(([label, items]) => (
+            <li key={label}>
+              <details>
+                <summary>
+                  {ui(label)}: {items?.length ?? 0}
+                </summary>
+                <ul>
+                  {items?.map((item, index) => (
+                    <li key={index}>{itemName(item)}</li>
+                  ))}
+                </ul>
+              </details>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {importSummary && !importReport ? <p>{ui("app.importReport.noWarnings")}</p> : null}
       <button className="btn" onClick={dismissImportReport}>
         {ui("app.importReport.dismiss")}
       </button>

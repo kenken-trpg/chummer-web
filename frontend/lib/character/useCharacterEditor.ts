@@ -284,11 +284,13 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     }
   }
 
-  async function restoreSnapshot(snap: Character) {
-    if (busy.current) return;
+  async function restoreSnapshot(snap: Character, recordCurrent = false) {
+    if (recordCurrent) await waitForIdle();
+    if (busy.current || snap.id !== lastCommitted.current?.id) return;
     busy.current = true;
     try {
       const next = await api.compute(snap);
+      if (recordCurrent && lastCommitted.current) history.record(lastCommitted.current);
       setCh(next);
       lastCommitted.current = next;
       setError(null);
@@ -296,6 +298,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
       setError(errorMessage(e, ui, "app.err.undo"));
     } finally {
       busy.current = false;
+      for (const resolve of idleWaiters.current.splice(0)) resolve();
     }
   }
 
@@ -350,6 +353,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     exportReview: exports.exportReview,
     exportReviewFormat: exports.exportReviewFormat,
     importReport: imports.importReport,
+    importSummary: imports.importSummary,
     dismissImportReport: imports.dismissImportReport,
     importSheetUrl: imports.importSheetUrl,
     pendingGear: imports.pendingGear,
