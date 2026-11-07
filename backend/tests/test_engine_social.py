@@ -93,13 +93,24 @@ def test_contact_overspend_costs_karma() -> None:
     assert out.derived["karma"]["remaining"] == 23
 
 
-def test_contact_chargen_cost_is_capped_at_seven() -> None:
+def test_contact_over_the_chargen_cap_is_warned_not_cut() -> None:
+    """Chummer keeps a contact worth more than 7 points as it was set and only
+    refuses to finish the character (`Message_HighContact`); the ratings are
+    the player's, so the warning is the whole of it."""
     out = compute(_human("contact-cap", contacts=[ContactInstall(name="Mr. Johnson", connection=6, loyalty=6)]))
     row = out.derived["contacts"][0]
-    assert row["connection"] == 6
-    assert row["loyalty"] == 1
-    assert row["cost"] == 7
+    assert (row["connection"], row["loyalty"], row["cost"]) == (6, 6, 12)
+    assert (out.contacts[0].connection, out.contacts[0].loyalty) == (6, 6)
     assert has(out.derived["warnings"], "engine.contacts.pairMax", max=7)
+    # the boxes go down from where the ratings are, not below them
+    assert (row["connection_max"], row["loyalty_max"]) == (6, 6)
+
+
+def test_contact_inside_the_chargen_cap_keeps_the_pair_ceiling() -> None:
+    out = compute(_human("contact-cap-ok", contacts=[ContactInstall(name="Sam", connection=4, loyalty=2)]))
+    row = out.derived["contacts"][0]
+    assert (row["connection_max"], row["loyalty_max"]) == (5, 3)
+    assert not has(out.derived["warnings"], "engine.contacts.pairMax", max=7)
 
 
 def test_unnamed_contact_is_warned() -> None:
