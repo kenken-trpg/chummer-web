@@ -15,6 +15,7 @@ import { useKeyboardShortcuts } from "@/lib/character/useKeyboardShortcuts";
 import { BooksProvider } from "@/lib/character/books";
 import { useUiText } from "@/lib/i18n";
 import { ExportReview } from "@/components/character/ExportReview";
+import { BackupReminder } from "@/components/character/BackupReminder";
 import { SavedHistory } from "@/components/character/SavedHistory";
 import { ImportReport } from "@/components/character/ImportReport";
 import { SheetUrlImport } from "@/components/character/SheetUrlImport";
@@ -84,6 +85,7 @@ export default function Page() {
               fileRef={fileRef}
             />
 
+            <BackupReminder ed={ed} />
             <SavedHistory ed={ed} />
             <SheetUrlImport ed={ed} />
             <div role="status">{notice ? <p className="notice">{notice}</p> : null}</div>

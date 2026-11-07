@@ -1,5 +1,18 @@
 /** アプリの枠・ナビ・共通の語・書式・共有・ツールバー — 日本語。 */
 export const JA_APP = {
+  "app.backup.title": "バックアップ",
+  "app.backup.description":
+    "JSONを保存すると、このブラウザに書き出し日時を記録します。10回の変更、または前回から7日以上経過して変更があるときに保存をご案内します。",
+  "app.backup.download": "JSONでバックアップ",
+  "app.backup.reminder":
+    "未バックアップの変更が{count}回あります。現在のキャラクターをJSONで保存しておきましょう。",
+  "app.backup.last": "前回のJSON書き出し：{date}",
+  "app.backup.never": "このブラウザにはJSONを書き出した記録がありません。",
+  "app.backup.changes": "未バックアップの変更：{count}回",
+  "app.backup.unavailable": "バックアップの記録を読み込めません。",
+  "app.backup.recordFailed":
+    "JSONのダウンロードを開始しましたが、書き出し日時を記録できませんでした。",
+
   "app.savedHistory.title": "編集履歴・復元",
   "app.savedHistory.description":
     "変更前の状態を直近10件、このブラウザに保存します。復元前の状態も履歴に残ります。",

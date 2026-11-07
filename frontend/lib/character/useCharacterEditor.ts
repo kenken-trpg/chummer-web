@@ -361,6 +361,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     dismissPendingGear: imports.dismissPendingGear,
     roster,
     copied: exports.copied,
+    backupVersion: exports.backupVersion,
     history,
     tr,
     trGroup,

@@ -5,6 +5,8 @@ import {
   deleteCharacter,
   getCharacter,
   getCharacterSnapshots,
+  getBackupStatus,
+  recordBackup,
   listCharacters,
   putCharacter,
   type StoredCharacter,
@@ -190,5 +192,58 @@ describe("persistent editing history", () => {
       derived: { ...character.derived, test: true },
     } as typeof character);
     expect(await getCharacterSnapshots("derived")).toEqual([]);
+  });
+});
+
+describe("backup metadata", () => {
+  it("tracks edits separately per character and preserves history when recording an export", async () => {
+    const base = makeCharacter({ id: "backup" });
+    await putCharacter(base);
+    await putCharacter(makeCharacter({ id: "other" }));
+    expect(await getBackupStatus(base.id)).toEqual({ lastExportedAt: null, changesSinceBackup: 0 });
+    const edited = { ...base, name: "Edited" };
+    await putCharacter(edited);
+    const history = await getCharacterSnapshots(base.id);
+    expect((await getBackupStatus(base.id))?.changesSinceBackup).toBe(1);
+    expect(await recordBackup(edited)).toBe(true);
+    expect(await getBackupStatus(base.id)).toEqual({
+      lastExportedAt: expect.any(Number),
+      changesSinceBackup: 0,
+    });
+    expect(await getCharacterSnapshots(base.id)).toEqual(history);
+    expect(await getCharacter(base.id)).toEqual(edited);
+    await putCharacter({ ...edited, name: "Again" });
+    expect((await getBackupStatus(base.id))?.changesSinceBackup).toBe(1);
+    expect((await getBackupStatus("other"))?.lastExportedAt).toBeNull();
+  });
+
+  it("does not count derived recomputations or reset newer edits for a stale export", async () => {
+    const base = makeCharacter({ id: "stale" });
+    await putCharacter(base);
+    await putCharacter({ ...base, derived: { ...base.derived, test: true } } as typeof base);
+    expect((await getBackupStatus(base.id))?.changesSinceBackup).toBe(0);
+    const edited = { ...base, name: "Newer" };
+    await putCharacter(edited);
+    await recordBackup(base);
+    expect((await getBackupStatus(base.id))?.changesSinceBackup).toBe(1);
+    expect(await getCharacter(base.id)).toEqual(edited);
+    await deleteCharacter(base.id);
+    expect(await recordBackup(edited)).toBe(false);
+    expect(await getBackupStatus(base.id)).toBeNull();
+  });
+
+  it("retains counts past the ten-snapshot limit and reads older records", async () => {
+    await writeRaw({
+      id: "old-backup",
+      savedAt: 1,
+      character: makeCharacter({ id: "old-backup" }),
+    });
+    expect(await getBackupStatus("old-backup")).toEqual({
+      lastExportedAt: null,
+      changesSinceBackup: 0,
+    });
+    for (let i = 0; i < 15; i++)
+      await putCharacter(makeCharacter({ id: "old-backup", name: `Edit ${i}` }));
+    expect((await getBackupStatus("old-backup"))?.changesSinceBackup).toBe(15);
   });
 });
