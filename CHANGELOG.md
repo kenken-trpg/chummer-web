@@ -3,6 +3,14 @@
 Notable changes. Format follows [Keep a Changelog](https://keepachangelog.com/);
 self-hosters can pin to a tag instead of tracking `main`.
 
+## [Unreleased]
+
+## [0.5.33] — 2026-11-07
+
+### Added
+
+- **資質・パワー・呪文・精霊・スプライト・フォーカス・ウェア・防具・武器・アクセサリー・装備・ヴィークル・ドローン・ライフスタイルの各行に、備考を書けるようにしました**：各行の「備考」を開くと書けます。防具・装備・ヴィークル・ドローン・精霊・スプライト・フォーカスには、自分で付ける「呼び名」の欄もあります。何か書いてある行は、最初から開いています。計算には使いません。Chummer のセーブにある備考と呼び名は、これまで取り込むと消えていましたが、今は取り込みでも `.chum5` の書き出しでもそのまま残ります（Chummer のテスト用セーブ 34 件にある 129 件のうち 122 件が元どおりに戻ることを確かめました。残る 7 件は、アプリが取り込まない精霊と、ほかの品目に最初から付いてくる品目に書かれたものです）。
+
 ## [0.5.32] — 2026-11-07
 
 ### Added
@@ -3067,7 +3075,8 @@ First tagged release.
 - One-container Docker image (Caddy + uvicorn + Next standalone) published to
   GHCR; `make up` / `compose.yaml` for local self-hosting.
 
-[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.32...HEAD
+[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.33...HEAD
+[0.5.33]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.32...v0.5.33
 [0.5.32]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.31...v0.5.32
 [0.5.31]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.30...v0.5.31
 [0.5.30]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.29...v0.5.30
