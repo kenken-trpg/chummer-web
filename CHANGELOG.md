@@ -5,6 +5,12 @@ self-hosters can pin to a tag instead of tracking `main`.
 
 ## [Unreleased]
 
+## [0.5.36] — 2026-11-07
+
+### Added
+
+- **品物の保管場所を書き留められるようにしました**：装備タブのカテゴリーの最後に「保管場所」を足しました。バックパック・車・隠れ家などの場所を作って名前を付け、品物ごとにどこに置いてあるかを選べます。場所ごとに中身が一覧で出ます。装備と防具で場所は別々です。計算には使いません。Chummer のセーブにある保管場所は、これまで取り込むと消えていましたが、今は取り込みでも `.chum5` の書き出しでもそのまま残ります（Chummer のテスト用セーブ 34 件のうち 9 件にある 49 か所と、そこに置かれた 198 行が元どおりに戻ることを確かめました）。
+
 ## [0.5.35] — 2026-11-07
 
 ### Added
@@ -3087,7 +3093,8 @@ First tagged release.
 - One-container Docker image (Caddy + uvicorn + Next standalone) published to
   GHCR; `make up` / `compose.yaml` for local self-hosting.
 
-[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.35...HEAD
+[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.36...HEAD
+[0.5.36]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.35...v0.5.36
 [0.5.35]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.34...v0.5.35
 [0.5.34]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.33...v0.5.34
 [0.5.33]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.32...v0.5.33
