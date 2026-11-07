@@ -392,7 +392,7 @@ export const JA_ENGINE = {
 
   "engine.martial.unknownDropped": "未知の格闘技を外しました",
   "engine.contacts.exconLoyalty": "Ex-Con の {name}（{role}）は忠実値 {min} 以上が必要です",
-  "engine.contacts.pairMax": "{name} は作成時コネ値＋忠実値が{max}までです",
+  "engine.contacts.pairMax": "{name} のコネ値＋忠実値が、作成時の上限 {max} を超えています",
 
   "engine.contacts.unnamed": "名前のないコンタクトがあります",
   "engine.ware.attrBonusOver": "{attr} のウェア強化超過（+{value} / 上限+{limit}）",

@@ -66,3 +66,17 @@ def test_chummers_own_group_contact() -> None:
     exported = ET.fromstring(state_to_chum5(compute(state)))
     assert ("Shi no dairinin", "Contact", "True") in _contacts(exported)
     assert {kind for _, kind, _ in _contacts(exported)} == {"Contact"}
+
+
+@pytest.mark.skipif(not _SAVES.exists(), reason="Chummer's test saves are fetched by `make reconcile`; absent in CI")
+def test_chummers_over_cap_contact_keeps_its_loyalty() -> None:
+    """Yeti is still in creation with Ralph at Connection 5 / Loyalty 4 — over
+    the 7-point cap, which Chummer leaves to its finish-creation check. This
+    app used to cut Loyalty to 2 on every calculation, so the export said 2."""
+    raw = next(_SAVES.rglob("Yeti-#ffffff2.chum5")).read_bytes()
+    exported = ET.fromstring(state_to_chum5(compute(CharacterState.model_validate(chum5_to_state(raw)[0]))))
+    ratings = {
+        c.findtext("name"): (c.findtext("connection"), c.findtext("loyalty"))
+        for c in exported.findall("./contacts/contact")
+    }
+    assert ratings["Ralph, Just Ralph"] == ("5", "4")

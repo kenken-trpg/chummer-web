@@ -186,19 +186,6 @@ def resolve_contacts(
             inst.group = True
         chargen_pair_max = 12 if friends_in_high_places else CONTACT_CHARGEN_COST_MAX
         quality_granted = bool(inst.source_quality_id) or bool(inst.free)
-        if not career and not quality_granted and connection + loyalty > chargen_pair_max:
-            loyalty = max(CONTACT_RATING_MIN, chargen_pair_max - connection)
-            if forced is not None and loyalty < int(forced):
-                # Prefer keeping forced loyalty; clamp connection instead.
-                loyalty = max(CONTACT_RATING_MIN, min(CONTACT_RATING_MAX, int(forced)))
-                connection = max(CONTACT_RATING_MIN, chargen_pair_max - loyalty)
-            warnings.append(
-                notice(
-                    "engine.contacts.pairMax",
-                    name=name if name else ui("engine.term.contact"),
-                    max=chargen_pair_max,
-                )
-            )
         excon_loy_min = _excon_contact_loyalty_min(role) if excon else CONTACT_RATING_MIN
         if excon and loyalty < excon_loy_min:
             warnings.append(
@@ -210,8 +197,21 @@ def resolve_contacts(
                 )
             )
             loyalty = excon_loy_min
-            if not career and not quality_granted and connection + loyalty > chargen_pair_max:
-                connection = max(CONTACT_RATING_MIN, chargen_pair_max - loyalty)
+        # Over the chargen cap, the ratings stay as the player set them and
+        # only the warning says so. Chummer does the same: its rating boxes go
+        # to 6 (12 for Connection with Friends in High Places) whatever the
+        # other rating is, and `Message_HighContact` ("a contact worth more
+        # than 7 points") only stops the character being finished. Cutting
+        # Loyalty here changed what a save in progress said — Yeti's Ralph
+        # (5 / 4) came back 5 / 2.
+        if not career and not quality_granted and connection + loyalty > chargen_pair_max:
+            warnings.append(
+                notice(
+                    "engine.contacts.pairMax",
+                    name=name if name else ui("engine.term.contact"),
+                    max=chargen_pair_max,
+                )
+            )
         inst.name = name
         inst.role = role or None
         inst.connection = connection
@@ -238,6 +238,10 @@ def resolve_contacts(
         else:
             conn_max = min(CONTACT_RATING_MAX, CONTACT_CHARGEN_COST_MAX - loyalty)
             loy_max = min(CONTACT_RATING_MAX, CONTACT_CHARGEN_COST_MAX - connection)
+        # a contact already over the cap can be lowered, never raised: the
+        # box's ceiling is the rating it has, not one below it
+        conn_max = max(conn_max, connection)
+        loy_max = max(loy_max, loyalty)
         if forced is not None:
             loy_min = max(CONTACT_RATING_MIN, int(forced))
         else:
