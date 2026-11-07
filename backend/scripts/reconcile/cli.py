@@ -16,7 +16,7 @@ from typing import Any
 
 from ._saves import _ref, fetch
 from .balance import NUYEN_TOLERANCE, _number, reconcile
-from .fidelity import _accepted_drop, fidelity
+from .fidelity import _accepted_drop, fidelity, unneeded_allowances
 from .improvements import FLOORS, GROUPS, coverage
 from .prices import _gear_drift
 from .roundtrip import roundtrip
@@ -26,9 +26,10 @@ def report_fidelity(folder: Path) -> int:
     saves = sorted(folder.glob("*.chum5"))
     dropped_counts: collections.Counter[str] = collections.Counter()
     changed_counts: collections.Counter[tuple[str, str, str]] = collections.Counter()
+    relied: set[str] = set()
     clean = 0
     for path in saves:
-        dropped, changed = fidelity(path)
+        dropped, changed = fidelity(path, relied)
         if not changed and not any(_accepted_drop(tag) is None for tag in dropped):
             clean += 1
         dropped_counts.update(dropped)
@@ -50,13 +51,19 @@ def report_fidelity(folder: Path) -> int:
         print("\nchanged — both state it, with different text:")
         for (tag, theirs, ours), count in changed_counts.most_common():
             print(f"  {count:>4}  {tag}: Chummer {theirs!r}, ours {ours!r}")
-    # Two ways to fail. A *changed* field is a contradiction: both sides state
+    unneeded = unneeded_allowances(dropped_counts, relied)
+    if unneeded:
+        print("\nallowed but never needed — no save drops it any more; delete the entry:")
+        for table, entry in unneeded:
+            print(f"  {table}: {entry}")
+    # Three ways to fail. A *changed* field is a contradiction: both sides state
     # it and disagree. A *missing* one is a field Chummer reads back and the
     # export does not write — the character opens in Chummer without it. A
     # drop listed in `_ACCEPTED_DROPS` is neither: it is a field Chummer
     # writes for other readers, or an older spelling of one the export writes
-    # the current way.
-    return 1 if changed_counts or gaps else 0
+    # the current way. An entry in those lists that no save needs is the
+    # third: it would excuse a gap it was never written for.
+    return 1 if changed_counts or gaps or unneeded else 0
 
 
 def report_improvements(folder: Path) -> int:
