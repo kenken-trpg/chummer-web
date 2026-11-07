@@ -15,6 +15,7 @@ import { useKeyboardShortcuts } from "@/lib/character/useKeyboardShortcuts";
 import { BooksProvider } from "@/lib/character/books";
 import { useUiText } from "@/lib/i18n";
 import { ExportReview } from "@/components/character/ExportReview";
+import { CharacterRoster } from "@/components/character/CharacterRoster";
 import { BackupReminder } from "@/components/character/BackupReminder";
 import { SavedHistory } from "@/components/character/SavedHistory";
 import { ImportReport } from "@/components/character/ImportReport";
@@ -85,6 +86,7 @@ export default function Page() {
               fileRef={fileRef}
             />
 
+            <CharacterRoster ed={ed} />
             <BackupReminder ed={ed} />
             <SavedHistory ed={ed} />
             <SheetUrlImport ed={ed} />

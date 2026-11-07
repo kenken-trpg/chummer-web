@@ -103,6 +103,8 @@ describe("listCharacters", () => {
       talent: "Magician",
       career: false,
       updated: 2_000,
+      buildMethod: "Priority",
+      changesSinceBackup: 0,
     });
   });
 
@@ -110,7 +112,9 @@ describe("listCharacters", () => {
     await putCharacter(makeCharacter({ id: "a" }));
 
     expect(Object.keys((await listCharacters())[0]).sort()).toEqual([
+      "buildMethod",
       "career",
+      "changesSinceBackup",
       "id",
       "metatype",
       "metavariant",
@@ -246,4 +250,30 @@ describe("backup metadata", () => {
       await putCharacter(makeCharacter({ id: "old-backup", name: `Edit ${i}` }));
     expect((await getBackupStatus("old-backup"))?.changesSinceBackup).toBe(15);
   });
+});
+
+it("projects roster metadata and keeps the edit date when only recomputing or exporting", async () => {
+  const character = makeCharacter({ id: "roster", build_method: "Karma" });
+  const clock = vi.spyOn(Date, "now").mockReturnValue(1000);
+  try {
+    await putCharacter(character);
+    clock.mockReturnValue(2000);
+    await putCharacter({
+      ...character,
+      derived: { ...character.derived, test: true },
+    } as typeof character);
+    expect((await listCharacters())[0].updated).toBe(1000);
+    const edited = { ...character, name: "Edited" };
+    await putCharacter(edited);
+    expect((await listCharacters())[0]).toMatchObject({
+      buildMethod: "Karma",
+      changesSinceBackup: 1,
+      updated: 2000,
+    });
+    clock.mockReturnValue(3000);
+    await recordBackup(edited);
+    expect((await listCharacters())[0]).toMatchObject({ changesSinceBackup: 0, updated: 2000 });
+  } finally {
+    clock.mockRestore();
+  }
 });

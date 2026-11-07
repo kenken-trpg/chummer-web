@@ -73,6 +73,8 @@ export type CharacterSummary = {
   talent: string;
   career: boolean;
   updated: number;
+  buildMethod?: string;
+  changesSinceBackup?: number;
 };
 
 /** A `{key, params}` detail, i.e. one our own API raised. FastAPI's own 422

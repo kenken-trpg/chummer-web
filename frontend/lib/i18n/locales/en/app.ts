@@ -1,5 +1,26 @@
 /** アプリの枠・ナビ・共通の語・書式・共有・ツールバー — English。 */
 export const EN_APP = {
+  "app.roster.title": "Character list",
+  "app.roster.search": "Search by name",
+  "app.roster.filter": "Status",
+  "app.roster.all": "All",
+  "app.roster.creation": "Creation",
+  "app.roster.career": "Career",
+  "app.roster.sort": "Sort by",
+  "app.roster.updatedOrder": "Recently updated",
+  "app.roster.nameOrder": "Name",
+  "app.roster.count": "Showing {count} of {total}",
+  "app.roster.empty": "No characters match these filters.",
+  "app.roster.method": "Build method",
+  "app.roster.updated": "Last updated",
+  "app.roster.action": "Action",
+  "app.roster.unbacked": "Changes not backed up",
+  "app.roster.noChanges": "No changes awaiting backup",
+  "app.roster.current": "Currently open",
+  "app.roster.open": "Open",
+  "app.roster.currentName": "{name} (currently open)",
+  "app.roster.openName": "Open {name}",
+
   "app.backup.title": "Backup",
   "app.backup.description":
     "Downloading JSON records the export time in this browser. A reminder appears after 10 changes, or after 7 days if there are changes.",

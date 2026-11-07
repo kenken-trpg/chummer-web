@@ -1,5 +1,26 @@
 /** アプリの枠・ナビ・共通の語・書式・共有・ツールバー — 日本語。 */
 export const JA_APP = {
+  "app.roster.title": "キャラクター一覧",
+  "app.roster.search": "名前で検索",
+  "app.roster.filter": "状態",
+  "app.roster.all": "すべて",
+  "app.roster.creation": "作成中",
+  "app.roster.career": "キャリア",
+  "app.roster.sort": "並べ替え",
+  "app.roster.updatedOrder": "最終更新が新しい順",
+  "app.roster.nameOrder": "名前順",
+  "app.roster.count": "{total}件中{count}件を表示",
+  "app.roster.empty": "条件に一致するキャラクターがありません。",
+  "app.roster.method": "作成方式",
+  "app.roster.updated": "最終更新",
+  "app.roster.action": "操作",
+  "app.roster.unbacked": "未バックアップの変更あり",
+  "app.roster.noChanges": "未バックアップの変更なし",
+  "app.roster.current": "現在開いています",
+  "app.roster.open": "開く",
+  "app.roster.currentName": "{name}（現在開いています）",
+  "app.roster.openName": "{name}を開く",
+
   "app.backup.title": "バックアップ",
   "app.backup.description":
     "JSONを保存すると、このブラウザに書き出し日時を記録します。10回の変更、または前回から7日以上経過して変更があるときに保存をご案内します。",
