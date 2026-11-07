@@ -5,6 +5,12 @@ self-hosters can pin to a tag instead of tracking `main`.
 
 ## [Unreleased]
 
+## [0.5.37] — 2026-11-07
+
+### Fixed
+
+- **グループ・コンタクトが Chummer で「敵」として開かれないようにしました**：`.chum5` に書き出すと、グループ・コンタクトの種類が Chummer の知らない値になっていて、Chummer で開くと敵（Enemy）になり、グループの印も消えていました。今は Chummer と同じく、種類は「コンタクト」のまま、グループの印を別に書きます。Chummer のセーブにあるグループの印も取り込むようにしました（これまでは、資質から付くもの以外は普通のコンタクトとして入っていました）。このアプリの前の版で書き出したファイルも、そのまま読めます。
+
 ## [0.5.36] — 2026-11-07
 
 ### Added
@@ -3093,7 +3099,8 @@ First tagged release.
 - One-container Docker image (Caddy + uvicorn + Next standalone) published to
   GHCR; `make up` / `compose.yaml` for local self-hosting.
 
-[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.36...HEAD
+[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.37...HEAD
+[0.5.37]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.36...v0.5.37
 [0.5.36]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.35...v0.5.36
 [0.5.35]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.34...v0.5.35
 [0.5.34]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.33...v0.5.34
