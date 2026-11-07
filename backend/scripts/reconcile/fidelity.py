@@ -252,7 +252,6 @@ _ACCEPTED_ROW_DROPS: dict[str, str] = {
             "accessory",
             "gear",
             "vehicle",
-            "contact",
         )
     },
     **{
@@ -274,19 +273,13 @@ _ACCEPTED_ROW_DROPS: dict[str, str] = {
     **{
         f"contact/{tag}": _PLAYERS_TEXT
         for tag in (
-            "location",
-            "metatype",
-            "sex",
-            "age",
-            "hobbiesvice",
-            "personallife",
-            "preferredpayment",
-            "contacttype",
             "colour",
-            "family",
             "group",
         )
     },
+    # `Contact.ContactPoints` adds 1 for a Family contact (and 2 for Blackmail)
+    "contact/family": "the Family box, a point more for the contact, which this app does not offer",
+    "contact/sex": "legacy — <gender> says it now",
     "contact/mainmugshotindex": "the portrait shown; this app holds no portraits",
     "spirit/mainmugshotindex": "the portrait shown; this app holds no portraits",
     "spirit/crittername": _PLAYERS_TEXT,

@@ -6,6 +6,7 @@ import { HelpTip } from "@/components/help/HelpTip";
 import { contactTerm } from "@/lib/ui-strings";
 import { editRow } from "@/lib/character/rows";
 import { BoundedNumberInput } from "@/components/character/BoundedNumberInput";
+import { ContactDetails } from "./ContactDetails";
 
 export function ContactsTab({ character: ch, d, tr, ui, patch, setCharacter }: TabPanelProps) {
   const [contactName, setContactName] = useState("");
@@ -134,6 +135,20 @@ export function ContactsTab({ character: ch, d, tr, ui, patch, setCharacter }: T
                 />
               </label>
             </div>
+            {(() => {
+              // a contact a Life Module adds is made afresh on every
+              // calculation and kept nowhere to write a description to
+              const row = (ch.contacts || []).find((r) => r.id === item.id);
+              return row ? (
+                <ContactDetails
+                  row={row}
+                  character={ch}
+                  ui={ui}
+                  patch={patch}
+                  setCharacter={setCharacter}
+                />
+              ) : null;
+            })()}
           </div>
           {item.locked ? (
             <span className="muted">{ui("common.fromQuality")}</span>
