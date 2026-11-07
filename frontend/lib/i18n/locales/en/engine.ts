@@ -396,7 +396,8 @@ export const EN_ENGINE = {
 
   "engine.martial.unknownDropped": "An unknown martial art was dropped",
   "engine.contacts.exconLoyalty": "Ex-Con contact {name} ({role}) needs Loyalty {min} or higher",
-  "engine.contacts.pairMax": "{name}: Connection + Loyalty is over {max}, the most a contact can be worth at chargen",
+  "engine.contacts.pairMax":
+    "{name}: Connection + Loyalty is over {max}, the most a contact can be worth at chargen",
 
   "engine.contacts.unnamed": "A contact has no name",
   "engine.ware.attrBonusOver":
