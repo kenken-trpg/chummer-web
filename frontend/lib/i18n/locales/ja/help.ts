@@ -310,7 +310,7 @@ export const JA_HELP = {
   "help.flag.erased": "Erased：マトリックス上に残った自分の記録が、放っておくと消えていく",
   "help.flag.excon": "Ex-Con：前科者。社会的な扱いが悪くなる代わりにカルマが戻る",
   "help.flag.overclock":
-    "Overclocker：いちばん性能の高いデッキのマトリックス値 1 つ（ふつうアタック）に +1",
+    "Overclocker：デッキのマトリックス値 1 つに +1。どれを上げるかは装備タブのデッキごとに選ぶ（選ばなければ、いちばん性能の高いデッキのアタック）",
   "help.flag.specialMod":
     "特別改造 n/m：資質で増える枠で、これを要求する武器アクセサリの数を数えている",
   "help.flag.fihp": "Friends in High Places：伝手が要る場面で便宜を受けられる",

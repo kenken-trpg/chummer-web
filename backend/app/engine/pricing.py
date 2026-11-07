@@ -341,15 +341,21 @@ def _trust_fund(gear: dict[str, Any], effects: EffectsDict) -> int:
 
 
 def apply_overclocker(gear: GearBundle, enabled: bool) -> None:
-    if not enabled:
-        return
+    """Overclocker (RF p.148): +1 to the Matrix attribute picked on each deck.
+
+    Chummer keeps the pick per deck (`Gear.Overclocked`) and adds it by name,
+    so it follows the attribute wherever the array put it. Until a deck has a
+    pick, the highest-rated deck's Attack gets it, as before there was one.
+    The deck that got it says which attribute in ``overclocker``."""
     decks = list(gear.get("cyberdecks") or [])
-    if not decks:
+    if not enabled or not decks:
         return
-    deck = max(decks, key=lambda row: int(row.get("device_rating") or 0))
-    # Prefer Attack, else first matrix attr.
-    for key in MATRIX_ARRAY_KEYS:
-        if key in deck:
+    picked = {str(deck["id"]): str(deck.get("overclocked")) for deck in decks if deck.get("overclocked")}
+    if not picked:
+        best = max(decks, key=lambda row: int(row.get("device_rating") or 0))
+        picked = {str(best["id"]): next((key for key in MATRIX_ARRAY_KEYS if key in best), "none")}
+    for deck in decks:
+        key = picked.get(str(deck["id"]), "none")
+        if key in MATRIX_ARRAY_KEYS and key in deck:
             deck[key] = int(deck.get(key) or 0) + 1
             deck["overclocker"] = key
-            break

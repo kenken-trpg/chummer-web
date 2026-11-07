@@ -296,7 +296,7 @@ _ACCEPTED_ROW_DROPS: dict[str, str] = {
     "armor/location": "the player's own storage location, which this app does not hold",
     "gear/location": "the player's own storage location, which this app does not hold",
     "gear/allowrename": "only lets the player rename the piece in Chummer",
-    "gear/overclocked": "the attribute an Overclocker boosts, which this app does not hold",
+    "gear/overclocked": "the attribute an Overclocker boosts — written on cyberdecks, the only gear Chummer offers the pick on",
     "gear/conditionmonitor": "output only",
     "gear/programlimit": "falls back to the catalogue's <programs> when absent",
     "vehicle/devicerating": "falls back to the catalogue when absent",

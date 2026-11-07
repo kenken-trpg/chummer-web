@@ -142,6 +142,10 @@ class GearInstall(BaseModel):
     included: bool = False
     capacity_override: str | None = None
     array_order: list[str] = Field(default_factory=list)
+    #: Cyberdecks only: the attribute Overclocker raises on this deck (Chummer's
+    #: `<overclocked>`) — attack / sleaze / dataprocessing / firewall, or "none".
+    #: Left unset on every deck, the highest-rated deck's Attack gets it.
+    overclocked: Literal["attack", "sleaze", "dataprocessing", "firewall", "none"] | None = None
     extra: str | None = None
     active: bool = False  # drugs/toxins: effect currently applied
     # Cyberdeck programs only; missing on old saves means the former all-running

@@ -140,6 +140,32 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                   ))}
                 </div>
               ) : null}
+              {d.overclocker ? (
+                <div className="cyber-controls">
+                  <label>
+                    {ui("gear.overclocker")}
+                    <select
+                      aria-label={ui("gear.overclocker")}
+                      value={item.overclocked ?? ""}
+                      onChange={(e) =>
+                        patch({
+                          cyberdecks: editRow(ch.cyberdecks, item.id, {
+                            overclocked: (e.target.value || null) as typeof item.overclocked,
+                          }),
+                        })
+                      }
+                    >
+                      <option value="">{ui("gear.overclockerAuto")}</option>
+                      {MATRIX_ATTRS.map(([key, label]) => (
+                        <option key={key} value={key}>
+                          {label} +1
+                        </option>
+                      ))}
+                      <option value="none">{ui("gear.overclockerNone")}</option>
+                    </select>
+                  </label>
+                </div>
+              ) : null}
               {(d.programs || [])
                 .filter((prog) => prog.parent_id === item.id)
                 .map((prog) => (

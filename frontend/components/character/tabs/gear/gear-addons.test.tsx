@@ -329,6 +329,35 @@ describe("<CyberdeckGear> the matrix attribute array", () => {
     expect(screen.getByText(/DP 3/)).toBeDefined();
   });
 
+  it("lets an Overclocker pick the attribute on each deck", () => {
+    const patch = vi.fn();
+    const ch = makeCharacter({
+      cyberdecks: [deck()],
+      derived: { overclocker: true, cyberdecks: [deck({ overclocked: null })] },
+    } as never);
+    renderPanel(CyberdeckGear, ch, patch);
+
+    const pick = screen.getByRole("combobox", { name: "オーバークロック" }) as HTMLSelectElement;
+    expect(pick.value).toBe("");
+    expect(
+      within(pick).getByRole("option", { name: "選ばない（いちばん性能の高いデッキの ATK）" }),
+    ).toBeDefined();
+    fireEvent.change(pick, { target: { value: "sleaze" } });
+    expect(patch.mock.calls.at(-1)![0].cyberdecks[0].overclocked).toBe("sleaze");
+    fireEvent.change(pick, { target: { value: "" } });
+    expect(patch.mock.calls.at(-1)![0].cyberdecks[0].overclocked).toBeNull();
+  });
+
+  it("offers no Overclocker pick without the quality", () => {
+    const ch = makeCharacter({
+      cyberdecks: [deck()],
+      derived: { cyberdecks: [deck()] },
+    } as never);
+    renderPanel(CyberdeckGear, ch, vi.fn());
+
+    expect(screen.queryByRole("combobox", { name: "オーバークロック" })).toBeNull();
+  });
+
   it("offers no reordering for a deck whose array is fixed", () => {
     const ch = makeCharacter({
       cyberdecks: [deck({ can_reorder: false })],
