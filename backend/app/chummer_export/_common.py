@@ -28,6 +28,20 @@ def _player_text(el: ET.Element, row: Any, name_tag: str = "") -> None:
         _sub(el, name_tag, row.nickname)
 
 
+def _storage_locations(root: ET.Element, list_tag: str, locations: list[Any]) -> set[str]:
+    """Write the places the player keeps things in (`<gearlocations>`,
+    `<armorlocations>`); the ids a row may name as its `<location>`."""
+    if not locations:
+        return set()
+    parent = _sub(root, list_tag)
+    for loc in locations:
+        el = _sub(parent, "location")
+        _sub(el, "guid", loc.id)
+        _sub(el, "name", loc.name)
+        _sub(el, "notes", loc.notes)
+    return {loc.id for loc in locations}
+
+
 def _id_name(rows: list[dict[str, Any]]) -> dict[str, str]:
     return {r["id"]: r.get("name") or "" for r in rows if r.get("id")}
 

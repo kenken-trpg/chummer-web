@@ -65,6 +65,9 @@ class ArmorInstall(BaseModel):
     #: the player's own name for this one (Chummer's `<armorname>`), shown beside
     #: the catalogue's
     nickname: str = ""
+    #: where the player keeps it: the id of one of the character's
+    #: `armor_locations` (Chummer's `<location>`, a `<armorlocations>` guid)
+    location: str | None = None
 
 
 class ArmorModInstall(BaseModel):
@@ -152,6 +155,11 @@ class CommlinkInstall(BaseModel):
     #: the player's own name for this one (Chummer's `<gearname>`), shown beside
     #: the catalogue's
     nickname: str = ""
+    #: where the player keeps it: the id of one of the character's
+    #: `gear_locations` (Chummer's `<location>`, a `<gearlocations>` guid).
+    #: Only a row of its own has one; what is put inside another goes where
+    #: that goes.
+    location: str | None = None
 
 
 class GearInstall(BaseModel):
@@ -191,6 +199,23 @@ class GearInstall(BaseModel):
     #: (Chummer's `<gearname>`, a vehicle's or drone's `<vehiclename>`) — not
     #: `name`, which is what a Custom Item is
     nickname: str = ""
+    #: where the player keeps it: the id of one of the character's
+    #: `gear_locations` (Chummer's `<location>`, a `<gearlocations>` guid).
+    #: Only a row of its own under `<gears>` has one, not a vehicle or drone;
+    #: what is put inside another goes where that goes.
+    location: str | None = None
+
+
+class StorageLocation(BaseModel):
+    """A place the player keeps things in — a backpack, a safehouse, a car
+    (Chummer's `<gearlocations>` / `<armorlocations>`). Its id is Chummer's
+    `<guid>`, which the rows name as their `location`; nothing is computed
+    from where a thing is."""
+
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()), max_length=64)
+    name: str = Field(default="", max_length=200)
+    #: the player's own note on it (Chummer's `<notes>`)
+    notes: str = ""
 
 
 class CustomDrugPart(BaseModel):

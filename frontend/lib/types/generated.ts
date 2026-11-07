@@ -250,6 +250,10 @@ export interface ArmorInstall {
    *  the catalogue's
    */
   nickname?: string;
+  /** where the player keeps it: the id of one of the character's
+   *  `armor_locations` (Chummer's `<location>`, a `<armorlocations>` guid)
+   */
+  location?: string | null;
 }
 
 export interface ArmorModInstall {
@@ -347,6 +351,12 @@ export interface CommlinkInstall {
    *  the catalogue's
    */
   nickname?: string;
+  /** where the player keeps it: the id of one of the character's
+   *  `gear_locations` (Chummer's `<location>`, a `<gearlocations>` guid).
+   *  Only a row of its own has one; what is put inside another goes where
+   *  that goes.
+   */
+  location?: string | null;
 }
 
 export interface GearInstall {
@@ -393,6 +403,12 @@ export interface GearInstall {
    *  `name`, which is what a Custom Item is
    */
   nickname?: string;
+  /** where the player keeps it: the id of one of the character's
+   *  `gear_locations` (Chummer's `<location>`, a `<gearlocations>` guid).
+   *  Only a row of its own under `<gears>` has one, not a vehicle or drone;
+   *  what is put inside another goes where that goes.
+   */
+  location?: string | null;
 }
 
 export interface ElectronicPartsSupply {
@@ -453,6 +469,13 @@ export interface LifestyleInstall {
   /** the player's own note on this row (Chummer's `<notes>`); nothing is
    *  computed from it
    */
+  notes?: string;
+}
+
+export interface StorageLocation {
+  id?: string;
+  name?: string;
+  /** the player's own note on it (Chummer's `<notes>`) */
   notes?: string;
 }
 
@@ -880,6 +903,12 @@ export interface Character {
   vehicle_mods?: VehicleModInstall[];
   weapon_mounts?: WeaponMountInstall[];
   lifestyles?: LifestyleInstall[];
+  /** the places the player keeps their gear and their armor in (Chummer's
+   *  `<gearlocations>` / `<armorlocations>`), in the order they listed them;
+   *  a row names one as its `location`
+   */
+  gear_locations?: StorageLocation[];
+  armor_locations?: StorageLocation[];
   contacts?: ContactInstall[];
   martial_arts?: MartialArtInstall[];
   initiate_grade?: number;

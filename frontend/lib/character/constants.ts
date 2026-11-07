@@ -141,7 +141,8 @@ export type GearKind =
   | "vehicle"
   | "misc"
   | "drugs"
-  | "lifestyle";
+  | "lifestyle"
+  | "locations";
 export const OPTICS_DEVICE_CATS = new Set(["Vision Devices", "Audio Devices"]);
 export const SENSOR_DEVICE_CATS = new Set(["Sensors", "Sensor Housings"]);
 /**

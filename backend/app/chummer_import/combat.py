@@ -9,7 +9,15 @@ from typing import Any
 from ..data_loader import CatalogDict, catalog_list
 from ..data_loader._xml import _int, _text
 from ..notices import Notice, ui
-from ._common import _discounted, _picked_cost, _player_text, _Resolver, _unexpected_children
+from ._common import (
+    _discounted,
+    _location_of,
+    _picked_cost,
+    _player_text,
+    _Resolver,
+    _storage_locations,
+    _unexpected_children,
+)
 
 
 def _is_gear_not_mod(node: ET.Element, mods: _Resolver, gear: _Resolver) -> bool:
@@ -32,6 +40,9 @@ def _import_armor(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: 
     st_armor: list[dict[str, Any]] = []
     st_amods: list[dict[str, Any]] = []
     carried: list[tuple[str, ET.Element]] = []
+    locations = _storage_locations(root, "armorlocations")
+    if locations:
+        st["armor_locations"] = locations
     for a in root.findall("./armors/armor"):
         aid = armor_r.resolve(a, warn, ui("engine.kind.armor"))
         if not aid:
@@ -43,6 +54,7 @@ def _import_armor(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: 
             "equipped": _text(a.find("equipped")).lower() != "false",
             "discounted": _discounted(a),
             **_player_text(a, "armorname"),
+            **_location_of(a, locations),
         }
         if aid in variable_armor:
             row["cost"] = _picked_cost(a)

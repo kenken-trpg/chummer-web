@@ -183,6 +183,18 @@ export const EN_GEAR = {
   "gear.kind.drugs.hint": "Drugs and chemicals, with their effects and side effects",
 
   "gear.kind.lifestyle.hint": "Lifestyle. At chargen it is paid for by the month, up front",
+  "gear.kind.locations": "Storage",
+  "gear.kind.locations.hint":
+    "Where things are kept — a backpack, the car, a safehouse — and what is in each. Only a record; nothing is computed from it",
+  "gear.locations.gearTitle": "Gear",
+  "gear.locations.armorTitle": "Armor",
+  "gear.locations.nameOf": "{name}: name",
+  "gear.locations.untitled": "(unnamed)",
+  "gear.locations.empty": "Nothing in it",
+  "gear.locations.unplaced": "Not kept anywhere",
+  "gear.locations.whereOf": "{name}: kept in",
+  "gear.locations.nowhere": "(none)",
+  "gear.locations.newName": "New place's name",
   "ware.allCategories": "All categories",
   "ware.compact": "Compact (names only)",
   "ware.pending": "(choice pending)",

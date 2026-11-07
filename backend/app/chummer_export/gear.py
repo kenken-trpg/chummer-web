@@ -16,7 +16,7 @@ from ..engine.gear.ammo import ammo_fits_weapon
 from ..engine.gear.weapons.hosts import ware_weapon_specs
 from ..engine.lookups import _focus_by_id
 from ..models import CharacterState, FocusInstall, GearInstall
-from ._common import _Ctx, _Names, _player_text, _sub
+from ._common import _Ctx, _Names, _player_text, _storage_locations, _sub
 from .data_fields import _definitions, _from_data
 from .improvements import _bonus_improvements, _Imp, _text, _with_rows, _write_improvements
 from .metatype import export_metatype_weapons
@@ -192,6 +192,7 @@ def _export_ware_improvements(
 def _export_armor(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
     """Write armor and its mods."""
     armors = _sub(root, "armors")
+    locations = _storage_locations(root, "armorlocations", state.armor_locations)
     amods_by_parent: dict[str | None, list[Any]] = {}
     for mrow in state.armor_mods:
         amods_by_parent.setdefault(mrow.parent_id, []).append(mrow)
@@ -202,6 +203,8 @@ def _export_armor(root: ET.Element, state: CharacterState, names: _Names, ctx: _
         _sub(el, "sourceid", a.armor_id)
         _sub(el, "name", names["armor"].get(a.armor_id, ""))
         _player_text(el, a, "armorname")
+        if a.location in locations:
+            _sub(el, "location", a.location)
         if a.cost is not None:
             _sub(el, "cost", a.cost)
         _sub(el, "rating", a.rating)
@@ -374,6 +377,8 @@ _OVERCLOCKED = {
 
 def _gear_writer(state: CharacterState, names: _Names) -> tuple[dict[str | None, list[Any]], Any]:
     """Gear of every bucket by parent id, and the writer of a `<gear>` list."""
+    # the places a row of its own may be kept in (`_export_gear` writes them)
+    locations = {loc.id for loc in state.gear_locations}
     gear_rows: list[Any] = [
         *state.gear,
         *state.commlinks,
@@ -445,6 +450,8 @@ def _gear_writer(state: CharacterState, names: _Names) -> tuple[dict[str | None,
                 # a Custom Item goes by the name the player gave it
                 el.find("name").text = g.name  # type: ignore[union-attr]
             _player_text(el, g, "gearname")
+            if not getattr(g, "parent_id", None) and getattr(g, "location", None) in locations:
+                _sub(el, "location", g.location)
             _sub(el, "rating", getattr(g, "rating", 1))
             if g.id == state.home_node:
                 # an A.I.'s home node (`IHasMatrixAttributes.IsHomeNode`)
@@ -483,6 +490,7 @@ def _export_gear(root: ET.Element, state: CharacterState, names: _Names, ctx: _C
     gears = root.find("gears")
     if gears is None:
         gears = _sub(root, "gears")
+    _storage_locations(root, "gearlocations", state.gear_locations)
     by_parent_g, emit_gear = _gear_writer(state, names)
     emit_gear(gears, by_parent_g.get(None, []))
     _emit_focus_gear(gears, state, names)
