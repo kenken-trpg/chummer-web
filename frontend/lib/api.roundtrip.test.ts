@@ -54,6 +54,32 @@ afterEach(() => {
 
 const body = (call: Call) => JSON.parse(String(call.init?.body));
 
+describe("a recompute that never answers", () => {
+  it("is given up with a message, so the editor is not left waiting for good", async () => {
+    // CI saw a patch relayed through the Next server get no answer at all;
+    // until then every later edit was dropped behind it
+    await local.putCharacter(makeCharacter({ id: "c1" }));
+    const deadline = new AbortController();
+    const timeout = vi.spyOn(AbortSignal, "timeout").mockReturnValue(deadline.signal);
+    vi.stubGlobal("fetch", (path: string, init?: RequestInit) => {
+      calls.push({ path, init });
+      return new Promise<Response>((_, reject) =>
+        init?.signal?.addEventListener("abort", () => reject(init.signal?.reason)),
+      );
+    });
+
+    const sent = api.patch("c1", { name: "Lost" });
+    await vi.waitFor(() => expect(calls).toHaveLength(1));
+    expect(calls[0].init?.signal).toBe(deadline.signal);
+    deadline.abort(new DOMException("signal timed out", "TimeoutError"));
+
+    await expect(sent).rejects.toEqual(new MessageError("app.err.timeout"));
+    expect(timeout).toHaveBeenCalledWith(30_000);
+    expect((await local.getCharacter("c1"))?.name).not.toBe("Lost");
+    timeout.mockRestore();
+  });
+});
+
 describe("api.create / api.patch", () => {
   it("stores what the engine returns, so a reload finds it", async () => {
     const fresh = makeCharacter({ id: "server-id", name: "Runner" });

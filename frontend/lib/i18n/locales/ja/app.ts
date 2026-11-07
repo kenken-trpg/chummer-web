@@ -364,6 +364,7 @@ export const JA_APP = {
   "app.err.load": "読込に失敗しました",
   "app.err.duplicate": "複製に失敗しました",
   "app.err.patch": "更新に失敗しました",
+  "app.err.timeout": "サーバーから応答がありませんでした。もう一度操作してください",
   "app.err.undo": "取り消しに失敗しました",
   "app.err.export": "書き出しに失敗しました",
   "app.err.portraitRead": "画像の読込に失敗しました",

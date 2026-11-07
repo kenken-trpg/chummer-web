@@ -1,6 +1,8 @@
-import { fireEvent, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { makeCharacter } from "@/tests/fixtures";
+import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
+import type { Updater } from "@/lib/character/patch-queue";
+import type { Character } from "@/lib/types";
 import { CommlinkGear } from "./CommlinkGear";
 import { CyberdeckGear } from "./CyberdeckGear";
 import { OpticsGear } from "./OpticsGear";
@@ -598,6 +600,34 @@ it("the running checkbox changes one program without changing ownership or payme
   renderPanel(CyberdeckGear, ch, patch);
   fireEvent.click(screen.getByRole("checkbox", { name: "Browse：作動中" }));
   expect(patch.mock.calls[0][0]).toEqual({ programs: [{ ...rows[0], running: true }, rows[1]] });
+});
+
+it("ticking two programs before the first tick is saved keeps both running", () => {
+  // e2e/cyberdeck.spec.ts lost the second tick now and then: both bodies were
+  // built from the same character, so the second differed from the first in
+  // two programs and the editor dropped it as stale.
+  const rows = [
+    program("p1", "Browse", "d", { running: false }),
+    program("p2", "Armor", "d", { running: false }),
+  ];
+  const ch = makeCharacter({
+    cyberdecks: [host("d", "Erika")],
+    programs: rows,
+    derived: { cyberdecks: [host("d", "Erika")], programs: rows },
+  } as never);
+  const patch = vi.fn();
+  render(<CyberdeckGear {...panelProps(ch, { catalog: makeCatalog(), patch })} />);
+  fireEvent.click(screen.getByRole("checkbox", { name: "Browse：作動中" }));
+  fireEvent.click(screen.getByRole("checkbox", { name: "Armor：作動中" }));
+
+  const [first, second] = patch.mock.calls.map(([body]) => body as Updater);
+  expect(typeof first).toBe("function");
+  expect(typeof second).toBe("function");
+  // the second is solved against the character as the first left it
+  const afterFirst = { ...ch, ...first(ch) } as Character;
+  expect(
+    (second(afterFirst).programs as { id: string; running: boolean }[]).map((r) => r.running),
+  ).toEqual([true, true]);
 });
 
 it("loading a purchased loose program keeps its row and stops it", () => {

@@ -353,6 +353,7 @@ export const EN_APP = {
   "app.err.load": "Could not load.",
   "app.err.duplicate": "Could not duplicate.",
   "app.err.patch": "Could not save the change.",
+  "app.err.timeout": "The server did not answer. Please try again.",
   "app.err.undo": "Could not undo.",
   "app.err.export": "Could not export.",
   "app.err.portraitRead": "Could not read the image.",
