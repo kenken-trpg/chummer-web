@@ -5,6 +5,12 @@ self-hosters can pin to a tag instead of tracking `main`.
 
 ## [Unreleased]
 
+## [0.5.34] — 2026-11-07
+
+### Fixed
+
+- **編集が知らないうちに消えないようにしました**：サイバーデッキのプログラムの「作動中」を、1 つ目の保存が終わる前に続けて 2 つ付けると、2 つ目が消えていました。今は両方とも残ります。また、サーバーから応答が返らない保存があると、その後の編集が何も言わずにすべて捨てられていました。今は 30 秒で諦めて「サーバーから応答がありませんでした」と表示し、続けて編集できます。
+
 ## [0.5.33] — 2026-11-07
 
 ### Added
@@ -3075,7 +3081,8 @@ First tagged release.
 - One-container Docker image (Caddy + uvicorn + Next standalone) published to
   GHCR; `make up` / `compose.yaml` for local self-hosting.
 
-[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.33...HEAD
+[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.34...HEAD
+[0.5.34]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.33...v0.5.34
 [0.5.33]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.32...v0.5.33
 [0.5.32]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.31...v0.5.32
 [0.5.31]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.30...v0.5.31
