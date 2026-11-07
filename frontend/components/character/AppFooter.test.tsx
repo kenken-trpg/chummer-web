@@ -1,5 +1,11 @@
 import { render, screen } from "@testing-library/react";
-import { AppFooter, AUTHOR, MANUAL_URL, REPO_URL } from "@/components/character/AppFooter";
+import {
+  AppFooter,
+  AUTHOR,
+  MANUAL_URL,
+  REPO_URL,
+  VIDEO_URL,
+} from "@/components/character/AppFooter";
 
 describe("<AppFooter>", () => {
   it("credits the author and links the repository", () => {
@@ -16,6 +22,14 @@ describe("<AppFooter>", () => {
     const link = screen.getByRole("link", { name: "使い方" });
     // `next.config.ts` rewrites this to `public/manual/index.html`
     expect(link.getAttribute("href")).toBe(MANUAL_URL);
+    expect(link.getAttribute("rel")).toBe("noopener noreferrer");
+  });
+
+  it("links the walkthrough video in a new tab", () => {
+    render(<AppFooter />);
+    const link = screen.getByRole("link", { name: "使い方動画" });
+    expect(link.getAttribute("href")).toBe(VIDEO_URL);
+    expect(link.getAttribute("target")).toBe("_blank");
     expect(link.getAttribute("rel")).toBe("noopener noreferrer");
   });
 

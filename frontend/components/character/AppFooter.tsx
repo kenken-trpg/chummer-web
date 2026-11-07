@@ -8,6 +8,9 @@ export const REPO_URL = "https://github.com/kenken-trpg/chummer-web";
 export const AUTHOR = "kenken-trpg";
 /** `public/manual/index.html`, reached through the rewrite in `next.config.ts`. */
 export const MANUAL_URL = "/manual";
+/** The narrated walkthrough of character creation on YouTube (Japanese, about
+ *  two minutes), recorded with `scripts/record-walkthrough.mjs`. */
+export const VIDEO_URL = "https://www.youtube.com/watch?v=apdx_Ii-y9k";
 
 /** Inlined at build time from `backend/pyproject.toml` (`next.config.ts`);
  *  empty when the build had no such file. */
@@ -21,6 +24,10 @@ export function AppFooter({ version = APP_VERSION }: { version?: string } = {}) 
       <span aria-hidden="true">・</span>
       <a href={MANUAL_URL} target="_blank" rel="noopener noreferrer">
         {ui("app.footer.manual")}
+      </a>
+      <span aria-hidden="true">・</span>
+      <a href={VIDEO_URL} target="_blank" rel="noopener noreferrer">
+        {ui("app.footer.video")}
       </a>
       <span aria-hidden="true">・</span>
       <a href={REPO_URL} target="_blank" rel="noopener noreferrer">

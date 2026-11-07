@@ -252,6 +252,8 @@ docs/       Character creation walkthrough, architecture, data pipeline, deploym
 
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — setup, conventions, how to open a PR
 - [`SECURITY.md`](SECURITY.md) — reporting a vulnerability (GitHub private vulnerability reporting)
+- [Video walkthrough](https://www.youtube.com/watch?v=apdx_Ii-y9k) (YouTube, about two minutes, in Japanese) — character creation from start to export.
+  How it is recorded: [`scripts/README.md`](scripts/README.md#youtube-walkthrough)
 - [`docs/chargen.md`](docs/chargen.md) — walking one runner through creation: which screen does what (written in Japanese)
 - [`docs/architecture.md`](docs/architecture.md) — data flow, `<bonus>` nodes and `effects`, the API surface
 - [`docs/deploy.md`](docs/deploy.md) — Docker, Cloud Run / Fly / Cloudflare Containers, or self-hosting behind a Cloudflare Tunnel
