@@ -3,6 +3,14 @@
 Notable changes. Format follows [Keep a Changelog](https://keepachangelog.com/);
 self-hosters can pin to a tag instead of tracking `main`.
 
+## [0.5.30] — 2026-11-07
+
+### Added
+
+- **使い方動画（YouTube、約 2 分）へのリンクを足しました**：キャラクター作成の流れを、ナレーションつきで紹介する動画です。アプリのフッター（「使い方」の隣）、利用マニュアルの冒頭、README から開けます。
+
+- **作動中の Toolbox・Encryption・Decryption・Stealth が、デッキの属性を 1 上げるようにしました**：それぞれデータ処理・ファイアウォール・アタック・スリーズを 1 上げます（SR5 p.245）。「作動中」のチェックを外すと元に戻ります。上がった値は、装備タブ・シート・マトリックスのイニシアティブ（データ処理を使う）、ココフォリア・ユドナリウム・FVTT への書き出しに反映されます。プログラムの行には「（作動中は DP +1）」のように、どの属性が上がるかを表示します。Chummer はこの効果を計算しないので、`.chum5` の書き出しは今までどおりです。
+
 ## [0.5.29] — 2026-11-07
 
 ### Fixed
@@ -3047,7 +3055,8 @@ First tagged release.
 - One-container Docker image (Caddy + uvicorn + Next standalone) published to
   GHCR; `make up` / `compose.yaml` for local self-hosting.
 
-[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.29...HEAD
+[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.30...HEAD
+[0.5.30]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.29...v0.5.30
 [0.5.29]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.28...v0.5.29
 [0.5.28]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.27...v0.5.28
 [0.5.27]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.26...v0.5.27
