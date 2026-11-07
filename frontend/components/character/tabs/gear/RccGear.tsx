@@ -1,4 +1,5 @@
 "use client";
+import { RowNotes } from "@/components/character/RowNotes";
 import { CatalogPicker } from "@/components/character/CatalogPicker";
 import { DiscountToggle } from "@/components/character/DiscountToggle";
 import { HomeNodeToggle } from "@/components/character/HomeNodeToggle";
@@ -89,6 +90,14 @@ export function RccGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
                 character={ch}
                 d={d}
                 tr={tr}
+                ui={ui}
+                patch={patch}
+              />
+              <RowNotes
+                ch={ch}
+                bucket="rccs"
+                id={item.id}
+                of={tr(item.name)}
                 ui={ui}
                 patch={patch}
               />

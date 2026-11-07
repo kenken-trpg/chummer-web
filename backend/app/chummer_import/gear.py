@@ -11,7 +11,7 @@ from ..data_loader import CatalogDict, catalog_list
 from ..data_loader._xml import _int, _text, current_overlay_key
 from ..engine.home_node import HOME_NODE_BUCKETS
 from ..notices import Notice, Phrase, notice, ui
-from ._common import _chummer_added, _data_index, _discounted, _picked_cost, _Resolver
+from ._common import _chummer_added, _data_index, _discounted, _picked_cost, _player_text, _Resolver
 
 
 def _qty(node: ET.Element) -> float:
@@ -171,6 +171,7 @@ class _GearRouter:
             "gear_id": gid,
             "rating": max(1, _int(g.find("rating"), 1)),
             "discounted": _discounted(g),
+            **_player_text(g, "gearname"),
         }
         spec = self.rows_by_id.get(gid) or {}
         if spec.get("category") == "Electronic Parts" and _qty(g) % max(1, self.cost_for.get(gid, 0)):

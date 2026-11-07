@@ -1,4 +1,5 @@
 "use client";
+import { RowNotes } from "@/components/character/RowNotes";
 import { PickerList } from "@/components/character/CatalogPicker";
 import { HelpTip } from "@/components/help/HelpTip";
 import type { TabPanelProps } from "@/components/character/types";
@@ -180,6 +181,7 @@ export function FociTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
                 </>
               ) : null}
             </div>
+            <RowNotes ch={ch} bucket="foci" id={item.id} of={tr(item.name)} ui={ui} patch={patch} />
           </div>
           <button
             className="btn danger"

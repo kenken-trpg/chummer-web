@@ -241,20 +241,6 @@ _NEW_ON_LOAD = "a new one is made on load; the export names a row by guid where 
 #: still fails the run, but it is not counted against the export.
 _ACCEPTED_ROW_DROPS: dict[str, str] = {
     **{
-        f"{kind}/notes": _PLAYERS_TEXT
-        for kind in (
-            "quality",
-            "power",
-            "spell",
-            "cyberware",
-            "armor",
-            "weapon",
-            "accessory",
-            "gear",
-            "vehicle",
-        )
-    },
-    **{
         f"{kind}/guid": _NEW_ON_LOAD
         for kind in (
             "quality",
@@ -282,10 +268,6 @@ _ACCEPTED_ROW_DROPS: dict[str, str] = {
     "contact/sex": "legacy — <gender> says it now",
     "contact/mainmugshotindex": "the portrait shown; this app holds no portraits",
     "spirit/mainmugshotindex": "the portrait shown; this app holds no portraits",
-    "spirit/crittername": _PLAYERS_TEXT,
-    "armor/armorname": _PLAYERS_TEXT,
-    "gear/gearname": _PLAYERS_TEXT,
-    "vehicle/vehiclename": _PLAYERS_TEXT,
     "armor/location": "the player's own storage location, which this app does not hold",
     "gear/location": "the player's own storage location, which this app does not hold",
     "gear/allowrename": "only lets the player rename the piece in Chummer",

@@ -14,6 +14,9 @@ class AdeptPowerInstall(BaseModel):
     extra: str | None = None
     discounted: bool = False
     force: int | None = None
+    #: the player's own note on this row (Chummer's `<notes>`); nothing is
+    #: computed from it
+    notes: str = ""
 
 
 class SpellInstall(BaseModel):
@@ -25,6 +28,9 @@ class SpellInstall(BaseModel):
     #: what the spell picked when learned: Increase [Attribute]'s attribute,
     #: Detect [Life Form]'s life form (Chummer's `<extra>`)
     extra: str | None = None
+    #: the player's own note on this row (Chummer's `<notes>`); nothing is
+    #: computed from it
+    notes: str = ""
 
 
 class QiFocusInstall(BaseModel):
@@ -46,6 +52,12 @@ class SpiritInstall(BaseModel):
     bound: bool = True
     hits: int | None = None
     opposed_hits: int | None = None
+    #: the player's own note on this row (Chummer's `<notes>`); nothing is
+    #: computed from it
+    notes: str = ""
+    #: the player's own name for this one (Chummer's `<crittername>`), shown beside
+    #: the catalogue's
+    nickname: str = ""
 
 
 class ComplexFormInstall(BaseModel):
@@ -85,6 +97,12 @@ class SpriteInstall(BaseModel):
     registered: bool = True
     hits: int | None = None
     opposed_hits: int | None = None
+    #: the player's own note on this row (Chummer's `<notes>`); nothing is
+    #: computed from it
+    notes: str = ""
+    #: the player's own name for this one (Chummer's `<crittername>`), shown beside
+    #: the catalogue's
+    nickname: str = ""
 
 
 class FocusInstall(BaseModel):
@@ -98,6 +116,12 @@ class FocusInstall(BaseModel):
     extra: str | None = None
     # Chummer's `<bonded>`: one bought but not bonded costs its price only
     bonded: bool = True
+    #: the player's own note on this row (Chummer's `<notes>` on the focus's
+    #: gear); nothing is computed from it
+    notes: str = ""
+    #: the player's own name for this one (Chummer's `<gearname>`), shown beside
+    #: the catalogue's
+    nickname: str = ""
 
 
 class InitiationChoice(BaseModel):

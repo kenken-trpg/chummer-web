@@ -9,7 +9,7 @@ from typing import Any
 from ..data_loader import CatalogDict, catalog_list
 from ..data_loader._xml import _int, _text
 from ..notices import Notice, ui
-from ._common import _discounted, _picked_cost, _Resolver, _unexpected_children
+from ._common import _discounted, _picked_cost, _player_text, _Resolver, _unexpected_children
 
 
 def _is_gear_not_mod(node: ET.Element, mods: _Resolver, gear: _Resolver) -> bool:
@@ -42,6 +42,7 @@ def _import_armor(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: 
             "rating": max(1, _int(a.find("rating"), 1)),
             "equipped": _text(a.find("equipped")).lower() != "false",
             "discounted": _discounted(a),
+            **_player_text(a, "armorname"),
         }
         if aid in variable_armor:
             row["cost"] = _picked_cost(a)
@@ -132,6 +133,7 @@ def _read_weapon(
         "weapon_id": wid,
         "qty": max(1, _int(w.find("qty"), 1)),
         "discounted": _discounted(w),
+        **_player_text(w),
     }
     st_weap.append(row)
     _read_accessories(w, str(row["id"]), wacc_r, st_wacc, warn)
@@ -156,6 +158,7 @@ def _read_accessories(
                     # and an older save's `<installed>` puts it back on
                     "equipped": _text(acc.find("equipped")).lower() != "false"
                     or _text(acc.find("installed")).lower() == "true",
+                    **_player_text(acc),
                 }
             )
 

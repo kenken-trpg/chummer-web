@@ -11,7 +11,7 @@ import xml.etree.ElementTree as ET
 from ..data_loader import catalog
 from ..data_loader._xml import parse_data
 from ..models import CharacterState
-from ._common import _Ctx, _id_name, _Names, _sub
+from ._common import _Ctx, _id_name, _Names, _player_text, _sub
 from .data_fields import _from_data
 from .improvements import _bonus_improvements, _write_improvements
 
@@ -41,6 +41,7 @@ def _export_lifestyles(root: ET.Element, state: CharacterState, names: _Names, c
         _sub(el, "baselifestyle", base)
         _sub(el, "name", base)
         _sub(el, "months", lrow.months)
+        _player_text(el, lrow)
         for key in ("comforts", "area", "security"):
             _sub(el, key, getattr(lrow, key))
         _from_data(el, "lifestyle", lrow.lifestyle_id)

@@ -10,7 +10,7 @@ from typing import Any
 from ..data_loader import CatalogDict
 from ..data_loader._xml import _int, _text
 from ..notices import Notice, notice, term, ui
-from ._common import _Resolver
+from ._common import _player_text, _Resolver
 
 
 def _bonus_names(bonus: list[dict[str, Any]] | None) -> set[str]:
@@ -112,6 +112,7 @@ def _import_magic(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: 
             "spell_id": spell_ref,
             "alchemical": _text(sp.find("alchemical")).lower() == "true",
             "extra": _text(sp.find("extra")) or None,
+            **_player_text(sp),
         }
         for sp in root.findall("./spells/spell")
         if (spell_ref := spell_r.resolve(sp, warn, ui("engine.kind.spell")))
@@ -143,6 +144,7 @@ def _import_magic(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: 
                     "extra": _text(p.find("extra")) or None,
                     # the Adept Way discount (`Power.Save`'s `discounted`)
                     "discounted": _text(p.find("discounted")).lower() == "true",
+                    **_player_text(p),
                 }
             )
     st["adept_powers"] = powers
@@ -281,6 +283,7 @@ def _import_spirits(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn
                         "registered": bound,
                         "hits": hits,
                         "opposed_hits": opposed,
+                        **_player_text(el, "crittername"),
                     }
                 )
             continue
@@ -295,6 +298,7 @@ def _import_spirits(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn
                     "bound": bound,
                     "hits": hits,
                     "opposed_hits": opposed,
+                    **_player_text(el, "crittername"),
                 }
             )
     st["spirits"] = spirits
@@ -459,6 +463,7 @@ def _import_foci(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
                 "opposed_hits": _int(f.find("opposedhits"), 0) or None,
                 "extra": weapon_ids.get(weapon_name.lower()) or tradition or None,
                 "bonded": bonded,
+                **_player_text(gear, "gearname"),
             }
         )
     st["foci"] = foci

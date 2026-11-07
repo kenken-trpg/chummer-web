@@ -19,7 +19,7 @@ from ..engine.constants import (
 from ..engine.lookups import critter_power_label
 from ..engine.qualities import _quality_needs_spell_category, _quality_needs_spirit_category, has_extra_per_take
 from ..notices import Notice, notice, ui
-from ._common import _by_name
+from ._common import _by_name, _raw_text
 
 
 def _import_qualities(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
@@ -29,6 +29,7 @@ def _import_qualities(root: ET.Element, cat: CatalogDict, st: dict[str, Any], wa
     q_specs = {str(r["id"]): r for r in cat["qualities"]}
     quality_ids: list[str] = []
     quality_extras: dict[str, str] = {}
+    quality_notes: dict[str, str] = {}
     picks: dict[str, str] = {}
     removed_innate: list[str] = []
     for q in root.findall("./qualities/quality"):
@@ -47,9 +48,19 @@ def _import_qualities(root: ET.Element, cat: CatalogDict, st: dict[str, Any], wa
             # Codeslinger action. That lives only in the grant's `<extra>`.
             meta_qid = next((c for c in (_text(q.find("sourceid")), _text(q.find("id"))) if c in q_ids), None)
             extra = _text(q.find("extra"))
+            if meta_qid and (note := _raw_text(q, "notes")):
+                # the talent's quality (Adept): the engine adds it again,
+                # and the export writes its note back on it
+                quality_notes.setdefault(meta_qid, note)
             if meta_qid and extra and meta_qid not in quality_extras:
                 quality_extras.update(_quality_extra_in(cat, meta_qid, extra, _text(q.find("guid")), root))
             continue
+        if src == "improvement" and (note := _raw_text(q, "notes")):
+            # one another quality added (Prototype Transhuman's Wanted),
+            # which `_import_selected_qualities` reads back as that one's pick
+            granted_id = next((c for c in (_text(q.find("sourceid")), _text(q.find("id"))) if c in q_ids), None)
+            if granted_id := granted_id or q_by_name.get(_text(q.find("name")).lower()):
+                quality_notes.setdefault(granted_id, note)
         if src and src not in ("selected", "builtin", ""):
             continue  # life-module grants are re-derived by the engine
         # Chummer writes the data id to `<id>` (`<guid>` is this instance), and
@@ -69,8 +80,14 @@ def _import_qualities(root: ET.Element, cat: CatalogDict, st: dict[str, Any], wa
         # and `quality_ids` holds a repeat the same way
         take = quality_ids.count(qid)
         quality_ids.append(qid)
+        per_take = take and has_extra_per_take(q_specs.get(qid) or {})
+        # a take with its own text has its own note; the levels of one
+        # quality (Gremlins at 2) share the first that says anything
+        note_key = quality_take_extra_key(qid, take) if per_take else qid
+        if (note := _raw_text(q, "notes")) and note_key not in quality_notes:
+            quality_notes[note_key] = note
         extra = _text(q.find("extra"))
-        if take and has_extra_per_take(q_specs.get(qid) or {}):
+        if per_take:
             # each take's own text: Records on File against a second megacorp
             if extra:
                 quality_extras[quality_take_extra_key(qid, take)] = extra
@@ -84,6 +101,7 @@ def _import_qualities(root: ET.Element, cat: CatalogDict, st: dict[str, Any], wa
     _import_optional_powers(root, cat, quality_ids, quality_extras)
     st["quality_ids"] = quality_ids
     st["quality_extras"] = quality_extras
+    st["quality_notes"] = quality_notes
     st["removed_innate_qualities"] = removed_innate
     # Merged rather than assigned: `_import_ware` fills in the implant picks,
     # and the two sections run in either order.

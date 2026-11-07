@@ -47,6 +47,8 @@ export function WareRow(props: {
   /** What the row holds beyond its plug-ins (a gland's chemical), drawn
    *  under its children. */
   renderHeld?: (item: InstalledWare) => React.ReactNode;
+  /** The player's own note on the row, drawn above its children. */
+  renderNotes?: (item: InstalledWare) => React.ReactNode;
 }) {
   const {
     item,
@@ -69,6 +71,7 @@ export function WareRow(props: {
     nested,
     compact,
     renderHeld,
+    renderNotes,
   } = props;
   const { ui } = useUiText();
   const [nestedSlot, setNestedSlot] = useState("");
@@ -311,6 +314,7 @@ export function WareRow(props: {
             onPick={onSkillPick}
           />
         ) : null}
+        {renderNotes ? renderNotes(item) : null}
         {childrenItems.map((child) => (
           <WareRow
             key={child.id}
@@ -333,6 +337,7 @@ export function WareRow(props: {
             pickSlots={pickSlots}
             onSkillPick={onSkillPick}
             renderHeld={renderHeld}
+            renderNotes={renderNotes}
             nested
           />
         ))}

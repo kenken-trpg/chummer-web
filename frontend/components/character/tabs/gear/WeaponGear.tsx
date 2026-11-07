@@ -1,4 +1,5 @@
 "use client";
+import { RowNotes } from "@/components/character/RowNotes";
 import { useState } from "react";
 import { CatalogPicker } from "@/components/character/CatalogPicker";
 import { HelpTip } from "@/components/help/HelpTip";
@@ -139,6 +140,14 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                     </label>
                   </div>
                 )}
+                <RowNotes
+                  ch={ch}
+                  bucket="weapons"
+                  id={item.id}
+                  of={tr(item.name)}
+                  ui={ui}
+                  patch={patch}
+                />
                 {(item.accessories || []).map((acc) => (
                   <div className="muted" key={acc.id} style={{ marginTop: 6 }}>
                     {tr(acc.name)}
@@ -166,6 +175,14 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                         </button>
                       </>
                     )}
+                    <RowNotes
+                      ch={ch}
+                      bucket="weapon_accessories"
+                      id={acc.id}
+                      of={tr(acc.name)}
+                      ui={ui}
+                      patch={patch}
+                    />
                   </div>
                 ))}
                 {!fromGear && !natural && !fromArmor && addons.length ? (

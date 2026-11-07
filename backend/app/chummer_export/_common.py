@@ -13,6 +13,21 @@ def _sub(parent: ET.Element, tag: str, text: Any = None) -> ET.Element:
     return el
 
 
+def _note(el: ET.Element, text: str) -> None:
+    """The player's own `<notes>` on a row, where something is written."""
+    if text:
+        _sub(el, "notes", text)
+
+
+def _player_text(el: ET.Element, row: Any, name_tag: str = "") -> None:
+    """The row's own note, and the player's name for it under `name_tag`
+    (`<armorname>`, `<gearname>`, ...), where something is written — the
+    mirror of the import's `_player_text`."""
+    _note(el, getattr(row, "notes", ""))
+    if name_tag and getattr(row, "nickname", ""):
+        _sub(el, name_tag, row.nickname)
+
+
 def _id_name(rows: list[dict[str, Any]]) -> dict[str, str]:
     return {r["id"]: r.get("name") or "" for r in rows if r.get("id")}
 

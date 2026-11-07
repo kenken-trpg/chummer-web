@@ -16,7 +16,7 @@ from ..engine.gear.ammo import ammo_fits_weapon
 from ..engine.gear.weapons.hosts import ware_weapon_specs
 from ..engine.lookups import _focus_by_id
 from ..models import CharacterState, FocusInstall, GearInstall
-from ._common import _Ctx, _Names, _sub
+from ._common import _Ctx, _Names, _player_text, _sub
 from .data_fields import _definitions, _from_data
 from .improvements import _bonus_improvements, _Imp, _text, _with_rows, _write_improvements
 from .metatype import export_metatype_weapons
@@ -55,6 +55,7 @@ def _ware_writer(state: CharacterState, names: _Names) -> Any:
             _sub(w, "guid", r.id)
             _sub(w, "sourceid", r.ware_id)
             _sub(w, "name", names["ware"].get(r.ware_id, ""))
+            _player_text(w, r)
             _sub(w, "grade", r.grade)
             _sub(w, "rating", r.rating)
             spec = ware_specs.get(r.ware_id) or {}
@@ -200,6 +201,7 @@ def _export_armor(root: ET.Element, state: CharacterState, names: _Names, ctx: _
         _sub(el, "guid", a.id)
         _sub(el, "sourceid", a.armor_id)
         _sub(el, "name", names["armor"].get(a.armor_id, ""))
+        _player_text(el, a, "armorname")
         if a.cost is not None:
             _sub(el, "cost", a.cost)
         _sub(el, "rating", a.rating)
@@ -290,6 +292,7 @@ def _export_weapons(root: ET.Element, state: CharacterState, names: _Names, ctx:
         _sub(el, "guid", w.id)
         _sub(el, "sourceid", w.weapon_id)
         _sub(el, "name", names["weapon"].get(w.weapon_id, ""))
+        _player_text(el, w)
         _sub(el, "qty", w.qty)
         if w.included:
             _sub(el, "parentid", host_of.get(w.id, ""))
@@ -352,6 +355,7 @@ def _emit_accessories(
         ac = _sub(accs, "accessory")
         _sub(ac, "sourceid", arow.accessory_id)
         _sub(ac, "name", names["wacc"].get(arow.accessory_id, ""))
+        _player_text(ac, arow)
         _sub(ac, "mount", arow.mount or ("None" if arow.accessory_id in mountless else ""))
         _sub(ac, "equipped", "True" if arow.equipped else "False")
         _sub(ac, "rating", arow.rating)
@@ -440,6 +444,7 @@ def _gear_writer(state: CharacterState, names: _Names) -> tuple[dict[str | None,
             if getattr(g, "name", None):
                 # a Custom Item goes by the name the player gave it
                 el.find("name").text = g.name  # type: ignore[union-attr]
+            _player_text(el, g, "gearname")
             _sub(el, "rating", getattr(g, "rating", 1))
             if g.id == state.home_node:
                 # an A.I.'s home node (`IHasMatrixAttributes.IsHomeNode`)
@@ -569,6 +574,7 @@ def _emit_focus_gear(gears: ET.Element, state: CharacterState, names: _Names) ->
         _sub(el, "guid", frow.id)
         _sub(el, "sourceid", frow.gear_id)
         _sub(el, "name", names["focus"].get(frow.gear_id, ""))
+        _player_text(el, frow, "gearname")
         _sub(el, "category", "Foci")
         _sub(el, "rating", frow.force)
         tradition = _focus_tradition(frow)
@@ -676,6 +682,7 @@ def _export_vehicles(root: ET.Element, state: CharacterState, names: _Names, ctx
         el = _sub(vehs, "vehicle")
         _sub(el, "sourceid", v.gear_id)
         _sub(el, "name", names["gear"].get(v.gear_id, ""))
+        _player_text(el, v, "vehiclename")
         if v.id == state.home_node:
             # an A.I. living in it (`Vehicle.IsHomeNode`)
             _sub(el, "homenode", "True")

@@ -1,4 +1,5 @@
 "use client";
+import { RowNotes } from "@/components/character/RowNotes";
 import { sourceText } from "@/lib/character/books";
 import { PickerList } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
@@ -125,6 +126,16 @@ export function BioTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPro
             catalogItems={catalog.bioware.items}
             grades={bioGrades}
             kind="bioware"
+            renderNotes={(row) => (
+              <RowNotes
+                ch={ch}
+                bucket="bioware"
+                id={row.id}
+                of={tr(row.name)}
+                ui={ui}
+                patch={patch}
+              />
+            )}
             renderHeld={(row) => (
               <WareHeldGear
                 item={row}

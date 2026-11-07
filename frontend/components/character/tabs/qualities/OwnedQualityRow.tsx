@@ -6,6 +6,8 @@ import { SkillPickSelects } from "@/components/character/SkillPickSelects";
 import { QualityExtraEditor } from "@/components/character/tabs/qualities/QualityExtraEditor";
 import { CritterPowerRow } from "@/components/character/CritterPowerRow";
 import { HelpTip } from "@/components/help/HelpTip";
+import { QualityNotes } from "@/components/character/RowNotes";
+import type { TabPanelProps } from "@/components/character/types";
 import {
   dropSkillPicksForPrefix,
   grantedLevels,
@@ -52,7 +54,7 @@ export function OwnedQualityRow({
   trGroup: (group: string) => string;
   t: (key: string, fallback?: string) => string;
   ui: UiFn;
-  patch: (body: Record<string, unknown>) => void | Promise<void>;
+  patch: TabPanelProps["patch"];
   setCharacter: (next: Character) => void;
   catalog: Catalog;
   catalogById: Map<string, CatalogQuality>;
@@ -213,6 +215,7 @@ export function OwnedQualityRow({
             </div>
           ) : null}
         </div>
+        <QualityNotes ch={ch} noteKey={q.extra_key || q.id} of={tr(q.name)} ui={ui} patch={patch} />
       </div>
       {q.origin === "Metatype" && q.removable && !ch.career ? (
         <RemoveInnateButton q={q} ch={ch} tr={tr} ui={ui} patch={patch} catalogById={catalogById} />
@@ -225,24 +228,25 @@ export function OwnedQualityRow({
           className="btn danger"
           onClick={() => {
             if (q.extra_key) {
-              // this take only, with its own text; the later takes' move down
-              patch(
-                removeQualityTake(
-                  ch.quality_ids,
-                  ch.quality_extras || {},
-                  q.id,
-                  qualityTakeIndex(q.id, q.extra_key),
-                ),
-              );
+              // this take only, with its own text and note; the later
+              // takes' move down
+              const take = qualityTakeIndex(q.id, q.extra_key);
+              patch({
+                ...removeQualityTake(ch.quality_ids, ch.quality_extras || {}, q.id, take),
+                quality_notes: removeQualityTake(ch.quality_ids, ch.quality_notes || {}, q.id, take)
+                  .quality_extras,
+              });
               return;
             }
             const extras = { ...(ch.quality_extras || {}) };
+            const notes = { ...(ch.quality_notes || {}) };
             const remaining =
               q.level != null ? 0 : ch.quality_ids.filter((id) => id === q.id).length - 1;
             if (remaining <= 0) {
               for (const key of Object.keys(extras)) {
                 if (key === q.id || key.startsWith(`${q.id}:`)) delete extras[key];
               }
+              delete notes[q.id];
             }
             let removed = false;
             patch({
@@ -257,6 +261,7 @@ export function OwnedQualityRow({
                       return true;
                     }),
               quality_extras: extras,
+              quality_notes: notes,
               skill_picks:
                 remaining <= 0
                   ? dropSkillPicksForPrefix(ch.skill_picks, [`quality:${q.id}:`])

@@ -43,6 +43,9 @@ class CyberwareInstall(BaseModel):
     #: on the first career compute that sees the piece; dropped in chargen.
     ess_extra_additive: float | None = None
     ess_extra_multiplicative: float | None = None
+    #: the player's own note on this row (Chummer's `<notes>`); nothing is
+    #: computed from it
+    notes: str = ""
 
 
 class ArmorInstall(BaseModel):
@@ -56,6 +59,12 @@ class ArmorInstall(BaseModel):
     #: bought through the Black Market Pipeline: 10% off (Chummer's
     #: `<discountedcost>`, which the quality's categories allow)
     discounted: bool = False
+    #: the player's own note on this row (Chummer's `<notes>`); nothing is
+    #: computed from it
+    notes: str = ""
+    #: the player's own name for this one (Chummer's `<armorname>`), shown beside
+    #: the catalogue's
+    nickname: str = ""
 
 
 class ArmorModInstall(BaseModel):
@@ -80,6 +89,9 @@ class WeaponInstall(BaseModel):
     #: bought through the Black Market Pipeline: 10% off (Chummer's
     #: `<discountedcost>`, which the quality's categories allow)
     discounted: bool = False
+    #: the player's own note on this row (Chummer's `<notes>`); nothing is
+    #: computed from it
+    notes: str = ""
 
 
 class VehicleModInstall(BaseModel):
@@ -118,6 +130,9 @@ class WeaponAccessoryInstall(BaseModel):
     #: bought through the Black Market Pipeline: 10% off (Chummer's
     #: `<discountedcost>`, which the quality's categories allow)
     discounted: bool = False
+    #: the player's own note on this row (Chummer's `<notes>`); nothing is
+    #: computed from it
+    notes: str = ""
 
 
 class CommlinkInstall(BaseModel):
@@ -131,6 +146,12 @@ class CommlinkInstall(BaseModel):
     #: bought through the Black Market Pipeline: 10% off (Chummer's
     #: `<discountedcost>`, which the quality's categories allow)
     discounted: bool = False
+    #: the player's own note on this row (Chummer's `<notes>`); nothing is
+    #: computed from it
+    notes: str = ""
+    #: the player's own name for this one (Chummer's `<gearname>`), shown beside
+    #: the catalogue's
+    nickname: str = ""
 
 
 class GearInstall(BaseModel):
@@ -163,6 +184,13 @@ class GearInstall(BaseModel):
     #: bought through the Black Market Pipeline: 10% off (Chummer's
     #: `<discountedcost>`, which the quality's categories allow)
     discounted: bool = False
+    #: the player's own note on this row (Chummer's `<notes>`); nothing is
+    #: computed from it
+    notes: str = ""
+    #: the player's own name for this one, shown beside the catalogue's
+    #: (Chummer's `<gearname>`, a vehicle's or drone's `<vehiclename>`) — not
+    #: `name`, which is what a Custom Item is
+    nickname: str = ""
 
 
 class CustomDrugPart(BaseModel):
@@ -198,6 +226,9 @@ class LifestyleInstall(BaseModel):
     security: int = 0
     quality_ids: list[str] = Field(default_factory=list)
     quality_extras: dict[str, str] = Field(default_factory=dict)
+    #: the player's own note on this row (Chummer's `<notes>`); nothing is
+    #: computed from it
+    notes: str = ""
 
 
 class ElectronicPartsSupply(BaseModel):
