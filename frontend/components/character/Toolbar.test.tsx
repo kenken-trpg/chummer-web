@@ -20,6 +20,7 @@ function makeEd(over: Partial<CharacterEditor> = {}): CharacterEditor {
     newCharacter: vi.fn(),
     deleteCurrent: vi.fn(),
     duplicateCurrent: vi.fn(),
+    requestCareerReview: vi.fn().mockResolvedValue(undefined),
     onImport: vi.fn(),
     download: vi.fn(),
     downloadChum5: vi.fn(),
@@ -470,48 +471,35 @@ describe("<Toolbar>", () => {
     expect(ed.downloadUdonariumConjured).toHaveBeenCalledWith(base.catalog, ed.tr);
   });
 
-  it("asks before moving a character with creation errors into career mode", () => {
+  it("opens creation review for both erroneous and clean characters without switching immediately", () => {
     const ed = makeEd();
     const ch = makeCharacter({ name: "Vex", derived: { errors: [{ key: "engine.oops" }] } });
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
-    try {
-      render(<Toolbar ed={ed} {...base} ch={ch} tab={"priority"} sheetLayout={"standard"} />);
-      fireEvent.click(screen.getByRole("button", { name: "作成完了（キャリア）" }));
-      expect(confirm).toHaveBeenCalledTimes(1);
-      expect(ed.patch).not.toHaveBeenCalled();
-
-      confirm.mockReturnValue(true);
-      fireEvent.click(screen.getByRole("button", { name: "作成完了（キャリア）" }));
-      expect(ed.patch).toHaveBeenCalledWith({ career: true });
-    } finally {
-      confirm.mockRestore();
-    }
+    const view = render(
+      <Toolbar ed={ed} {...base} ch={ch} tab="priority" sheetLayout="standard" />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "作成完了（キャリア）" }));
+    expect(ed.requestCareerReview).toHaveBeenCalledOnce();
+    expect(ed.patch).not.toHaveBeenCalled();
+    view.rerender(<Toolbar ed={ed} {...base} tab="priority" sheetLayout="standard" />);
+    fireEvent.click(screen.getByRole("button", { name: "作成完了（キャリア）" }));
+    expect(ed.requestCareerReview).toHaveBeenCalledTimes(2);
+    expect(ed.patch).not.toHaveBeenCalled();
   });
 
-  it("moves a clean character into career mode without asking, and back out", () => {
-    const confirm = vi.spyOn(window, "confirm");
-    try {
-      const ed = makeEd();
-      render(<Toolbar ed={ed} {...base} tab={"priority"} sheetLayout={"standard"} />);
-      fireEvent.click(screen.getByRole("button", { name: "作成完了（キャリア）" }));
-      expect(confirm).not.toHaveBeenCalled();
-      expect(ed.patch).toHaveBeenCalledWith({ career: true });
-
-      const back = makeEd();
-      render(
-        <Toolbar
-          ed={back}
-          {...base}
-          ch={makeCharacter({ name: "Vex", career: true })}
-          tab={"priority"}
-          sheetLayout={"standard"}
-        />,
-      );
-      fireEvent.click(screen.getByRole("button", { name: "キャリア中" }));
-      expect(back.patch).toHaveBeenCalledWith({ career: false });
-    } finally {
-      confirm.mockRestore();
-    }
+  it("returns a career character to creation through the existing patch", () => {
+    const ed = makeEd();
+    render(
+      <Toolbar
+        ed={ed}
+        {...base}
+        ch={makeCharacter({ career: true })}
+        tab="priority"
+        sheetLayout="standard"
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "キャリア中" }));
+    expect(ed.patch).toHaveBeenCalledWith({ career: false });
+    expect(ed.requestCareerReview).not.toHaveBeenCalled();
   });
 
   it("wires the layout picker, 印刷 and シート表示", () => {

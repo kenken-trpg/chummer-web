@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { storedCharacters, waitForEditor } from "./helpers";
+import { enterCareer, storedCharacters, waitForEditor } from "./helpers";
 
 /**
  * Career mode end to end. What nothing else reaches: the karma a raise costs is
@@ -12,13 +12,6 @@ import { storedCharacters, waitForEditor } from "./helpers";
  * A wrong price here is a player being overcharged karma, which is why it is
  * worth a browser.
  */
-
-/** Creation errors are expected on a bare character; the switch asks first. */
-async function intoCareer(page: import("@playwright/test").Page) {
-  page.once("dialog", (dialog) => void dialog.accept());
-  await page.getByRole("button", { name: "作成完了（キャリア）", exact: true }).click();
-  await expect(page.getByRole("button", { name: "キャリア中", exact: true })).toBeVisible();
-}
 
 test("a reward is logged, a raise is priced against the chargen baseline, and both survive a reload", async ({
   page,
@@ -35,7 +28,7 @@ test("a reward is logged, a raise is priced against the chargen baseline, and bo
   // `patch-queue`). The test should not be the thing that proves that.
   await expect.poll(async () => (await storedCharacters(page))[0]?.name).toBe("Careerist");
 
-  await intoCareer(page);
+  await enterCareer(page);
 
   // The reward log is the career sidebar's own panel: it is what gives the
   // character karma to spend, so it comes before the raise.

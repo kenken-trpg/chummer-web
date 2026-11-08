@@ -1680,3 +1680,98 @@ describe("useCharacterEditor failure paths", () => {
     expect(result.current.error).not.toBeNull();
   });
 });
+
+describe("creation completion review", () => {
+  it("opens and cancels the review without mutating the character", async () => {
+    const { result } = await booted();
+    await act(async () => {
+      await result.current.requestCareerReview();
+    });
+    expect(result.current.careerReview).toBe(result.current.ch);
+    expect(api.patch).not.toHaveBeenCalled();
+    act(() => result.current.cancelCareerReview());
+    expect(result.current.careerReview).toBeNull();
+    expect(api.patch).not.toHaveBeenCalled();
+  });
+
+  it("waits for pending edits and reviews the committed result", async () => {
+    const { result } = await booted();
+    const pending = deferred<Character>();
+    api.patch.mockReturnValueOnce(pending.promise);
+    let patching!: Promise<void>;
+    let reviewing!: Promise<void>;
+    act(() => {
+      patching = result.current.patch({ name: "Updated" });
+      reviewing = result.current.requestCareerReview();
+    });
+    expect(result.current.careerReview).toBeNull();
+    const updated = makeCharacter({ id: "c1", name: "Updated" });
+    await act(async () => {
+      pending.resolve(updated);
+      await patching;
+      await reviewing;
+    });
+    expect(result.current.careerReview?.name).toBe("Updated");
+  });
+
+  it("confirms once, preserves undo, and ignores a second simultaneous confirmation", async () => {
+    const { result } = await booted();
+    await act(async () => {
+      await result.current.requestCareerReview();
+    });
+    const pending = deferred<Character>();
+    api.patch.mockReturnValueOnce(pending.promise);
+    let first!: Promise<void>;
+    let second!: Promise<void>;
+    act(() => {
+      first = result.current.confirmCareerReview();
+      second = result.current.confirmCareerReview();
+    });
+    await act(async () => {
+      pending.resolve(makeCharacter({ id: "c1", career: true }));
+      await first;
+      await second;
+    });
+    expect(api.patch).toHaveBeenCalledExactlyOnceWith("c1", { career: true });
+    expect(result.current.careerReview).toBeNull();
+    expect(result.current.history.counts.undo).toBe(1);
+  });
+
+  it("invalidates the review after an edit or a character switch", async () => {
+    const { result } = await booted();
+    await act(async () => {
+      await result.current.requestCareerReview();
+    });
+    api.patch.mockResolvedValueOnce(makeCharacter({ id: "c1", name: "Changed" }));
+    await act(async () => {
+      await result.current.patch({ name: "Changed" });
+    });
+    expect(result.current.careerReview).toBeNull();
+    await act(async () => {
+      await result.current.confirmCareerReview();
+    });
+    expect(api.patch).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      await result.current.requestCareerReview();
+    });
+    api.get.mockResolvedValueOnce(makeCharacter({ id: "other" }));
+    await act(async () => {
+      await result.current.openCharacter("other");
+    });
+    expect(result.current.careerReview).toBeNull();
+  });
+
+  it("keeps the review available when the transition fails", async () => {
+    const { result } = await booted();
+    await act(async () => {
+      await result.current.requestCareerReview();
+    });
+    api.patch.mockRejectedValueOnce(new Error("Transition failed"));
+    await act(async () => {
+      await result.current.confirmCareerReview();
+    });
+    expect(result.current.careerReview).not.toBeNull();
+    expect(result.current.error).toContain("Transition failed");
+    expect(result.current.ch?.career).not.toBe(true);
+  });
+});

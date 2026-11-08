@@ -567,7 +567,7 @@ export const EN_HELP = {
   "help.toolbar.udonariumConjured":
     "Download every bound spirit, registered sprite, vehicle and drone as a piece, one .zip per kind. Udonarium reads every xml an archive holds, so each kind lands on the table in one drop.",
   "help.toolbar.career": "Go back to character creation",
-  "help.toolbar.toCareer": "Finish creation → spend leftover karma / nuyen to advance",
+  "help.toolbar.toCareer": "Review remaining budgets and creation checks before entering career",
   "help.toolbar.print":
     "Switch to the print layout and print. The dialog can also \u201cSave as PDF\u201d.",
   "help.settings.preset":

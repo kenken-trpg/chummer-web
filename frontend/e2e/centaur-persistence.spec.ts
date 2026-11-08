@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 import type { Character } from "../lib/types";
-import { encodeFragment, openExportMenu, waitForEditor } from "./helpers";
+import { enterCareer, encodeFragment, openExportMenu, waitForEditor } from "./helpers";
 
 /** Imported character exercises persistence independently of the creation flow. */
 const payload = {
@@ -156,11 +156,8 @@ test("Centaur career keeps purchased MAG as its baseline across growth, undo and
   await waitForEditor(page);
   await expect.poll(async () => summary(await currentCharacter(page))).toEqual(expected(3));
 
-  // This development import has unfinished chargen budgets. Accept the existing
-  // warning; this test verifies persistence and prices, not chargen legality.
-  page.once("dialog", (dialog) => void dialog.accept());
-  await page.getByRole("button", { name: "作成完了（キャリア）", exact: true }).click();
-  await expect(page.getByRole("button", { name: "キャリア中", exact: true })).toBeVisible();
+  // Review the imported development character before starting career play.
+  await enterCareer(page);
   await expect.poll(async () => (await currentCharacter(page)).career).toBe(true);
   const baseline = (await currentCharacter(page)).career_baseline;
   expect(baseline?.attributes?.MAG).toBe(3);
