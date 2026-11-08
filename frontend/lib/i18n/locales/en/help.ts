@@ -591,4 +591,38 @@ export const EN_HELP = {
   "help.settings.booksBulkLabel": "Switching them all",
   "help.toolbar.vehiclePiece":
     "Copy this vehicle as one piece, then paste it into your Cocofolia room.",
+  "help.roster.local":
+    "Characters are stored in this browser only. Nothing stays on the server, and another browser or device cannot see them",
+  "help.roster.search":
+    "Narrows by part of the name, ignoring case and full-width/half-width forms",
+  "help.roster.backup":
+    '"Changes not backed up" means the character changed since its JSON was last saved. Saving JSON or a full backup clears it',
+  "help.bulk.restore":
+    "To restore, pick this file with Load on the toolbar, then choose the characters to bring back",
+  "help.bulk.state": "Each character is saved as it is now; the editing history is left out",
+  "help.bulk.twice": "Importing the same backup twice gives two of each character",
+  "help.bulk.recompute":
+    "Each character is recomputed against the current rules data before it is saved",
+  "help.search.terms": "Words separated by spaces must all appear in an entry for it to match",
+  "help.search.fields":
+    "Searches the shown name, the original (English) name, nicknames, notes, and the names of containers and storage locations, ignoring case and full-width/half-width forms",
+  "help.search.jump": "Picking a result opens its tab and scrolls to its row",
+  "help.history.when":
+    "Each change keeps the state from before it (the last 10). Recomputing on open does not count as a change",
+  "help.history.undo":
+    "Undo on the toolbar only remembers while the character is open (up to 50 steps); this history survives closing the browser",
+  "help.history.local": "Kept in this browser only; JSON files and full backups do not include it",
+  "help.import.new":
+    "The import opens as a new character. The file, and the other characters in the roster, are left unchanged",
+  "help.import.warn":
+    "Anything that could not be imported, or was replaced, is listed here. Add it by hand on its tab if you need it",
+  "help.review.negative":
+    "A negative remainder means overspent; Go to tab takes you there to fix it",
+  "help.review.baseline":
+    "Switching makes this state the career baseline. Anything raised afterwards is counted as karma and nuyen spent",
+  "help.review.back":
+    "You can switch with creation errors left. Pressing In career on the toolbar returns to creation mode",
+  "help.contact.detailsNote": "Notes about the contact; nothing is computed from them",
+  "help.contact.detailsChum5": "A .chum5 reads and writes them as Chummer's own fields",
+  "help.contact.detailsShare": "JSON files and share links carry them too",
 } as const;

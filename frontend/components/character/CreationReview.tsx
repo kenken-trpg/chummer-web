@@ -6,6 +6,7 @@ import { creationBudgets } from "@/lib/character/creation-review";
 import { buildChecklist, checklistSummary } from "@/lib/character/checklist";
 import { ChecklistPanel } from "./ChecklistPanel";
 import { useUiText } from "@/lib/i18n";
+import { HelpTip } from "@/components/help/HelpTip";
 
 export function CreationReview({
   ed,
@@ -56,9 +57,18 @@ function Review({
         {ui("app.creationReview.title")}
       </h2>
       <p>
-        {ui("app.creationReview.description", {
-          name: panel.character.name || ui("toolbar.unnamed"),
-        })}
+        <HelpTip
+          label={ui("help.open", { label: ui("app.creationReview.title") })}
+          lines={[
+            { label: ui("help.review.negative") },
+            { label: ui("help.review.baseline") },
+            { label: ui("help.review.back") },
+          ]}
+        >
+          {ui("app.creationReview.description", {
+            name: panel.character.name || ui("toolbar.unnamed"),
+          })}
+        </HelpTip>
       </p>
       <div className="table-scroll">
         <table>

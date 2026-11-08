@@ -2,6 +2,7 @@ import { useEffect, useEffectEvent, useId, useState } from "react";
 import type { CharacterEditor } from "@/lib/character/useCharacterEditor";
 import { selectRoster, type RosterFilter, type RosterSort } from "@/lib/character/roster";
 import { useUiText } from "@/lib/i18n";
+import { HelpTip } from "@/components/help/HelpTip";
 
 export function CharacterRoster({ ed }: { ed: CharacterEditor }) {
   const { ui, locale } = useUiText();
@@ -44,26 +45,40 @@ export function CharacterRoster({ ed }: { ed: CharacterEditor }) {
       </button>
       {open ? (
         <div id={id}>
-          <button
-            className="btn"
-            disabled={backingUp || !ed.roster.length}
-            onClick={async () => {
-              setBackingUp(true);
-              try {
-                await ed.downloadAll();
-              } finally {
-                setBackingUp(false);
-              }
-            }}
+          <HelpTip
+            label={ui("help.open", { label: ui("app.bulk.download") })}
+            lines={[{ label: ui("help.bulk.restore") }, { label: ui("help.bulk.state") }]}
           >
-            {ui("app.bulk.download")}
-          </button>
+            <button
+              className="btn"
+              disabled={backingUp || !ed.roster.length}
+              onClick={async () => {
+                setBackingUp(true);
+                try {
+                  await ed.downloadAll();
+                } finally {
+                  setBackingUp(false);
+                }
+              }}
+            >
+              {ui("app.bulk.download")}
+            </button>
+          </HelpTip>
           <p className="muted">{ui("app.bulk.entireRoster")}</p>
           <div className="toolbar">
-            <label>
-              {ui("app.roster.search")}{" "}
-              <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} />
-            </label>
+            <HelpTip
+              label={ui("help.open", { label: ui("app.roster.title") })}
+              lines={[
+                { label: ui("help.roster.local") },
+                { label: ui("help.roster.search") },
+                { label: ui("help.roster.backup") },
+              ]}
+            >
+              <label>
+                {ui("app.roster.search")}{" "}
+                <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} />
+              </label>
+            </HelpTip>
             <label>
               {ui("app.roster.filter")}{" "}
               <select value={filter} onChange={(e) => setFilter(e.target.value as RosterFilter)}>

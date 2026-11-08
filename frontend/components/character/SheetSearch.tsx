@@ -6,6 +6,7 @@ import {
   type SheetSearchTarget,
 } from "@/lib/character/sheet-search";
 import { useUiText, type MsgKey } from "@/lib/i18n";
+import { HelpTip } from "@/components/help/HelpTip";
 
 export function SheetSearch({
   ed,
@@ -23,10 +24,19 @@ export function SheetSearch({
   const results = searchSheet(entries, query, locale);
   return (
     <section aria-label={ui("app.sheetSearch.title")}>
-      <label>
-        {ui("app.sheetSearch.title")}{" "}
-        <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} />
-      </label>
+      <HelpTip
+        label={ui("help.open", { label: ui("app.sheetSearch.title") })}
+        lines={[
+          { label: ui("help.search.terms") },
+          { label: ui("help.search.fields") },
+          { label: ui("help.search.jump") },
+        ]}
+      >
+        <label>
+          {ui("app.sheetSearch.title")}{" "}
+          <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} />
+        </label>
+      </HelpTip>
       {query.trim() ? (
         <>
           <p role="status">{ui("app.sheetSearch.count", { count: results.length })}</p>
