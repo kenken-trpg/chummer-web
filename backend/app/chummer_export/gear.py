@@ -300,6 +300,8 @@ def _export_weapons(root: ET.Element, state: CharacterState, names: _Names, ctx:
         if w.included:
             _sub(el, "parentid", host_of.get(w.id, ""))
         _sub(el, "discountedcost", "True" if w.discounted else "False")
+        if w.free:
+            _sub(el, "cost", 0)
         _from_data(el, "weapon", w.weapon_id, included=bool(w.included))
         emit_contents(el, w.id, w.loaded_ammo_id)
         _emit_accessories(el, w.id, wacc_by_parent, names, mountless)
@@ -363,7 +365,9 @@ def _emit_accessories(
         _sub(ac, "equipped", "True" if arow.equipped else "False")
         _sub(ac, "rating", arow.rating)
         _sub(ac, "included", "True" if arow.included else "False")
-        _from_data(ac, "accessory", arow.accessory_id)
+        if arow.free:
+            _sub(ac, "cost", 0)
+        _from_data(ac, "accessory", arow.accessory_id, included=bool(arow.included))
 
 
 #: this app's Matrix attribute keys as Chummer names them in `<overclocked>`

@@ -89,6 +89,9 @@ class WeaponInstall(BaseModel):
     loaded_ammo_id: str | None = None
     #: comes with a drone's own entry: free, and not the player's to remove
     included: bool = False
+    #: Bought for free in Chummer (`<cost>0`), independently of its accessories.
+    #: Still removable and otherwise treated as a normal purchased weapon.
+    free: bool = False
     #: bought through the Black Market Pipeline: 10% off (Chummer's
     #: `<discountedcost>`, which the quality's categories allow)
     discounted: bool = False
@@ -125,6 +128,8 @@ class WeaponAccessoryInstall(BaseModel):
     accessory_id: str
     parent_id: str | None = None
     included: bool = False
+    #: Bought for free (`<cost>0`); still occupies a mount and can be removed.
+    free: bool = False
     rating: int = 1
     mount: str = ""
     #: on the weapon (Chummer's `<equipped>`): one taken off is still owned

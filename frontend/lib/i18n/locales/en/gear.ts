@@ -1,5 +1,6 @@
 /** 装備: ギア・武器・防具・ヴィークル・ウェア・ドラッグ — English。 */
 export const EN_GEAR = {
+  "weapon.freePurchase": " / Free purchase",
   "gear.normalModulePool": "Normal / quality pool",
   "gear.hardwiredModulePool": "Hardwired pool",
   "gear.constructionCancelled": "History cancelled",

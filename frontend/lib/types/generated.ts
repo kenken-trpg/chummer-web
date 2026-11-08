@@ -276,6 +276,10 @@ export interface WeaponInstall {
   loaded_ammo_id?: string | null;
   /** comes with a drone's own entry: free, and not the player's to remove */
   included?: boolean;
+  /** Bought for free in Chummer (`<cost>0`), independently of its accessories.
+   *  Still removable and otherwise treated as a normal purchased weapon.
+   */
+  free?: boolean;
   /** bought through the Black Market Pipeline: 10% off (Chummer's
    *  `<discountedcost>`, which the quality's categories allow)
    */
@@ -315,6 +319,8 @@ export interface WeaponAccessoryInstall {
   accessory_id: string;
   parent_id?: string | null;
   included?: boolean;
+  /** Bought for free (`<cost>0`); still occupies a mount and can be removed. */
+  free?: boolean;
   rating?: number;
   mount?: string;
   /** on the weapon (Chummer's `<equipped>`): one taken off is still owned

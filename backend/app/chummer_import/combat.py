@@ -11,6 +11,7 @@ from ..data_loader._xml import _int, _text
 from ..notices import Notice, ui
 from ._common import (
     _discounted,
+    _free_item,
     _location_of,
     _picked_cost,
     _player_text,
@@ -145,6 +146,7 @@ def _read_weapon(
         "weapon_id": wid,
         "qty": max(1, _int(w.find("qty"), 1)),
         "discounted": _discounted(w),
+        "free": _free_item(w, weap_r.costs.get(wid)),
         **_player_text(w),
     }
     st_weap.append(row)
@@ -166,6 +168,7 @@ def _read_accessories(
                     "mount": _text(acc.find("mount")),
                     "rating": max(1, _int(acc.find("rating"), 1)),
                     "included": _text(acc.find("included")).lower() == "true",
+                    "free": _text(acc.find("included")).lower() != "true" and _free_item(acc, wacc_r.costs.get(acid)),
                     # `WeaponAccessory.Load`: on unless the save says not,
                     # and an older save's `<installed>` puts it back on
                     "equipped": _text(acc.find("equipped")).lower() != "false"

@@ -182,6 +182,7 @@ class _Resolver:
     def __init__(self, rows: list[dict[str, Any]], translations: dict[str, str] | None = None):
         self.by_name = _by_name(rows)
         self.ids = {r["id"] for r in rows}
+        self.costs = {r["id"]: str(r.get("cost") or "") for r in rows}
         # Localized Chummer saves often store the translated display name.
         # Only add aliases that identify one catalog row; ambiguous Japanese
         # names must not silently resolve to an arbitrary entry.
@@ -226,6 +227,26 @@ def _discounted(node: ET.Element) -> bool:
     """`<discountedcost>`: the buyer took the Black Market Pipeline's 10% off
     this one item (Chummer's `DiscountCost`)."""
     return _text(node.find("discountedcost")).lower() == "true"
+
+
+def _free_item(node: ET.Element, listed: str | None) -> bool:
+    """Chummer's free purchase saves a literal zero for a priced item.
+
+    Missing cost says nothing; included items must be checked by the caller.
+    This is not a general override for prices from older catalogue versions.
+    """
+    saved = _text(node.find("cost"))
+    try:
+        zero = bool(saved) and float(saved) == 0
+    except ValueError:
+        return False
+    if not zero:
+        return False
+    try:
+        return float(listed or "0") != 0
+    except ValueError:
+        # Formula prices are saved as formulas unless the purchase was free.
+        return True
 
 
 def _picked_cost(node: ET.Element) -> int | None:
