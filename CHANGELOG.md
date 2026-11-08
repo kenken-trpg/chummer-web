@@ -5,6 +5,16 @@ self-hosters can pin to a tag instead of tracking `main`.
 
 ## [Unreleased]
 
+## [0.5.39] — 2026-11-08
+
+### Added
+
+- **マトリックスで使う機器を選べるようにしました**：コムリンク・サイバーデッキ・RCC・生体ペルソナを 2 つ以上持つと、装備タブの先頭で「マトリックスで使う機器」を選べます。マトリックス・イニシアティブとシートのマトリックス欄は、選んだ機器で計算します。「自動」のままなら、これまでどおりデータ処理が最大のものを使います。Chummer のセーブで使用中（Active Commlink）になっている機器も取り込むようにしました。これまでは捨てていたので、予備の機器を使用中にしていたキャラクターは、マトリックス・イニシアティブが Chummer と違っていました（テスト用セーブ 34 件のうち 4 件）。
+
+### Fixed
+
+- **Living Persona の表記を「生体ペルソナ」にそろえました**：導師精霊の効果の説明だけが、中黒入りの片仮名のまま用語集と違っていました。
+
 ## [0.5.38] — 2026-11-08
 
 ### Added
@@ -3119,7 +3129,8 @@ First tagged release.
 - One-container Docker image (Caddy + uvicorn + Next standalone) published to
   GHCR; `make up` / `compose.yaml` for local self-hosting.
 
-[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.38...HEAD
+[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.39...HEAD
+[0.5.39]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.38...v0.5.39
 [0.5.38]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.37...v0.5.38
 [0.5.37]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.36...v0.5.37
 [0.5.36]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.35...v0.5.36
