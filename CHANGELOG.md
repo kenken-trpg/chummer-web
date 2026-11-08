@@ -5,6 +5,15 @@ self-hosters can pin to a tag instead of tracking `main`.
 
 ## [Unreleased]
 
+## [0.5.40] — 2026-11-08
+
+### Fixed
+
+- **画面の読み上げと文字の見やすさを直しました**：axe で全タブを検査し、見つかったものを直しました。
+  - サイバー・バイオの分類と等級、知識技能の分類、サイバーウェアの差し込み先の選択欄に、読み上げ用の名前を付けました。
+  - 作成完了前の確認の「該当タブへ」は、読み上げでも「該当タブへ（カルマ）」のように見えている文字から始まるようにしました。
+  - 品目の行の数量・レーティングなどの入力欄と、シートの説明欄の値は、薄い灰色から本文の色にしました（背景との比が WCAG AA の 4.5:1 に届いていませんでした）。技能のスライダーの目盛りの数字も少し明るくしました。
+
 ## [0.5.39] — 2026-11-08
 
 ### Added
@@ -3129,7 +3138,8 @@ First tagged release.
 - One-container Docker image (Caddy + uvicorn + Next standalone) published to
   GHCR; `make up` / `compose.yaml` for local self-hosting.
 
-[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.39...HEAD
+[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.40...HEAD
+[0.5.40]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.39...v0.5.40
 [0.5.39]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.38...v0.5.39
 [0.5.38]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.37...v0.5.38
 [0.5.37]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.36...v0.5.37
