@@ -3,6 +3,12 @@
 Notable changes. Format follows [Keep a Changelog](https://keepachangelog.com/);
 self-hosters can pin to a tag instead of tracking `main`.
 
+## [0.5.42] — 2026-11-08
+
+### Changed
+
+- **開発文書**: `.chum5` 取り込みの TODO を再検証し、Gangerbean の修正済み 3 件と、ヴィークル改造以外の無料品目の残件を分けました。実セーブ 34 件の往復・書き出し検査と取り込みテスト 79 件の成功を記録しました。アプリの動作変更はありません。
+
 ## [0.5.41] — 2026-11-08
 
 ### Added
@@ -3142,7 +3148,8 @@ First tagged release.
 - One-container Docker image (Caddy + uvicorn + Next standalone) published to
   GHCR; `make up` / `compose.yaml` for local self-hosting.
 
-[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.41...HEAD
+[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.42...HEAD
+[0.5.42]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.41...v0.5.42
 [0.5.41]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.40...v0.5.41
 [0.5.40]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.39...v0.5.40
 [0.5.39]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.38...v0.5.39
