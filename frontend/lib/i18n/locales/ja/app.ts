@@ -1,5 +1,25 @@
 /** アプリの枠・ナビ・共通の語・書式・共有・ツールバー — 日本語。 */
 export const JA_APP = {
+  "app.creationReview.contacts": "無料のコンタクト点",
+  "app.creationReview.title": "作成完了前の確認",
+  "app.creationReview.description":
+    "「{name}」の残りポイントと作成チェックを確認してください。修正する場合は「該当タブへ」から編集できます。",
+  "app.creationReview.budgets": "残りポイント・資金",
+  "app.creationReview.item": "項目",
+  "app.creationReview.remaining": "残り",
+  "app.creationReview.karma": "カルマ",
+  "app.creationReview.nuyen": "新円（¥）",
+  "app.creationReview.power": "パワーポイント",
+  "app.creationReview.spells": "無料の呪文枠",
+  "app.creationReview.forms": "無料の複合体枠",
+  "app.creationReview.edit": "{name}の編集タブへ",
+  "app.creationReview.pending": "取り込み後に未確定の装備が{count}件あります。",
+  "app.creationReview.errors":
+    "作成エラーが残っています。各項目を確認してください。このまま移行することもできます。",
+  "app.creationReview.confirm": "確認してキャリアへ移行",
+  "app.creationReview.confirming": "キャリアへ移行中…",
+  "app.creationReview.cancel": "作成を続ける",
+
   "app.sheetSearch.title": "シート内容を検索",
   "app.sheetSearch.hint":
     "所持品・資質・呪文・技能・コンタクト・経歴やメモを、名前・呼び名・備考・保管場所から検索できます。",
@@ -267,7 +287,6 @@ export const JA_APP = {
   "toolbar.conjured": "精霊コマ：{name}",
   "toolbar.career": "キャリア中",
   "toolbar.toCareer": "作成完了（キャリア）",
-  "toolbar.careerConfirm": "作成エラーが残っています。このままキャリアに進みますか？",
 
   "toolbar.showSheet": "シート表示",
   "common.selectShort": "選択",

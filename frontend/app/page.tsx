@@ -17,6 +17,7 @@ import { useSheetLayout } from "@/lib/character/useSheetLayout";
 import { useKeyboardShortcuts } from "@/lib/character/useKeyboardShortcuts";
 import { BooksProvider } from "@/lib/character/books";
 import { useUiText } from "@/lib/i18n";
+import { CreationReview } from "@/components/character/CreationReview";
 import { ExportReview } from "@/components/character/ExportReview";
 import { CharacterRoster } from "@/components/character/CharacterRoster";
 import { BackupReminder } from "@/components/character/BackupReminder";
@@ -116,6 +117,7 @@ export default function Page() {
             <SavedHistory ed={ed} />
             <SheetUrlImport ed={ed} />
             <div role="status">{notice ? <p className="notice">{notice}</p> : null}</div>
+            <CreationReview ed={ed} panel={panel} setTab={changeTab} />
             <ExportReview ed={ed} />
             <BulkImportReview ed={ed} />
             <ImportReport ed={ed} />

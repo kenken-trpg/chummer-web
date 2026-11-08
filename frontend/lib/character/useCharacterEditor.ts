@@ -45,6 +45,10 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
   const { onCharacterOpened } = opts;
   const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [ch, setCh] = useState<Character | null>(null);
+  const [reviewedCreation, setReviewedCreation] = useState<Character | null>(null);
+  const finalizingCareer = useRef(false);
+  const careerReview =
+    reviewedCreation === ch && ch && !ch.career && !ch.derived.career ? ch : null;
   const [error, setError] = useState<string | null>(null);
   /** Advisories about an action that *succeeded* — never the red error box. */
   const [notice, setNotice] = useState<string | null>(null);
@@ -88,6 +92,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
   async function remember(c: Character) {
     await waitForIdle();
     setCh(c);
+    setReviewedCreation(null);
     lastCommitted.current = c;
     history.reset();
     try {
@@ -268,6 +273,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
         const next = await api.patch(ch.id, send);
         history.record(base);
         setCh(next);
+        setReviewedCreation(null);
         lastCommitted.current = next;
         setError(null);
         send = queued.current ?? updaters.current.shift()?.(next) ?? null;
@@ -286,6 +292,42 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     }
   }
 
+  async function requestCareerReview() {
+    const wanted = ch?.id;
+    await waitForIdle();
+    const current = lastCommitted.current;
+    if (!current || current.id !== wanted || current.career || current.derived.career) return;
+    imports.readPendingGear(current.id);
+    setReviewedCreation(current);
+  }
+
+  function cancelCareerReview() {
+    setReviewedCreation(null);
+  }
+
+  async function confirmCareerReview() {
+    if (finalizingCareer.current) return;
+    finalizingCareer.current = true;
+    try {
+      await waitForIdle();
+      // A changed or switched character must be reviewed again.
+      if (
+        !reviewedCreation ||
+        reviewedCreation !== ch ||
+        reviewedCreation !== lastCommitted.current ||
+        reviewedCreation.id !== ch?.id
+      )
+        return;
+      await patch({ career: true });
+      if (lastCommitted.current?.career || lastCommitted.current?.derived.career) {
+        setReviewedCreation(null);
+        void refreshRoster();
+      }
+    } finally {
+      finalizingCareer.current = false;
+    }
+  }
+
   async function restoreSnapshot(snap: Character, recordCurrent = false) {
     if (recordCurrent) await waitForIdle();
     if (busy.current || snap.id !== lastCommitted.current?.id) return;
@@ -294,6 +336,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
       const next = await api.compute(snap);
       if (recordCurrent && lastCommitted.current) history.record(lastCommitted.current);
       setCh(next);
+      setReviewedCreation(null);
       lastCommitted.current = next;
       setError(null);
     } catch (e) {
@@ -350,6 +393,10 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
   return {
     catalog,
     ch,
+    careerReview,
+    requestCareerReview,
+    cancelCareerReview,
+    confirmCareerReview,
     error,
     notice,
     exportReview: exports.exportReview,

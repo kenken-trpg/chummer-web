@@ -489,7 +489,7 @@ export const JA_HELP = {
   "help.toolbar.udonariumConjured":
     "束縛した精霊・登録したスプライト・ヴィークル・ドローンを、1 体 1 コマで書き出します。種類ごとに別の .zip で、ユドナリウムは zip の中の xml を全部読むので、まとめて卓に出ます。",
   "help.toolbar.career": "作成モードに戻す",
-  "help.toolbar.toCareer": "作成完了 → 残カルマ／新円で成長",
+  "help.toolbar.toCareer": "残りポイントと作成チェックを確認してキャリアへ移行",
   "help.toolbar.print":
     "印刷用レイアウトに切り替えて印刷。ダイアログで「PDF として保存」も選べます",
   "help.settings.preset": "Chummer 同梱のセッティング。使用ルールブックと作成方式が切り替わります",

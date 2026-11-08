@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { freshCharacter, storedCharacters, waitForEditor } from "./helpers";
+import { enterCareer, freshCharacter, storedCharacters, waitForEditor } from "./helpers";
 
 test("life modules persist across reload and removing a module removes its grants", async ({
   page,
@@ -175,8 +175,7 @@ test("skill overflow survives reload, career growth and undo", async ({ page, re
   await page.reload();
   await waitForEditor(page);
   await expect(page.locator(".life-overflow")).toContainText("+2");
-  page.once("dialog", (dialog) => dialog.accept());
-  await page.getByRole("button", { name: "作成完了（キャリア）", exact: true }).click();
+  await enterCareer(page);
   await expect.poll(async () => (await saved())?.career).toBe(true);
   const spent = (await saved()).derived.karma.spent;
   await page.getByRole("button", { name: "技能", exact: true }).click();

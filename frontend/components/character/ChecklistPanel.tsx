@@ -17,7 +17,9 @@ const ORDER: CheckSeverity[] = ["error", "warn", "info"];
 export function ChecklistPanel({
   panel,
   setTab,
+  disabled = false,
 }: {
+  disabled?: boolean;
   panel: TabPanelProps;
   setTab: (t: Tab) => void;
 }) {
@@ -50,7 +52,11 @@ export function ChecklistPanel({
                       {i.ref ? <span className="muted"> — {i.ref}</span> : null}
                     </span>
                     {i.tab ? (
-                      <button className="btn ci-jump" onClick={() => setTab(i.tab as Tab)}>
+                      <button
+                        disabled={disabled}
+                        className="btn ci-jump"
+                        onClick={() => setTab(i.tab as Tab)}
+                      >
                         {ui("check.jump")}
                       </button>
                     ) : null}

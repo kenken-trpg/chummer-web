@@ -132,3 +132,12 @@ export async function chummerFixture(): Promise<string> {
   writeFileSync(path, bytes);
   return path;
 }
+
+/** Review creation before committing the chargen baseline for career play. */
+export async function enterCareer(page: Page) {
+  await page.getByRole("button", { name: "作成完了（キャリア）", exact: true }).click();
+  const review = page.getByRole("region", { name: "作成完了前の確認" });
+  await expect(review).toBeVisible();
+  await review.getByRole("button", { name: "確認してキャリアへ移行", exact: true }).click();
+  await expect(page.getByRole("button", { name: "キャリア中", exact: true })).toBeVisible();
+}

@@ -1,5 +1,25 @@
 /** アプリの枠・ナビ・共通の語・書式・共有・ツールバー — English。 */
 export const EN_APP = {
+  "app.creationReview.contacts": "Free contact points",
+  "app.creationReview.title": "Review character creation",
+  "app.creationReview.description":
+    "Review remaining budgets and creation checks for “{name}”. Use the edit links to make corrections.",
+  "app.creationReview.budgets": "Remaining points and funds",
+  "app.creationReview.item": "Budget",
+  "app.creationReview.remaining": "Remaining",
+  "app.creationReview.karma": "Karma",
+  "app.creationReview.nuyen": "Nuyen (¥)",
+  "app.creationReview.power": "Power points",
+  "app.creationReview.spells": "Free spell slots",
+  "app.creationReview.forms": "Free complex form slots",
+  "app.creationReview.edit": "Edit {name}",
+  "app.creationReview.pending": "There are {count} unresolved equipment rows from an import.",
+  "app.creationReview.errors":
+    "Creation errors remain. Review each finding. You may still proceed with this character.",
+  "app.creationReview.confirm": "Confirm and enter career",
+  "app.creationReview.confirming": "Entering career…",
+  "app.creationReview.cancel": "Continue creation",
+
   "app.sheetSearch.title": "Search character contents",
   "app.sheetSearch.hint":
     "Search owned items, qualities, spells, skills, contacts, background and notes by name, nickname, notes or storage location.",
@@ -261,7 +281,6 @@ export const EN_APP = {
   "toolbar.conjured": "Spirit piece: {name}",
   "toolbar.career": "In career",
   "toolbar.toCareer": "Finish chargen (career)",
-  "toolbar.careerConfirm": "There are still creation errors. Continue into career mode anyway?",
 
   "toolbar.showSheet": "Show sheet",
   "common.selectShort": "Select",

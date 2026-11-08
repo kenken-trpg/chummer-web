@@ -43,6 +43,7 @@ export function Toolbar({
     newCharacter,
     deleteCurrent,
     duplicateCurrent,
+    requestCareerReview,
     onImport,
     download,
     downloadChum5,
@@ -305,11 +306,8 @@ export function Toolbar({
         <button
           className={`btn ${inCareer ? "primary" : ""}`}
           onClick={() => {
-            const next = !inCareer;
-            if (next && (d.errors || []).length) {
-              if (!window.confirm(ui("toolbar.careerConfirm"))) return;
-            }
-            patch({ career: next });
+            if (inCareer) void patch({ career: false });
+            else void requestCareerReview();
           }}
         >
           {inCareer ? ui("toolbar.career") : ui("toolbar.toCareer")}
