@@ -497,33 +497,43 @@ def _export_gear(root: ET.Element, state: CharacterState, names: _Names, ctx: _C
     _export_gear_improvements(root, state, by_parent_g)
     # after the gear and armor are written, which get the `<weaponguid>`
     _export_added_weapons(root, state)
-    _mark_active_device(root, ctx)
+    _mark_active_device(root, state, ctx)
 
 
-def _mark_active_device(root: ET.Element, ctx: _Ctx) -> None:
+def _mark_active_device(root: ET.Element, state: CharacterState, ctx: _Ctx) -> None:
     """Make the device this app's Matrix initiative runs on Chummer's active
     commlink (`<active>`, which `Gear.Load` reads back into `ActiveCommlink`).
 
     Chummer picks one only when a commlink is bought, never on load, so a
     character opened without one has no Data Processing in their Matrix
-    initiative and no Matrix attributes on the sheet. This app keeps no pick of
-    its own: it runs the persona with the highest Data Processing — a
-    technomancer's Living Persona, which their quality writes, or the best
-    commlink, deck or RCC — and that is the one marked. An A.I. runs from its
-    home node, which `<homenode>` says already.
+    initiative and no Matrix attributes on the sheet. The one marked is the
+    persona this app runs: the player's pick (`active_matrix_device`, which the
+    import reads from this same element), else the one with the highest Data
+    Processing — a technomancer's Living Persona, which their quality writes,
+    or a commlink, deck or RCC. An A.I. runs from its home node, which
+    `<homenode>` says already.
+
+    A mark this app chose itself also gets `<autoactive>`, which is this app's
+    own and Chummer ignores: read back, it leaves the pick unset, so the best
+    device is still the one run. Chummer drops it when it saves the file, and
+    the mark then reads back as the player's pick, which it is by then.
     """
     derived = ctx.get("derived") or {}
     device = (derived.get("matrix_initiative") or {}).get("device")
     gears = list(root.iter("gear"))
     if device == "living_persona":
         target = next((el for el in gears if el.findtext("name") == "Living Persona"), None)
+        picked = state.active_matrix_device == "living_persona"
     elif device in ("commlink", "cyberdeck", "rcc"):
         guid = str((derived.get(device) or {}).get("id") or "")
         target = next((el for el in gears if guid and el.findtext("guid") == guid), None)
+        picked = bool(guid) and state.active_matrix_device == guid
     else:
         return
     if target is not None and target.find("active") is None:
         _sub(target, "active", "True")
+        if not picked:
+            _sub(target, "autoactive", "True")
 
 
 def _export_gear_improvements(root: ET.Element, state: CharacterState, by_parent: dict[str | None, list[Any]]) -> None:

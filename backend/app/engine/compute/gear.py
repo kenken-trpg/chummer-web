@@ -70,6 +70,16 @@ from .gear_market import discounted_ids, pick_black_market
 from .gear_rows import resolve_armor_rows, resolve_commlink_rows, resolve_weapon_rows
 
 
+def _primary_device(rows: list[dict[str, Any]], active: str) -> dict[str, Any] | None:
+    """The device of one kind the sheet and the Matrix initiative look at: the
+    one the character picked to run (Chummer `ActiveCommlink`), else the one
+    with the highest device rating."""
+    if not rows:
+        return None
+    picked = next((row for row in rows if active and str(row.get("id") or "") == active), None)
+    return picked or max(rows, key=lambda row: int(row.get("device_rating") or 0))
+
+
 def resolve_gear(
     state: CharacterState,
     ware_items: list[dict[str, Any]] | None = None,
@@ -201,9 +211,9 @@ def resolve_gear(
     warnings.extend(lifestyle_warns)
     bonus_sources.extend(lifestyle_bonus)
 
-    primary_link = max(commlinks, key=lambda row: int(row.get("device_rating") or 0)) if commlinks else None
-    primary_deck = max(cyberdecks, key=lambda row: int(row.get("device_rating") or 0)) if cyberdecks else None
-    primary_rcc = max(rccs, key=lambda row: int(row.get("device_rating") or 0)) if rccs else None
+    primary_link = _primary_device(commlinks, state.active_matrix_device)
+    primary_deck = _primary_device(cyberdecks, state.active_matrix_device)
+    primary_rcc = _primary_device(rccs, state.active_matrix_device)
     primary_life = lifestyles[0] if lifestyles else None
     _finalize_avail_tree(armor_items + armor_mods)
     _finalize_avail_tree(weapons + weapon_accessories)

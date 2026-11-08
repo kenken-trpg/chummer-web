@@ -220,6 +220,12 @@ class _GearRouter:
         from ..engine.gear.implants import IMPLANT_CATEGORIES
 
         name = _text(g.find("name"))
+        # Chummer's active commlink, unless this app marked it for want of a
+        # pick (`<autoactive>`, see the export)
+        active = _text(g.find("active")).lower() == "true" and _text(g.find("autoactive")).lower() != "true"
+        if active and name == "Living Persona":
+            # the technomancer runs their own persona (Chummer `ActiveCommlink`)
+            self.st["active_matrix_device"] = "living_persona"
         gid, bucket = self.resolve(g, parent_bucket, host)
         if not gid:
             if name and not _chummer_added(g):
@@ -264,6 +270,9 @@ class _GearRouter:
         if (host is None or implanted) and bucket in HOME_NODE_BUCKETS and _text(g.find("homenode")).lower() == "true":
             # an A.I.'s home node; the engine drops it from anyone else
             self.st["home_node"] = row["id"]
+        if (host is None or implanted) and bucket in HOME_NODE_BUCKETS and active:
+            # Chummer's active commlink: the persona the character runs
+            self.st["active_matrix_device"] = row["id"]
         if _text(g.find("guid")):
             self.gear_ids[_text(g.find("guid"))] = row["id"]
         for child in g.findall("./children/gear"):

@@ -465,6 +465,10 @@ export const EN_HELP = {
   "help.sub.echo": "Every grade picks one echo, and raises the cap on Resonance by one",
   "help.gear.homeNode1":
     "The device the A.I. lives in. Only one: marking another device moves the mark",
+  "help.gear.activeDevice1":
+    "The device the Matrix initiative and the sheet's Matrix section use (Chummer's active commlink)",
+  "help.gear.activeDevice2":
+    "Automatic runs the one with the highest Data Processing. Pick another if that is the one you carry",
   "help.gear.homeNode2":
     "Its Data Processing goes to the Matrix initiative and the mental and social limits",
   "help.gear.homeNode3": "Its Matrix condition monitor stands in for the Stun track",

@@ -124,12 +124,16 @@ def matrix_initiative(
     intuition: int,
     extra_dice: int = 0,
     offset: int = 0,
+    prefer: str | None = None,
 ) -> MatrixInitiative | None:
-    """The VR initiative of the best persona the character can run.
+    """The VR initiative of the persona the character runs: the one they
+    picked (``prefer``, a label in ``personas``), else the best one.
 
     ``personas`` is (label, row) in preference order — a technomancer's living
-    persona, then the devices. The one with the highest Data Processing wins,
-    because that is the one worth jacking into; ties keep the earlier entry.
+    persona, then the devices. With no pick, the one with the highest Data
+    Processing wins, because that is the one worth jacking into; ties keep the
+    earlier entry. A pick is Chummer's active commlink, which a player sets
+    to the device they carry rather than the best one they own.
     SR5 p.229: VR initiative rolls Data Processing + Intuition, with three
     dice in cold sim and four in hot sim — the settings' minimums, each capped
     at its maximum. In AR the character keeps their meat initiative, so there
@@ -144,6 +148,9 @@ def matrix_initiative(
         if not row:
             continue
         processing = int(row.get("dataprocessing") or 0)
+        if label == prefer:
+            best = (label, processing, int(row.get("module_initiative_dice") or 0))
+            break
         if best is None or processing > best[1]:
             best = (label, processing, int(row.get("module_initiative_dice") or 0))
     if best is None:
