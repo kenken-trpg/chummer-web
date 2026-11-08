@@ -169,7 +169,7 @@ export const JA_ENGINE = {
   "engine.mentorEffect.qualityPick": "資質 {name}（{pick}）",
   "engine.mentorEffect.action": "{name} のダイス {value}",
   "engine.mentorEffect.karmaCost": "{name} の成長カルマ {value}（下限 {min}）",
-  "engine.mentorEffect.persona": "リビング・ペルソナの {name} {value}",
+  "engine.mentorEffect.persona": "生体ペルソナの {name} {value}",
   "engine.mentorEffect.other": "その他の効果",
   "engine.drugEffect.attribute": "{name} {value}",
   "engine.drugEffect.initiative": "イニシアティブ {value}",
