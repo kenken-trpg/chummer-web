@@ -3,6 +3,12 @@
 Notable changes. Format follows [Keep a Changelog](https://keepachangelog.com/);
 self-hosters can pin to a tag instead of tracking `main`.
 
+## [0.5.43] — 2026-11-08
+
+### Fixed
+
+- **`.chum5` の無料購入**: Chummer で無料にした武器と武器アクセサリーが、取り込み後に通常価格で計算される問題を修正しました。無料の状態を JSON と `.chum5` に保持し、武器画面には「無料購入」と表示します。付属品とは区別し、取り外しや装着箇所・効果は通常の購入品と同じ扱いです。
+
 ## [0.5.42] — 2026-11-08
 
 ### Changed
@@ -3148,7 +3154,8 @@ First tagged release.
 - One-container Docker image (Caddy + uvicorn + Next standalone) published to
   GHCR; `make up` / `compose.yaml` for local self-hosting.
 
-[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.42...HEAD
+[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.43...HEAD
+[0.5.43]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.42...v0.5.43
 [0.5.42]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.41...v0.5.42
 [0.5.41]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.40...v0.5.41
 [0.5.40]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.39...v0.5.40
