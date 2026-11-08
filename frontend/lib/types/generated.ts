@@ -356,6 +356,8 @@ export interface CommlinkInstall {
   parent_id?: string | null;
   /** how many alike — a stack of burner Meta Links */
   qty?: number;
+  /** Bought for free in Chummer (`<cost>0`): no nuyen, otherwise as bought. */
+  free?: boolean;
   /** bought through the Black Market Pipeline: 10% off (Chummer's
    *  `<discountedcost>`, which the quality's categories allow)
    */
@@ -383,6 +385,11 @@ export interface GearInstall {
   qty?: number;
   parent_id?: string | null;
   included?: boolean;
+  /** Bought for free in Chummer (`<cost>0`): no nuyen, otherwise a normal
+   *  purchase. What sits in it is priced on its own; one priced off
+   *  `Parent Cost` sees 0, as `Vehicle Cost` does for a free vehicle.
+   */
+  free?: boolean;
   capacity_override?: string | null;
   array_order?: string[];
   /** Cyberdecks only: the attribute Overclocker raises on this deck (Chummer's

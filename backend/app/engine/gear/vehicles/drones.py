@@ -22,7 +22,8 @@ def _resolve_drones(state: CharacterState, kind: str = "drones") -> tuple[list[d
         spec = _item_by_id(kind, inst.gear_id)
         if not spec:
             continue
-        cost = int(eval_formula(str(spec.get("cost") or "0"), 1, 0))
+        # free: no nuyen, and `Vehicle Cost` in a mod price is the OwnCost, 0
+        cost = 0 if inst.free else int(eval_formula(str(spec.get("cost") or "0"), 1, 0))
         nuyen += cost
         stats = {
             "handling": _leading_vehicle_stat(spec.get("handling")),
@@ -42,6 +43,7 @@ def _resolve_drones(state: CharacterState, kind: str = "drones") -> tuple[list[d
         public.append(
             {
                 "id": inst.id,
+                "free": bool(inst.free),
                 "gear_id": spec["id"],
                 "name": spec["name"],
                 "category": spec.get("category") or "",

@@ -92,7 +92,7 @@ def _resolve_programs(
         rating = _clamp_rating(spec, inst.rating)
         inst.rating = rating
         # an autosoft a drone's own entry grants comes with it
-        cost = 0 if inst.included else int(eval_formula(str(spec.get("cost") or "0"), rating, 0))
+        cost = 0 if inst.included or inst.free else int(eval_formula(str(spec.get("cost") or "0"), rating, 0))
         nuyen += cost
         kept.append(inst)
         public.append(
@@ -106,6 +106,7 @@ def _resolve_programs(
                 "rating_max": int(spec.get("maxrating") or 0),
                 "parent_id": inst.parent_id,
                 "included": bool(inst.included),
+                "free": bool(inst.free) and not inst.included,
                 "running": (
                     False
                     if in_ware

@@ -140,7 +140,8 @@ export function VehicleDroneGear({
                       ? ui("veh.slots", { used: item.slots_used ?? 0, max: item.slots_max })
                       : ""}
                   {" / "}
-                  {item.nuyen.toLocaleString()}¥ / {sourceBit(item, ui)}
+                  {item.nuyen.toLocaleString()}¥{item.free ? ui("gear.freePurchase") : ""} /{" "}
+                  {sourceBit(item, ui)}
                 </div>
                 <RowNotes
                   ch={ch}

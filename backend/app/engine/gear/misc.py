@@ -342,7 +342,7 @@ def _line_cost(
             parent_spec = specs.get(parent.gear_id) if parent else None
             parent_unit = (
                 0
-                if not parent or not parent_spec or parent.included
+                if not parent or not parent_spec or parent.included or parent.free
                 else int(eval_formula(str(parent_spec.get("cost") or "0"), int(parent.rating or 1), 0))
             )
         extras["Parent Cost"] = int(parent_unit)
@@ -355,7 +355,13 @@ def _line_cost(
     inst.cost = picked
     if (spec.get("category") or "") != "Custom":
         inst.name = None
-    unit = 0 if inst.included else picked if picked is not None else int(eval_formula(cost_expr, rating, 0, extras))
+    unit = (
+        0
+        if inst.included or inst.free
+        else picked
+        if picked is not None
+        else int(eval_formula(cost_expr, rating, 0, extras))
+    )
     unit_costs[inst.id] = unit
     # Chummer's `Gear.TotalCost`: what is inside a gear item is bought
     # once for each of it — three gas grenades, three loads of CS/Tear
@@ -398,6 +404,7 @@ def _public_row(
         "qty": qty,
         "parent_id": inst.parent_id,
         "included": bool(inst.included),
+        "free": bool(inst.free) and not inst.included,
         "granted_by": granted_by,
         "plugin": plugin,
         "extra": extra,

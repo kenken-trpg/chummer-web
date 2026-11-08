@@ -92,7 +92,7 @@ def _resolve_matrix_devices(
             continue
         rating = _clamp_rating(spec, inst.rating)
         inst.rating = rating
-        cost = int(eval_formula(str(spec.get("cost") or "0"), rating, 0))
+        cost = 0 if inst.free else int(eval_formula(str(spec.get("cost") or "0"), rating, 0))
         nuyen += cost
         stats = _matrix_stats(spec, rating, inst.array_order, reorder=reorder)
         if stats["can_reorder"]:
@@ -103,6 +103,7 @@ def _resolve_matrix_devices(
         public.append(
             {
                 "id": inst.id,
+                "free": bool(inst.free),
                 "gear_id": spec["id"],
                 "name": spec["name"],
                 "category": spec.get("category") or "",
