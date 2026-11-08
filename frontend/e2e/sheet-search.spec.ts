@@ -68,7 +68,7 @@ test("search finds nested equipment across tabs and opens the exact row and char
   );
 
   await search.fill("Retired courier");
-  await results.getByRole("button").click();
+  await results.getByRole("button", { name: "背景", exact: true }).click();
   const background = page.locator('[data-sheet-search="description/background"]');
   await expect(background).toHaveAttribute("data-search-highlight", "true");
   await expect(background.locator("textarea")).toHaveValue("Retired courier from Seattle");
