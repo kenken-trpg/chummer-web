@@ -24,6 +24,10 @@ export function SheetSearch({
   const results = searchSheet(entries, query, locale);
   return (
     <section aria-label={ui("app.sheetSearch.title")}>
+      <label>
+        {ui("app.sheetSearch.title")}{" "}
+        <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} />
+      </label>
       <HelpTip
         label={ui("help.open", { label: ui("app.sheetSearch.title") })}
         lines={[
@@ -32,10 +36,7 @@ export function SheetSearch({
           { label: ui("help.search.jump") },
         ]}
       >
-        <label>
-          {ui("app.sheetSearch.title")}{" "}
-          <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} />
-        </label>
+        {null}
       </HelpTip>
       {query.trim() ? (
         <>

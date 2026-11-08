@@ -66,6 +66,10 @@ export function CharacterRoster({ ed }: { ed: CharacterEditor }) {
           </HelpTip>
           <p className="muted">{ui("app.bulk.entireRoster")}</p>
           <div className="toolbar">
+            <label>
+              {ui("app.roster.search")}{" "}
+              <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} />
+            </label>
             <HelpTip
               label={ui("help.open", { label: ui("app.roster.title") })}
               lines={[
@@ -74,10 +78,7 @@ export function CharacterRoster({ ed }: { ed: CharacterEditor }) {
                 { label: ui("help.roster.backup") },
               ]}
             >
-              <label>
-                {ui("app.roster.search")}{" "}
-                <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} />
-              </label>
+              {null}
             </HelpTip>
             <label>
               {ui("app.roster.filter")}{" "}
