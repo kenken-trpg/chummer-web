@@ -46,7 +46,8 @@ export function CommlinkGear({ catalog, character: ch, d, tr, ui, patch }: TabPa
                 {" / "}DR {item.device_rating}
                 {item.attack ? ` / A ${item.attack}` : ""}
                 {item.sleaze ? ` / S ${item.sleaze}` : ""} / DP {item.dataprocessing} / FW{" "}
-                {item.firewall} / {item.nuyen.toLocaleString()}¥ / {sourceBit(item, ui)}
+                {item.firewall} / {item.nuyen.toLocaleString()}¥
+                {item.free ? ui("gear.freePurchase") : ""} / {sourceBit(item, ui)}
               </div>
               <div className="cyber-controls">
                 <DiscountToggle list="commlinks" id={item.id} ch={ch} d={d} ui={ui} patch={patch} />

@@ -124,7 +124,7 @@ def resolve_commlink_rows(state: CharacterState) -> tuple[list[CommlinkInstall],
         rating = _clamp_rating(spec, link_inst.rating)
         link_inst.rating = rating
         qty = max(1, int(link_inst.qty or 1))
-        cost = int(eval_formula(str(spec.get("cost") or "0"), rating, 0)) * qty
+        cost = 0 if link_inst.free else int(eval_formula(str(spec.get("cost") or "0"), rating, 0)) * qty
         nuyen += cost
         device = int(eval_formula(str(spec.get("devicerating") or "0"), rating, 0))
         processing = int(eval_formula(str(spec.get("dataprocessing") or "0"), rating, 0))
@@ -133,6 +133,7 @@ def resolve_commlink_rows(state: CharacterState) -> tuple[list[CommlinkInstall],
         commlinks.append(
             {
                 "id": link_inst.id,
+                "free": bool(link_inst.free),
                 "gear_id": spec["id"],
                 "name": spec["name"],
                 "category": spec.get("category") or "Commlinks",

@@ -97,7 +97,7 @@ def _resolve_optics(
             continue
         rating = _clamp_rating(spec, inst.rating)
         inst.rating = rating
-        cost = 0 if inst.included else int(eval_formula(str(spec.get("cost") or "0"), rating, 0))
+        cost = 0 if inst.included or inst.free else int(eval_formula(str(spec.get("cost") or "0"), rating, 0))
         nuyen += cost
         plugin = bool(spec.get("plugin"))
         cap_expr = inst.capacity_override if inst.capacity_override is not None else str(spec.get("capacity") or "")
@@ -119,6 +119,7 @@ def _resolve_optics(
                 "rating_max": int(spec.get("maxrating") or 0),
                 "parent_id": inst.parent_id,
                 "included": bool(inst.included),
+                "free": bool(inst.free) and not inst.included,
                 "plugin": plugin,
                 "nuyen": cost,
                 "capacity_cost": cap_cost,

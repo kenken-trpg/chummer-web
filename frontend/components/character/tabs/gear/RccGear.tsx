@@ -40,7 +40,8 @@ export function RccGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
                   used: item.program_used ?? 0,
                   max: item.program_max ?? item.programs ?? 0,
                 })}{" "}
-                / {item.nuyen.toLocaleString()}¥ / {sourceBit(item, ui)}
+                / {item.nuyen.toLocaleString()}¥{item.free ? ui("gear.freePurchase") : ""} /{" "}
+                {sourceBit(item, ui)}
               </div>
               <div className="cyber-controls">
                 <DiscountToggle list="rccs" id={item.id} ch={ch} d={d} ui={ui} patch={patch} />

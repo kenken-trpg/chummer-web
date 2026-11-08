@@ -32,6 +32,16 @@ describe("<CommlinkGear>", () => {
     } as never);
     render(<CommlinkGear {...panelProps(ch)} />);
     expect(screen.queryByText(/に埋め込み/)).toBeNull();
+    expect(screen.queryByText(/無料購入/)).toBeNull();
+  });
+
+  it("labels an imported free commlink", () => {
+    const ch = makeCharacter({
+      commlinks: [{ id: "link", gear_id: "ikon", free: true }],
+      derived: { commlinks: [{ ...row, nuyen: 0, free: true }] },
+    } as never);
+    render(<CommlinkGear {...panelProps(ch)} />);
+    expect(screen.getByText(/0¥ \/ 無料購入/)).toBeTruthy();
   });
 
   it("shows a loose Mapsoft and lets the player load it into a commlink", () => {

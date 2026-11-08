@@ -72,7 +72,8 @@ export function MiscGearRow({
             ? ` / ${ui("common.capacity")} ${item.capacity_used}/${item.capacity_max}`
             : ""}
           {" / "}
-          {item.nuyen.toLocaleString()}¥ / {sourceBit(item, ui)}
+          {item.nuyen.toLocaleString()}¥{item.free ? ui("gear.freePurchase") : ""} /{" "}
+          {sourceBit(item, ui)}
         </div>
         {item.parts_remaining_units != null ? (
           <p>

@@ -56,7 +56,8 @@ export function OpticsGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                       })
                     : ""}
                   {" / "}
-                  {item.nuyen.toLocaleString()}¥ / {sourceBit(item, ui)}
+                  {item.nuyen.toLocaleString()}¥{item.free ? ui("gear.freePurchase") : ""} /{" "}
+                  {sourceBit(item, ui)}
                 </div>
                 <div className="cyber-controls">
                   <DiscountToggle list="optics" id={item.id} ch={ch} d={d} ui={ui} patch={patch} />

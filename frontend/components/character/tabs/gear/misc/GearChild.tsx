@@ -35,6 +35,7 @@ export function GearChild({
       {child.rating_max > 0 ? ` R${child.rating}` : ""}
       {child.qty > 1 ? ` ×${child.qty}` : ""}
       {child.included ? ` / ${ui("common.included")}` : ` / ${child.nuyen.toLocaleString()}¥`}
+      {!child.included && child.free ? ui("gear.freePurchase") : ""}
       {child.capacity_cost ? ` / ${ui("common.capacity")} ${child.capacity_cost}` : ""}
       {child.included ? null : (
         <>

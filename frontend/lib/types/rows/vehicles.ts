@@ -44,6 +44,8 @@ export interface InstalledWeaponMount {
 
 export interface InstalledDrone {
   id: string;
+  /** Bought for free in Chummer (`<cost>0`): no nuyen, otherwise as bought. */
+  free?: boolean;
   gear_id: string;
   name: string;
   category: string;

@@ -48,7 +48,15 @@ def _import_vehicles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], war
             vid = veh_r.resolve(v, [], ui("engine.kind.vehicle")) or drone_r.resolve(v, warn, ui("engine.kind.drone"))
         if not vid:
             continue
-        row = {"id": str(uuid.uuid4()), "gear_id": vid, "rating": 1, "qty": 1, **_player_text(v, "vehiclename")}
+        listed = (drone_r if is_drone else veh_r).costs.get(vid)
+        row = {
+            "id": str(uuid.uuid4()),
+            "gear_id": vid,
+            "rating": 1,
+            "qty": 1,
+            "free": _free_item(v, listed),
+            **_player_text(v, "vehiclename"),
+        }
         (st_veh if is_drone else st_veh_only).append(row)
         if _text(v.find("homenode")).lower() == "true":
             # an A.I.'s home node; the engine drops it from anyone else

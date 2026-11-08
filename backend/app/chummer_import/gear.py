@@ -15,11 +15,13 @@ from ._common import (
     _chummer_added,
     _data_index,
     _discounted,
+    _free_item,
     _location_of,
     _picked_cost,
     _player_text,
     _Resolver,
     _storage_locations,
+    listed_cost,
 )
 
 
@@ -257,6 +259,7 @@ class _GearRouter:
             host_name = host[1] if host is not None else str((self.rows_by_id.get(parent_gid) or {}).get("name") or "")
             self.warn.append(notice("engine.import.gearMovedOut", name=name, host=host_name))
             parent_id = None
+        row["free"] = not included and _free_item(g, listed_cost(spec))
         if bucket == "commlinks":
             row["qty"] = max(1, math.ceil(_qty(g)))
             if implanted:

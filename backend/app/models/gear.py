@@ -160,6 +160,8 @@ class CommlinkInstall(BaseModel):
     parent_id: str | None = None
     #: how many alike — a stack of burner Meta Links
     qty: int = Field(default=1, ge=1, le=999)
+    #: Bought for free in Chummer (`<cost>0`): no nuyen, otherwise as bought.
+    free: bool = False
     #: bought through the Black Market Pipeline: 10% off (Chummer's
     #: `<discountedcost>`, which the quality's categories allow)
     discounted: bool = False
@@ -183,6 +185,10 @@ class GearInstall(BaseModel):
     qty: int = 1
     parent_id: str | None = None
     included: bool = False
+    #: Bought for free in Chummer (`<cost>0`): no nuyen, otherwise a normal
+    #: purchase. What sits in it is priced on its own; one priced off
+    #: `Parent Cost` sees 0, as `Vehicle Cost` does for a free vehicle.
+    free: bool = False
     capacity_override: str | None = None
     array_order: list[str] = Field(default_factory=list)
     #: Cyberdecks only: the attribute Overclocker raises on this deck (Chummer's

@@ -120,7 +120,7 @@ def ware_gear_costs(state: CharacterState) -> dict[str, int]:
     hosts = _ware_hosts(state)
     out: dict[str, int] = {}
     for inst in state.gear or []:
-        if not inst.parent_id or inst.parent_id not in hosts or inst.included:
+        if not inst.parent_id or inst.parent_id not in hosts or inst.included or inst.free:
             continue
         spec = _item_by_id("gear", inst.gear_id)
         if not spec:

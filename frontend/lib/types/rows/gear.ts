@@ -173,6 +173,8 @@ export interface InstalledWeaponAccessory {
 }
 
 export interface InstalledCommlink {
+  /** Bought for free in Chummer (`<cost>0`): no nuyen, otherwise as bought. */
+  free?: boolean;
   /** the headware Commlink or Cyberdeck it is implanted in (SR5 p.451-452) */
   parent_id?: string | null;
   implanted_in?: string;
@@ -199,6 +201,8 @@ export interface InstalledCommlink {
 }
 
 export interface InstalledMatrixDevice {
+  /** Bought for free in Chummer (`<cost>0`): no nuyen, otherwise as bought. */
+  free?: boolean;
   /** the headware Commlink or Cyberdeck it is implanted in (SR5 p.451-452) */
   parent_id?: string | null;
   implanted_in?: string;
@@ -240,6 +244,8 @@ export interface InstalledMatrixDevice {
 
 export interface InstalledOptics {
   id: string;
+  /** Bought for free in Chummer (`<cost>0`): no nuyen, otherwise as bought. */
+  free?: boolean;
   gear_id: string;
   name: string;
   category: string;

@@ -483,7 +483,10 @@ def _gear_writer(state: CharacterState, names: _Names) -> tuple[dict[str | None,
                 else int(getattr(g, "qty", 1) or 1) * max(1, cost_for.get(gid, 0)),
             )
             _sub(el, "discountedcost", "True" if getattr(g, "discounted", False) else "False")
-            if getattr(g, "cost", None) is not None:
+            if getattr(g, "free", False) and not getattr(g, "included", False):
+                # Chummer's free purchase: the picker sets Cost "0"
+                _sub(el, "cost", 0)
+            elif getattr(g, "cost", None) is not None:
                 _sub(el, "cost", g.cost)
             if getattr(g, "parent_id", None):
                 _sub(el, "included", "True" if getattr(g, "included", False) else "False")
@@ -716,6 +719,8 @@ def _export_vehicles(root: ET.Element, state: CharacterState, names: _Names, ctx
         if v.id == state.home_node:
             # an A.I. living in it (`Vehicle.IsHomeNode`)
             _sub(el, "homenode", "True")
+        if v.free:
+            _sub(el, "cost", 0)
         _from_data(el, "vehicle", v.gear_id)
         mods = _sub(el, "mods")
         for vrow in vmod_by_parent.get(v.id, []):

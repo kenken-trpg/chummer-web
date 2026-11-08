@@ -176,16 +176,22 @@ def _unexpected_children(parent_id: str, nodes: list[ET.Element]) -> list[ET.Ele
     return out
 
 
+def listed_cost(row: dict[str, Any]) -> str:
+    """The catalogue price `_free_item` compares a saved 0 against.
+
+    A `Variable(lo-hi)` row lists its bottom: a saved 0 is a free purchase
+    only where the range could not have held it (Clothing's 20-100000, not
+    Theme Music's 0-50)."""
+    return str((row.get("cost_range") or [row.get("cost")])[0] or "")
+
+
 class _Resolver:
     """name / sourceid -> catalog id for one bucket."""
 
     def __init__(self, rows: list[dict[str, Any]], translations: dict[str, str] | None = None):
         self.by_name = _by_name(rows)
         self.ids = {r["id"] for r in rows}
-        # A `Variable(lo-hi)` row lists its bottom: a saved 0 is a free
-        # purchase only where the range could not have held it (Clothing's
-        # 20-100000, not Theme Music's 0-50).
-        self.costs = {r["id"]: str((r.get("cost_range") or [r.get("cost")])[0] or "") for r in rows}
+        self.costs = {r["id"]: listed_cost(r) for r in rows}
         # Localized Chummer saves often store the translated display name.
         # Only add aliases that identify one catalog row; ambiguous Japanese
         # names must not silently resolve to an arbitrary entry.
