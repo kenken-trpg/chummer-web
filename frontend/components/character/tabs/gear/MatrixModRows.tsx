@@ -59,7 +59,12 @@ export function MatrixModRows({
       <p className="muted">{ui("gear.constructionHelp")}</p>
       <ElectronicPartsPanel catalog={catalog} character={ch} d={d} tr={tr} ui={ui} patch={patch} />
       {installed.map((mod) => (
-        <div className="muted" key={mod.id} style={{ marginTop: 6 }}>
+        <div
+          data-sheet-search={`gear/${mod.id}`}
+          className="muted"
+          key={mod.id}
+          style={{ marginTop: 6 }}
+        >
           <HelpTip
             label={ui("help.open", { label: tr(mod.label || mod.name) })}
             lines={[

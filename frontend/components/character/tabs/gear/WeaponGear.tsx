@@ -66,7 +66,7 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
             ),
           });
           return (
-            <div className="cyber-item" key={item.id}>
+            <div data-sheet-search={`weapons/${item.id}`} className="cyber-item" key={item.id}>
               <div>
                 <b>{tr(item.name)}</b>
                 {item.vehicle_id ? (

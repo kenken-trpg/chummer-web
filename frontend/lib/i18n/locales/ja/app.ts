@@ -1,5 +1,14 @@
 /** アプリの枠・ナビ・共通の語・書式・共有・ツールバー — 日本語。 */
 export const JA_APP = {
+  "app.sheetSearch.title": "シート内容を検索",
+  "app.sheetSearch.hint":
+    "所持品・資質・呪文・技能・コンタクト・経歴やメモを、名前・呼び名・備考・保管場所から検索できます。",
+  "app.sheetSearch.count": "{count}件見つかりました。",
+  "app.sheetSearch.empty": "一致する項目がありません。",
+  "app.sheetSearch.notes": "備考・選択内容",
+  "app.sheetSearch.limit": "先頭100件を表示しています。検索語を追加して絞り込めます。",
+  "app.sheetSearch.missing": "編集箇所を開きましたが、対象の行を見つけられませんでした。",
+
   "app.bulk.download": "全キャラクターを一括バックアップ",
   "app.bulk.entireRoster":
     "検索や絞り込みにかかわらず、保存済みの全キャラクターを1つのJSONにまとめます。",

@@ -44,7 +44,7 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabP
       <>
         {(d.cyberdecks || []).length ? <p className="muted">{ui("deck.arrayNote")}</p> : null}
         {(d.cyberdecks || []).map((item) => (
-          <div className="cyber-item" key={item.id}>
+          <div data-sheet-search={`cyberdecks/${item.id}`} className="cyber-item" key={item.id}>
             <div>
               <b>{tr(item.name)}</b>
               {item.implanted_in ? (
@@ -170,7 +170,12 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabP
               {(d.programs || [])
                 .filter((prog) => prog.parent_id === item.id)
                 .map((prog) => (
-                  <div className="muted" key={prog.id} style={{ marginTop: 6 }}>
+                  <div
+                    data-sheet-search={`programs/${prog.id}`}
+                    className="muted"
+                    key={prog.id}
+                    style={{ marginTop: 6 }}
+                  >
                     <HelpTip
                       label={ui("help.open", { label: tr(prog.name) })}
                       lines={[

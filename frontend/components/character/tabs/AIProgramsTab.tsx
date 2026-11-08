@@ -74,7 +74,7 @@ export function AIProgramsTab({ catalog, character: ch, d, tr, ui, patch }: TabP
         {ui("aiprog.summary", { count: owned.length, karma: spent })}
       </p>
       {owned.map((row) => (
-        <div className="cyber-item" key={row.id}>
+        <div data-sheet-search={`ai_programs/${row.id}`} className="cyber-item" key={row.id}>
           <div>
             <b>{tr(row.name)}</b>
             <div className="muted">

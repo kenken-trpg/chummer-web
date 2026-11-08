@@ -93,7 +93,9 @@ export function NotesBox({
   of,
   ui,
   onSave,
+  searchKey,
 }: {
+  searchKey?: string;
   text: PlayerText;
   named: boolean;
   /** what the row is, for the boxes' labels */
@@ -105,7 +107,7 @@ export function NotesBox({
   const nickname = text.nickname ?? "";
   const [opened] = useState(() => !!(notes.trim() || (named && nickname.trim())));
   return (
-    <details className="row-notes" open={opened || undefined}>
+    <details className="row-notes" data-sheet-search={searchKey} open={opened || undefined}>
       <summary>
         {ui(named ? "rowNotes.summaryNamed" : "rowNotes.summary")}
         {named && nickname.trim() ? ui("rowNotes.nicknameShown", { nickname }) : ""}
@@ -157,6 +159,7 @@ export function RowNotes({
   return (
     <NotesBox
       text={row}
+      searchKey={`${bucket}/${id}`}
       named={NAMED.has(bucket)}
       of={of}
       ui={ui}
@@ -187,6 +190,7 @@ export function QualityNotes({
 }) {
   return (
     <NotesBox
+      searchKey={`qualities/${noteKey}`}
       text={{ notes: ch.quality_notes?.[noteKey] ?? "" }}
       named={false}
       of={of}

@@ -59,7 +59,7 @@ export function ArmorGear({ catalog, character: ch, d, tr, ui, patch }: TabPanel
           );
           const specialLine = specialArmorLine(mergeSpecialArmor(item.mods), ui);
           return (
-            <div className="cyber-item" key={item.id}>
+            <div data-sheet-search={`armor/${item.id}`} className="cyber-item" key={item.id}>
               <div>
                 <b>{tr(item.name)}</b>
                 <div className="muted">

@@ -37,7 +37,9 @@ const KIND_TABS: { kind: GearKind; label: MsgKey }[] = [
 
 export function GearTab(props: TabPanelProps) {
   const { d, tr, ui } = props;
-  const [gearKind, setGearKind] = useState<GearKind>("armor");
+  const [gearKind, setGearKind] = useState<GearKind>(
+    props.searchRequest?.target.gearKind ?? "armor",
+  );
 
   return (
     <div className="card">

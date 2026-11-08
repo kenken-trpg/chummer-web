@@ -21,12 +21,20 @@ import {
   wareBounds,
 } from "@/lib/character/ware";
 
-export function CyberTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
+export function CyberTab({
+  catalog,
+  character: ch,
+  d,
+  tr,
+  ui,
+  patch,
+  searchRequest,
+}: TabPanelProps) {
   const [cySearch, setCySearch] = useState("");
   const [cyCat, setCyCat] = useState("all");
   const [addGrade, setAddGrade] = useState("Standard");
   const [slotPick, setSlotPick] = useState<Record<string, string>>({});
-  const [compact, setCompact] = useWareCompact();
+  const [compact, setCompact] = useWareCompact("wareCompact", !!searchRequest);
   const cyberCats = useMemo(
     () =>
       [

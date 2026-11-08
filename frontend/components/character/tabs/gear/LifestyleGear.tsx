@@ -24,7 +24,7 @@ export function LifestyleGear({ catalog, character: ch, d, tr, ui, patch }: TabP
             (q) => q.allow_multiple || !ownedUser.has(q.id),
           );
           return (
-            <div className="cyber-item" key={item.id}>
+            <div data-sheet-search={`lifestyles/${item.id}`} className="cyber-item" key={item.id}>
               <div>
                 <b>{tr(item.name)}</b>
                 <div className="muted">

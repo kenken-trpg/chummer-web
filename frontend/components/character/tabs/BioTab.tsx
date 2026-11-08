@@ -17,12 +17,12 @@ import {
   wareBounds,
 } from "@/lib/character/ware";
 
-export function BioTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
+export function BioTab({ catalog, character: ch, d, tr, ui, patch, searchRequest }: TabPanelProps) {
   const [bioSearch, setBioSearch] = useState("");
   const [bioCat, setBioCat] = useState("all");
   const [bioGrade, setBioGrade] = useState("Standard");
   const [slotPick, setSlotPick] = useState<Record<string, string>>({});
-  const [compact, setCompact] = useWareCompact();
+  const [compact, setCompact] = useWareCompact("wareCompact", !!searchRequest);
   const bioCats = useMemo(
     () =>
       [

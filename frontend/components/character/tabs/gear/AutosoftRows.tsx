@@ -32,7 +32,12 @@ export function AutosoftRows({
       {(d.programs || [])
         .filter((prog) => prog.parent_id === hostId)
         .map((prog) => (
-          <div className="muted" key={prog.id} style={{ marginTop: 6 }}>
+          <div
+            data-sheet-search={`programs/${prog.id}`}
+            className="muted"
+            key={prog.id}
+            style={{ marginTop: 6 }}
+          >
             <HelpTip
               label={ui("help.open", { label: tr(prog.label || prog.name) })}
               lines={[{ label: ui("help.program.slot") }, { label: ui("help.program.rating") }]}

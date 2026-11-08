@@ -118,7 +118,10 @@ export function WareRow(props: {
       (pickSlots || []).some((slot) => slot.source_id === item.id && !slot.picked) ||
       Boolean(item.select_ware && !locked && !item.extra);
     return (
-      <div className={`cyber-item compact${nested ? " nested" : ""}`}>
+      <div
+        data-sheet-search={`${kind}/${item.id}`}
+        className={`cyber-item compact${nested ? " nested" : ""}`}
+      >
         <div>
           {title}
           {pending ? <span className="warn"> {ui("ware.pending")}</span> : null}
@@ -143,7 +146,10 @@ export function WareRow(props: {
     );
   }
   return (
-    <div className={`cyber-item${nested ? " nested" : ""}`}>
+    <div
+      data-sheet-search={`${kind}/${item.id}`}
+      className={`cyber-item${nested ? " nested" : ""}`}
+    >
       <div>
         {title}
         <div className="muted">

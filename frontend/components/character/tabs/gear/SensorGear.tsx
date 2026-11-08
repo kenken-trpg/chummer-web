@@ -36,7 +36,7 @@ export function SensorGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
               !childrenItems.some((child) => child.gear_id === mod.id),
           );
           return (
-            <div className="cyber-item" key={item.id}>
+            <div data-sheet-search={`sensors/${item.id}`} className="cyber-item" key={item.id}>
               <div>
                 <b>{tr(item.name)}</b>
                 <div className="muted">

@@ -26,7 +26,11 @@ export function GearChild({
 }) {
   const kids = all.filter((row) => row.parent_id === child.id);
   return (
-    <div className="muted" style={{ marginTop: 6, marginLeft: depth * 12 }}>
+    <div
+      data-sheet-search={`gear/${child.id}`}
+      className="muted"
+      style={{ marginTop: 6, marginLeft: depth * 12 }}
+    >
       {tr(child.label || child.name)}
       {child.rating_max > 0 ? ` R${child.rating}` : ""}
       {child.qty > 1 ? ` ×${child.qty}` : ""}

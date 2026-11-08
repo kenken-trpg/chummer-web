@@ -35,7 +35,12 @@ export function AppRows({
       {(d.apps || [])
         .filter((app) => app.parent_id === hostId)
         .map((app) => (
-          <div className="muted" key={app.id} style={{ marginTop: 6 }}>
+          <div
+            data-sheet-search={`apps/${app.id}`}
+            className="muted"
+            key={app.id}
+            style={{ marginTop: 6 }}
+          >
             <HelpTip
               label={ui("help.open", { label: tr(app.label || app.name) })}
               lines={[{ label: ui("help.program.slot") }, { label: ui("help.program.rating") }]}
