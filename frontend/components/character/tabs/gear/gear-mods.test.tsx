@@ -83,6 +83,20 @@ describe("<ArmorGear> mods on a piece", () => {
     expect(within(row).queryByRole("button", { name: "外す" })).toBeNull();
   });
 
+  it("labels a free mod and keeps it removable", () => {
+    const patch = vi.fn();
+    const { container } = renderPanel(
+      ArmorGear,
+      character([mod("m1", "Fire Resistance", "a1", { nuyen: 0, free: true })]),
+      patch,
+    );
+
+    const row = [...container.querySelectorAll<HTMLElement>(".cyber-item")][0];
+    expect(row.textContent).toContain("Fire Resistance / 0¥ / 無料購入");
+    fireEvent.click(within(row).getByRole("button", { name: "外す" }));
+    expect(patch).toHaveBeenCalledWith({ armor_mods: [] });
+  });
+
   it("re-rating a mod edits that mod alone", () => {
     const patch = vi.fn();
     renderPanel(

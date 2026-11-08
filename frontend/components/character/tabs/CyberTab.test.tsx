@@ -251,6 +251,29 @@ describe("<CyberTab>", () => {
     expect(screen.getByRole("button", { name: "削除" })).toBeTruthy();
   });
 
+  it("labels a free implant and still lets it be deleted", () => {
+    const ch = makeCharacter();
+    const d = {
+      ...ch.derived,
+      cyberware: [
+        {
+          id: "row1",
+          ware_id: "datajack",
+          name: "Datajack",
+          category: "Headware",
+          grade: "Standard",
+          rating: 1,
+          essence: 0.1,
+          nuyen: 0,
+          free: true,
+        },
+      ],
+    } as unknown as Derived;
+    render(<CyberTab {...panelProps({ ...ch, derived: d }, { catalog: cyberCatalog() })} />);
+    expect(screen.getByText(/0¥\s*\/ 無料購入/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: "削除" })).toBeTruthy();
+  });
+
   it("toggles a Redliner option through patch", () => {
     const patch = vi.fn();
     renderTab({ patch });

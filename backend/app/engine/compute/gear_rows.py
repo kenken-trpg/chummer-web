@@ -34,7 +34,14 @@ def resolve_armor_rows(
         has_wireless = bool(spec.get("wirelessbonus"))
         picked = chosen_cost(spec, armor_inst.cost)
         armor_inst.cost = picked
-        cost = picked if picked is not None else int(eval_formula(str(spec.get("cost") or "0"), rating, 0))
+        armor_inst.free = bool(armor_inst.free)
+        cost = (
+            0
+            if armor_inst.free
+            else picked
+            if picked is not None
+            else int(eval_formula(str(spec.get("cost") or "0"), rating, 0))
+        )
         nuyen += cost
         value, additive = parse_armor_value(str(spec.get("armor") or "0"), rating)
         if armor_inst.equipped:
@@ -60,6 +67,7 @@ def resolve_armor_rows(
                 "wireless": armor_inst.wireless,
                 "has_wireless": has_wireless,
                 "nuyen": cost,
+                "free": armor_inst.free,
                 "cost_range": spec.get("cost_range"),
                 "avail": spec.get("avail") or "",
                 "source": spec.get("source") or "",

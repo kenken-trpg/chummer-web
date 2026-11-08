@@ -39,6 +39,8 @@ export interface InstalledArmorMod {
   category?: string;
   parent_id?: string | null;
   included?: boolean;
+  /** Bought for free in Chummer (`<cost>0`); still takes capacity. */
+  free?: boolean;
   rating: number;
   rating_max: number;
   nuyen: number;
@@ -74,6 +76,8 @@ export interface InstalledArmor {
   wireless?: boolean;
   has_wireless?: boolean;
   nuyen: number;
+  /** Free purchase; its mods keep their own prices. */
+  free?: boolean;
   avail?: string;
   source?: string;
   contributes?: number;

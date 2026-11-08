@@ -162,7 +162,8 @@ def resolve_ware(
         picked = chosen_cost(ware, inst.cost)
         inst.cost = picked
         base_cost = picked if picked is not None else eval_formula(ware.get("cost"), rating, extras=formula_extras)
-        cost = 0 if included else int(round(base_cost * float(grade.get("cost") or 1)))
+        free = bool(getattr(inst, "free", False)) and not included
+        cost = 0 if included or free else int(round(base_cost * float(grade.get("cost") or 1)))
         nodes = substitute_rating(ware.get("bonus") or [], rating)
         if inst.wireless:
             nodes = nodes + substitute_rating(ware.get("wirelessbonus") or [], rating)
@@ -181,6 +182,7 @@ def resolve_ware(
                 "wireless": bool(inst.wireless),
                 "parent_id": inst.parent_id,
                 "included": included,
+                "free": free,
                 "plugin": plugin,
                 "essence": ess,
                 "ess_discount": int(inst.ess_discount or 0),

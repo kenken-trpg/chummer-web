@@ -9,7 +9,7 @@ from typing import Any
 from ..data_loader import CatalogDict
 from ..data_loader._xml import _int, _text
 from ..notices import Notice, Phrase, ui
-from ._common import _discounted, _picked_cost, _player_text, _Resolver, _unexpected_children
+from ._common import _discounted, _free_item, _picked_cost, _player_text, _Resolver, _unexpected_children
 
 _GRADE_NAMES = {
     "スタンダード": "Standard",
@@ -83,6 +83,7 @@ def _import_ware(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
                 "side": _text(w.find("location")) or None,
                 "extra": _text(w.find("extra")) or None,
                 "included": _came_with_parent(w),
+                "free": not _came_with_parent(w) and _free_item(w, ware_r.costs.get(wid)),
                 "discounted": _discounted(w),
                 "ess_discount": max(-100, min(100, _int(w.find("essdiscount"), 0))),
                 **_player_text(w),

@@ -14,6 +14,8 @@ export interface InstalledWare {
   wireless: boolean;
   parent_id?: string | null;
   included?: boolean;
+  /** Free purchase (`<cost>0`): no nuyen, essence and capacity as usual. */
+  free?: boolean;
   /** `<addware>`: the quality that came with this implant (Busted Cyberware). */
   granted_by?: string;
   essence: number;

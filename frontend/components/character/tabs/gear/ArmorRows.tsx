@@ -31,6 +31,7 @@ export function ArmorModRow({
       {tr(mod.name)}
       {mod.rating_max > 1 ? ` R${mod.rating}` : ""}
       {mod.included ? ` / ${ui("common.included")}` : ` / ${mod.nuyen.toLocaleString()}¥`}
+      {!mod.included && mod.free ? ui("gear.freePurchase") : ""}
       {mod.capacity_cost
         ? ui("gear.capacityCost", {
             cost: mod.capacity_cost < 0 ? `+${-mod.capacity_cost}` : mod.capacity_cost,

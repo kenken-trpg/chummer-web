@@ -54,6 +54,7 @@ def _import_armor(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: 
             "rating": max(1, _int(a.find("rating"), 1)),
             "equipped": _text(a.find("equipped")).lower() != "false",
             "discounted": _discounted(a),
+            "free": _free_item(a, armor_r.costs.get(aid)),
             **_player_text(a, "armorname"),
             **_location_of(a, locations),
         }
@@ -78,6 +79,7 @@ def _import_armor(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: 
                         "parent_id": row["id"],
                         "rating": max(1, _int(m.find("rating"), 1)),
                         "included": _text(m.find("included")).lower() == "true",
+                        "free": _text(m.find("included")).lower() != "true" and _free_item(m, amod_r.costs.get(mid)),
                         # Custom Fit (Stack): the armor it was tailored to
                         "stack_with": _text(m.find("extra")),
                     }

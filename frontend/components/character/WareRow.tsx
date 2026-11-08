@@ -164,6 +164,7 @@ export function WareRow(props: {
             {ui("help.ware.statsLabel")}
           </HelpTip>{" "}
           {item.name} / {tr(item.category)} / ESS −{item.essence} / {item.nuyen.toLocaleString()}¥
+          {!item.included && item.free ? ui("gear.freePurchase") : ""}
           {availBit(item, ui)} / {sourceBit(item, ui)}
           {capMax > 0 ? (
             <span className="cap">
