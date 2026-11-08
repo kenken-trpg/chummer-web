@@ -1,5 +1,6 @@
 /** 装備: 一般装備・武器・防具・ヴィークル・ウェア・ドラッグ — 日本語。 */
 export const JA_GEAR = {
+  "weapon.freePurchase": " / 無料購入",
   "gear.normalModulePool": "通常／資質枠",
   "gear.hardwiredModulePool": "直結枠",
   "gear.constructionCancelled": "履歴取消済み",

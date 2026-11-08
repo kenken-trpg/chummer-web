@@ -31,6 +31,37 @@ function renderTab(
 }
 
 describe("<WeaponGear>", () => {
+  it("labels an imported free weapon while keeping its delete action", () => {
+    const patch = vi.fn();
+    const ch = makeCharacter({
+      weapons: [{ id: "free-ak", weapon_id: "ak", qty: 1, free: true }],
+      derived: {
+        weapons: [
+          {
+            id: "free-ak",
+            weapon_id: "ak",
+            name: "AK-97",
+            category: "Assault Rifles",
+            type: "Ranged",
+            accuracy: "5",
+            reach: "0",
+            damage: "10P",
+            ap: "-2",
+            mode: "SA/BF/FA",
+            ammo: "38(c)",
+            qty: 1,
+            nuyen: 0,
+            free: true,
+          },
+        ],
+      },
+    });
+    render(<WeaponGear {...panelProps(ch, { patch })} />);
+    expect(screen.getByText(/無料購入/)).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "削除" }));
+    expect(patch).toHaveBeenCalledWith({ weapons: [], weapon_accessories: [], gear: [] });
+  });
+
   it("renders the search box and category tabs from the catalog", () => {
     renderTab();
     expect(screen.getByPlaceholderText("武器を検索")).toBeDefined();

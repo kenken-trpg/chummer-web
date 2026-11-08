@@ -29,7 +29,7 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
         {(d.weapons || []).map((item) => {
           const installedNames = (item.accessories || []).map((acc) => acc.name);
           const entry = (catalog.weapons || []).find((row) => row.id === item.weapon_id);
-          const parentCost = entry?.cost;
+          const parentCost = item.free ? "0" : entry?.cost;
           const specialMod = d.special_modification_limit;
           // Chummer tests the weapon's data, not what its accessories changed
           const tested = { ...item, ...entry, mounts: item.mounts };
@@ -105,6 +105,7 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                     : ""}
                   {item.mounted_label ? ui("weapon.mounted", { name: tr(item.mounted_label) }) : ""}
                   {included ? ui("weapon.includedWithHost") : ""}
+                  {!included && item.free ? ui("weapon.freePurchase") : ""}
                 </div>
                 <div className="cyber-controls">
                   {included ? null : (
@@ -151,6 +152,7 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                 {(item.accessories || []).map((acc) => (
                   <div className="muted" key={acc.id} style={{ marginTop: 6 }}>
                     {tr(acc.name)}
+                    {!acc.included && acc.free ? ui("weapon.freePurchase") : ""}
                     {acc.mount ? ` / ${acc.mount}` : ""}
                     {acc.specialmodification
                       ? ` / ${ui("weapon.specialMod", { cost: acc.special_modification_cost || 1 })}`

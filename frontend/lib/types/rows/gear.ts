@@ -134,6 +134,8 @@ export interface InstalledWeapon {
   origin_name?: string;
   /** comes with the drone it is bolted into: free, and not ours to remove */
   included?: boolean;
+  /** Free purchase; accessories keep their own prices. */
+  free?: boolean;
   useskill?: string;
   limb_str?: number | null;
   limb_agi?: number | null;
@@ -151,6 +153,7 @@ export interface InstalledWeaponAccessory {
   name: string;
   parent_id?: string | null;
   included?: boolean;
+  free?: boolean;
   /** false for one taken off (Chummer `<equipped>`): paid for, adds nothing */
   equipped?: boolean;
   mount?: string;

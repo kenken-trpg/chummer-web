@@ -211,9 +211,12 @@ def _resolve_weapon_accessories(
             parent_unit = int(
                 eval_formula(str((weapon_specs.get(str(weapon.get("weapon_id") or "")) or {}).get("cost") or "0"), 1, 0)
             )
+            if weapon.get("free"):
+                # Chummer substitutes the parent's OwnCost for Weapon Cost.
+                parent_unit = 0
             cost = (
                 0
-                if inst.included
+                if inst.included or inst.free
                 else int(eval_formula(str(spec.get("cost") or "0"), rating, 0, extras={"Weapon Cost": parent_unit}))
             )
             cost *= int(qty_by_id.get(weapon["id"]) or 1)
@@ -233,6 +236,7 @@ def _resolve_weapon_accessories(
                     "name": spec["name"],
                     "parent_id": inst.parent_id,
                     "included": bool(inst.included),
+                    "free": bool(inst.free),
                     "equipped": bool(inst.equipped),
                     "mount": mount,
                     "rating": rating,
