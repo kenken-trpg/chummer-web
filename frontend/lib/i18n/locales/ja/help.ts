@@ -397,6 +397,10 @@ export const JA_HELP = {
   "help.sub.discount": "ネットワーク・タスク・師事のそれぞれで 10% 引き（重ねられる）",
   "help.sub.echo": "1 等級につきエコーを 1 つ選べる。共振力の上限も等級のぶんだけ伸びる",
   "help.gear.homeNode1": "A.I. が住む機器。1 台だけで、別の機器に付けると印が移る",
+  "help.gear.activeDevice1":
+    "マトリックス・イニシアティブとシートのマトリックス欄に使う機器（Chummer の Active Commlink）",
+  "help.gear.activeDevice2":
+    "自動では、データ処理が最大のものを使う。持ち歩く機器が別なら、ここで選ぶ",
   "help.gear.homeNode2":
     "この機器のデータ処理が、マトリックス・イニシアティブと精神・社交リミットに使われる",
   "help.gear.homeNode3":

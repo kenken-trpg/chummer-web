@@ -105,6 +105,8 @@ class CharacterPatch(BaseModel):
     critter_powers: list[CritterPowerInstall] | None = None
     #: an A.I.'s home node, by device id; "" clears it
     home_node: str | None = None
+    #: the commlink, deck or RCC id, or "living_persona", the character runs; "" goes back to the automatic pick
+    active_matrix_device: str | None = None
     sprites: list[SpriteInstall] | None = None
     foci: list[FocusInstall] | None = None
     armor: list[ArmorInstall] | None = None
@@ -302,6 +304,9 @@ class CharacterState(BaseModel):
     critter_powers: list[CritterPowerInstall] = Field(default_factory=list)
     #: an A.I.'s home node (Chummer `HomeNode`): a commlink, deck, RCC, vehicle or drone id
     home_node: str = ""
+    #: the persona the character runs (Chummer `ActiveCommlink`): a commlink, deck or RCC id,
+    #: or "living_persona"; "" runs the one with the highest Data Processing
+    active_matrix_device: str = ""
     sprites: list[SpriteInstall] = Field(default_factory=list)
     foci: list[FocusInstall] = Field(default_factory=list)
     armor: list[ArmorInstall] = Field(default_factory=list)

@@ -292,6 +292,23 @@ def _combat_and_body(ctx: Ctx) -> _CombatPart:
     }
 
 
+def _active_persona(ctx: Ctx, living: dict[str, int] | None) -> str | None:
+    """Which of the personas the character picked to run, by the label
+    `matrix_initiative` knows it by — `None` when the pick is unset or names
+    something they no longer have, so the best one is run instead."""
+    active = ctx.state.active_matrix_device
+    if not active:
+        return None
+    if active == "living_persona":
+        return "living_persona" if living else None
+    devices = {
+        "cyberdeck": ctx.gear.get("cyberdeck"),
+        "rcc": ctx.gear.get("rcc"),
+        "commlink": ctx.gear.get("commlink"),
+    }
+    return next((label for label, row in devices.items() if row and str(row.get("id") or "") == active), None)
+
+
 def _gear(ctx: Ctx, living: dict[str, int] | None) -> _GearPart:
     """What the character carries, and the Matrix initiative of the persona worth running."""
     return {
@@ -335,6 +352,7 @@ def _gear(ctx: Ctx, living: dict[str, int] | None) -> _GearPart:
             int(ctx.total.get("INT") or 0),
             int(ctx.effects.get("matrix_initiative_dice") or 0),
             int(ctx.effects.get("matrix_initiative") or 0),
+            prefer=_active_persona(ctx, living),
         ),
         "lifestyle": ctx.gear.get("lifestyle"),
     }

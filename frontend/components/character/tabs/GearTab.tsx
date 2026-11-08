@@ -16,6 +16,7 @@ import { VehicleDroneGear } from "@/components/character/tabs/gear/VehicleDroneG
 import { MiscDrugsGear } from "@/components/character/tabs/gear/MiscDrugsGear";
 import { LifestyleGear } from "@/components/character/tabs/gear/LifestyleGear";
 import { StorageLocationsGear } from "@/components/character/tabs/gear/StorageLocationsGear";
+import { ActiveMatrixDevice } from "@/components/character/tabs/gear/ActiveMatrixDevice";
 
 // A module constant cannot call the hook, so it holds keys and the render
 // resolves them.
@@ -60,6 +61,7 @@ export function GearTab(props: TabPanelProps) {
         {d.cyberdeck ? ` ・ ${tr(d.cyberdeck.name)} DR${d.cyberdeck.device_rating}` : ""}
         {d.rcc ? ` ・ ${tr(d.rcc.name)} DR${d.rcc.device_rating}` : ""}
       </p>
+      <ActiveMatrixDevice {...props} />
       <div className="option-row">
         {KIND_TABS.map(({ kind, label }) => (
           <button

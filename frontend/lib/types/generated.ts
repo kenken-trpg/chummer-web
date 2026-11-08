@@ -880,6 +880,10 @@ export interface Character {
   critter_powers?: CritterPowerInstall[];
   /** an A.I.'s home node (Chummer `HomeNode`): a commlink, deck, RCC, vehicle or drone id */
   home_node?: string;
+  /** the persona the character runs (Chummer `ActiveCommlink`): a commlink, deck or RCC id,
+   *  or "living_persona"; "" runs the one with the highest Data Processing
+   */
+  active_matrix_device?: string;
   sprites?: SpriteInstall[];
   foci?: FocusInstall[];
   armor?: ArmorInstall[];
