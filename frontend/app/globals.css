@@ -633,7 +633,8 @@ input[type="range"] {
 .range-tick em {
   font-style: normal;
   font-size: 0.62rem;
-  color: var(--muted);
+  /* ten-pixel digits: --muted was 4.1:1 where the slider's track sits behind */
+  color: var(--muted-stat);
   font-variant-numeric: tabular-nums;
 }
 .range-tick.here i {
@@ -827,6 +828,12 @@ input[type="search"] {
 }
 .cyber-controls input[type="number"] {
   width: 64px;
+}
+/* What the player typed is the value itself, not a hint: the row's muted grey
+   on the browser's dark field (#3b3b3b) was 4.1:1, under WCAG AA's 4.5. */
+.cyber-controls input,
+.sheet-desc-grid input {
+  color: var(--text);
 }
 .cyber-controls select {
   background: var(--bg);

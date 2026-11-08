@@ -202,6 +202,8 @@ export const EN_GEAR = {
   "ware.compact": "Compact (names only)",
   "ware.pending": "(choice pending)",
   "ware.addGrade": "Add as {grade}",
+  "ware.addGradeLabel": "Grade to add at",
+  "ware.categoryFilter": "Filter by category",
   "ware.aloneEss": " (standalone)",
   "ware.maxRating": " / max R{max}",
 

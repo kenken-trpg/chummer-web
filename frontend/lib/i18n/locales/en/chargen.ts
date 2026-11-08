@@ -206,6 +206,8 @@ export const EN_CHARGEN = {
   "skills.emptyKnowledge": "None yet. Add one from the catalog, or make one with a custom name.",
   "skills.searchKnowledge": "Search knowledge skills",
   "skills.customName": "Custom knowledge name",
+  "skills.customCategory": "Category of the knowledge skill to add",
+  "skills.categoryOf": "Category of {name}",
 
   // --- vehicles / drones --------------------------------------------------
   "skills.addCustom": "Add custom",

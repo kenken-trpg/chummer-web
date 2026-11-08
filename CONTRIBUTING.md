@@ -219,6 +219,13 @@ belong to — `Ares Predator V: アクセサリを追加` — which is what
 `<AddonSelect>` is for. Where a panel still writes its own `<select>`, give it
 the same `aria-label={`${tr(row.name)}: …`}` shape.
 
+The lint sees the source; it cannot see a control's computed name or the colours
+it is drawn in. `frontend/e2e/a11y.spec.ts` runs axe (WCAG 2.1 A and AA) on every
+tab of a fresh Mystic Adept and Technomancer, on the rows of the Chummer save
+fixture, on the open panels and the export menu, and on the creation review. A
+failure lists each violation with its rule and the element it was found on.
+A new tab, gear kind or panel is covered once it is reachable from those.
+
 ### Coverage
 
 ```bash

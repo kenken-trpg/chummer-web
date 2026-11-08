@@ -66,7 +66,11 @@ export function KnowledgePicker(props: TabPanelProps) {
           value={customKnow}
           onChange={(e) => setCustomKnow(e.target.value)}
         />
-        <select value={customKnowCat} onChange={(e) => setCustomKnowCat(e.target.value)}>
+        <select
+          aria-label={ui("skills.customCategory")}
+          value={customKnowCat}
+          onChange={(e) => setCustomKnowCat(e.target.value)}
+        >
           {KNOW_CATS.map((cat) => (
             <option key={cat} value={cat}>
               {knowCatLabel(cat, ui)}

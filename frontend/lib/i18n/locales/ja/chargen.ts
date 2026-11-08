@@ -204,6 +204,8 @@ export const JA_CHARGEN = {
   "skills.emptyKnowledge": "まだありません。カタログから追加するか、カスタム名で作れます。",
   "skills.searchKnowledge": "知識技能を検索",
   "skills.customName": "カスタム知識名",
+  "skills.customCategory": "追加する知識技能の分類",
+  "skills.categoryOf": "{name}の分類",
 
   // --- vehicles / drones --------------------------------------------------
   "skills.addCustom": "カスタム追加",
