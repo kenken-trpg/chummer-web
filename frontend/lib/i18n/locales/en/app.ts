@@ -12,7 +12,7 @@ export const EN_APP = {
   "app.creationReview.power": "Power points",
   "app.creationReview.spells": "Free spell slots",
   "app.creationReview.forms": "Free complex form slots",
-  "app.creationReview.edit": "Edit {name}",
+  "app.creationReview.edit": "Go to tab ({name})",
   "app.creationReview.pending": "There are {count} unresolved equipment rows from an import.",
   "app.creationReview.errors":
     "Creation errors remain. Review each finding. You may still proceed with this character.",

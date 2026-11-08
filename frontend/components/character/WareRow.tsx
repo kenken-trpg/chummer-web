@@ -351,6 +351,7 @@ export function WareRow(props: {
         {slotOptions.length > 0 && (!nested || props.onAddChildTo) ? (
           <div className="slot-picker">
             <select
+              aria-label={`${tr(item.name)}: ${ui("gear.addToSlot")}`}
               value={chosen}
               onChange={(e) =>
                 nested ? setNestedSlot(e.target.value) : onSlotChange(e.target.value)

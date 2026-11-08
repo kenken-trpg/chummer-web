@@ -287,7 +287,11 @@ export function CyberTab({
           value={cySearch}
           onChange={(e) => setCySearch(e.target.value)}
         />
-        <select value={cyCat} onChange={(e) => setCyCat(e.target.value)}>
+        <select
+          aria-label={ui("ware.categoryFilter")}
+          value={cyCat}
+          onChange={(e) => setCyCat(e.target.value)}
+        >
           <option value="all">{ui("ware.allCategories")}</option>
           {cyberCats.map((c) => (
             <option key={c} value={c}>
@@ -295,7 +299,11 @@ export function CyberTab({
             </option>
           ))}
         </select>
-        <select value={effectiveAddGrade} onChange={(e) => setAddGrade(e.target.value)}>
+        <select
+          aria-label={ui("ware.addGradeLabel")}
+          value={effectiveAddGrade}
+          onChange={(e) => setAddGrade(e.target.value)}
+        >
           {cyberGrades.map((g) => (
             <option key={g.name} value={g.name}>
               {ui("ware.addGrade", { grade: g.name })}

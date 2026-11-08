@@ -211,7 +211,11 @@ export function BioTab({ catalog, character: ch, d, tr, ui, patch, searchRequest
           value={bioSearch}
           onChange={(e) => setBioSearch(e.target.value)}
         />
-        <select value={bioCat} onChange={(e) => setBioCat(e.target.value)}>
+        <select
+          aria-label={ui("ware.categoryFilter")}
+          value={bioCat}
+          onChange={(e) => setBioCat(e.target.value)}
+        >
           <option value="all">{ui("ware.allCategories")}</option>
           {bioCats.map((c) => (
             <option key={c} value={c}>
@@ -219,7 +223,11 @@ export function BioTab({ catalog, character: ch, d, tr, ui, patch, searchRequest
             </option>
           ))}
         </select>
-        <select value={effectiveBioGrade} onChange={(e) => setBioGrade(e.target.value)}>
+        <select
+          aria-label={ui("ware.addGradeLabel")}
+          value={effectiveBioGrade}
+          onChange={(e) => setBioGrade(e.target.value)}
+        >
           {bioGrades.map((g) => (
             <option key={g.name} value={g.name}>
               {ui("ware.addGrade", { grade: g.name })}

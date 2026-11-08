@@ -100,6 +100,7 @@ export function KnowledgeSkills(props: TabPanelProps) {
               </span>
               {custom ? (
                 <select
+                  aria-label={ui("skills.categoryOf", { name: tr(row.name) })}
                   disabled={d.life_module_skills?.frozen}
                   value={row.category}
                   onChange={(e) =>

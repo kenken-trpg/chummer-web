@@ -204,6 +204,8 @@ export const JA_GEAR = {
   "ware.compact": "簡易表示（名称のみ）",
   "ware.pending": "（未選択あり）",
   "ware.addGrade": "追加時 {grade}",
+  "ware.addGradeLabel": "追加するときの等級",
+  "ware.categoryFilter": "分類で絞り込む",
   "ware.aloneEss": "（単独時）",
   "ware.maxRating": " / 最大R{max}",
 

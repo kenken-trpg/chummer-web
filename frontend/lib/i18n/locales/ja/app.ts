@@ -12,7 +12,7 @@ export const JA_APP = {
   "app.creationReview.power": "パワーポイント",
   "app.creationReview.spells": "無料の呪文枠",
   "app.creationReview.forms": "無料の複合体枠",
-  "app.creationReview.edit": "{name}の編集タブへ",
+  "app.creationReview.edit": "該当タブへ（{name}）",
   "app.creationReview.pending": "取り込み後に未確定の装備が{count}件あります。",
   "app.creationReview.errors":
     "作成エラーが残っています。各項目を確認してください。このまま移行することもできます。",

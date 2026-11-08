@@ -31,7 +31,7 @@ it("shows creation findings, budgets and unresolved import rows before confirmat
 it("returns to editing without entering career", () => {
   const props = setup();
   render(<CreationReview {...props} />);
-  fireEvent.click(screen.getByRole("button", { name: "カルマの編集タブへ" }));
+  fireEvent.click(screen.getByRole("button", { name: "該当タブへ（カルマ）" }));
   expect(props.ed.cancelCareerReview).toHaveBeenCalledOnce();
   expect(props.setTab).toHaveBeenCalledWith("qualities");
   expect(props.ed.confirmCareerReview).not.toHaveBeenCalled();

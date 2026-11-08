@@ -17,7 +17,7 @@ test("creation review can return to editing and only starts career after confirm
   await expect(start).toBeVisible();
 
   await start.click();
-  await review.getByRole("button", { name: "カルマの編集タブへ", exact: true }).click();
+  await review.getByRole("button", { name: "該当タブへ（カルマ）", exact: true }).click();
   await expect(review).toHaveCount(0);
   await expect(
     page
