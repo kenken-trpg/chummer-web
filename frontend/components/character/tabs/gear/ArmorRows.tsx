@@ -27,7 +27,7 @@ export function ArmorModRow({
   patch,
 }: RowProps & { mod: InstalledArmorMod; /** pieces it may stack with */ stackOptions: string[] }) {
   return (
-    <div className="muted" style={{ marginTop: 6 }}>
+    <div data-sheet-search={`armor_mods/${mod.id}`} className="muted" style={{ marginTop: 6 }}>
       {tr(mod.name)}
       {mod.rating_max > 1 ? ` R${mod.rating}` : ""}
       {mod.included ? ` / ${ui("common.included")}` : ` / ${mod.nuyen.toLocaleString()}¥`}
@@ -140,7 +140,7 @@ export function CarriedGearRow({
   const bucket = gear.bucket || "gear";
   const rows = ch[bucket] || [];
   return (
-    <div className="muted" style={{ marginTop: 6 }}>
+    <div data-sheet-search={`${bucket}/${gear.id}`} className="muted" style={{ marginTop: 6 }}>
       {tr(gear.name)}
       {gear.rating_max > 1 ? ` R${gear.rating}` : ""}
       {(gear.qty ?? 1) > 1 ? ` ×${gear.qty}` : ""}

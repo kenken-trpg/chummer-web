@@ -34,7 +34,7 @@ export function OpticsGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
               !alreadySlotted(mod, heldGear),
           );
           return (
-            <div className="cyber-item" key={item.id}>
+            <div data-sheet-search={`optics/${item.id}`} className="cyber-item" key={item.id}>
               <div>
                 <b>{tr(item.name)}</b>
                 <div className="muted">

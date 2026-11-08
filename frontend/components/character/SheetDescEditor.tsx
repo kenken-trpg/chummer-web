@@ -69,7 +69,7 @@ export function SheetDescEditor({
             ["player_name", "desc.playerName"],
           ] as const satisfies readonly (readonly [keyof Character, MsgKey])[]
         ).map(([field, label]) => (
-          <label key={field}>
+          <label data-sheet-search={`description/${field}`} key={field}>
             {ui(label)}
             <input
               defaultValue={(ch[field] as string) || ""}
@@ -90,7 +90,12 @@ export function SheetDescEditor({
           ["game_notes", "desc.gameNotes"],
         ] as const satisfies readonly (readonly [keyof Character, MsgKey])[]
       ).map(([field, label]) => (
-        <div key={field} className="sheet-notes-edit" style={{ margin: "8px 0 0" }}>
+        <div
+          data-sheet-search={`description/${field}`}
+          key={field}
+          className="sheet-notes-edit"
+          style={{ margin: "8px 0 0" }}
+        >
           <label>
             {ui(label)}
             <textarea

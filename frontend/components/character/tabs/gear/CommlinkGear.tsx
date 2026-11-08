@@ -20,7 +20,7 @@ export function CommlinkGear({ catalog, character: ch, d, tr, ui, patch }: TabPa
       <LooseAppRows character={ch} d={d} tr={tr} ui={ui} patch={patch} />
       <>
         {(d.commlinks || []).map((item) => (
-          <div className="cyber-item" key={item.id}>
+          <div data-sheet-search={`commlinks/${item.id}`} className="cyber-item" key={item.id}>
             <div>
               <b>{tr(item.name)}</b>
               {item.implanted_in ? (

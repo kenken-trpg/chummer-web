@@ -42,7 +42,7 @@ export function ContactsTab({ character: ch, d, tr, ui, patch, setCharacter }: T
         {ui("common.period")}
       </p>
       {(d.contacts || []).map((item) => (
-        <div className="cyber-item" key={item.id}>
+        <div data-sheet-search={`contacts/${item.id}`} className="cyber-item" key={item.id}>
           <div>
             <b>{item.name || ui("common.unnamed")}</b>
             <div className="muted">

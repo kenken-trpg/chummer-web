@@ -67,7 +67,11 @@ export function KnowledgeSkills(props: TabPanelProps) {
           const specValue = ch.skill_specializations?.[row.name] || row.spec || "";
           const knowSpec = (catalog.skills.knowledge || []).find((item) => item.name === row.name);
           return (
-            <div className={splitKarma ? "know-row has-karma" : "know-row"} key={row.name}>
+            <div
+              className={splitKarma ? "know-row has-karma" : "know-row"}
+              key={row.name}
+              data-sheet-search={`knowledge_skills/${row.name}`}
+            >
               <span>
                 <HelpTip
                   label={ui("help.open", { label: tr(row.name) })}

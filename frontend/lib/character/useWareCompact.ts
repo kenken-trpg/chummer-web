@@ -6,8 +6,12 @@ import { useState } from "react";
  * for both tabs: someone who wants the long list folded wants it everywhere.
  * Vehicles and drones keep their own key — a garage and a body fold apart.
  */
-export function useWareCompact(key = "wareCompact"): [boolean, (v: boolean) => void] {
+export function useWareCompact(
+  key = "wareCompact",
+  expanded = false,
+): [boolean, (v: boolean) => void] {
   const [compact, setCompact] = useState<boolean>(() => {
+    if (expanded) return false;
     try {
       return localStorage.getItem(key) === "1";
     } catch {

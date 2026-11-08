@@ -85,7 +85,7 @@ export function WareHeldGear({
         </div>
       ) : null}
       {storedPrograms.map((prog) => (
-        <div className="cyber-item" key={prog.id}>
+        <div className="cyber-item" key={prog.id} data-sheet-search={`programs/${prog.id}`}>
           <div>
             <b>{tr(prog.label || prog.name)}</b>
             <div className="muted">{prog.nuyen}¥</div>

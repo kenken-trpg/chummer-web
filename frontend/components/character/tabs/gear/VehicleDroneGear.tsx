@@ -24,9 +24,10 @@ export function VehicleDroneGear({
   patch,
   mode,
   ui,
+  searchRequest,
 }: TabPanelProps & { mode: "drone" | "vehicle" }) {
   const [slotPick, setSlotPick] = useState<Record<string, string>>({});
-  const [compact, setCompact] = useWareCompact("vehicleCompact");
+  const [compact, setCompact] = useWareCompact("vehicleCompact", !!searchRequest);
   const owned = (mode === "drone" ? d.drones : d.vehicles) || [];
 
   return (
@@ -72,7 +73,11 @@ export function VehicleDroneGear({
                 .map((prog) => tr(prog.label || prog.name)),
             ];
             return (
-              <div className="cyber-item compact" key={item.id}>
+              <div
+                data-sheet-search={`${mode === "vehicle" ? "vehicles" : "drones"}/${item.id}`}
+                className="cyber-item compact"
+                key={item.id}
+              >
                 <div>
                   <b>{tr(item.name)}</b>
                   {fitted.length ? (
@@ -84,7 +89,11 @@ export function VehicleDroneGear({
             );
           }
           return (
-            <div className="cyber-item" key={item.id}>
+            <div
+              data-sheet-search={`${mode === "vehicle" ? "vehicles" : "drones"}/${item.id}`}
+              className="cyber-item"
+              key={item.id}
+            >
               <div>
                 <b>{tr(item.name)}</b>
                 <div className="cyber-controls">

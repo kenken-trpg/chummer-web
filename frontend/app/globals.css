@@ -2097,3 +2097,9 @@ input[type="search"] {
   display: none !important;
   background: none !important;
 }
+
+[data-search-highlight="true"] {
+  outline: 3px solid var(--accent, #4fa9d6);
+  outline-offset: 4px;
+  scroll-margin-top: 120px;
+}

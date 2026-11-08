@@ -3,6 +3,9 @@
 import { useRef, useState } from "react";
 import { CharacterSidebar } from "@/components/character/CharacterSidebar";
 import { shownTabs, TabBar } from "@/components/character/TabBar";
+import { SheetSearch } from "@/components/character/SheetSearch";
+import type { SheetSearchRequest } from "@/lib/character/sheet-search";
+import { useSheetSearchNavigation } from "@/lib/character/useSheetSearchNavigation";
 import { TabPanels } from "@/components/character/TabPanels";
 import type { TabPanelProps } from "@/components/character/types";
 import { Toolbar } from "@/components/character/Toolbar";
@@ -25,13 +28,22 @@ import { GearReview } from "@/components/character/GearReview";
 
 export default function Page() {
   const [tab, setTab] = useState<Tab>("priority");
+  const [searchRequest, setSearchRequest] = useState<SheetSearchRequest | null>(null);
+  const searchSerial = useRef(0);
+  const changeTab = (next: Tab) => {
+    setSearchRequest(null);
+    setTab(next);
+  };
   const [sheetLayout, setSheetLayout] = useSheetLayout();
   const fileRef = useRef<HTMLInputElement>(null);
-  const ed = useCharacterEditor({ onCharacterOpened: () => setTab("priority") });
+  const ed = useCharacterEditor({ onCharacterOpened: () => changeTab("priority") });
   const { catalog, ch, error, notice, tr, trGroup, t, patch, setCh, undo, redo, onPortraitFile } =
     ed;
   const { ui } = useUiText();
   useKeyboardShortcuts(undo, redo);
+  useSheetSearchNavigation(searchRequest, tab, ch?.id, () =>
+    ed.setNotice(ui("app.sheetSearch.missing")),
+  );
 
   if (error && !ch) {
     return (
@@ -49,6 +61,10 @@ export default function Page() {
   const d = ch.derived;
   const panel: TabPanelProps = {
     catalog,
+    searchRequest:
+      searchRequest?.characterId === ch.id && searchRequest.target.tab === tab
+        ? searchRequest
+        : undefined,
     character: ch,
     d,
     tr,
@@ -81,12 +97,20 @@ export default function Page() {
               ch={ch}
               catalog={catalog}
               tab={tab}
-              setTab={setTab}
+              setTab={changeTab}
               sheetLayout={sheetLayout}
               setSheetLayout={setSheetLayout}
               fileRef={fileRef}
             />
 
+            <SheetSearch
+              key={ch.id}
+              ed={ed}
+              onNavigate={(target) => {
+                setSearchRequest({ target, characterId: ch.id, serial: ++searchSerial.current });
+                setTab(target.tab);
+              }}
+            />
             <CharacterRoster ed={ed} />
             <BackupReminder ed={ed} />
             <SavedHistory ed={ed} />
@@ -101,16 +125,17 @@ export default function Page() {
           {/* Outside the <header> on purpose: a sticky element can only stick
               inside its own containing block, so a tab bar nested in the
               header would unstick the moment the header scrolled away. */}
-          <TabBar tab={tab} setTab={setTab} enabledTabs={shownTabs(d)} />
+          <TabBar tab={tab} setTab={changeTab} enabledTabs={shownTabs(d)} />
 
-          <TabPanels
-            tab={tab}
-            panel={panel}
-            sheetLayout={sheetLayout}
-            onPortraitFile={onPortraitFile}
-            setTab={setTab}
-          />
-
+          <div id="character-panels" key={`${ch.id}-${searchRequest?.serial ?? 0}`}>
+            <TabPanels
+              tab={tab}
+              panel={panel}
+              sheetLayout={sheetLayout}
+              onPortraitFile={onPortraitFile}
+              setTab={changeTab}
+            />
+          </div>
           <AppFooter />
         </main>
 

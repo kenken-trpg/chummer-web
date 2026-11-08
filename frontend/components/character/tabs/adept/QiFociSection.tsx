@@ -37,7 +37,7 @@ export function QiFociSection({
       </h3>
       <p className="muted">{ui("adept.qiNote")}</p>
       {(d.qi_foci || []).map((item) => (
-        <div className="cyber-item" key={item.id}>
+        <div data-sheet-search={`qi_foci/${item.id}`} className="cyber-item" key={item.id}>
           <div>
             <b>Qi Focus F{item.rating}</b>
             <div className="muted">

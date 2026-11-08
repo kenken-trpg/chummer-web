@@ -19,7 +19,7 @@ export function AdeptPowerRow({
   patch,
 }: Pick<TabPanelProps, "character" | "tr" | "t" | "ui" | "patch"> & { item: InstalledAdeptPower }) {
   return (
-    <div className="cyber-item">
+    <div data-sheet-search={`adept_powers/${item.id}`} className="cyber-item">
       <div>
         <b>{tr(item.name)}</b>
         <div className="muted">

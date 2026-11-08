@@ -39,3 +39,19 @@ describe("<GearTab>", () => {
     expect(screen.queryByPlaceholderText("防具を検索")).toBeNull();
   });
 });
+
+it("opens the searched category and still allows manual category changes", () => {
+  render(
+    <GearTab
+      {...panelProps(makeCharacter())}
+      searchRequest={{
+        characterId: "c",
+        serial: 1,
+        target: { key: "gear/a", tab: "gear", gearKind: "weapon" },
+      }}
+    />,
+  );
+  expect(screen.getByPlaceholderText("武器を検索")).toBeDefined();
+  fireEvent.click(screen.getByRole("button", { name: "防具" }));
+  expect(screen.getByPlaceholderText("防具を検索")).toBeDefined();
+});

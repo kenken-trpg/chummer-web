@@ -52,7 +52,7 @@ export function DeckModuleRows({
       </b>
       <p className="muted">{ui("gear.moduleHelp")}</p>
       {installed.map((r) => (
-        <div key={r.id} className="muted">
+        <div data-sheet-search={`gear/${r.id}`} key={r.id} className="muted">
           {tr(r.label || r.name)} ×{r.qty} / {r.nuyen.toLocaleString()}¥
           {!r.module_valid ? ` / ${ui("gear.moduleInvalid")}` : ""}
           {!r.module_effect_supported ? ` / ${ui("gear.moduleManualEffect")}` : ""}

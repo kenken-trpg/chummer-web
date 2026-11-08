@@ -41,7 +41,7 @@ export function SpiritsTab({ catalog, character: ch, d, tr, ui, patch }: TabPane
         </select>
       </label>
       {(d.spirits || []).map((item) => (
-        <div className="cyber-item" key={item.id}>
+        <div data-sheet-search={`spirits/${item.id}`} className="cyber-item" key={item.id}>
           <div>
             <b>{tr(item.name)}</b>
             <div className="muted">

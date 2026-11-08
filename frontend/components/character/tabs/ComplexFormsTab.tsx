@@ -33,7 +33,7 @@ export function ComplexFormsTab({ catalog, character: ch, d, tr, ui, patch }: Ta
         {ui("cf.note")}
       </p>
       {(d.complex_forms || []).map((item) => (
-        <div className="cyber-item" key={item.id}>
+        <div data-sheet-search={`complex_forms/${item.id}`} className="cyber-item" key={item.id}>
           <div>
             <b>{tr(item.label || item.name)}</b>
             <div className="muted">

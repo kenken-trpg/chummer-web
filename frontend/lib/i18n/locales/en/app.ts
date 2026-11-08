@@ -1,5 +1,14 @@
 /** アプリの枠・ナビ・共通の語・書式・共有・ツールバー — English。 */
 export const EN_APP = {
+  "app.sheetSearch.title": "Search character contents",
+  "app.sheetSearch.hint":
+    "Search owned items, qualities, spells, skills, contacts, background and notes by name, nickname, notes or storage location.",
+  "app.sheetSearch.count": "Found {count} items.",
+  "app.sheetSearch.empty": "No matching items.",
+  "app.sheetSearch.notes": "Notes and selections",
+  "app.sheetSearch.limit": "Showing the first 100 items. Add search terms to narrow the results.",
+  "app.sheetSearch.missing": "The editor was opened, but the requested row could not be found.",
+
   "app.bulk.download": "Back up all characters",
   "app.bulk.entireRoster":
     "Includes every saved character in one JSON file, regardless of search or filters.",

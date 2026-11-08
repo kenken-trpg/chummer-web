@@ -121,6 +121,7 @@ export function ActiveSkills(props: TabPanelProps) {
               <div
                 className={splitKarma ? "skill-row has-spec has-karma" : "skill-row has-spec"}
                 key={s.id}
+                data-sheet-search={`skills/${s.name}`}
               >
                 <span>
                   <HelpTip

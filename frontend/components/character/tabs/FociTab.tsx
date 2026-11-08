@@ -34,7 +34,7 @@ export function FociTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
         {d.enabled_tabs.includes("adept") ? ui("foci.adeptNote") : ""}
       </p>
       {(d.foci || []).map((item) => (
-        <div className="cyber-item" key={item.id}>
+        <div data-sheet-search={`foci/${item.id}`} className="cyber-item" key={item.id}>
           <div>
             <b>{tr(item.name)}</b>
             <div className="muted">

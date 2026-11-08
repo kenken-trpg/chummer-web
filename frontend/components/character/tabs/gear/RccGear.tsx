@@ -20,7 +20,7 @@ export function RccGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
       <LooseProgramRows kind="rccs" character={ch} d={d} tr={tr} ui={ui} patch={patch} />
       <>
         {(d.rccs || []).map((item) => (
-          <div className="cyber-item" key={item.id}>
+          <div data-sheet-search={`rccs/${item.id}`} className="cyber-item" key={item.id}>
             <div>
               <b>{tr(item.name)}</b>
               <div className="muted">

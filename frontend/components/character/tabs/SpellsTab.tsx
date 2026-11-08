@@ -71,7 +71,7 @@ export function SpellsTab({ catalog, character: ch, d, t, tr, ui, patch }: TabPa
         </select>
       </label>
       {(d.spells || []).map((item) => (
-        <div className="cyber-item" key={item.id}>
+        <div data-sheet-search={`spells/${item.id}`} className="cyber-item" key={item.id}>
           <div>
             <b>{spellLabel(item, tr, t)}</b>
             <div className="muted">

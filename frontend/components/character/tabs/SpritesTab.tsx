@@ -30,7 +30,7 @@ export function SpritesTab({ catalog, character: ch, d, tr, ui, patch }: TabPane
           : ""}
       </p>
       {(d.sprites || []).map((item) => (
-        <div className="cyber-item" key={item.id}>
+        <div data-sheet-search={`sprites/${item.id}`} className="cyber-item" key={item.id}>
           <div>
             <b>{tr(item.name)}</b>
             <div className="muted">

@@ -37,7 +37,12 @@ export function LooseProgramRows({
       <div>
         <b>{ui("gear.loosePrograms")}</b>
         {loose.map((prog) => (
-          <div className="muted" key={prog.id} style={{ marginTop: 6 }}>
+          <div
+            data-sheet-search={`programs/${prog.id}`}
+            className="muted"
+            key={prog.id}
+            style={{ marginTop: 6 }}
+          >
             <HelpTip
               label={ui("help.open", { label: tr(prog.label || prog.name) })}
               lines={[

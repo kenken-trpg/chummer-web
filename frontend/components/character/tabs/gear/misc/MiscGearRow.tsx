@@ -50,7 +50,7 @@ export function MiscGearRow({
     (row) => !row.parent_id && row.id !== item.id && !row.granted_by,
   );
   return (
-    <div className="cyber-item" key={item.id}>
+    <div data-sheet-search={`gear/${item.id}`} className="cyber-item" key={item.id}>
       <div>
         <b>{tr(item.label || item.name)}</b>
         <div className="muted">

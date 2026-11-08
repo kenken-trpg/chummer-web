@@ -21,7 +21,12 @@ export function LooseAppRows({
       <div>
         <b>{ui("gear.looseApps")}</b>
         {loose.map((app) => (
-          <div className="muted" key={app.id} style={{ marginTop: 6 }}>
+          <div
+            data-sheet-search={`apps/${app.id}`}
+            className="muted"
+            key={app.id}
+            style={{ marginTop: 6 }}
+          >
             {tr(app.label || app.name)} / {app.nuyen.toLocaleString()}¥{" "}
             {hosts.length ? (
               <label>

@@ -1,8 +1,10 @@
+import type { SheetSearchRequest } from "@/lib/character/sheet-search";
 import type { Catalog, Character } from "@/lib/types";
 import type { UiFn } from "@/lib/i18n";
 import type { PatchInput } from "@/lib/character/patch-queue";
 
 export type TabPanelProps = {
+  searchRequest?: SheetSearchRequest;
   catalog: Catalog;
   character: Character;
   d: Character["derived"];
