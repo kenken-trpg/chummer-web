@@ -3,7 +3,11 @@
 Notable changes. Format follows [Keep a Changelog](https://keepachangelog.com/);
 self-hosters can pin to a tag instead of tracking `main`.
 
-## [Unreleased]
+## [0.5.41] — 2026-11-08
+
+### Added
+
+- **画面内ヘルプ**: キャラクター一覧、一括バックアップと取り込み、キャラクター内検索、編集履歴、取り込み結果、キャリア移行前の確認、コンタクトの詳細に、日本語と英語の「?」説明を追加しました。
 
 ## [0.5.40] — 2026-11-08
 
@@ -3138,7 +3142,8 @@ First tagged release.
 - One-container Docker image (Caddy + uvicorn + Next standalone) published to
   GHCR; `make up` / `compose.yaml` for local self-hosting.
 
-[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.40...HEAD
+[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.41...HEAD
+[0.5.41]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.40...v0.5.41
 [0.5.40]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.39...v0.5.40
 [0.5.39]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.38...v0.5.39
 [0.5.38]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.37...v0.5.38
