@@ -1,5 +1,6 @@
 import type { CharacterEditor } from "@/lib/character/useCharacterEditor";
 import { useUiText } from "@/lib/i18n";
+import { HelpTip } from "@/components/help/HelpTip";
 
 export function BulkImportReview({ ed }: { ed: CharacterEditor }) {
   const { ui, locale } = useUiText();
@@ -10,7 +11,14 @@ export function BulkImportReview({ ed }: { ed: CharacterEditor }) {
     <section className="notice" aria-labelledby="bulk-import-title" aria-busy={ed.bulkBusy}>
       <p id="bulk-import-title">{ui("app.bulk.review")}</p>
       <p>{ui("app.bulk.created", { date: new Date(backup.createdAt).toLocaleString(locale) })}</p>
-      <p>{ui("app.bulk.copies")}</p>
+      <p>
+        <HelpTip
+          label={ui("help.open", { label: ui("app.bulk.review") })}
+          lines={[{ label: ui("help.bulk.twice") }, { label: ui("help.bulk.recompute") }]}
+        >
+          {ui("app.bulk.copies")}
+        </HelpTip>
+      </p>
       <fieldset disabled={ed.bulkBusy}>
         <legend>{ui("app.bulk.choose")}</legend>
         <button

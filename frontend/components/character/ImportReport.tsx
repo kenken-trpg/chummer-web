@@ -1,6 +1,7 @@
 import type { CharacterEditor } from "@/lib/character/useCharacterEditor";
 import { useUiText } from "@/lib/i18n";
 import { ReviewPanel } from "./ReviewPanel";
+import { HelpTip } from "@/components/help/HelpTip";
 
 /**
  * What an import could not bring over, listed once the character is open.
@@ -59,11 +60,18 @@ export function ImportReport({ ed }: { ed: CharacterEditor }) {
     >
       {importSummary ? (
         <p>
-          {ui("app.importReport.summary", {
-            skills: Object.keys(importSummary.skills).length,
-            qualities: importSummary.quality_ids.length,
-            contacts: importSummary.contacts?.length ?? 0,
-          })}
+          <HelpTip
+            label={ui("help.open", {
+              label: ui("app.importReport.success", { name: importSummary.name }),
+            })}
+            lines={[{ label: ui("help.import.new") }, { label: ui("help.import.warn") }]}
+          >
+            {ui("app.importReport.summary", {
+              skills: Object.keys(importSummary.skills).length,
+              qualities: importSummary.quality_ids.length,
+              contacts: importSummary.contacts?.length ?? 0,
+            })}
+          </HelpTip>
         </p>
       ) : null}
       {importSummary ? (

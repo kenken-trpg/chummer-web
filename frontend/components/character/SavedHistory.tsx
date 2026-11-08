@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { getCharacterSnapshots, type CharacterSnapshot } from "@/lib/character/local-store";
 import type { CharacterEditor } from "@/lib/character/useCharacterEditor";
 import { useUiText } from "@/lib/i18n";
+import { HelpTip } from "@/components/help/HelpTip";
 
 export function SavedHistory({ ed }: { ed: CharacterEditor }) {
   const { ui, locale } = useUiText();
@@ -31,7 +32,18 @@ export function SavedHistory({ ed }: { ed: CharacterEditor }) {
   return (
     <details>
       <summary>{ui("app.savedHistory.title")}</summary>
-      <p className="muted">{ui("app.savedHistory.description")}</p>
+      <p className="muted">
+        <HelpTip
+          label={ui("help.open", { label: ui("app.savedHistory.title") })}
+          lines={[
+            { label: ui("help.history.when") },
+            { label: ui("help.history.undo") },
+            { label: ui("help.history.local") },
+          ]}
+        >
+          {ui("app.savedHistory.description")}
+        </HelpTip>
+      </p>
       {failed ? <p role="alert">{ui("app.savedHistory.failed")}</p> : null}
       {!rows.length ? <p>{ui("app.savedHistory.empty")}</p> : null}
       <ul>

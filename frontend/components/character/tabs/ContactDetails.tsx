@@ -3,6 +3,7 @@ import type { TabPanelProps } from "@/components/character/types";
 import { useState } from "react";
 import { editRow } from "@/lib/character/rows";
 import type { ContactInstall } from "@/lib/types/generated";
+import { HelpTip } from "@/components/help/HelpTip";
 
 /** The contact's own description, as Chummer keeps it. Nothing is computed from these. */
 const FIELDS = [
@@ -42,6 +43,17 @@ export function ContactDetails({
   return (
     <details className="contact-details" open={opened || undefined}>
       <summary>{ui("contact.details")}</summary>
+      <p className="muted">
+        <HelpTip
+          label={ui("help.open", { label: ui("contact.details") })}
+          lines={[
+            { label: ui("help.contact.detailsChum5") },
+            { label: ui("help.contact.detailsShare") },
+          ]}
+        >
+          {ui("help.contact.detailsNote")}
+        </HelpTip>
+      </p>
       <div className="cyber-controls">
         {FIELDS.map(([field, label]) => (
           <label key={field}>
