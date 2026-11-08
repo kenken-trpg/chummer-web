@@ -3,6 +3,13 @@
 Notable changes. Format follows [Keep a Changelog](https://keepachangelog.com/);
 self-hosters can pin to a tag instead of tracking `main`.
 
+## [0.5.44] — 2026-11-08
+
+### Fixed
+
+- **`.chum5` の無料購入（ウェア・防具）**: Chummer で無料にしたサイバーウェア・バイオウェア・防具・防具の改造が、取り込み後に通常価格で計算される問題を修正しました。無料の状態を JSON と `.chum5` に保持し、画面には「無料購入」と表示します。エッセンス・容量・取り外しは通常の購入品と同じで、中に入れた品目は自分の価格のままです。防具の価格から決まる改造（YNT Softweave Armor）は、Chummer と同じく防具が無料なら 0 新円になります。`Variable` 価格の品目は、範囲の下限が 0 より大きいときだけ、保存された 0 を無料購入とみなします（テスト用セーブ Draught の Clothing 2 着が該当）。
+- **`.chum5` の無料購入（装備・ヴィークル）**: Chummer で無料にした装備（コムリンク・サイバーデッキ・RCC・センサー・光学機器・プログラム・アプリを含む）とヴィークル・ドローンが、取り込み後に通常価格で計算される問題を修正しました。無料の状態を JSON と `.chum5` に保持し、画面には「無料購入」と表示します。中に入れた品目は自分の価格のままですが、親の価格から決まる品目（`Parent Cost` の薬物のグレード、`Vehicle Cost` のヴィークルの改造）は、Chummer と同じく親が無料なら 0 新円になります。
+
 ## [0.5.43] — 2026-11-08
 
 ### Fixed
@@ -3154,7 +3161,8 @@ First tagged release.
 - One-container Docker image (Caddy + uvicorn + Next standalone) published to
   GHCR; `make up` / `compose.yaml` for local self-hosting.
 
-[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.43...HEAD
+[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.44...HEAD
+[0.5.44]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.43...v0.5.44
 [0.5.43]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.42...v0.5.43
 [0.5.42]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.41...v0.5.42
 [0.5.41]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.40...v0.5.41
