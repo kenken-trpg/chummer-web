@@ -152,7 +152,8 @@ class _ArmorMods:
         armor_cost = str((self.armor_specs.get(str(item.get("armor_id") or "")) or {}).get("cost") or "0")
         fit = _Fit(
             cap_max_base=eval_formula(str(item.get("armorcapacity") or "0"), rating, 0),
-            parent_unit=int(eval_formula(armor_cost, rating, 0)),
+            # Chummer's `Armor Cost` is the armor's OwnCost: 0 when it was free
+            parent_unit=0 if item.get("free") else int(eval_formula(armor_cost, rating, 0)),
         )
         for inst in mods:
             spec = self.specs.get(inst.mod_id)
@@ -191,9 +192,10 @@ class _ArmorMods:
             )
         )
         extra, _additive = parse_armor_value(str(spec.get("armor") or "0"), rating)
+        inst.free = bool(inst.free) and not inst.included
         cost = (
             0
-            if inst.included
+            if inst.included or inst.free
             else int(eval_formula(str(spec.get("cost") or "0"), rating, 0, extras={"Armor Cost": fit.parent_unit}))
         )
         self.nuyen += cost
@@ -246,6 +248,7 @@ def _mod_row(
         "category": spec.get("category") or "General",
         "parent_id": inst.parent_id,
         "included": bool(inst.included),
+        "free": bool(inst.free),
         "rating": rating,
         "rating_max": int(spec.get("maxrating") or 0),
         "nuyen": cost,

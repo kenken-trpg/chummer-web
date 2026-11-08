@@ -66,6 +66,11 @@ export interface WareInstall {
   wireless?: boolean;
   parent_id?: string | null;
   included?: boolean;
+  /** Bought for free in Chummer (`<cost>0`): no nuyen, but otherwise a
+   *  normal purchase — essence, capacity and removal are unchanged, and what
+   *  sits in it is priced on its own.
+   */
+  free?: boolean;
   side?: string | null;
   /** `<selectcyberware>`: the implant this one is keyed to (Implant Medic,
    *  Nanohive Soft). A label, like Chummer's `<extra>` — it grants nothing.
@@ -236,6 +241,10 @@ export interface ArmorInstall {
   rating?: number;
   /** the price picked for a `Variable(lo-hi)` piece (Clothing) */
   cost?: number | null;
+  /** Bought for free in Chummer (`<cost>0`). Its mods are priced on their
+   *  own; one priced off the armor (`Armor Cost`) sees 0, as in Chummer.
+   */
+  free?: boolean;
   equipped?: boolean;
   wireless?: boolean;
   /** bought through the Black Market Pipeline: 10% off (Chummer's
@@ -261,6 +270,8 @@ export interface ArmorModInstall {
   mod_id: string;
   parent_id?: string | null;
   included?: boolean;
+  /** Bought for free (`<cost>0`); still takes capacity and can be removed. */
+  free?: boolean;
   rating?: number;
   wireless?: boolean;
   /** Custom Fit (Stack) `<selectarmor>`: the catalog name of the armor this

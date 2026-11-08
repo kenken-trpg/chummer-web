@@ -78,7 +78,10 @@ def _ware_writer(state: CharacterState, names: _Names) -> Any:
                 _sub(w, "hasmodularmount", spec.get("modular_mount") or "")
                 _sub(w, "plugsintomodularmount", spec.get("mounts_to") or "")
                 _sub(w, "blocksmounts", ",".join(spec.get("blocks_mounts") or []))
-            if getattr(r, "cost", None) is not None:
+            if getattr(r, "free", False):
+                # Chummer's free purchase: `Cyberware.Purchase` sets Cost "0"
+                _sub(w, "cost", 0)
+            elif getattr(r, "cost", None) is not None:
                 _sub(w, "cost", r.cost)
             if r.side:
                 _sub(w, "location", r.side)
@@ -205,7 +208,9 @@ def _export_armor(root: ET.Element, state: CharacterState, names: _Names, ctx: _
         _player_text(el, a, "armorname")
         if a.location in locations:
             _sub(el, "location", a.location)
-        if a.cost is not None:
+        if a.free:
+            _sub(el, "cost", 0)
+        elif a.cost is not None:
             _sub(el, "cost", a.cost)
         _sub(el, "rating", a.rating)
         _sub(el, "equipped", "True" if a.equipped else "False")
@@ -221,6 +226,8 @@ def _export_armor(root: ET.Element, state: CharacterState, names: _Names, ctx: _
             _sub(mm, "included", "True" if mrow.included else "False")
             if mrow.stack_with:
                 _sub(mm, "extra", mrow.stack_with)
+            if mrow.free and not mrow.included:
+                _sub(mm, "cost", 0)
             _from_data(mm, "armormod", mrow.mod_id, included=bool(mrow.included))
         # the gear it carries (a Holster, a Medkit), as Chummer keeps it
         carried = gear_by_parent.get(a.id)

@@ -18,6 +18,10 @@ class CyberwareInstall(BaseModel):
     wireless: bool = True
     parent_id: str | None = None
     included: bool = False
+    #: Bought for free in Chummer (`<cost>0`): no nuyen, but otherwise a
+    #: normal purchase — essence, capacity and removal are unchanged, and what
+    #: sits in it is priced on its own.
+    free: bool = False
     side: str | None = None
     # `<selectcyberware>`: the implant this one is keyed to (Implant Medic,
     # Nanohive Soft). A label, like Chummer's `<extra>` — it grants nothing.
@@ -54,6 +58,9 @@ class ArmorInstall(BaseModel):
     rating: int = 1
     #: the price picked for a `Variable(lo-hi)` piece (Clothing)
     cost: int | None = None
+    #: Bought for free in Chummer (`<cost>0`). Its mods are priced on their
+    #: own; one priced off the armor (`Armor Cost`) sees 0, as in Chummer.
+    free: bool = False
     equipped: bool = True
     wireless: bool = True
     #: bought through the Black Market Pipeline: 10% off (Chummer's
@@ -75,6 +82,8 @@ class ArmorModInstall(BaseModel):
     mod_id: str
     parent_id: str | None = None
     included: bool = False
+    #: Bought for free (`<cost>0`); still takes capacity and can be removed.
+    free: bool = False
     rating: int = 1
     wireless: bool = True
     # Custom Fit (Stack) `<selectarmor>`: the catalog name of the armor this

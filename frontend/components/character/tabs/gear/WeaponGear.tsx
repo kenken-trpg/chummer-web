@@ -105,7 +105,7 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                     : ""}
                   {item.mounted_label ? ui("weapon.mounted", { name: tr(item.mounted_label) }) : ""}
                   {included ? ui("weapon.includedWithHost") : ""}
-                  {!included && item.free ? ui("weapon.freePurchase") : ""}
+                  {!included && item.free ? ui("gear.freePurchase") : ""}
                 </div>
                 <div className="cyber-controls">
                   {included ? null : (
@@ -152,7 +152,7 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                 {(item.accessories || []).map((acc) => (
                   <div className="muted" key={acc.id} style={{ marginTop: 6 }}>
                     {tr(acc.name)}
-                    {!acc.included && acc.free ? ui("weapon.freePurchase") : ""}
+                    {!acc.included && acc.free ? ui("gear.freePurchase") : ""}
                     {acc.mount ? ` / ${acc.mount}` : ""}
                     {acc.specialmodification
                       ? ` / ${ui("weapon.specialMod", { cost: acc.special_modification_cost || 1 })}`

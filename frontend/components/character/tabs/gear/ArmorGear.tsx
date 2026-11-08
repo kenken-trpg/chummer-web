@@ -87,7 +87,8 @@ export function ArmorGear({ catalog, character: ch, d, tr, ui, patch }: TabPanel
                       })
                     : ""}
                   {" / "}
-                  {item.nuyen.toLocaleString()}¥ / {sourceBit(item, ui)}
+                  {item.nuyen.toLocaleString()}¥{item.free ? ui("gear.freePurchase") : ""} /{" "}
+                  {sourceBit(item, ui)}
                 </div>
                 <div className="cyber-controls">
                   <DiscountToggle list="armor" id={item.id} ch={ch} d={d} ui={ui} patch={patch} />
