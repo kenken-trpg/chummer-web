@@ -109,6 +109,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     remember,
     refreshRoster,
     setError,
+    setNotice,
     onCharacterOpened,
   });
   const exports = useCharacterExport({
@@ -116,6 +117,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     ui,
     locale,
     pendingGearCount: imports.pendingGear?.length ?? 0,
+    waitForIdle,
     setError,
     setNotice,
   });
@@ -354,6 +356,12 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     exportReviewFormat: exports.exportReviewFormat,
     importReport: imports.importReport,
     importSummary: imports.importSummary,
+    bulkImport: imports.bulkImport,
+    bulkSelection: imports.bulkSelection,
+    bulkBusy: imports.bulkBusy,
+    selectBulkImport: imports.selectBulkImport,
+    cancelBulkImport: imports.cancelBulkImport,
+    confirmBulkImport: imports.confirmBulkImport,
     dismissImportReport: imports.dismissImportReport,
     importSheetUrl: imports.importSheetUrl,
     pendingGear: imports.pendingGear,
@@ -381,6 +389,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     onImport: imports.onImport,
     onPortraitFile,
     download: exports.download,
+    downloadAll: exports.downloadAll,
     downloadChum5: exports.downloadChum5,
     downloadXlsx: exports.downloadXlsx,
     downloadFvtt: exports.downloadFvtt,

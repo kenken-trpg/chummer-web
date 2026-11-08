@@ -1,5 +1,25 @@
 /** アプリの枠・ナビ・共通の語・書式・共有・ツールバー — English。 */
 export const EN_APP = {
+  "app.bulk.download": "Back up all characters",
+  "app.bulk.entireRoster":
+    "Includes every saved character in one JSON file, regardless of search or filters.",
+  "app.bulk.saved": "Downloaded a bulk backup of {count} characters.",
+  "app.bulk.empty": "There are no characters to back up.",
+  "app.bulk.invalid": "The bulk backup format is invalid.",
+  "app.bulk.version": "This bulk backup version is not supported.",
+  "app.bulk.review": "Import from a bulk backup",
+  "app.bulk.created": "Backup created: {date}",
+  "app.bulk.copies":
+    "Selected characters are added as new copies. Existing characters, including those with the same name, are not overwritten.",
+  "app.bulk.choose": "Characters to import",
+  "app.bulk.all": "Select all",
+  "app.bulk.none": "Clear selection",
+  "app.bulk.selected": "{count} characters selected.",
+  "app.bulk.importing": "Importing {count} characters…",
+  "app.bulk.confirm": "Import selected characters",
+  "app.bulk.cancel": "Cancel",
+  "app.bulk.imported": "Imported {count} characters.",
+
   "app.roster.title": "Character list",
   "app.roster.search": "Search by name",
   "app.roster.filter": "Status",

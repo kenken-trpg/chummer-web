@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { api, type PendingGear, type XlsxImport } from "@/lib/api";
 import {
   clearPendingGear,
   loadPendingGear,
   savePendingGear,
 } from "@/lib/character/pending-gear-store";
+import { addCharacters } from "@/lib/character/local-store";
+import { isBulkBackup, readBulkBackup, type BulkBackup } from "@/lib/character/bulk-backup";
 import { errorMessage } from "@/lib/errors";
 import type { Character } from "@/lib/types";
 import { type Notice } from "@/lib/engine-notices";
@@ -34,8 +36,51 @@ export function useCharacterImport(opts: {
   refreshRoster: () => Promise<void>;
   setError: (message: string | null) => void;
   onCharacterOpened?: () => void;
+  setNotice?: (message: string | null) => void;
 }) {
   const { ch, ui, remember, refreshRoster, setError, onCharacterOpened } = opts;
+  const [bulkImport, setBulkImport] = useState<BulkBackup | null>(null);
+  const [bulkSelection, setBulkSelection] = useState<number[]>([]);
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const bulkRunning = useRef(false);
+
+  function selectBulkImport(indices: number[]) {
+    if (!bulkRunning.current) setBulkSelection(indices);
+  }
+  function cancelBulkImport() {
+    if (!bulkRunning.current) {
+      setBulkImport(null);
+      setBulkSelection([]);
+    }
+  }
+  async function confirmBulkImport() {
+    if (!bulkImport || !bulkSelection.length || bulkRunning.current) return;
+    bulkRunning.current = true;
+    setBulkBusy(true);
+    setError(null);
+    try {
+      const characters: Character[] = [];
+      const selected = new Set(bulkSelection);
+      for (const [index, payload] of bulkImport.characters.entries()) {
+        if (selected.has(index)) characters.push(await api.preview(payload));
+      }
+      if (!characters.length) return;
+      await addCharacters(characters);
+      setBulkImport(null);
+      setBulkSelection([]);
+      await remember(characters[0]);
+      setSummary(characters[0]);
+      onCharacterOpened?.();
+      readPendingGear(characters[0].id);
+      await refreshRoster();
+      opts.setNotice?.(ui("app.bulk.imported", { count: characters.length }));
+    } catch (e) {
+      setError(errorMessage(e, ui, "app.err.load"));
+    } finally {
+      bulkRunning.current = false;
+      setBulkBusy(false);
+    }
+  }
   /** What the last import could not bring over. Not an error: the character is
    *  open, and this is the list of what to fix by hand. Dropped when the player
    *  closes it, not on the next edit — it is about a file, not about a state. */
@@ -104,6 +149,8 @@ export function useCharacterImport(opts: {
    * than a fault.
    */
   async function importSheetUrl(url: string) {
+    if (bulkRunning.current) return;
+    cancelBulkImport();
     setError(null);
     setImportReport(null);
     setSummary(null);
@@ -116,6 +163,8 @@ export function useCharacterImport(opts: {
   }
 
   async function onImport(file: File) {
+    if (bulkRunning.current) return;
+    cancelBulkImport();
     setError(null);
     setImportReport(null);
     setSummary(null);
@@ -125,6 +174,12 @@ export function useCharacterImport(opts: {
         return;
       }
       const payload = /\.chum5(lz)?$/i.test(file.name) ? null : JSON.parse(await file.text());
+      if (isBulkBackup(payload)) {
+        const backup = readBulkBackup(payload);
+        setBulkImport(backup);
+        setBulkSelection(backup.characters.map((_, index) => index));
+        return;
+      }
       if (payload === null || isFvttActor(payload)) {
         const { character, warnings } =
           payload === null
@@ -147,6 +202,12 @@ export function useCharacterImport(opts: {
   }
 
   return {
+    bulkImport,
+    bulkSelection,
+    bulkBusy,
+    selectBulkImport,
+    cancelBulkImport,
+    confirmBulkImport,
     importReport: summary && summary.id !== ch?.id ? null : importReport,
     importSummary,
     dismissImportReport,

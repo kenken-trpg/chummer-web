@@ -351,7 +351,11 @@ export function Toolbar({
         // more than one file input, so "the file input" is no longer a thing
         // a screen reader — or a test — can point at
         aria-label={ui("toolbar.import")}
-        onChange={(e) => e.target.files && onImport(e.target.files[0])}
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          e.target.value = "";
+          if (file) void onImport(file);
+        }}
       />
     </div>
   );
