@@ -18,6 +18,7 @@ import { ExportReview } from "@/components/character/ExportReview";
 import { CharacterRoster } from "@/components/character/CharacterRoster";
 import { BackupReminder } from "@/components/character/BackupReminder";
 import { SavedHistory } from "@/components/character/SavedHistory";
+import { BulkImportReview } from "@/components/character/BulkImportReview";
 import { ImportReport } from "@/components/character/ImportReport";
 import { SheetUrlImport } from "@/components/character/SheetUrlImport";
 import { GearReview } from "@/components/character/GearReview";
@@ -92,6 +93,7 @@ export default function Page() {
             <SheetUrlImport ed={ed} />
             <div role="status">{notice ? <p className="notice">{notice}</p> : null}</div>
             <ExportReview ed={ed} />
+            <BulkImportReview ed={ed} />
             <ImportReport ed={ed} />
             <GearReview ed={ed} />
           </header>

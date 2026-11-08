@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { recordBackup } from "@/lib/character/local-store";
+import { getAllCharacters, recordBackup } from "@/lib/character/local-store";
 import { api } from "@/lib/api";
+import { writeBulkBackup } from "@/lib/character/bulk-backup";
 import { exportFilename } from "@/lib/character/export-filename";
 import { buildShareUrl, SHARE_URL_WARN } from "@/lib/character/share";
 import { portraitsOf } from "@/lib/character/portrait";
@@ -58,6 +59,7 @@ export function useCharacterExport(opts: {
   ui: UiFn;
   locale: Locale;
   pendingGearCount: number;
+  waitForIdle?: () => Promise<void>;
   setError: (message: string | null) => void;
   setNotice: (message: string | null) => void;
 }) {
@@ -85,6 +87,32 @@ export function useCharacterExport(opts: {
   const exportReview = review && review.of === ch ? review.differences : null;
   /** Which format the pending review was asked for, so the panel can name it. */
   const exportReviewFormat = review && review.of === ch ? review.format : null;
+
+  async function downloadAll() {
+    try {
+      await opts.waitForIdle?.();
+      const characters = await getAllCharacters();
+      if (!characters.length) {
+        setNotice(ui("app.bulk.empty"));
+        return;
+      }
+      offer(
+        new Blob([writeBulkBackup(characters)], { type: "application/json" }),
+        exportFilename("chummer-web-backup", "json"),
+      );
+      const recorded = await Promise.allSettled(
+        characters.map((character) => recordBackup(character)),
+      );
+      setBackupVersion((version) => version + 1);
+      setNotice(
+        recorded.every((result) => result.status === "fulfilled" && result.value)
+          ? ui("app.bulk.saved", { count: characters.length })
+          : ui("app.backup.recordFailed"),
+      );
+    } catch (e) {
+      setError(errorMessage(e, ui, "app.err.export"));
+    }
+  }
 
   async function download() {
     if (!ch) return;
@@ -307,6 +335,7 @@ export function useCharacterExport(opts: {
     exportReviewFormat,
     copied,
     download,
+    downloadAll,
     downloadChum5,
     downloadXlsx,
     downloadFvtt,

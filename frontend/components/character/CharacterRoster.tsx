@@ -6,6 +6,7 @@ import { useUiText } from "@/lib/i18n";
 export function CharacterRoster({ ed }: { ed: CharacterEditor }) {
   const { ui, locale } = useUiText();
   const id = useId();
+  const [backingUp, setBackingUp] = useState(false);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<RosterFilter>("all");
@@ -43,6 +44,21 @@ export function CharacterRoster({ ed }: { ed: CharacterEditor }) {
       </button>
       {open ? (
         <div id={id}>
+          <button
+            className="btn"
+            disabled={backingUp || !ed.roster.length}
+            onClick={async () => {
+              setBackingUp(true);
+              try {
+                await ed.downloadAll();
+              } finally {
+                setBackingUp(false);
+              }
+            }}
+          >
+            {ui("app.bulk.download")}
+          </button>
+          <p className="muted">{ui("app.bulk.entireRoster")}</p>
           <div className="toolbar">
             <label>
               {ui("app.roster.search")}{" "}

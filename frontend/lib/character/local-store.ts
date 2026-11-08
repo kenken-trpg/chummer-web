@@ -219,3 +219,31 @@ export async function recordBackup(character: Character): Promise<boolean> {
     tx.onabort = tx.onerror = () => reject(tx.error ?? request.error);
   });
 }
+
+/** A single consistent read, with no recomputation or silent empty fallback. */
+export async function getAllCharacters(): Promise<Character[]> {
+  const records = await run<StoredCharacter[]>("readonly", (store) => store.getAll());
+  return records.map(migrate);
+}
+
+/** Commit a selected import atomically. Existing ids must never be overwritten. */
+export async function addCharacters(characters: Character[]): Promise<void> {
+  if (!characters.length) return;
+  const db = await openDB();
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(STORE, "readwrite");
+    const store = tx.objectStore(STORE);
+    for (const character of characters) {
+      store.add({
+        id: character.id,
+        savedAt: Date.now(),
+        schemaVersion: SCHEMA_VERSION,
+        character,
+        history: [],
+        backup: { lastExportedAt: null, changesSinceBackup: 0 },
+      });
+    }
+    tx.oncomplete = () => resolve();
+    tx.onabort = tx.onerror = () => reject(tx.error ?? new Error("Import transaction failed"));
+  });
+}

@@ -3,6 +3,8 @@ import "fake-indexeddb/auto";
 import { makeCharacter } from "@/tests/fixtures";
 import {
   deleteCharacter,
+  getAllCharacters,
+  addCharacters,
   getCharacter,
   getCharacterSnapshots,
   getBackupStatus,
@@ -276,4 +278,24 @@ it("projects roster metadata and keeps the edit date when only recomputing or ex
   } finally {
     clock.mockRestore();
   }
+});
+
+describe("bulk import storage", () => {
+  it("adds selected characters together and reads their complete states", async () => {
+    const first = makeCharacter({ id: "bulk-a", notes: "Saved notes" });
+    const second = makeCharacter({ id: "bulk-b", career: true });
+    await addCharacters([first, second]);
+    expect(await getAllCharacters()).toEqual([first, second]);
+    expect(await getCharacterSnapshots(first.id)).toEqual([]);
+  });
+
+  it("rolls back the whole import on an existing id instead of overwriting", async () => {
+    const original = makeCharacter({ id: "existing", name: "Original" });
+    await putCharacter(original);
+    await expect(
+      addCharacters([makeCharacter({ id: "new" }), { ...original, name: "Replacement" }]),
+    ).rejects.toThrow();
+    expect(await getCharacter("new")).toBeNull();
+    expect(await getCharacter("existing")).toEqual(original);
+  });
 });

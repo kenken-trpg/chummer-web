@@ -1,5 +1,24 @@
 /** アプリの枠・ナビ・共通の語・書式・共有・ツールバー — 日本語。 */
 export const JA_APP = {
+  "app.bulk.download": "全キャラクターを一括バックアップ",
+  "app.bulk.entireRoster":
+    "検索や絞り込みにかかわらず、保存済みの全キャラクターを1つのJSONにまとめます。",
+  "app.bulk.saved": "{count}人のキャラクターの一括バックアップをダウンロードしました。",
+  "app.bulk.empty": "バックアップするキャラクターがありません。",
+  "app.bulk.invalid": "一括バックアップの形式が正しくありません。",
+  "app.bulk.version": "このバージョンの一括バックアップには対応していません。",
+  "app.bulk.review": "一括バックアップから取り込む",
+  "app.bulk.created": "バックアップ作成日時：{date}",
+  "app.bulk.copies": "選んだキャラクターを新しく追加します。同名のキャラクターも上書きしません。",
+  "app.bulk.choose": "取り込むキャラクター",
+  "app.bulk.all": "すべて選択",
+  "app.bulk.none": "選択を解除",
+  "app.bulk.selected": "{count}人を選択しています。",
+  "app.bulk.importing": "{count}人を取り込んでいます…",
+  "app.bulk.confirm": "選択したキャラクターを取り込む",
+  "app.bulk.cancel": "キャンセル",
+  "app.bulk.imported": "{count}人のキャラクターを取り込みました。",
+
   "app.roster.title": "キャラクター一覧",
   "app.roster.search": "名前で検索",
   "app.roster.filter": "状態",

@@ -7,6 +7,7 @@ function editor() {
   return {
     ch: makeCharacter({ id: "a" }),
     tr: identityTr,
+    downloadAll: vi.fn().mockResolvedValue(undefined),
     refreshRoster: vi.fn(),
     openCharacter: vi.fn(),
     roster: [
@@ -68,4 +69,13 @@ it("filters by state, sorts and reports empty results", () => {
   fireEvent.change(screen.getByRole("searchbox"), { target: { value: "missing" } });
   screen.getByText("条件に一致するキャラクターがありません。");
   expect(screen.queryByRole("table")).toBeNull();
+});
+
+it("offers a backup of all saved characters even with an empty search result", async () => {
+  const ed = editor();
+  render(<CharacterRoster ed={ed} />);
+  fireEvent.click(screen.getByRole("button", { name: "キャラクター一覧" }));
+  fireEvent.change(screen.getByRole("searchbox"), { target: { value: "missing" } });
+  fireEvent.click(screen.getByRole("button", { name: "全キャラクターを一括バックアップ" }));
+  expect(ed.downloadAll).toHaveBeenCalledOnce();
 });

@@ -1,11 +1,11 @@
 import { act, renderHook } from "@testing-library/react";
 import { useCharacterExport } from "./useCharacterExport";
-import { recordBackup } from "./local-store";
+import { recordBackup, getAllCharacters } from "./local-store";
 import { api } from "@/lib/api";
 import { useUiText } from "@/lib/i18n";
 import { makeCharacter } from "@/tests/fixtures";
 
-vi.mock("./local-store", () => ({ recordBackup: vi.fn() }));
+vi.mock("./local-store", () => ({ recordBackup: vi.fn(), getAllCharacters: vi.fn() }));
 vi.mock("@/lib/api", () => ({ api: { checkChummerExport: vi.fn(), exportChummer: vi.fn() } }));
 
 beforeEach(() => {
@@ -22,7 +22,7 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-function boot() {
+function boot(waitForIdle?: () => Promise<void>) {
   const character = makeCharacter({ id: "backup-export" });
   const setNotice = vi.fn();
   const setError = vi.fn();
@@ -33,6 +33,7 @@ function boot() {
       ui,
       locale: "ja",
       pendingGearCount: 0,
+      waitForIdle,
       setNotice,
       setError,
     });
@@ -82,4 +83,30 @@ it("does not mark Chummer exports as JSON backups", async () => {
     await result.current.downloadChum5();
   });
   expect(recordBackup).not.toHaveBeenCalled();
+});
+
+it("backs up every saved character after waiting for edits and records each JSON backup", async () => {
+  const characters = [makeCharacter({ id: "all-a" }), makeCharacter({ id: "all-b" })];
+  vi.mocked(getAllCharacters).mockResolvedValue(characters);
+  let finishEdits!: () => void;
+  const idle = new Promise<void>((resolve) => {
+    finishEdits = resolve;
+  });
+  const { result } = boot(() => idle);
+  let download!: Promise<void>;
+  act(() => {
+    download = result.current.downloadAll();
+  });
+  expect(getAllCharacters).not.toHaveBeenCalled();
+  await act(async () => {
+    finishEdits();
+    await download;
+  });
+  const blob = vi.mocked(URL.createObjectURL).mock.calls[0][0] as Blob;
+  expect(JSON.parse(await blob.text()).characters).toEqual(characters);
+  expect(getAllCharacters).toHaveBeenCalledOnce();
+  expect(recordBackup).toHaveBeenCalledTimes(2);
+  expect(recordBackup).toHaveBeenCalledWith(characters[0]);
+  expect(recordBackup).toHaveBeenCalledWith(characters[1]);
+  expect(result.current.backupVersion).toBe(1);
 });
