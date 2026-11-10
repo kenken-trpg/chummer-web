@@ -456,8 +456,6 @@ export const JA_ENGINE = {
   "engine.gear.pickSkill": "{name} の技能を選んでください",
   "engine.gear.runningProgramsOver": "{name} のプログラム同時実行数が上限超過（{used}/{max}）",
   "engine.gear.programsOver": "{name} のプログラムが上限超過（{used}/{max}）",
-  "engine.gear.carrierProgramElsewhere":
-    "{name} は、プログラム保持のある機器から外れているため、常時実行になりません",
   "engine.gear.skillInvalid": "{name} の技能指定が無効です（{picked}）",
   "engine.gear.specialModsOver":
     "Special Modifications の上限を超えています（{used}/{max}・{name}）",

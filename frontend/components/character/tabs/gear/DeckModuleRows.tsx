@@ -2,11 +2,11 @@
 import { RowNotes } from "@/components/character/RowNotes";
 import { AddonSelect } from "@/components/character/AddonSelect";
 import type { TabPanelProps } from "@/components/character/types";
-import type { GearInstall, InstalledGear } from "@/lib/types";
+import type { GearInstall } from "@/lib/types";
 import { catalogExtraOptions } from "@/lib/character/gear";
 
 export const DECK_BUILDER = "d85c6437-7611-47d3-b4c7-4e581e5349a4";
-/** Program Carrier (DT p.65): holds one of the device's programs, run permanently. */
+/** Program Carrier (DT p.65): its program is picked at manufacture and locked in. */
 export const PROGRAM_CARRIER = "f11b2c82-6dbb-4e32-831f-1387fff2274c";
 
 /** Split one physical item while keeping the purchase total and all choices. */
@@ -73,8 +73,32 @@ export function DeckModuleRows({
             />
             {ui("gear.moduleEnabled")}
           </label>
-          {r.gear_id === PROGRAM_CARRIER ? (
-            <CarrierProgramPick row={r} character={ch} d={d} tr={tr} ui={ui} patch={patch} />
+          {r.gear_id === PROGRAM_CARRIER && r.extra ? (
+            // locked in when it was made: to change it, buy another
+            <span> {ui("gear.carrierHolds", { name: tr(r.extra) })}</span>
+          ) : r.gear_id === PROGRAM_CARRIER ? (
+            // one bought or imported without a pick: pick it once
+            <label>
+              {ui("gear.carrierProgram")}
+              <select
+                aria-label={ui("gear.carrierProgramName", { name: tr(r.name) })}
+                value=""
+                onChange={(e) =>
+                  patch({
+                    gear: (ch.gear || []).map((g) =>
+                      g.id === r.id ? { ...g, extra: e.target.value } : g,
+                    ),
+                  })
+                }
+              >
+                <option value="">{ui("common.selectShort")}</option>
+                {catalogExtraOptions(catalog.gear, r.gear_id).map((p) => (
+                  <option key={p} value={p}>
+                    {tr(p)}
+                  </option>
+                ))}
+              </select>
+            </label>
           ) : r.needs_extra ? (
             <label>
               {ui("common.target")}
@@ -153,14 +177,19 @@ export function DeckModuleRows({
             tr={tr}
             options={(catalog.gear || []).filter((r) => r.category === "Cyberdeck Modules")}
             extraFor={(r) =>
-              // a Program Carrier picks one of the device's programs once installed
-              r.needs_extra && r.id !== PROGRAM_CARRIER
+              r.id === PROGRAM_CARRIER
                 ? {
-                    label: ui("common.target"),
-                    freeText: true,
+                    // a closed list: the program it is made with
+                    label: ui("gear.carrierProgram"),
                     values: catalogExtraOptions(catalog.gear, r.id),
                   }
-                : null
+                : r.needs_extra
+                  ? {
+                      label: ui("common.target"),
+                      freeText: true,
+                      values: catalogExtraOptions(catalog.gear, r.id),
+                    }
+                  : null
             }
             onAdd={(r, extra) =>
               patch({
@@ -176,60 +205,5 @@ export function DeckModuleRows({
         <p className="muted">{ui("gear.modulePoolFull")}</p>
       )}
     </div>
-  );
-}
-
-/** The program a Program Carrier holds: one already on the device it is in,
- * not held by another carrier. An old or imported save's typed-in name is
- * shown until one is picked. */
-function CarrierProgramPick({
-  row: r,
-  character: ch,
-  d,
-  tr,
-  ui,
-  patch,
-}: Pick<TabPanelProps, "character" | "d" | "tr" | "ui" | "patch"> & {
-  row: InstalledGear;
-}) {
-  const held = (ch.gear || []).find((g) => g.id === r.id)?.held_program_id || "";
-  const takenByOthers = new Set(
-    (ch.gear || [])
-      .filter((g) => g.gear_id === PROGRAM_CARRIER && g.id !== r.id && g.held_program_id)
-      .map((g) => g.held_program_id),
-  );
-  const choices = (d.programs || []).filter(
-    (p) => r.module_host_id && p.parent_id === r.module_host_id && !takenByOthers.has(p.id),
-  );
-  return (
-    <>
-      <label>
-        {ui("gear.carrierProgram")}
-        <select
-          aria-label={ui("gear.carrierProgramName", { name: tr(r.name) })}
-          value={held}
-          onChange={(e) => {
-            const id = e.target.value || null;
-            const picked = choices.find((p) => p.id === id);
-            patch({
-              gear: (ch.gear || []).map((g) =>
-                g.id === r.id
-                  ? { ...g, held_program_id: id, ...(picked ? { extra: picked.name } : {}) }
-                  : g,
-              ),
-            });
-          }}
-        >
-          <option value="">{ui("common.selectShort")}</option>
-          {choices.map((p) => (
-            <option key={p.id} value={p.id}>
-              {tr(p.label || p.name)}
-            </option>
-          ))}
-        </select>
-      </label>
-      {!choices.length ? ` ${ui("gear.carrierNoPrograms")}` : ""}
-      {!held && r.extra ? ` ${ui("gear.carrierLegacy", { name: tr(r.extra) })}` : ""}
-    </>
   );
 }

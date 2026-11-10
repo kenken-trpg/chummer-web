@@ -461,8 +461,6 @@ export const EN_ENGINE = {
   "engine.gear.runningProgramsOver":
     "{name} exceeds its simultaneous running program limit ({used}/{max})",
   "engine.gear.programsOver": "{name} is over its program limit ({used}/{max})",
-  "engine.gear.carrierProgramElsewhere":
-    "{name} is no longer on the device its Program Carrier is in, so it does not run permanently",
   "engine.gear.skillInvalid": "{name}: {picked} is not a valid skill",
   "engine.gear.specialModsOver": "Special Modifications are over the limit ({used}/{max}, {name})",
   "engine.gear.trustFundNeedsSinner": "Trust Fund requires SINner (National or Corporate)",

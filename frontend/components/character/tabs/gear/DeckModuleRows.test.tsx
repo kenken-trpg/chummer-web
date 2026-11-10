@@ -179,61 +179,74 @@ it("stops offering anything once the slots are full", () => {
   expect(screen.getByRole("button", { name: "Browse Module：取り外す" })).toBeDefined();
 });
 
-// A Program Carrier (DT p.65) holds one of the programs already on its
-// deck: picked from a list, not typed, and named after it for the export.
-function renderCarrier(carrier: Record<string, unknown>, programs: Record<string, unknown>[]) {
+// A Program Carrier (DT p.65) is made with its program, which cannot be
+// changed afterwards: picked from a closed list when bought, then only shown.
+const carrierCatalog = {
+  gear: [
+    ...catalog.gear,
+    {
+      id: PROGRAM_CARRIER,
+      name: "Program Carrier",
+      category: "Cyberdeck Modules",
+      needs_extra: true,
+      extra_options: ["Toolbox", "Browse"],
+    },
+  ],
+};
+
+function renderCarrier(rows: Record<string, unknown>[]) {
   const patch = vi.fn<(body: Record<string, unknown>) => void>();
-  const row = moduleRow({
-    id: "pc",
-    gear_id: PROGRAM_CARRIER,
-    name: "Program Carrier",
-    needs_extra: true,
-    module_host_id: DECK,
-    ...carrier,
-  });
-  const ch = makeCharacter({ gear: [row], derived: { gear: [row], programs } } as never);
+  const ch = makeCharacter({ gear: rows, derived: { gear: rows } } as never);
   render(
     <DeckModuleRows
-      {...panelProps(ch, { catalog: makeCatalog(catalog as never), patch })}
+      {...panelProps(ch, { catalog: makeCatalog(carrierCatalog as never), patch })}
       hostId={DECK}
       hostName="Erika MCD-1"
-      used={1}
-      max={1}
+      used={rows.length}
+      max={2}
     />,
   );
   return patch;
 }
 
-const program = (id: string, name: string, parent_id: string = DECK) => ({
-  id,
-  gear_id: `g-${id}`,
-  name,
-  category: "Common Programs",
-  rating: 1,
-  rating_max: 0,
-  parent_id,
-  nuyen: 80,
-});
+const carrier = (over: Record<string, unknown> = {}) =>
+  moduleRow({
+    id: "pc",
+    gear_id: PROGRAM_CARRIER,
+    name: "Program Carrier",
+    needs_extra: true,
+    ...over,
+  });
 
-it("lets a Program Carrier hold one of the deck's own programs", () => {
-  const patch = renderCarrier({}, [
-    program("tb", "Toolbox"),
-    program("br", "Browse", "other-deck"),
-  ]);
-  const pick = screen.getByRole("combobox", { name: "Program Carrier：保持するプログラム" });
-  const offered = Array.from(pick.querySelectorAll("option")).map((o) => o.getAttribute("value"));
-  // only what is on this deck; Browse sits on another one
-  expect(offered).toEqual(["", "tb"]);
-  expect(screen.queryByRole("combobox", { name: "対象" })).toBeNull();
-
-  fireEvent.change(pick, { target: { value: "tb" } });
+it("buys a Program Carrier with its program picked from a closed list", () => {
+  const patch = renderCarrier([]);
+  fireEvent.change(screen.getByRole("combobox", { name: "Erika MCD-1: モジュールを購入・搭載" }), {
+    target: { value: PROGRAM_CARRIER },
+  });
+  const pick = screen.getByRole("combobox", { name: "Erika MCD-1: 保持するプログラム" });
+  expect(pick.tagName).toBe("SELECT");
+  fireEvent.change(pick, { target: { value: "Toolbox" } });
+  fireEvent.click(screen.getByRole("button", { name: "Erika MCD-1: 装着" }));
   expect(patch).toHaveBeenCalledWith({
-    gear: [expect.objectContaining({ id: "pc", held_program_id: "tb", extra: "Toolbox" })],
+    gear: [{ gear_id: PROGRAM_CARRIER, rating: 1, qty: 1, parent_id: DECK, extra: "Toolbox" }],
   });
 });
 
-it("shows an imported carrier's typed-in name until a program is picked", () => {
-  renderCarrier({ extra: "Virtual Machine" }, []);
-  expect(screen.getByText(/先にこの機器へプログラムを入れてください/)).toBeDefined();
-  expect(screen.getByText(/記録：Virtual Machine/)).toBeDefined();
+it("shows a Program Carrier's program without letting it be changed", () => {
+  renderCarrier([carrier({ extra: "Toolbox" })]);
+  expect(screen.getByText(/保持：Toolbox（製造時に固定・枠の外で常時実行）/)).toBeDefined();
+  expect(
+    screen.queryByRole("combobox", { name: "Program Carrier：保持するプログラム" }),
+  ).toBeNull();
+  expect(screen.queryByRole("combobox", { name: "対象" })).toBeNull();
+});
+
+it("lets a Program Carrier saved without a program pick one", () => {
+  const patch = renderCarrier([carrier()]);
+  fireEvent.change(screen.getByRole("combobox", { name: "Program Carrier：保持するプログラム" }), {
+    target: { value: "Browse" },
+  });
+  expect(patch).toHaveBeenCalledWith({
+    gear: [expect.objectContaining({ id: "pc", extra: "Browse" })],
+  });
 });
