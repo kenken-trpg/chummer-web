@@ -429,8 +429,6 @@ def _gear_writer(state: CharacterState, names: _Names) -> tuple[dict[str | None,
             parts_remaining[supply.id] = left
     by_parent_g: dict[str | None, list[Any]] = {}
     program_ids = {p.id for p in state.programs}
-    # what a Program Carrier holds runs, whatever its own switch says (DT p.65)
-    carried_ids = {str(r["id"]) for r in bundle["programs"] if r.get("carried_by")}
     # Overclocker's pick, under Chummer's name for it (`Gear.Overclocked`):
     # what the deck got, so Chummer adds the same point
     overclocked = {
@@ -470,7 +468,7 @@ def _gear_writer(state: CharacterState, names: _Names) -> tuple[dict[str | None,
                 # an A.I.'s home node (`IHasMatrixAttributes.IsHomeNode`)
                 _sub(el, "homenode", "True")
             if g.id in program_ids:
-                _sub(el, "equipped", "True" if g.running or g.id in carried_ids else "False")
+                _sub(el, "equipped", "True" if g.running else "False")
             if g.id in overclocked:
                 _sub(el, "overclocked", overclocked[g.id])
             elif gid in module_gids:

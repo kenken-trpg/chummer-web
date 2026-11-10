@@ -55,7 +55,7 @@ from ..gear import (
     resolve_custom_drugs,
     resolve_lifestyles,
 )
-from ..gear.deck_modules import carried_programs, resolve_deck_modules, sync_program_carriers
+from ..gear.deck_modules import resolve_deck_modules
 from ..gear.electronic_modifications import resolve_electronic_modifications
 from ..gear.implants import mark_implanted, place_implanted_devices
 from ..gear.matrix import apply_host_matrix_mods
@@ -152,6 +152,9 @@ def resolve_gear(
     warnings.extend(optic_warns)
     errors.extend(optic_errors)
     bonus_sources.extend(optic_bonus)
+    programs, prog_nuyen, prog_warns = _resolve_programs(state, cyberdecks, rccs)
+    spend["programs"] += prog_nuyen
+    warnings.extend(prog_warns)
     # a deck or an RCC runs apps too (BLUE's RCC carries Swarm)
     apps, app_nuyen, app_warns = _resolve_apps(state, [*commlinks, *cyberdecks, *rccs])
     spend["programs"] += app_nuyen
@@ -175,8 +178,6 @@ def resolve_gear(
     errors.extend(sensor_errors)
     bonus_sources.extend(sensor_bonus)
     _publish_drone_stats(hosts, sensors)
-    # a Program Carrier goes by the program it holds, before its row is made
-    sync_program_carriers(state)
     gear_items, gear_nuyen, gear_warns, gear_errors, gear_bonus = _resolve_misc_gear(
         state,
         hosts,
@@ -196,11 +197,6 @@ def resolve_gear(
     # p.66 modifications are soldered into all three
     warnings.extend(resolve_electronic_modifications(state, [*commlinks, *cyberdecks, *rccs], gear_items))
     warnings.extend(resolve_deck_modules(state, cyberdecks, [*commlinks, *cyberdecks, *rccs], gear_items))
-    # after the modules: a valid Program Carrier keeps the program it holds
-    # running (DT p.65)
-    programs, prog_nuyen, prog_warns = _resolve_programs(state, cyberdecks, rccs, carried_programs(state, gear_items))
-    spend["programs"] += prog_nuyen
-    warnings.extend(prog_warns)
     apply_host_matrix_mods([*commlinks, *cyberdecks, *rccs], gear_items)
     apply_running_program_bonuses(cyberdecks, programs)
     apply_armor_gear(armor_items, {"gear": gear_items, "optics": optics, "sensors": sensors}, errors)

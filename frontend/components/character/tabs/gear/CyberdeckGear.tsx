@@ -63,6 +63,13 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                 / {item.nuyen.toLocaleString()}¥{item.free ? ui("gear.freePurchase") : ""} /{" "}
                 {sourceBit(item, ui)}
               </div>
+              {item.carrier_programs?.length ? (
+                <div className="muted">
+                  {ui("gear.carrierRunning", {
+                    names: item.carrier_programs.map((name) => tr(name)).join(" / "),
+                  })}
+                </div>
+              ) : null}
               <div className="cyber-controls">
                 <DiscountToggle
                   list="cyberdecks"
@@ -200,8 +207,6 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                       <input
                         type="checkbox"
                         aria-label={ui("gear.programRunningName", { name: tr(prog.name) })}
-                        // a Program Carrier keeps it running (DT p.65)
-                        disabled={!!prog.carried_by}
                         checked={prog.running ?? true}
                         onChange={(e) => {
                           // read now: the updater runs later, once React has set the
@@ -215,7 +220,7 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                           }));
                         }}
                       />
-                      {ui(prog.carried_by ? "gear.programCarried" : "gear.programRunning")}
+                      {ui("gear.programRunning")}
                     </label>{" "}
                     <button
                       className="btn danger"

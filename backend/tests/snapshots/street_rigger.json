@@ -106,6 +106,7 @@
     "avail_suffix": "R",
     "avail_value": 3,
     "can_reorder": true,
+    "carrier_programs": [],
     "category": "Cyberdecks",
     "construction_attributes": {
       "attack": 4,
@@ -161,6 +162,7 @@
       "avail_suffix": "R",
       "avail_value": 3,
       "can_reorder": true,
+      "carrier_programs": [],
       "category": "Cyberdecks",
       "construction_attributes": {
         "attack": 4,

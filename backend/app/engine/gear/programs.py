@@ -35,13 +35,8 @@ def _resolve_programs(
     state: CharacterState,
     cyberdecks: list[dict[str, Any]],
     rccs: list[dict[str, Any]],
-    carried: dict[str, tuple[str, str]] | None = None,
 ) -> tuple[list[dict[str, Any]], int, list[Notice]]:
-    """`carried`: program id → (carrier id, device id), the programs a Program
-    Carrier holds (``carried_programs``). One on that device runs, and cannot
-    be stopped; on a deck it still takes one of the slots."""
     warnings: list[Notice] = []
-    carried = carried or {}
     specs = {item["id"]: item for item in catalog().get("programs") or []}
     hosts: dict[str, tuple[str, dict[str, Any]]] = {}
     for row in cyberdecks:
@@ -94,11 +89,6 @@ def _resolve_programs(
         elif extra_kind == "text" and not extra:
             warnings.append(notice("engine.gear.pickExtra", name=term(str(spec["name"]))))
         inst.extra = extra or None
-        carrier_id, carrier_deck = carried.get(inst.id, ("", ""))
-        if carrier_id and inst.parent_id != carrier_deck:
-            # moved off the device the carrier sits in: the carrier runs nothing
-            warnings.append(notice("engine.gear.carrierProgramElsewhere", name=term(str(spec["name"]))))
-            carrier_id = ""
         rating = _clamp_rating(spec, inst.rating)
         inst.rating = rating
         # an autosoft a drone's own entry grants comes with it
@@ -118,17 +108,13 @@ def _resolve_programs(
                 "included": bool(inst.included),
                 "free": bool(inst.free) and not inst.included,
                 "running": (
-                    True
-                    if carrier_id
-                    else False
+                    False
                     if in_ware
                     else bool(inst.parent_id and inst.running)
                     if want_kind == "cyberdecks"
                     else inst.running
                 ),
                 "extra": extra,
-                # the Program Carrier holding it (DT p.65): it runs permanently
-                "carried_by": carrier_id,
                 # the deck attribute it raises while running (SR5 p.245)
                 "attribute_bonus": PROGRAM_ATTRIBUTE_BONUS.get(str(spec["id"]), ""),
                 "needs_extra": bool(extra_kind),
@@ -170,7 +156,8 @@ def _resolve_programs(
 
 def apply_running_program_bonuses(cyberdecks: list[dict[str, Any]], programs: list[dict[str, Any]]) -> None:
     """Raise each deck's attribute by 1 for every running Toolbox, Encryption,
-    Decryption or Stealth on it (SR5 p.245).
+    Decryption or Stealth on it (SR5 p.245) — one a Program Carrier holds
+    included (DT p.65), unless the deck runs that program in a slot as well.
 
     Runs after the accessories and modules have had their say, so the point
     lands on the attribute wherever the array put it. ``program_bonus`` on the
@@ -187,3 +174,15 @@ def apply_running_program_bonuses(cyberdecks: list[dict[str, Any]], programs: li
             continue
         deck[key] = int(deck.get(key) or 0) + 1
         deck["program_bonus"][key] = int(deck["program_bonus"].get(key) or 0) + 1
+    names = {str(spec["name"]): str(spec["id"]) for spec in catalog().get("programs") or []}
+    running = {
+        (str(prog.get("parent_id") or ""), str(prog.get("gear_id") or "")) for prog in programs if prog.get("running")
+    }
+    for row in cyberdecks:
+        for name in dict.fromkeys(row.get("carrier_programs") or []):
+            gid = names.get(name, "")
+            key = PROGRAM_ATTRIBUTE_BONUS.get(gid, "")
+            if not key or (str(row.get("id") or ""), gid) in running:
+                continue
+            row[key] = int(row.get(key) or 0) + 1
+            row["program_bonus"][key] = int(row["program_bonus"].get(key) or 0) + 1
