@@ -3,6 +3,12 @@
 Notable changes. Format follows [Keep a Changelog](https://keepachangelog.com/);
 self-hosters can pin to a tag instead of tracking `main`.
 
+## [0.5.45] — 2026-11-10
+
+### Fixed
+
+- **プログラム保持の効果を計算に入れました**：プログラム保持（Program Carrier, DT p.65）は、製造時に選んだプログラムを 1 本持つデッキ・モジュールです。そのプログラムは、デッキの同時実行枠とは別に常時実行され、価格はモジュールの値段に含まれます。これまでは、名前を手で入れる欄があるだけで、計算には何も反映されませんでした。今は、買うときに一覧からプログラムを選び、後から変えられません（変えるときは買い直します）。デッキの行には「プログラム保持で常時実行（枠の外）」と出ます。Toolbox などの能力値 +1 も付きます。同じプログラムをデッキでも作動させているときは、+1 は 1 回だけです。
+
 ## [0.5.44] — 2026-11-08
 
 ### Fixed
@@ -3161,7 +3167,8 @@ First tagged release.
 - One-container Docker image (Caddy + uvicorn + Next standalone) published to
   GHCR; `make up` / `compose.yaml` for local self-hosting.
 
-[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.44...HEAD
+[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.45...HEAD
+[0.5.45]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.44...v0.5.45
 [0.5.44]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.43...v0.5.44
 [0.5.43]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.42...v0.5.43
 [0.5.42]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.41...v0.5.42
