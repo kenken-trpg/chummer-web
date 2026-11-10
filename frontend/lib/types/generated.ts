@@ -409,6 +409,11 @@ export interface GearInstall {
   purchased_parts_units?: number | null;
   /** Cyberdeck modules only; this is not generic gear equipment management. */
   equipped?: boolean;
+  /** a Program Carrier only (DT p.65): the id of the program, on the same
+   *  device, that it holds and the device runs permanently. Its name is
+   *  the carrier's `extra` (Chummer's `<extra>`, a bare `<selecttext>`).
+   */
+  held_program_id?: string | null;
   /** the price picked for a `Variable(lo-hi)` item (a Custom Item, a
    *  Commlink App), and a Custom Item's own name
    */

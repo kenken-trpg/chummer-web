@@ -200,6 +200,8 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                       <input
                         type="checkbox"
                         aria-label={ui("gear.programRunningName", { name: tr(prog.name) })}
+                        // a Program Carrier keeps it running (DT p.65)
+                        disabled={!!prog.carried_by}
                         checked={prog.running ?? true}
                         onChange={(e) => {
                           // read now: the updater runs later, once React has set the
@@ -213,7 +215,7 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                           }));
                         }}
                       />
-                      {ui("gear.programRunning")}
+                      {ui(prog.carried_by ? "gear.programCarried" : "gear.programRunning")}
                     </label>{" "}
                     <button
                       className="btn danger"

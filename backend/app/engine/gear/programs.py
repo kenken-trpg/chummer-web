@@ -35,8 +35,13 @@ def _resolve_programs(
     state: CharacterState,
     cyberdecks: list[dict[str, Any]],
     rccs: list[dict[str, Any]],
+    carried: dict[str, tuple[str, str]] | None = None,
 ) -> tuple[list[dict[str, Any]], int, list[Notice]]:
+    """`carried`: program id → (carrier id, device id), the programs a Program
+    Carrier holds (``carried_programs``). One on that device runs, and cannot
+    be stopped; on a deck it still takes one of the slots."""
     warnings: list[Notice] = []
+    carried = carried or {}
     specs = {item["id"]: item for item in catalog().get("programs") or []}
     hosts: dict[str, tuple[str, dict[str, Any]]] = {}
     for row in cyberdecks:
@@ -89,6 +94,11 @@ def _resolve_programs(
         elif extra_kind == "text" and not extra:
             warnings.append(notice("engine.gear.pickExtra", name=term(str(spec["name"]))))
         inst.extra = extra or None
+        carrier_id, carrier_deck = carried.get(inst.id, ("", ""))
+        if carrier_id and inst.parent_id != carrier_deck:
+            # moved off the device the carrier sits in: the carrier runs nothing
+            warnings.append(notice("engine.gear.carrierProgramElsewhere", name=term(str(spec["name"]))))
+            carrier_id = ""
         rating = _clamp_rating(spec, inst.rating)
         inst.rating = rating
         # an autosoft a drone's own entry grants comes with it
@@ -108,13 +118,17 @@ def _resolve_programs(
                 "included": bool(inst.included),
                 "free": bool(inst.free) and not inst.included,
                 "running": (
-                    False
+                    True
+                    if carrier_id
+                    else False
                     if in_ware
                     else bool(inst.parent_id and inst.running)
                     if want_kind == "cyberdecks"
                     else inst.running
                 ),
                 "extra": extra,
+                # the Program Carrier holding it (DT p.65): it runs permanently
+                "carried_by": carrier_id,
                 # the deck attribute it raises while running (SR5 p.245)
                 "attribute_bonus": PROGRAM_ATTRIBUTE_BONUS.get(str(spec["id"]), ""),
                 "needs_extra": bool(extra_kind),

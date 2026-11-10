@@ -8,7 +8,7 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { expect, it, vi } from "vitest";
 import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
-import { DeckModuleRows } from "./DeckModuleRows";
+import { DeckModuleRows, PROGRAM_CARRIER } from "./DeckModuleRows";
 
 const DECK = "deck";
 
@@ -177,4 +177,63 @@ it("stops offering anything once the slots are full", () => {
   ).toBeNull();
   // the fitted module can still be taken out — that is how a slot is freed
   expect(screen.getByRole("button", { name: "Browse Module：取り外す" })).toBeDefined();
+});
+
+// A Program Carrier (DT p.65) holds one of the programs already on its
+// deck: picked from a list, not typed, and named after it for the export.
+function renderCarrier(carrier: Record<string, unknown>, programs: Record<string, unknown>[]) {
+  const patch = vi.fn<(body: Record<string, unknown>) => void>();
+  const row = moduleRow({
+    id: "pc",
+    gear_id: PROGRAM_CARRIER,
+    name: "Program Carrier",
+    needs_extra: true,
+    module_host_id: DECK,
+    ...carrier,
+  });
+  const ch = makeCharacter({ gear: [row], derived: { gear: [row], programs } } as never);
+  render(
+    <DeckModuleRows
+      {...panelProps(ch, { catalog: makeCatalog(catalog as never), patch })}
+      hostId={DECK}
+      hostName="Erika MCD-1"
+      used={1}
+      max={1}
+    />,
+  );
+  return patch;
+}
+
+const program = (id: string, name: string, parent_id: string = DECK) => ({
+  id,
+  gear_id: `g-${id}`,
+  name,
+  category: "Common Programs",
+  rating: 1,
+  rating_max: 0,
+  parent_id,
+  nuyen: 80,
+});
+
+it("lets a Program Carrier hold one of the deck's own programs", () => {
+  const patch = renderCarrier({}, [
+    program("tb", "Toolbox"),
+    program("br", "Browse", "other-deck"),
+  ]);
+  const pick = screen.getByRole("combobox", { name: "Program Carrier：保持するプログラム" });
+  const offered = Array.from(pick.querySelectorAll("option")).map((o) => o.getAttribute("value"));
+  // only what is on this deck; Browse sits on another one
+  expect(offered).toEqual(["", "tb"]);
+  expect(screen.queryByRole("combobox", { name: "対象" })).toBeNull();
+
+  fireEvent.change(pick, { target: { value: "tb" } });
+  expect(patch).toHaveBeenCalledWith({
+    gear: [expect.objectContaining({ id: "pc", held_program_id: "tb", extra: "Toolbox" })],
+  });
+});
+
+it("shows an imported carrier's typed-in name until a program is picked", () => {
+  renderCarrier({ extra: "Virtual Machine" }, []);
+  expect(screen.getByText(/先にこの機器へプログラムを入れてください/)).toBeDefined();
+  expect(screen.getByText(/記録：Virtual Machine/)).toBeDefined();
 });

@@ -336,6 +336,8 @@ export interface InstalledProgram {
   included?: boolean;
   extra?: string;
   label?: string;
+  /** the Program Carrier holding it (DT p.65), which keeps it running, or "" */
+  carried_by?: string;
   /** the deck attribute it raises by 1 while running (SR5 p.245), or "" */
   attribute_bonus?: "attack" | "sleaze" | "dataprocessing" | "firewall" | "";
   needs_extra?: boolean;
