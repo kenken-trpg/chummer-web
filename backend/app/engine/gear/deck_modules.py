@@ -10,6 +10,45 @@ from ...notices import Notice, notice, term
 ADD_MODULE = "d6802ad9-5dca-434a-bc92-bf8a17a8c5dc"
 DECK_BUILDER = "d85c6437-7611-47d3-b4c7-4e581e5349a4"
 COPROCESSOR = "8706c98d-b53b-4a29-b21b-a921030ae801"
+PROGRAM_CARRIER = "f11b2c82-6dbb-4e32-831f-1387fff2274c"
+
+
+def sync_program_carriers(state: CharacterState) -> None:
+    """Name each Program Carrier after the program it holds, and let go of
+    one whose program is gone.
+
+    The name is the carrier's `extra`, which the .chum5 export writes as
+    Chummer's `<extra>`; holding nothing, it keeps the name it had (an old
+    save's, typed in by hand).
+    """
+    from ...data_loader import catalog
+
+    names = {str(spec["id"]): str(spec["name"]) for spec in catalog().get("programs") or []}
+    programs = {inst.id: inst for inst in state.programs or []}
+    for inst in state.gear or []:
+        if inst.gear_id != PROGRAM_CARRIER or not inst.held_program_id:
+            continue
+        held = programs.get(inst.held_program_id)
+        if held is None or held.gear_id not in names:
+            inst.held_program_id = None
+            continue
+        inst.extra = names[held.gear_id]
+
+
+def carried_programs(state: CharacterState, gear: list[dict[str, Any]]) -> dict[str, tuple[str, str]]:
+    """Program id → (carrier id, device id) for every Program Carrier that is
+    installed, valid and enabled — on a deck, or through Add Module on a
+    commlink or an RCC — and holds a program (DT p.65)."""
+    rows = {str(row["id"]): row for row in gear}
+    carried: dict[str, tuple[str, str]] = {}
+    for inst in state.gear or []:
+        row = rows.get(inst.id)
+        if inst.gear_id != PROGRAM_CARRIER or not inst.held_program_id or row is None:
+            continue
+        if not row.get("module_valid") or not inst.equipped or not row.get("module_host_id"):
+            continue
+        carried.setdefault(inst.held_program_id, (inst.id, str(row["module_host_id"])))
+    return carried
 
 
 def resolve_deck_modules(
@@ -50,7 +89,7 @@ def resolve_deck_modules(
             module_method=method,
             module_valid=False,
             module_reason="uninstalled" if not parent else "invalidHost",
-            module_effect_supported=row["gear_id"] == COPROCESSOR,
+            module_effect_supported=row["gear_id"] in (COPROCESSOR, PROGRAM_CARRIER),
         )
         if not method:
             # Containers hold spare modules; invalid chains never grant an effect.

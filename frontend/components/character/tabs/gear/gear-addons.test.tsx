@@ -331,6 +331,28 @@ describe("<CyberdeckGear> the matrix attribute array", () => {
     expect(screen.getByText(/DP 3/)).toBeDefined();
   });
 
+  // DT p.65: what a Program Carrier holds runs permanently, so its switch is locked on
+  it("locks the running switch of a program a Program Carrier holds", () => {
+    const ch = makeCharacter({
+      cyberdecks: [deck()],
+      programs: [program("p1", "Toolbox", "d1"), program("p2", "Browse", "d1")],
+      derived: {
+        cyberdecks: [deck()],
+        programs: [
+          program("p1", "Toolbox", "d1", { running: true, carried_by: "pc" }),
+          program("p2", "Browse", "d1", { running: false, carried_by: "" }),
+        ],
+      },
+    } as never);
+    renderPanel(CyberdeckGear, ch, vi.fn());
+
+    const held = screen.getByRole("checkbox", { name: "Toolbox：作動中" }) as HTMLInputElement;
+    expect(held.disabled && held.checked).toBe(true);
+    expect(held.closest("label")!.textContent).toContain("常時実行（プログラム保持）");
+    const free = screen.getByRole("checkbox", { name: "Browse：作動中" }) as HTMLInputElement;
+    expect(free.disabled).toBe(false);
+  });
+
   it("lets an Overclocker pick the attribute on each deck", () => {
     const patch = vi.fn();
     const ch = makeCharacter({

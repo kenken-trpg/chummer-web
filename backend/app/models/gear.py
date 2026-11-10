@@ -205,6 +205,10 @@ class GearInstall(BaseModel):
     purchased_parts_units: int | None = Field(default=None, ge=0, le=100000)
     # Cyberdeck modules only; this is not generic gear equipment management.
     equipped: bool = True
+    #: a Program Carrier only (DT p.65): the id of the program, on the same
+    #: device, that it holds and the device runs permanently. Its name is
+    #: the carrier's `extra` (Chummer's `<extra>`, a bare `<selecttext>`).
+    held_program_id: str | None = None
     #: the price picked for a `Variable(lo-hi)` item (a Custom Item, a
     #: Commlink App), and a Custom Item's own name
     cost: int | None = None

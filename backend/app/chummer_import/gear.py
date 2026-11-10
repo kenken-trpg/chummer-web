@@ -295,6 +295,7 @@ def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
             continue
         router.route(g, None, None, location=_location_of(g, locations))
     _route_hosted_gear(router, cat, st)
+    _link_program_carriers(router)
     for inst_id, saved_ammo_id in (st.pop("_weapon_loaded", {}) or {}).items():
         for kind in ("weapons", "cyberware", "bioware"):
             for inst in st.get(kind) or []:
@@ -303,6 +304,41 @@ def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
     for b, rows in router.routed.items():
         # vehicles import first: its drones are already in `st`
         st[b] = (st.get(b) or []) + rows
+
+
+def _link_program_carriers(router: _GearRouter) -> None:
+    """Point each Program Carrier at the program it holds (DT p.65).
+
+    Chummer keeps only the program's name, in the carrier's `<extra>`; the
+    program itself is one of the deck's. The first one by that name on the
+    device the carrier is in (a deck, or one it is in through Add Module) is
+    the one held.
+    """
+    from ..engine.gear.deck_modules import ADD_MODULE, PROGRAM_CARRIER
+
+    gear = {str(row["id"]): row for row in router.routed["gear"]}
+    taken: set[str] = set()
+    for row in router.routed["gear"]:
+        if row.get("gear_id") != PROGRAM_CARRIER or not row.get("extra"):
+            continue
+        deck = str(row.get("parent_id") or "")
+        mod = gear.get(deck)
+        if mod is not None and mod.get("gear_id") == ADD_MODULE:
+            deck = str(mod.get("parent_id") or "")
+        held = next(
+            (
+                prog
+                for prog in router.routed["programs"]
+                if deck
+                and prog.get("parent_id") == deck
+                and prog["id"] not in taken
+                and (router.rows_by_id.get(str(prog["gear_id"])) or {}).get("name") == row["extra"]
+            ),
+            None,
+        )
+        if held is not None:
+            row["held_program_id"] = held["id"]
+            taken.add(held["id"])
 
 
 def _route_hosted_gear(router: _GearRouter, cat: CatalogDict, st: dict[str, Any]) -> None:
