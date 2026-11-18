@@ -42,6 +42,26 @@ describe("<SkillsTab>", () => {
     expect(boughtValue.textContent).toContain("3");
   });
 
+  it("explains the defaulting pool in the skill's '?', not in a mouse-only title", () => {
+    const tipOf = (container: HTMLElement) => {
+      const button = container.querySelector(".skill-row.has-spec button") as HTMLElement;
+      return document.getElementById(button.getAttribute("aria-describedby")!)!.textContent;
+    };
+    const unlearned = renderTab({ character: { derived: { totals: { AGI: 5 } } as never } });
+    expect(unlearned.container.querySelector(".skill-row.has-spec b [title]")).toBeNull();
+    expect(tipOf(unlearned.container)).toContain("関連能力値 AGI から −1 して振ります");
+
+    // bought: the general rule, since this row is not defaulting
+    const bought = renderTab({
+      character: {
+        skills: { Blades: 3 },
+        derived: { totals: { AGI: 5 }, skill_totals: { Blades: 3 } } as never,
+      },
+    });
+    expect(tipOf(bought.container)).not.toContain("から −1 して振ります");
+    expect(tipOf(bought.container)).toContain("デフォルティング");
+  });
+
   it("explains the terms behind a skill row: pool, specialization, defaulting, cap", () => {
     const { container } = renderTab();
     const button = container.querySelector(".skill-row.has-spec button") as HTMLElement;

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { HelpTip } from "@/components/help/HelpTip";
 import { initiativeHelp, limitHelp, weaponHelpLines } from "@/lib/character/help-breakdown";
 import { translate } from "@/lib/i18n";
@@ -7,7 +7,7 @@ import { makeCharacter } from "@/tests/fixtures";
 const ui = (key: Parameters<typeof translate>[1], vars?: Record<string, string | number>) =>
   translate("ja", key, vars);
 
-import { bindRuns, fitBox, widthCap } from "./HelpTip";
+import { HOVER_DELAY_MS, bindRuns, fitBox, widthCap } from "./HelpTip";
 
 describe("bindRuns", () => {
   it("keeps a rulebook citation on one line", () => {
@@ -33,6 +33,24 @@ describe("bindRuns", () => {
 });
 
 describe("<HelpTip>", () => {
+  // Each test on its own stretch of fake time: the "go from ? to ?" warm-up is
+  // shared module state, and a clock that restarted at the wall time could
+  // still be inside the window the previous test opened.
+  let clock = Date.UTC(2030, 0, 1);
+  beforeEach(() => {
+    clock += 3_600_000;
+    vi.useFakeTimers({ now: clock });
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+  /** A pointer that rests: enter, then the delay. */
+  const hover = (el: HTMLElement) => {
+    fireEvent.mouseEnter(el);
+    act(() => {
+      vi.advanceTimersByTime(HOVER_DELAY_MS);
+    });
+  };
   const renderTip = () => {
     render(
       <>
@@ -70,7 +88,7 @@ describe("<HelpTip>", () => {
 
   it("closes on Escape while only hovered", () => {
     const { button, shown } = renderTip();
-    fireEvent.mouseEnter(button.parentElement!);
+    hover(button.parentElement!);
     expect(shown()).toBe(true);
     fireEvent.keyDown(document.body, { key: "Escape" });
     expect(shown()).toBe(false);
@@ -78,7 +96,7 @@ describe("<HelpTip>", () => {
 
   it("opens on hover and closes when the pointer leaves", () => {
     const { button, shown } = renderTip();
-    fireEvent.mouseEnter(button.parentElement!);
+    hover(button.parentElement!);
     expect(shown()).toBe(true);
     fireEvent.mouseLeave(button.parentElement!);
     expect(shown()).toBe(false);
@@ -88,7 +106,7 @@ describe("<HelpTip>", () => {
   // must not close a box the keyboard opened
   it("stays open on focus when the pointer leaves", () => {
     const { button, shown } = renderTip();
-    fireEvent.mouseEnter(button.parentElement!);
+    hover(button.parentElement!);
     fireEvent.focus(button);
     fireEvent.mouseLeave(button.parentElement!);
     expect(shown()).toBe(true);
@@ -96,22 +114,22 @@ describe("<HelpTip>", () => {
 
   it("opens again when the pointer comes back after Escape", () => {
     const { button, shown } = renderTip();
-    fireEvent.mouseEnter(button.parentElement!);
+    hover(button.parentElement!);
     fireEvent.keyDown(document.body, { key: "Escape" });
     fireEvent.mouseLeave(button.parentElement!);
-    fireEvent.mouseEnter(button.parentElement!);
+    hover(button.parentElement!);
     expect(shown()).toBe(true);
   });
 
   it("stays open after a tap until a second tap, even while hovered and focused", () => {
     const { button, shown } = renderTip();
     // the order a desktop click arrives in: hover, focus, click
-    fireEvent.mouseEnter(button.parentElement!);
+    hover(button.parentElement!);
     fireEvent.focus(button);
     fireEvent.click(button);
     fireEvent.mouseLeave(button.parentElement!);
     expect(shown()).toBe(true);
-    fireEvent.mouseEnter(button.parentElement!);
+    hover(button.parentElement!);
     fireEvent.click(button);
     expect(shown()).toBe(false);
   });
@@ -128,6 +146,59 @@ describe("<HelpTip>", () => {
     const { button, shown } = renderTip();
     fireEvent.click(button);
     fireEvent.focusOut(button, { relatedTarget: screen.getByRole("button", { name: "外" }) });
+    expect(shown()).toBe(false);
+  });
+
+  it("waits for the pointer to rest before opening", () => {
+    const { button, shown } = renderTip();
+    fireEvent.mouseEnter(button.parentElement!);
+    act(() => {
+      vi.advanceTimersByTime(HOVER_DELAY_MS - 1);
+    });
+    expect(shown()).toBe(false);
+    // passing through: gone before the delay, never shown
+    fireEvent.mouseLeave(button.parentElement!);
+    act(() => {
+      vi.advanceTimersByTime(HOVER_DELAY_MS);
+    });
+    expect(shown()).toBe(false);
+  });
+
+  it("opens the next box at once while going from '?' to '?'", () => {
+    render(
+      <>
+        <HelpTip label="A の説明" lines={[{ label: "a" }]}>
+          A
+        </HelpTip>
+        <HelpTip label="B の説明" lines={[{ label: "b" }]}>
+          B
+        </HelpTip>
+      </>,
+    );
+    const [a, b] = ["A の説明", "B の説明"].map(
+      (name) => screen.getByRole("button", { name }).parentElement!,
+    );
+    hover(a);
+    fireEvent.mouseLeave(a);
+    fireEvent.mouseEnter(b);
+    expect(b.hasAttribute("data-open")).toBe(true);
+    // and the warm-up runs out
+    fireEvent.mouseLeave(b);
+    act(() => {
+      vi.advanceTimersByTime(HOVER_DELAY_MS * 2);
+    });
+    fireEvent.mouseEnter(a);
+    expect(a.hasAttribute("data-open")).toBe(false);
+  });
+
+  it("does not let a pending hover reopen what a second click closed", () => {
+    const { button, shown } = renderTip();
+    fireEvent.mouseEnter(button.parentElement!);
+    fireEvent.click(button);
+    fireEvent.click(button);
+    act(() => {
+      vi.advanceTimersByTime(HOVER_DELAY_MS);
+    });
     expect(shown()).toBe(false);
   });
 });

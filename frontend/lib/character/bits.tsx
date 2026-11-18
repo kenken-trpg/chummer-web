@@ -31,8 +31,8 @@ export function defaultBit(info: SkillDefault, ui: UiFn) {
   if (info.blocked) return <span className="muted">{ui("skills.defaultBlocked")}</span>;
   const key = info.free ? "skills.defaultFree" : "skills.default";
   return (
-    <span className="muted" title={ui("skills.defaultHint", { attr: info.attribute })}>
-      {ui(key, { pool: info.pool })}
-    </span>
+    // the rule behind the pool is in the skill name's "?", which a keyboard
+    // and a finger can open; a `title=` here only reached a mouse
+    <span className="muted">{ui(key, { pool: info.pool })}</span>
   );
 }
