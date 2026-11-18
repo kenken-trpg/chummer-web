@@ -446,7 +446,7 @@ td.rowhead {
 /* `content-visibility: auto` also clips painting to the block, which cut off
    the HelpTip of a category's last rows. A block with an open tip is on
    screen anyway, so it gives up nothing by being drawn in full. */
-.skill-cat-block:has(.help-tip:hover, .help-tip:focus-within, .help-tip[data-open]) {
+.skill-cat-block:has(.help-tip[data-open]) {
   content-visibility: visible;
 }
 /* #364 slipped the content-visibility block in between `.attr-row,` and this
@@ -2042,6 +2042,19 @@ input[type="search"] {
   font-size: 0.72rem;
   line-height: 1;
   cursor: help;
+  position: relative;
+}
+/* The circle is about 13px across, and a finger needs more than that: WCAG
+   2.5.8 asks for 24px. The extra is invisible, so the 175 labels it sits next
+   to keep their layout. */
+.help-tip-button::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 24px;
+  height: 24px;
+  transform: translate(-50%, -50%);
 }
 .help-tip-body {
   display: none;
@@ -2063,10 +2076,40 @@ input[type="search"] {
   white-space: normal;
   box-shadow: 0 4px 12px rgb(0 0 0 / 40%);
 }
-.help-tip:hover .help-tip-body,
-.help-tip:focus-within .help-tip-body,
+/* `data-open` alone decides: `:hover` and `:focus-within` here kept the box
+   up after Escape or a second tap had closed it (see HelpTip). */
 .help-tip[data-open] .help-tip-body {
   display: block;
+}
+.help-tip[data-side="above"] .help-tip-body {
+  top: auto;
+  bottom: calc(100% + 4px);
+}
+/* The 4px between the label and the box is neither, so a pointer moving from
+   the "?" to the box left the tip on the way and closed it (WCAG 1.4.13 asks
+   that the box can be hovered). Bridge it: the label's width from this side,
+   the box's width from the box's side — the box may be slid left of the "?". */
+.help-tip[data-open]::after,
+.help-tip-body::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 6px;
+}
+.help-tip[data-open]::after {
+  top: 100%;
+}
+.help-tip-body::before {
+  top: -6px;
+}
+.help-tip[data-open][data-side="above"]::after {
+  top: auto;
+  bottom: 100%;
+}
+.help-tip[data-side="above"] .help-tip-body::before {
+  top: auto;
+  bottom: -6px;
 }
 .help-tip-line {
   display: flex;

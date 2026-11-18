@@ -39,6 +39,85 @@ test.describe("help tips", () => {
     await expect(button).toHaveAttribute("aria-expanded", "true");
     await page.keyboard.press("Escape");
     await expect(button).toHaveAttribute("aria-expanded", "false");
+    // and the box goes with it, though the button still has focus — CSS
+    // `:focus-within` used to keep it up after the state said closed
+    await expect(button).toBeFocused();
+    await expect(tip).toBeHidden();
+  });
+
+  test("a second click closes it, and the pointer can cross to the box", async ({ page }) => {
+    await page.goto("/");
+    await waitForEditor(page);
+    const button = page.getByRole("button", { name: "身体/精神/社交リミット の説明" });
+    const tip = page.locator(`[id="${await button.getAttribute("aria-describedby")}"]`);
+
+    // still hovered and focused after the second click, which is what kept
+    // the box up before
+    await button.click();
+    await expect(tip).toBeVisible();
+    await button.click();
+    await expect(tip).toBeHidden();
+
+    // Escape with only the pointer on it, focus elsewhere
+    await page.mouse.move(0, 0);
+    await button.blur();
+    await button.hover();
+    await expect(tip).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(tip).toBeHidden();
+
+    // hover, then walk the pointer straight down across the gap into the box
+    // a pixel at a time, with no focus to hold it open on the way
+    await page.mouse.move(0, 0);
+    await button.hover();
+    await expect(tip).toBeVisible();
+    await expect(button).not.toBeFocused();
+    const from = (await button.boundingBox())!;
+    const to = (await tip.boundingBox())!;
+    const x = from.x + from.width / 2;
+    expect(x).toBeGreaterThan(to.x);
+    expect(x).toBeLessThan(to.x + to.width);
+    const y0 = from.y + from.height / 2;
+    const y1 = to.y + 10;
+    await page.mouse.move(x, y0);
+    await page.mouse.move(x, y1, { steps: Math.ceil(y1 - y0) });
+    await expect(tip).toBeVisible();
+  });
+
+  test('the "?" takes a 24px tap', async ({ page }) => {
+    await page.goto("/");
+    await waitForEditor(page);
+    const button = page.getByRole("button", { name: "身体/精神/社交リミット の説明" });
+    const b = (await button.boundingBox())!;
+    expect(b.width).toBeLessThan(24); // the circle itself stays small
+    const cx = b.x + b.width / 2;
+    const cy = b.y + b.height / 2;
+    const hits = await button.evaluate(
+      (el, points) => points.map(([x, y]) => el.contains(document.elementFromPoint(x, y))),
+      [
+        [cx - 11, cy],
+        [cx + 11, cy],
+        [cx, cy - 11],
+        [cx, cy + 11],
+      ],
+    );
+    expect(hits).toEqual([true, true, true, true]);
+  });
+
+  test("opens upward at the bottom of the sidebar instead of being clipped", async ({ page }) => {
+    await page.goto("/");
+    await waitForEditor(page);
+    const side = page.locator("aside.side");
+    const button = side.locator(".help-tip-button").last();
+    await button.evaluate((el) => el.scrollIntoView({ block: "end" }));
+    await button.hover();
+    const tip = page.locator(`[id="${await button.getAttribute("aria-describedby")}"]`);
+    await expect(tip).toBeVisible();
+    const box = (await tip.boundingBox())!;
+    const s = (await side.boundingBox())!;
+    const b = (await button.boundingBox())!;
+    expect(box.y + box.height).toBeLessThanOrEqual(s.y + s.height);
+    expect(box.y + box.height).toBeLessThanOrEqual(b.y);
   });
 
   // The skills list truncates long names, and the cell that did it clipped
