@@ -7,7 +7,7 @@ import { HelpTip } from "@/components/help/HelpTip";
 import { SpecPicker } from "@/components/character/SpecPicker";
 import { ACTIVE_SKILL_CATS, skillCatLabel } from "@/lib/character/constants";
 import { defaultBit, skillsoftBit, specBit } from "@/lib/character/bits";
-import { skillDefault } from "@/lib/character/skill-default";
+import { skillDefault, type SkillDefault } from "@/lib/character/skill-default";
 import { specializationBonus } from "@/lib/character/skill-specialization";
 import { skillDice } from "@/lib/character/format";
 import { careerFloor, careerSpecLocked } from "@/lib/character/career-floor";
@@ -89,8 +89,16 @@ export function ActiveSkills(props: TabPanelProps) {
   }
 
   /** The row's facts plus the terms behind them — the same glossary on every
-   *  skill, so "what does a specialization buy" is answered where it is used. */
-  function skillHelpLines(name: string, attribute: string, category: string) {
+   *  skill, so "what does a specialization buy" is answered where it is used.
+   *  A row that is defaulting right now gets that rule with its own attribute
+   *  in place of the general one: it used to be a `title=` on the pool, which
+   *  only a mouse could read. */
+  function skillHelpLines(
+    name: string,
+    attribute: string,
+    category: string,
+    defaulting?: SkillDefault,
+  ) {
     return [
       ...skillHintLines(name, attribute, category).map((label) => ({ label })),
       { label: ui("help.skill.pool") },
@@ -98,7 +106,12 @@ export function ActiveSkills(props: TabPanelProps) {
       // only where there is one: an expertise is career-only and rare, so the
       // line would be noise on the other forty rows
       ...(expertiseBySkill.has(name) ? [{ label: ui("help.skill.expertise") }] : []),
-      { label: ui("help.skill.default") },
+      {
+        label:
+          defaulting && !defaulting.blocked && !defaulting.free
+            ? ui("skills.defaultHint", { attr: defaulting.attribute })
+            : ui("help.skill.default"),
+      },
       { label: ui("help.skill.cap") },
       ...(splitKarma ? [{ label: ui("skills.karmaHint") }] : []),
     ];
@@ -117,6 +130,7 @@ export function ActiveSkills(props: TabPanelProps) {
               (ch.skills[s.name] || 0) > 0 ||
               (d.skill_totals[s.name] || 0) > 0 ||
               (d.skillsoft?.[s.name] || 0) > 0;
+            const defaulting = hasSkill ? undefined : skillDefault(s, d);
             return (
               <div
                 className={splitKarma ? "skill-row has-spec has-karma" : "skill-row has-spec"}
@@ -127,7 +141,7 @@ export function ActiveSkills(props: TabPanelProps) {
                   <HelpTip
                     label={ui("help.open", { label: tr(s.name) })}
                     lines={[
-                      ...skillHelpLines(s.name, s.attribute, s.category),
+                      ...skillHelpLines(s.name, s.attribute, s.category, defaulting),
                       ...(splitKarma && specValue && !expertise
                         ? [{ label: ui("skills.specKarmaHint") }]
                         : []),
@@ -201,7 +215,7 @@ export function ActiveSkills(props: TabPanelProps) {
                     </>
                   ) : (
                     // Nothing bought: what the skill still rolls at, defaulting.
-                    defaultBit(skillDefault(s, d), ui)
+                    defaultBit(defaulting!, ui)
                   )}
                 </b>
               </div>

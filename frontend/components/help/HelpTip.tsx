@@ -105,6 +105,16 @@ function visibleBounds(from: HTMLElement): Box {
 type Why = { hovered: boolean; focused: boolean; pinned: boolean; dismissed: boolean };
 const SHUT: Why = { hovered: false, focused: false, pinned: false, dismissed: false };
 
+/** How long the pointer rests on a label before its box opens. Without it a
+ *  pointer crossing a table flashed a box at every row it passed; a pointer
+ *  that means it is still answered well inside a second. */
+export const HOVER_DELAY_MS = 300;
+
+/** Until when another label's box opens at once on hover. Once the reader is
+ *  going from "?" to "?" — reading a column of them — a fresh delay at each
+ *  one is only lag. Shared by every HelpTip on the page. */
+let warmUntil = 0;
+
 /**
  * A label with a small "?" that explains it. The explanation opens on hover,
  * on keyboard focus and on tap (a phone has no hover), and the button points
@@ -117,7 +127,8 @@ const SHUT: Why = { hovered: false, focused: false, pinned: false, dismissed: fa
  * still had focus (or, on iOS, the sticky hover). WCAG 1.4.13 asks that it be
  * dismissible without moving the pointer or the focus.
  *
- * - hover or focus opens it, and it stays while either holds — focus keeps
+ * - hover (after HOVER_DELAY_MS, or at once just after another box was open)
+ *   or focus opens it, and it stays while either holds — focus keeps
  *   it up when the page shifts out from under a parked pointer
  * - a tap (click) pins it open; a second tap closes it
  * - Escape closes it wherever the pointer and focus are; so does a tap outside.
@@ -139,6 +150,9 @@ export function HelpTip({
   const root = useRef<HTMLSpanElement>(null);
   const body = useRef<HTMLSpanElement>(null);
   const close = useCallback(() => setWhy((w) => ({ ...w, pinned: false, dismissed: true })), []);
+  const hoverTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const cancelHover = () => clearTimeout(hoverTimer.current);
+  useEffect(() => () => clearTimeout(hoverTimer.current), []);
 
   /** Put the box where it can actually be read, once it is shown and so has
    *  a size. Written straight to the element: CSS cannot ask how much room is
@@ -181,8 +195,17 @@ export function HelpTip({
       ref={root}
       className="help-tip"
       data-open={open || undefined}
-      onMouseEnter={() => setWhy((w) => ({ ...w, hovered: true, dismissed: false }))}
-      onMouseLeave={() => setWhy((w) => ({ ...w, hovered: false }))}
+      onMouseEnter={() => {
+        const enter = () => setWhy((w) => ({ ...w, hovered: true, dismissed: false }));
+        cancelHover();
+        if (Date.now() < warmUntil) enter();
+        else hoverTimer.current = setTimeout(enter, HOVER_DELAY_MS);
+      }}
+      onMouseLeave={() => {
+        cancelHover();
+        if (open) warmUntil = Date.now() + HOVER_DELAY_MS;
+        setWhy((w) => ({ ...w, hovered: false }));
+      }}
       onFocus={() => setWhy((w) => ({ ...w, focused: true, dismissed: w.focused && w.dismissed }))}
       onBlur={(e) => {
         if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
@@ -196,13 +219,16 @@ export function HelpTip({
         aria-label={label}
         aria-describedby={id}
         aria-expanded={open}
-        onClick={() =>
+        onClick={() => {
+          // a pending hover would land after the click and undo a second
+          // click's close; the click has decided
+          cancelHover();
           setWhy((w) =>
             w.pinned
               ? { ...w, pinned: false, dismissed: true }
               : { ...w, pinned: true, dismissed: false },
-          )
-        }
+          );
+        }}
       >
         ?
       </button>

@@ -80,6 +80,39 @@ function rendersHelp(rel: string, seen = new Set<string>()): boolean {
  *  deliberate exception, not a backlog item to be left alone. */
 const WITHOUT_HELP: Record<string, string> = {};
 
+/**
+ * The `title=` attributes left on purpose, per file. A `title=` is read on
+ * mouse hover only — not on focus, not on touch, and not reliably by a screen
+ * reader — so it may only repeat something the page already says another way.
+ * Anything it alone explains belongs in a `HelpTip`.
+ */
+const TITLE_DUPLICATES: Record<string, { count: number; reason: string }> = {
+  "lib/character/bits.tsx": {
+    count: 1,
+    reason: "the specialization's name, which the SpecPicker beside it shows",
+  },
+  "components/character/SpecPicker.tsx": {
+    count: 1,
+    reason: "the select's own value, readable by opening it; a mouse aid when it is cut off",
+  },
+  "components/character/sheet/sections/Combat.tsx": {
+    count: 2,
+    reason:
+      "a weapon's accuracy and DV formula, which the heading's '?' lists too (a '?' per cell would squeeze the name column on a phone)",
+  },
+};
+
+/** How many `title=` attributes on HTML elements a source has. A component's
+ *  `title` prop (`<Section title=…>`) is a heading, not a tooltip. */
+function titleAttributes(text: string): number {
+  let count = 0;
+  for (const m of text.matchAll(/\stitle=/g)) {
+    const tag = /<([A-Za-z][\w.]*)[^<]*$/.exec(text.slice(0, m.index));
+    if (tag && /^[a-z]/.test(tag[1])) count++;
+  }
+  return count;
+}
+
 describe("tooltip help", () => {
   const surfaces = SOURCES.filter((f) =>
     /^components\/character\/(tabs\/\w+Tab|sidebar\/Sidebar\w+)\.tsx$/.test(f),
@@ -94,6 +127,16 @@ describe("tooltip help", () => {
   it.each(surfaces)("%s explains its values", (surface) => {
     const reason = WITHOUT_HELP[surface];
     expect(rendersHelp(surface), reason ? `exempt: ${reason}` : "renders no HelpTip").toBe(!reason);
+  });
+
+  it("leaves no help in a mouse-only title=", () => {
+    const found = Object.fromEntries(
+      SOURCES.map((f) => [f, titleAttributes(read(f))] as const).filter(([, n]) => n > 0),
+    );
+    const allowed = Object.fromEntries(
+      Object.entries(TITLE_DUPLICATES).map(([f, { count }]) => [f, count]),
+    );
+    expect(found).toEqual(allowed);
   });
 
   it("names every '?' button through help.open", () => {
