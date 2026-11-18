@@ -7,7 +7,7 @@ import { makeCharacter } from "@/tests/fixtures";
 const ui = (key: Parameters<typeof translate>[1], vars?: Record<string, string | number>) =>
   translate("ja", key, vars);
 
-import { bindRuns } from "./HelpTip";
+import { bindRuns, fitBox, widthCap } from "./HelpTip";
 
 describe("bindRuns", () => {
   it("keeps a rulebook citation on one line", () => {
@@ -33,23 +33,130 @@ describe("bindRuns", () => {
 });
 
 describe("<HelpTip>", () => {
-  it("describes the button with its lines and toggles on tap", () => {
+  const renderTip = () => {
     render(
-      <HelpTip
-        label="身体リミット の説明"
-        lines={[{ label: "式" }, { label: "合計", value: 5, strong: true }]}
-      >
-        身体リミット
-      </HelpTip>,
+      <>
+        <HelpTip
+          label="身体リミット の説明"
+          lines={[{ label: "式" }, { label: "合計", value: 5, strong: true }]}
+        >
+          身体リミット
+        </HelpTip>
+        <button type="button">外</button>
+      </>,
     );
     const button = screen.getByRole("button", { name: "身体リミット の説明" });
     const tip = screen.getByRole("tooltip", { hidden: true });
+    const shown = () => tip.parentElement!.hasAttribute("data-open");
+    return { button, tip, shown };
+  };
+
+  it("describes the button with its lines", () => {
+    const { button, tip } = renderTip();
     expect(button.getAttribute("aria-describedby")).toBe(tip.id);
     expect(tip.textContent).toContain("合計5");
-    fireEvent.click(button);
+  });
+
+  // `data-open` is the only thing the CSS shows the box on, so it is the box
+  it("closes on Escape while the button keeps focus", () => {
+    const { button, shown } = renderTip();
+    fireEvent.focus(button);
+    expect(shown()).toBe(true);
     expect(button.getAttribute("aria-expanded")).toBe("true");
     fireEvent.keyDown(button, { key: "Escape" });
+    expect(shown()).toBe(false);
     expect(button.getAttribute("aria-expanded")).toBe("false");
+  });
+
+  it("closes on Escape while only hovered", () => {
+    const { button, shown } = renderTip();
+    fireEvent.mouseEnter(button.parentElement!);
+    expect(shown()).toBe(true);
+    fireEvent.keyDown(document.body, { key: "Escape" });
+    expect(shown()).toBe(false);
+  });
+
+  it("opens on hover and closes when the pointer leaves", () => {
+    const { button, shown } = renderTip();
+    fireEvent.mouseEnter(button.parentElement!);
+    expect(shown()).toBe(true);
+    fireEvent.mouseLeave(button.parentElement!);
+    expect(shown()).toBe(false);
+  });
+
+  // the skills tab settles under a parked pointer: a mouseleave from that
+  // must not close a box the keyboard opened
+  it("stays open on focus when the pointer leaves", () => {
+    const { button, shown } = renderTip();
+    fireEvent.mouseEnter(button.parentElement!);
+    fireEvent.focus(button);
+    fireEvent.mouseLeave(button.parentElement!);
+    expect(shown()).toBe(true);
+  });
+
+  it("opens again when the pointer comes back after Escape", () => {
+    const { button, shown } = renderTip();
+    fireEvent.mouseEnter(button.parentElement!);
+    fireEvent.keyDown(document.body, { key: "Escape" });
+    fireEvent.mouseLeave(button.parentElement!);
+    fireEvent.mouseEnter(button.parentElement!);
+    expect(shown()).toBe(true);
+  });
+
+  it("stays open after a tap until a second tap, even while hovered and focused", () => {
+    const { button, shown } = renderTip();
+    // the order a desktop click arrives in: hover, focus, click
+    fireEvent.mouseEnter(button.parentElement!);
+    fireEvent.focus(button);
+    fireEvent.click(button);
+    fireEvent.mouseLeave(button.parentElement!);
+    expect(shown()).toBe(true);
+    fireEvent.mouseEnter(button.parentElement!);
+    fireEvent.click(button);
+    expect(shown()).toBe(false);
+  });
+
+  it("closes on a tap outside it", () => {
+    const { button, shown } = renderTip();
+    fireEvent.click(button);
+    expect(shown()).toBe(true);
+    fireEvent.pointerDown(screen.getByRole("button", { name: "外" }));
+    expect(shown()).toBe(false);
+  });
+
+  it("closes when the focus leaves it", () => {
+    const { button, shown } = renderTip();
+    fireEvent.click(button);
+    fireEvent.focusOut(button, { relatedTarget: screen.getByRole("button", { name: "外" }) });
+    expect(shown()).toBe(false);
+  });
+});
+
+describe("fitBox", () => {
+  const window = { left: 0, top: 0, right: 400, bottom: 800 };
+  const at = (left: number, top: number) => ({ left, top, right: left + 80, bottom: top + 20 });
+
+  it("hangs off the label's left edge when there is room", () => {
+    expect(fitBox(at(20, 100), window, 200, 100)).toEqual({ left: 0, above: false });
+  });
+
+  it("slides left to stay inside the right edge", () => {
+    // 400 - 8 - 200 = 192, the box's left edge on screen
+    expect(fitBox(at(300, 100), window, 200, 100).left).toBe(192 - 300);
+  });
+
+  it("goes above when it would run past the bottom and there is more room above", () => {
+    expect(fitBox(at(20, 740), window, 200, 100).above).toBe(true);
+  });
+
+  it("stays below when neither side fits but below has more room", () => {
+    expect(fitBox(at(20, 100), { ...window, bottom: 400 }, 200, 500).above).toBe(false);
+  });
+
+  it("caps the width to the panel it is in", () => {
+    expect(widthCap({ left: 0, top: 0, right: 304, bottom: 800 })).toBe(288);
+    expect(widthCap(window)).toBe(352);
+    expect(widthCap({ left: 0, top: 0, right: 100, bottom: 800 })).toBe(120);
   });
 });
 
