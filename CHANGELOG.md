@@ -3,6 +3,17 @@
 Notable changes. Format follows [Keep a Changelog](https://keepachangelog.com/);
 self-hosters can pin to a tag instead of tracking `main`.
 
+## [0.5.46] — 2026-11-19
+
+### Changed
+
+- **「?」の説明は、マウスを少し止めてから開くようにしました**：表の上を通り過ぎるだけで、行ごとに説明が開いては消えていました。今はマウスを 0.3 秒止めると開きます。開いたあとで隣の「?」へ移ると、待たずにすぐ開きます。キーボードのフォーカスとタップでは、これまでどおりすぐ開きます。
+- **未修得技能のデフォルティングの説明を、技能名の「?」に移しました**：「デフォルティング 4」にマウスを重ねたときだけ出ていた説明（関連能力値から −1 して振る）を、技能名の「?」に出します。キーボードとスマートフォンでも読めます。
+
+### Fixed
+
+- **「?」の説明を Esc やもう一度のタップで閉じられるようにしました**：これまでは、キーボードで開いて Esc を押しても、「?」をもう一度押しても、ボタンにフォーカスが残っている間（iOS ではタップした後も）説明が出たままでした。今は Esc・もう一度のタップ・外側のタップで閉じます。マウスを「?」から説明の上へ動かしても、途中の隙間で消えなくなりました。「?」は見た目の大きさを変えずに、押せる範囲を 24px 四方に広げました。サイドバーの下端などで下に入りきらないときは、説明を上に出します。
+
 ## [0.5.45] — 2026-11-10
 
 ### Fixed
@@ -3167,7 +3178,8 @@ First tagged release.
 - One-container Docker image (Caddy + uvicorn + Next standalone) published to
   GHCR; `make up` / `compose.yaml` for local self-hosting.
 
-[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.45...HEAD
+[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.46...HEAD
+[0.5.46]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.45...v0.5.46
 [0.5.45]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.44...v0.5.45
 [0.5.44]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.43...v0.5.44
 [0.5.43]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.42...v0.5.43
